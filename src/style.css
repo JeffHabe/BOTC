@@ -1,0 +1,354 @@
+/* ─── 染鐘樓魔典 — 全域樣式系統 ─── */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+/* ─── CSS 設計令牌 ───────────────────────────────────────────── */
+:root {
+  /* 主色調 (古典風格：深邃木質與皮革感) */
+  --color-bg-deep:      #0b0c10;
+  --color-bg-dark:      #1a1d23;
+  --color-bg-mid:       #22272e;
+  --color-bg-surface:   #2d333b;
+  --color-bg-elevated:  #363d42;
+
+  /* 經典羊皮紙質感 */
+  --color-parchment:      #f4e4bc;
+  --color-parchment-dark: #d2b48c;
+  --color-label-bg:       rgba(20, 15, 10, 0.85);
+
+  /* 金色系 (古典風格：古銅金與暗金) */
+  --color-gold-bright:  #e5b54f;
+  --color-gold:         #b38b3d;
+  --color-gold-muted:   #8c6d30;
+  --color-gold-dark:    #4a3a1a;
+
+  /* 血紅系 (古典風格：深奧紅) */
+  --color-red-bright:   #c43232;
+  --color-red:          #7a1a1a;
+  --color-red-muted:    #4d1212;
+  --color-red-dark:     #2d0a0a;
+
+  /* 傳統藍 (古典風格：普魯士藍) */
+  --color-blue-bright:  #4a89c4;
+  --color-blue:         #2a5a8a;
+  --color-blue-muted:   #1a3a5a;
+
+  /* 文字 */
+  --color-text-primary: #d4c8b0;
+  --color-text-secondary: #9a8a6d;
+  --color-text-muted:   #7a6a4d;
+  --color-text-bright:  #f4ecd8;
+
+  /* 角色類型顏色 (古典色偏) */
+  --color-townsfolk:    #3e7bb3;
+  --color-outsider:     #7a52aa;
+  --color-minion:       #a83e3e;
+  --color-demon:        #c42020;
+  --color-traveler:     #4ac49a;
+  --color-fabled:       #d4a840;
+
+  /* 邊框 */
+  --border-token:       1px solid rgba(201, 168, 76, 0.4);
+  --border-panel:       1px solid rgba(201, 168, 76, 0.2);
+
+  /* 陰影 */
+  --shadow-token:       0 8px 16px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255,255,255,0.4);
+  --shadow-token-glow:  0 0 15px rgba(201, 168, 76, 0.3);
+  --shadow-panel:       0 20px 60px rgba(0, 0, 0, 0.9);
+  --shadow-dead:        0 8px 24px rgba(0, 0, 0, 0.9), inset 0 0 30px rgba(0,0,0,0.6);
+
+  /* 圓角 */
+  --radius-token:       50%;
+  --radius-panel:       12px;
+  --radius-button:      8px;
+  --radius-small:       4px;
+
+  /* 字型 */
+  --font-title:         'Cinzel', serif;
+  --font-body:          'Noto Sans TC', sans-serif;
+
+  /* 間距 */
+  --spacing-xs:         4px;
+  --spacing-sm:         8px;
+  --spacing-md:         16px;
+  --spacing-lg:         24px;
+  --spacing-xl:         32px;
+
+  /* 動畫 */
+  --transition-fast:    0.15s ease;
+  --transition-mid:     0.3s ease;
+  --transition-slow:    0.6s ease;
+}
+
+/* ─── 重置與基礎 ─────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-bg-deep);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* ─── 全局按鈕樣式 ──────────────────────────────────────────── */
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-gold-muted), var(--color-gold));
+  color: var(--color-bg-deep);
+  font-weight: 700;
+  padding: 12px 28px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-gold);
+  font-size: 16px;
+  transition: all var(--transition-fast);
+  letter-spacing: 0.5px;
+}
+
+.btn-primary:active {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--color-red-muted), var(--color-red));
+  color: var(--color-text-bright);
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-red);
+  font-size: 15px;
+  transition: all var(--transition-fast);
+}
+
+.btn-danger:active {
+  transform: scale(0.96);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+  padding: 10px 20px;
+  border-radius: var(--radius-button);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 15px;
+  transition: all var(--transition-fast);
+}
+
+.btn-ghost:active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ─── 面板容器 ──────────────────────────────────────────────── */
+.panel {
+  background: var(--color-bg-surface); /* 移除半透明與模糊 */
+  border: 1px solid var(--color-gold-muted);
+  border-radius: var(--radius-panel);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+  position: relative;
+}
+
+/* 古典裝飾邊角 */
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(201, 168, 76, 0.1);
+  border-radius: calc(var(--radius-panel) - 4px);
+  pointer-events: none;
+}
+
+.panel-header {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.panel-title {
+  font-family: var(--font-title);
+  font-size: 18px;
+  color: var(--color-gold);
+  letter-spacing: 1.5px;
+}
+
+/* ─── 角色類型標籤 ──────────────────────────────────────────── */
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.role-badge.townsfolk {
+  background: rgba(74, 155, 212, 0.2);
+  color: var(--color-townsfolk);
+  border: 1px solid rgba(74, 155, 212, 0.4);
+}
+
+.role-badge.outsider {
+  background: rgba(138, 92, 199, 0.2);
+  color: var(--color-outsider);
+  border: 1px solid rgba(138, 92, 199, 0.4);
+}
+
+.role-badge.minion {
+  background: rgba(196, 74, 74, 0.2);
+  color: var(--color-minion);
+  border: 1px solid rgba(196, 74, 74, 0.4);
+}
+
+.role-badge.demon {
+  background: rgba(224, 32, 32, 0.2);
+  color: var(--color-demon);
+  border: 1px solid rgba(224, 32, 32, 0.4);
+}
+
+/* ─── 輸入框 ─────────────────────────────────────────────────── */
+input[type="text"], input[type="search"], textarea {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: var(--radius-button);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 8px 12px;
+  width: 100%;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+input[type="text"]:focus, input[type="search"]:focus {
+  border-color: var(--color-gold);
+  background: rgba(201, 168, 76, 0.05);
+}
+
+/* ─── 分隔線 ─────────────────────────────────────────────────── */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent);
+  margin: var(--spacing-md) 0;
+}
+
+/* ─── 滾動條樣式 ─────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gold-dark);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold-muted);
+}
+
+/* ─── 動畫關鍵幀 ─────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(201, 168, 76, 0.3); }
+  50%       { box-shadow: 0 0 20px rgba(201, 168, 76, 0.7); }
+}
+
+@keyframes deathDrop {
+  from { transform: translateY(-100%) rotate(-10deg); opacity: 0; }
+  to   { transform: translateY(0) rotate(0deg); opacity: 1; }
+}
+
+@keyframes moonRise {
+  from { opacity: 0; transform: translateY(20px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── 遮罩層 ─────────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85); /* 增加不透明度 */
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ─── 工具提示 ──────────────────────────────────────────────── */
+.tooltip {
+  position: absolute;
+  background: var(--color-bg-elevated);
+  border: var(--border-token);
+  border-radius: var(--radius-small);
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 200;
+  animation: fadeIn 0.15s ease;
+}
+
+/* ─── 響應式輔助 ─────────────────────────────────────────────── */
+.hidden { display: none !important; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+}

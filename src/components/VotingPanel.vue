@@ -1,0 +1,508 @@
+<template>
+  <div class="overlay" @click.self="uiStore.closePanel()">
+    <div class="voting-panel panel animate-slide-up">
+      <div class="panel-header">
+        <span class="panel-icon">🗳️</span>
+        <h2 class="panel-title">投票管理</h2>
+        <button class="close-btn" @click="uiStore.closePanel()">✕</button>
+      </div>
+
+      <!-- 發起提名 -->
+      <div class="nominate-section" v-if="gameStore.phase === 'Day'">
+        <div class="section-title">發起提名</div>
+        <div class="nominate-row">
+          <div class="select-wrap">
+            <label class="select-label">提名者</label>
+            <select v-model="nominatorId" class="player-select">
+              <option value="" disabled>選擇玩家...</option>
+              <option v-for="(p, idx) in canNominate" :key="p.id" :value="p.id">
+                {{ gameStore.players.findIndex(pl => pl.id === p.id) + 1 }}. {{ p.name }}
+              </option>
+            </select>
+          </div>
+          <div class="nominate-arrow">提名</div>
+          <div class="select-wrap">
+            <label class="select-label">被提名者</label>
+            <select v-model="nomineeId" class="player-select">
+              <option value="" disabled>選擇玩家...</option>
+              <option v-for="p in notYetNominated" :key="p.id" :value="p.id">
+                {{ gameStore.players.findIndex(pl => pl.id === p.id) + 1 }}. {{ p.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <button 
+          class="btn-primary nominate-btn" 
+          :disabled="!nominatorId || !nomineeId"
+          @click="doNominate"
+        >
+          確認提名
+        </button>
+      </div>
+
+      <!-- 提名列表 -->
+      <div class="nominations-list">
+        <div class="section-title">提名記錄 (第 {{ currentRound }} 輪)</div>
+        
+        <div v-if="nominations.length === 0" class="empty-nominations">
+          今日尚未有任何提名
+        </div>
+
+        <div 
+          v-for="(nom, index) in nominations" 
+          :key="index"
+          class="nomination-card"
+          :class="{ 'nom-executed': nom.executed, 'nom-expandable': nom.executed || nom.round < currentRound }"
+          @click="toggleExpand(index)"
+        >
+          <div class="nom-header">
+            <div class="nom-names">
+              <span class="nom-round-tag">第 {{ nom.round }} 輪</span>
+              {{ playerName(nom.nominator_id) }} 提名了 {{ playerName(nom.nominee_id) }}
+            </div>
+            <div class="nom-score" :class="{ 'score-pass': nom.votes_for.length >= nom.threshold }">
+              {{ nom.votes_for.length }} / {{ nom.threshold }} 票
+            </div>
+          </div>
+
+          <!-- 投票詳情 -->
+          <div class="nom-body" v-if="!nom.executed && nom.round === currentRound">
+            <div class="vote-grid">
+              <button 
+                v-for="(p, idx) in gameStore.players" 
+                :key="p.id"
+                class="vote-btn"
+                :class="{ 
+                  'vote-yes': nom.votes_for.includes(p.id),
+                  'vote-ghost': !p.is_alive,
+                  'vote-spent': !p.is_alive && !p.has_ghost_vote && !nom.votes_for.includes(p.id)
+                }"
+                @click.stop="toggleVote(index, p.id)"
+                :disabled="!p.is_alive && !p.has_ghost_vote && !nom.votes_for.includes(p.id)"
+              >
+                <div class="vote-player-wrap">
+                  <span v-if="!p.is_alive" class="vote-ghost-icon">👻</span>
+                  <span class="vote-player">{{ idx + 1 }}. {{ p.name }}</span>
+                </div>
+                <span v-if="nom.votes_for.includes(p.id)" class="vote-mark">✓</span>
+              </button>
+            </div>
+
+            <div class="nom-actions">
+              <button 
+                class="btn-danger" 
+                :disabled="getExecutionStatus(index).disabled || isExecutedToday"
+                @click.stop="doExecute(index)"
+              >
+                {{ getExecutionStatus(index).label }}
+              </button>
+            </div>
+          </div>
+
+          <!-- 已執行或歷史記錄的樣式 -->
+          <div class="nom-executed-badge" v-else-if="nom.executed">
+            <span class="status">⚖️ 已處決</span>
+            <span class="final-score">(今日最終票數: {{ nom.votes_for.length }})</span>
+            <button class="btn-undo" @click.stop="doUndoExecute(index)">撤銷</button>
+          </div>
+          
+          <div class="nom-history-badge" v-if="nom.executed || nom.round < currentRound || expandedNoms.has(index)">
+            <div class="vote-summary" v-if="nom.votes_for.length > 0">
+              贊成者 ({{ nom.votes_for.length }}位): {{ nom.votes_for.map(playerName).join(', ') }}
+            </div>
+            <div class="vote-summary" v-else>今日無人投贊成票</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { useGameStore } from '../stores/gameStore'
+import { useUIStore } from '../stores/uiStore'
+
+const gameStore = useGameStore()
+const uiStore = useUIStore()
+
+const nominatorId = computed({
+  get: () => uiStore.nominationNominatorId,
+  set: (val) => uiStore.nominationNominatorId = val
+})
+const nomineeId = computed({
+  get: () => uiStore.nominationNomineeId,
+  set: (val) => uiStore.nominationNomineeId = val
+})
+
+const currentRound = computed(() => gameStore.round)
+const nominations = computed(() => gameStore.nominations)
+
+const expandedNoms = ref(new Set<number>())
+
+function toggleExpand(index: number) {
+  const nom = nominations.value[index]
+  if (nom.executed || nom.round !== currentRound.value) {
+    if (expandedNoms.value.has(index)) {
+      expandedNoms.value.delete(index)
+    } else {
+      expandedNoms.value.add(index)
+    }
+  }
+}
+
+const isExecutedToday = computed(() =>
+  gameStore.nominations.some(n => n.round === currentRound.value && n.executed)
+)
+
+const maxVotesInfo = computed(() => {
+  let max = 0
+  let count = 0
+  const todayNoms = nominations.value.filter(n => n.round === currentRound.value && !n.executed)
+  
+  todayNoms.forEach(n => {
+    const v = n.votes_for.length
+    if (v > max) {
+      max = v
+      count = 1
+    } else if (v === max && v > 0) {
+      count++
+    }
+  })
+  
+  return { max, count }
+})
+
+function getExecutionStatus(nomIndex: number) {
+  const nom = nominations.value[nomIndex]
+  const votes = nom.votes_for.length
+  const thresholdReached = votes >= nom.threshold
+  
+  const isMax = votes === maxVotesInfo.value.max
+  const isTie = isMax && maxVotesInfo.value.count > 1
+  
+  if (!thresholdReached) return { label: '未達門檻', disabled: true }
+  if (!isMax) return { label: '非最高票', disabled: true }
+  if (isTie) return { label: '票數平手', disabled: true }
+  
+  return { label: '執行處決', disabled: false }
+}
+
+const canNominate = computed(() =>
+  gameStore.players.filter(p => p.can_nominate && p.is_alive)
+)
+const notYetNominated = computed(() =>
+  gameStore.players.filter(p => !p.is_nominated)
+)
+
+function playerName(id: string) {
+  const all = gameStore.players
+  const idx = all.findIndex(p => p.id === id)
+  if (idx === -1) return '未知'
+  return `${idx + 1}. ${all[idx].name}`
+}
+
+async function doNominate() {
+  if (!nominatorId.value || !nomineeId.value) return
+  await gameStore.nominate(nominatorId.value, nomineeId.value)
+  nominatorId.value = ''
+  nomineeId.value = ''
+}
+
+async function toggleVote(nomIndex: number, voterId: string) {
+  await gameStore.vote(nomIndex, voterId)
+}
+
+async function doExecute(nomIndex: number) {
+  uiStore.showConfirm(
+    '處決確認',
+    `確認要處決玩家 ${playerName(nominations.value[nomIndex].nominee_id)} 嗎？`,
+    async () => {
+      await gameStore.execute(nomIndex)
+    },
+    true
+  )
+}
+
+async function doUndoExecute(nomIndex: number) {
+  uiStore.showConfirm(
+    '撤銷處決',
+    `確認要撤銷玩家 ${playerName(nominations.value[nomIndex].nominee_id)} 的處決嗎？\n這將恢復該玩家的存活狀態。`,
+    async () => {
+      await gameStore.undoExecution(nomIndex)
+    },
+    false
+  )
+}
+</script>
+
+<style scoped>
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 150;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 8px;
+}
+
+.voting-panel {
+  width: 100%;
+  max-width: 440px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px 20px 12px 12px;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 16px 10px;
+  border-bottom: 1px solid rgba(201,168,76,0.1);
+  flex-shrink: 0;
+}
+
+.panel-icon { font-size: 18px; }
+
+.panel-title {
+  font-family: var(--font-title);
+  font-size: 16px;
+  color: var(--color-gold);
+  flex: 1;
+}
+
+.close-btn {
+  color: var(--color-text-muted);
+  font-size: 16px;
+  background: none;
+  padding: 4px 8px;
+}
+
+.nominate-section {
+  padding: 12px 16px;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.nominate-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.select-wrap { flex: 1; }
+
+.select-label {
+  display: block;
+  font-size: 10px;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+.player-select {
+  width: 100%;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  padding: 8px 10px;
+  outline: none;
+}
+
+.nominate-arrow {
+  color: var(--color-gold-muted);
+  font-size: 11px;
+  padding-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.nominate-btn {
+  width: 100%;
+}
+
+.nominations-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+}
+
+.nomination-card {
+  background: var(--color-bg-elevated);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  transition: all var(--transition-fast);
+}
+
+.nom-expandable {
+  cursor: pointer;
+}
+
+.nom-expandable:hover {
+  border-color: rgba(201,168,76,0.3);
+}
+
+.nom-executed {
+  opacity: 0.7;
+  border-color: rgba(139,26,26,0.4);
+}
+
+.nom-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.nom-names {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nom-round-tag {
+  font-size: 10px;
+  background: var(--color-bg-surface);
+  color: var(--color-gold-muted);
+  border: 1px solid rgba(201,168,76,0.3);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.nom-score {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  background: var(--color-bg-surface);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.score-pass {
+  color: var(--color-gold-bright);
+  background: rgba(201,168,76,0.15);
+}
+
+.vote-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.vote-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--color-bg-surface);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.vote-btn.vote-yes {
+  background: rgba(201,168,76,0.2);
+  border-color: var(--color-gold);
+  color: var(--color-gold-bright);
+}
+
+.vote-player-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.vote-ghost-icon {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.vote-btn.vote-ghost {
+  background: rgba(100, 100, 120, 0.1);
+  border-style: dashed;
+}
+
+.vote-btn.vote-spent {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.vote-player {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vote-mark { font-size: 10px; font-weight: 700; }
+
+.nom-actions { 
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.nom-executed-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  padding: 8px 0;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.btn-undo {
+  background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.3);
+  color: var(--color-gold);
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.empty-nominations {
+  padding: 30px 0;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.nom-history-badge {
+  padding: 8px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+</style>

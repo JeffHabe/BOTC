@@ -1,0 +1,415 @@
+<template>
+  <transition name="sheet-slide">
+    <div v-if="player" class="control-sheet">
+      <div class="sheet-handle" @click="uiStore.selectPlayer(null)"></div>
+      
+      <div class="sheet-content">
+        <!-- 玩家標題區 -->
+        <div class="player-header">
+          <div class="player-avatar" :class="player.role?.role_type.toLowerCase()">
+            <img v-if="player.role?.image" :src="player.role.image" alt="" />
+            <span v-else>{{ player.role ? '🎭' : '👤' }}</span>
+          </div>
+          <div class="player-meta" @click="handleRename" style="cursor: pointer;">
+            <h2 class="name">{{ player.name }}</h2>
+            <p class="role" :class="player.role?.role_type.toLowerCase()">
+              {{ player.role?.name || '未指派角色' }}
+            </p>
+          </div>
+          <button class="close-sheet" @click="uiStore.selectPlayer(null)">✕</button>
+        </div>
+
+        <!-- 主操作按鈕組 (大按鈕) -->
+        <div class="action-grid">
+          <button 
+            class="action-btn death-btn" 
+            :class="{ 'is-dead': !player.is_alive }"
+            @click="handleToggleAlive"
+          >
+            <span class="icon">{{ player.is_alive ? '💀' : '❤️' }}</span>
+            <span class="label">{{ player.is_alive ? '標記死亡' : '恢復存活' }}</span>
+          </button>
+
+          <button class="action-btn role-btn" @click="handleRolePicker">
+            <span class="icon">🎭</span>
+            <span class="label">變更角色</span>
+          </button>
+
+          <button class="action-btn reminder-btn" @click="handleReminderPicker">
+            <span class="icon">🔖</span>
+            <span class="label">提示標記</span>
+          </button>
+
+          <button class="action-btn rename-btn" @click="handleRename">
+            <span class="icon">✏️</span>
+            <span class="label">修改姓名</span>
+          </button>
+        </div>
+
+        <!-- 次要切換開關 -->
+        <div class="toggle-list">
+          <div class="toggle-item" v-if="!player.is_alive">
+            <div class="toggle-info">
+              <span class="t-icon">👻</span>
+              <div>
+                <div class="t-title">靈魂投票權</div>
+                <div class="t-sub">{{ player.has_ghost_vote ? '尚未使用' : '已使用' }}</div>
+              </div>
+            </div>
+            <button 
+              class="switch" 
+              :class="{ 'active': player.has_ghost_vote }"
+              @click="handleToggleGhost"
+            >
+              <div class="switch-dot"></div>
+            </button>
+          </div>
+
+          <div class="toggle-item">
+            <div class="toggle-info">
+              <span class="t-icon">🗳️</span>
+              <div>
+                <div class="t-title">今日可提名</div>
+                <div class="t-sub">{{ player.can_nominate ? '可以提名' : '不可提名' }}</div>
+              </div>
+            </div>
+            <button 
+              class="switch" 
+              :class="{ 'active': player.can_nominate }"
+              @click="handleToggleNominate"
+            >
+              <div class="switch-dot"></div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 提名操作 (僅白天顯示) -->
+        <div class="nomination-actions" v-if="gameStore.phase === 'Day'">
+          <div class="section-title">提名管理</div>
+          <div class="action-grid mini">
+            <button 
+              class="action-btn nom-btn" 
+              @click="handleStartNominationAs"
+              :disabled="!player.is_alive || !player.can_nominate"
+            >
+              <span class="icon">📢</span>
+              <span class="label">由他發起提名</span>
+            </button>
+            <button 
+              class="action-btn nom-btn" 
+              @click="handleNominateHim"
+              :disabled="player.is_nominated"
+            >
+              <span class="icon">⚖️</span>
+              <span class="label">提名此玩家</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 危險操作 -->
+        <button class="remove-btn" @click="handleRemove">
+          🗑️ 移除此玩家
+        </button>
+      </div>
+    </div>
+  </transition>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useUIStore } from '../stores/uiStore'
+import { useGameStore } from '../stores/gameStore'
+
+const uiStore = useUIStore()
+const gameStore = useGameStore()
+
+const player = computed(() => {
+  return gameStore.players.find(p => p.id === uiStore.selectedPlayerId)
+})
+
+async function handleToggleAlive() {
+  if (player.value) await gameStore.toggleAlive(player.value.id)
+}
+
+function handleRolePicker() {
+  if (player.value) {
+    uiStore.openRolePicker(player.value)
+    uiStore.selectPlayer(null) // 縮回工具列
+  }
+}
+
+function handleReminderPicker() {
+  if (player.value) {
+    uiStore.openReminderPicker(player.value.id)
+    uiStore.selectPlayer(null) // 縮回工具列
+  }
+}
+
+function handleRename() {
+  if (player.value) {
+    uiStore.openRenameDialog(player.value)
+    uiStore.selectPlayer(null) // 縮回工具列
+  }
+}
+
+async function handleToggleGhost() {
+  if (player.value) await gameStore.toggleGhostVote(player.value.id)
+}
+
+async function handleToggleNominate() {
+  if (player.value) await gameStore.toggleCanNominate(player.value.id)
+}
+
+function handleRemove() {
+  if (!player.value) return
+  const targetId = player.value.id
+  const targetName = player.value.name
+  
+  uiStore.selectPlayer(null) // 點擊按鈕後立即縮回面板
+  
+  uiStore.showConfirm(
+    '移除玩家',
+    `確定要移除 ${targetName} 嗎？`,
+    async () => {
+      await gameStore.removePlayer(targetId)
+    },
+    true
+  )
+}
+
+function handleStartNominationAs() {
+  if (player.value) {
+    uiStore.startNomination(player.value.id, '')
+    uiStore.selectPlayer(null)
+  }
+}
+
+function handleNominateHim() {
+  if (player.value) {
+    uiStore.startNomination('', player.value.id)
+    uiStore.selectPlayer(null)
+  }
+}
+</script>
+
+<style scoped>
+.control-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #1a1c24;
+  background: linear-gradient(to bottom, #242835, #16181f);
+  border-top: 2px solid rgba(201, 168, 76, 0.4);
+  border-radius: 24px 24px 0 0;
+  z-index: 1000;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+}
+
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  margin: 12px auto;
+}
+
+.sheet-content {
+  padding: 0 20px 20px;
+}
+
+.player-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.player-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  border: 2px solid #555;
+  overflow: hidden; /* 防止大圖溢出 */
+  flex-shrink: 0;
+}
+
+.player-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.player-avatar.townsfolk { border-color: var(--color-townsfolk); }
+.player-avatar.outsider { border-color: var(--color-outsider); }
+.player-avatar.minion { border-color: var(--color-minion); }
+.player-avatar.demon { border-color: var(--color-demon); }
+
+.player-meta .name {
+  font-family: var(--font-title);
+  font-size: 26px;
+  color: var(--color-text-bright);
+  margin-bottom: 4px;
+}
+
+.role {
+  font-size: 18px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.role.townsfolk { color: var(--color-townsfolk); }
+.role.outsider { color: var(--color-outsider); }
+.role.minion { color: var(--color-minion); }
+.role.demon { color: var(--color-demon); }
+
+.close-sheet {
+  margin-left: auto;
+  background: rgba(255,255,255,0.05);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #888;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.action-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.action-btn:active {
+  background: rgba(255,255,255,0.1);
+  transform: scale(0.96);
+}
+
+.action-btn .icon { font-size: 24px; }
+.action-btn .label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ccc;
+}
+
+.death-btn.is-dead {
+  background: rgba(139, 26, 26, 0.2);
+  border-color: rgba(139, 26, 26, 0.4);
+}
+.death-btn.is-dead .label { color: #e87070; }
+
+.action-grid.mini {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.action-grid.mini .action-btn {
+  padding: 10px;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.action-grid.mini .icon { font-size: 18px; }
+.action-grid.mini .label { font-size: 12px; }
+
+.nomination-actions {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(201, 168, 76, 0.05);
+  border: 1px solid rgba(201, 168, 76, 0.1);
+  border-radius: 16px;
+}
+
+.nomination-actions .section-title {
+  margin-bottom: 12px;
+  font-size: 11px;
+  color: var(--color-gold-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.toggle-list {
+  background: rgba(0,0,0,0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.toggle-item {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.toggle-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.t-icon { font-size: 18px; }
+.t-title { font-size: 14px; color: #eee; font-weight: 500; }
+.t-sub { font-size: 11px; color: #888; }
+
+.switch {
+  width: 44px;
+  height: 24px;
+  background: #333;
+  border-radius: 12px;
+  position: relative;
+  transition: background 0.3s;
+  border: none;
+}
+
+.switch.active { background: var(--color-gold); }
+.switch-dot {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+.switch.active .switch-dot { transform: translateX(20px); }
+
+.remove-btn {
+  width: 100%;
+  padding: 12px;
+  background: none;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  color: #f44336;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.sheet-slide-enter-active, .sheet-slide-leave-active {
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.sheet-slide-enter-from, .sheet-slide-leave-to {
+  transform: translateY(100%);
+}
+</style>

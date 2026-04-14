@@ -1,0 +1,326 @@
+<template>
+  <div class="overlay" @click.self="uiStore.closeReminderPicker()">
+    <div class="reminder-panel animate-slide-up">
+      <div class="panel-header">
+        <span class="panel-icon">🔖</span>
+        <h2 class="panel-title">{{ player?.name }} 的提示標記</h2>
+        <button class="close-btn" @click="uiStore.closeReminderPicker()">✕</button>
+      </div>
+
+      <div class="reminder-content">
+        <!-- 1. 現有標記 -->
+        <div v-if="existingReminders.length > 0" class="section">
+          <div class="section-title">現有標記 (點擊修改)</div>
+          <div class="badges-container">
+            <button
+              v-for="r in existingReminders"
+              :key="r.id"
+              class="reminder-badge existing"
+              :class="{ 'is-editing': editingId === r.id, 'is-old': r.round < gameStore.round }"
+              @click="startEdit(r)"
+            >
+              {{ r.text }}
+              <span v-if="r.round < gameStore.round" class="old-tag">過往</span>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="existingReminders.length > 0" class="divider" />
+
+        <!-- 2. 輸入自定義 -->
+        <div class="section">
+          <div class="section-title">{{ editingId ? '修改標記' : '新增自定義標記' }}</div>
+          <div class="custom-input-row">
+            <input
+              v-model="customText"
+              class="custom-input"
+              :placeholder="editingId ? '修改標記內容...' : '輸入標記內容...'"
+              @keyup.enter="handleAction"
+              autocomplete="off"
+              ref="inputRef"
+            />
+            <button 
+              class="action-btn" 
+              :disabled="!customText.trim()" 
+              @click="handleAction"
+              :class="{ 'update-mode': !!editingId }"
+            >
+              {{ editingId ? '更新' : '新增' }}
+            </button>
+            <button 
+              v-if="editingId" 
+              class="delete-btn" 
+              @click="handleDelete"
+              title="刪除此標記"
+            >
+              🗑️
+            </button>
+            <button 
+              v-if="editingId" 
+              class="cancel-btn" 
+              @click="cancelEdit"
+            >
+              取消
+            </button>
+          </div>
+        </div>
+
+        <div class="divider" />
+
+        <!-- 3. 劇本預設標記 -->
+        <div class="section">
+          <div class="section-title">劇本預設標記</div>
+          <div class="badges-container">
+            <button
+              v-for="rem in scriptReminders"
+              :key="rem"
+              class="reminder-badge"
+              @click="quickAdd(rem)"
+            >
+              {{ rem }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, nextTick } from 'vue'
+import { useUIStore } from '../stores/uiStore'
+import { useGameStore } from '../stores/gameStore'
+import type { ReminderToken } from '../types'
+
+const uiStore = useUIStore()
+const gameStore = useGameStore()
+
+const player = computed(() => {
+  const id = uiStore.reminderPickerPlayerId
+  return gameStore.players.find(p => p.id === id) || null
+})
+const existingReminders = computed(() => player.value?.reminders ?? [])
+const customText = ref('')
+const editingId = ref<string | null>(null)
+const inputRef = ref<HTMLInputElement | null>(null)
+
+const scriptReminders = computed(() => {
+  const set = new Set<string>()
+  set.add('中毒')
+  set.add('醉酒')
+  set.add('已被選中')
+  set.add('即將死亡')
+  
+  if (gameStore.script) {
+    for (const c of gameStore.script.characters) {
+      if (c.reminders) {
+        for (const r of c.reminders) {
+          set.add(r)
+        }
+      }
+    }
+  }
+  return Array.from(set)
+})
+
+function startEdit(rem: ReminderToken) {
+  editingId.value = rem.id
+  customText.value = rem.text
+  nextTick(() => inputRef.value?.focus())
+}
+
+function cancelEdit() {
+  editingId.value = null
+  customText.value = ''
+}
+
+async function handleAction() {
+  if (!player.value || !customText.value.trim()) return
+  
+  if (editingId.value) {
+    await gameStore.updateReminder(player.value.id, editingId.value, customText.value.trim())
+  } else {
+    await gameStore.addReminder(player.value.id, customText.value.trim(), '自定義')
+  }
+  
+  cancelEdit()
+}
+
+async function handleDelete() {
+  if (!player.value || !editingId.value) return
+  if (confirm('確認要刪除這個提示標記嗎？')) {
+    await gameStore.removeReminder(player.value.id, editingId.value)
+    cancelEdit()
+  }
+}
+
+async function quickAdd(text: string) {
+  if (!player.value) return
+  await gameStore.addReminder(player.value.id, text, '劇本')
+}
+</script>
+
+<style scoped>
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 250;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 8px;
+}
+
+.reminder-panel {
+  width: 100%;
+  max-width: 400px;
+  background: #1a1b23; /* 確保不透明 */
+  border: var(--border-panel);
+  border-radius: 20px 20px 12px 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-panel);
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border-bottom: 1px solid rgba(201, 168, 76, 0.1);
+}
+
+.panel-icon { font-size: 18px; }
+.panel-title {
+  font-family: var(--font-title);
+  font-size: 16px;
+  color: var(--color-gold);
+  flex: 1;
+}
+
+.close-btn {
+  color: var(--color-text-muted);
+  font-size: 18px;
+  background: none;
+  border: none;
+  padding: 4px;
+}
+
+.reminder-content {
+  padding: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.section { margin-bottom: 16px; }
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.badges-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reminder-badge {
+  background: rgba(13, 27, 42, 0.8);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: var(--color-text-primary);
+  padding: 6px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.reminder-badge:hover {
+  border-color: var(--color-gold);
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.reminder-badge.existing {
+  background: rgba(201, 168, 76, 0.15);
+  border-color: var(--color-gold-muted);
+}
+
+.reminder-badge.is-editing {
+  background: var(--color-gold);
+  color: #000;
+  border-color: #fff;
+}
+
+.reminder-badge.is-old {
+  filter: grayscale(0.8) opacity(0.7);
+}
+
+.old-tag {
+  font-size: 9px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1px 4px;
+  border-radius: 4px;
+  color: #ccc;
+  margin-left: 4px;
+}
+
+.custom-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.custom-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.action-btn {
+  background: var(--color-gold-dark);
+  border: none;
+  color: #fff;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.action-btn.update-mode { background: #4a9bd4; }
+
+.delete-btn {
+  background: rgba(224, 32, 32, 0.2);
+  border: 1px solid rgba(224, 32, 32, 0.4);
+  color: #e02020;
+  border-radius: 8px;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cancel-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #ccc;
+  padding: 0 12px;
+  border-radius: 8px;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(201, 168, 76, 0.1);
+  margin: 16px 0;
+}
+</style>
