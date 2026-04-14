@@ -67,18 +67,47 @@
 
         <div class="divider" />
 
-        <!-- 3. 劇本預設標記 -->
-        <div class="section">
-          <div class="section-title">劇本預設標記</div>
-          <div class="badges-container">
-            <button
-              v-for="rem in scriptReminders"
-              :key="rem"
-              class="reminder-badge"
-              @click="quickAdd(rem)"
-            >
-              {{ rem }}
-            </button>
+        <!-- 3. 提示標記分類 -->
+        <div class="reminder-groups">
+          <!-- A. 常用與通用 -->
+          <div class="section">
+            <div class="section-title">通用標記</div>
+            <div class="badges-container">
+              <button
+                v-for="rem in commonReminders"
+                :key="rem"
+                class="reminder-badge common-badge"
+                @click="quickAdd(rem)"
+              >
+                {{ rem }}
+              </button>
+            </div>
+          </div>
+
+          <div class="divider" />
+
+          <!-- B. 場上角色標記 -->
+          <div v-if="inPlayGroups.length > 0" class="section">
+            <div class="section-title">場上角色專屬標記 ({{ inPlayGroups.length }})</div>
+            <div class="role-group-container">
+              <div v-for="group in inPlayGroups" :key="group.roleName" class="role-subgroup">
+                <div class="role-tiny-label">{{ group.roleName }}</div>
+                <div class="badges-container">
+                  <button
+                    v-for="rem in group.reminders"
+                    :key="rem"
+                    class="reminder-badge in-play-badge"
+                    @click="quickAdd(rem)"
+                  >
+                    {{ rem }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="section no-reminders">
+            <div class="section-title">提示標記</div>
+            <p class="empty-hint">當前場上角色暫無專屬提示。您可以使用上方輸入框新增自定義標記。</p>
           </div>
         </div>
       </div>
@@ -104,23 +133,26 @@ const customText = ref('')
 const editingId = ref<string | null>(null)
 const inputRef = ref<HTMLInputElement | null>(null)
 
-const scriptReminders = computed(() => {
-  const set = new Set<string>()
-  set.add('中毒')
-  set.add('醉酒')
-  set.add('已被選中')
-  set.add('即將死亡')
+const commonReminders = ['中毒', '醉酒', '已被選中', '已被提名', '即將死亡']
+
+/**
+ * 分類場上角色標記
+ */
+const inPlayGroups = computed(() => {
+  const groups: { roleName: string; reminders: string[] }[] = []
+  const roleIdsInPlay = new Set(gameStore.players.map(p => p.role?.id).filter(Boolean))
   
-  if (gameStore.script) {
-    for (const c of gameStore.script.characters) {
-      if (c.reminders) {
-        for (const r of c.reminders) {
-          set.add(r)
-        }
-      }
+  if (!gameStore.script) return []
+  
+  for (const char of gameStore.script.characters) {
+    if (roleIdsInPlay.has(char.id) && char.reminders && char.reminders.length > 0) {
+      groups.push({
+        roleName: char.name,
+        reminders: char.reminders
+      })
     }
   }
-  return Array.from(set)
+  return groups
 })
 
 function startEdit(rem: ReminderToken) {
@@ -322,5 +354,42 @@ async function quickAdd(text: string) {
   height: 1px;
   background: rgba(201, 168, 76, 0.1);
   margin: 16px 0;
+}
+
+/* 標記分組樣式 */
+.role-subgroup {
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.role-tiny-label {
+  font-size: 10px;
+  color: var(--color-gold-muted);
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.in-play-badge {
+  border-color: rgba(201, 168, 76, 0.5);
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.common-badge {
+  border-color: rgba(74, 155, 212, 0.4);
+  background: rgba(74, 155, 212, 0.05);
+}
+
+.other-badge {
+  opacity: 0.7;
+  font-size: 11px;
+}
+
+.empty-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  line-height: 1.6;
 }
 </style>

@@ -83,24 +83,75 @@ const uiStore = useUIStore()
 
 const activeTab = ref<'first' | 'other'>('first')
 
+/**
+ * 系統預設流程 (首夜專用)
+ */
+const SYSTEM_ACTIONS: any[] = [
+  {
+    id: 'sys_minion_info',
+    name: '爪牙信息',
+    role_type: 'Minion',
+    first_night_reminder: '爪牙彼此相認，並得知惡魔是誰。',
+    is_system: true
+  },
+  {
+    id: 'sys_demon_info',
+    name: '惡魔信息',
+    role_type: 'Demon',
+    first_night_reminder: '惡魔得知爪牙是誰，並獲得三個不在場的角色作為偽裝（虛張聲勢）。',
+    is_system: true
+  }
+]
+
+/**
+ * 前端排序權重 (針對暗流湧動劇本進行視圖層優化)
+ */
+const TROUBLE_BREWING_ORDER = {
+  first: {
+    'poisoner': 3, 'washerwoman': 4, 'librarian': 5, 'investigator': 6,
+    'chef': 7, 'empath': 8, 'fortuneteller': 9, 'butler': 10, 'spy': 11
+  },
+  other: {
+    'poisoner': 1, 'monk': 2, 'scarlet_woman': 3, 'imp': 4, 'ravenkeeper': 5,
+    'empath': 6, 'fortuneteller': 7, 'butler': 8, 'undertaker': 9, 'spy': 10
+  }
+}
+
 const currentOrder = computed(() => {
-  const baseOrder = activeTab.value === 'first'
-    ? gameStore.firstNightOrder
-    : gameStore.otherNightOrder
+  const isFirst = activeTab.value === 'first'
   
-  // 獲取當前在場的所有角色 ID
-  const inPlayRoleIds = new Set(gameStore.players.map(p => p.role?.id).filter(id => id !== undefined) as string[])
+  // 1. 獲取基礎清單 (劇本中所有有順序的角色)
+  let baseOrder = [...(isFirst ? gameStore.firstNightOrder : gameStore.otherNightOrder)]
+
+  // 2. 過濾已上場的角色
+  const inPlayRoleIds = new Set(gameStore.players.map(p => p.role?.id).filter(Boolean))
+  baseOrder = baseOrder.filter(char => inPlayRoleIds.has(char.id))
+
+  // 3. 排序優化 (針對暗流湧動進行排序優化)
+  const isTB = gameStore.script?.id === 'trouble_brewing'
+  if (isTB) {
+    const weights = isFirst ? TROUBLE_BREWING_ORDER.first : TROUBLE_BREWING_ORDER.other
+    baseOrder.sort((a, b) => {
+      const wa = (weights as any)[a.id] || 999
+      const wb = (weights as any)[b.id] || 999
+      return wa - wb
+    })
+  }
+
+  // 4. 首夜添加系統步驟 (任何劇本首夜皆顯示)
+  if (isFirst) {
+    return [...SYSTEM_ACTIONS, ...baseOrder]
+  }
   
-  // 過濾：確保只顯示在場玩家所對應或影響的角色（此處簡化為顯示所有在劇本中的有順序的角色，亦可過濾為僅在場角色的順序）
-  // 這裡我們只顯示當前在場的角色順序，以免列表過長
-  return baseOrder.filter(char => inPlayRoleIds.has(char.id))
+  return baseOrder
 })
 
-function isActiveInGame(char: CharacterDef) {
+function isActiveInGame(char: any) {
+  if (char.is_system) return true
   return gameStore.players.some(p => p.role?.id === char.id && p.is_alive)
 }
 
-function isEvilRole(char: CharacterDef) {
+function isEvilRole(char: any) {
   return char.role_type === 'Minion' || char.role_type === 'Demon'
 }
 
@@ -108,18 +159,21 @@ function getPlayerByRole(roleId: string) {
   return gameStore.players.find(p => p.role?.id === roleId) ?? null
 }
 
-function roleEmoji(char: CharacterDef) {
+function roleEmoji(char: any) {
+  if (char.id === 'sys_minion_info') return '🔱'
+  if (char.id === 'sys_demon_info') return '😈'
   const map: Record<string, string> = {
     Townsfolk: '👤', Outsider: '👤', Minion: '🔱', Demon: '😈',
   }
   return map[char.role_type] ?? '❓'
 }
 
-function roleTypeLabel(char: CharacterDef) {
-  return ROLE_TYPE_LABEL[char.role_type] ?? char.role_type
+function roleTypeLabel(char: any) {
+  if (char.is_system) return '系統流程'
+  return ROLE_TYPE_LABEL[char.role_type as any] ?? char.role_type
 }
 
-function getNightReminder(char: CharacterDef) {
+function getNightReminder(char: any) {
   return activeTab.value === 'first' 
     ? char.first_night_reminder 
     : char.other_night_reminder
