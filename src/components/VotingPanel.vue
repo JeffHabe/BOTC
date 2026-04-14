@@ -15,7 +15,7 @@
             <label class="select-label">提名者</label>
             <select v-model="nominatorId" class="player-select">
               <option value="" disabled>選擇玩家...</option>
-              <option v-for="(p, idx) in canNominate" :key="p.id" :value="p.id">
+              <option v-for="p in canNominate" :key="p.id" :value="p.id">
                 {{ gameStore.players.findIndex(pl => pl.id === p.id) + 1 }}. {{ p.name }}
               </option>
             </select>
@@ -33,10 +33,10 @@
         </div>
         <button 
           class="btn-primary nominate-btn" 
-          :disabled="!nominatorId || !nomineeId"
+          :disabled="!nominatorId || !nomineeId || isExecutedToday"
           @click="doNominate"
         >
-          確認提名
+          {{ isExecutedToday ? '今日已執行處決' : '確認提名' }}
         </button>
       </div>
 

@@ -75,7 +75,7 @@
 import { computed, ref } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
-import type { CharacterDef } from '../types'
+import type { RoleType } from '../types'
 import { ROLE_TYPE_LABEL } from '../types'
 
 const gameStore = useGameStore()
@@ -162,15 +162,17 @@ function getPlayerByRole(roleId: string) {
 function roleEmoji(char: any) {
   if (char.id === 'sys_minion_info') return '🔱'
   if (char.id === 'sys_demon_info') return '😈'
-  const map: Record<string, string> = {
+  const map: Record<RoleType, string> = {
     Townsfolk: '👤', Outsider: '👤', Minion: '🔱', Demon: '😈',
+    Traveler: '👤', Fabled: '👤'
   }
-  return map[char.role_type] ?? '❓'
+  return map[char.role_type as RoleType] ?? '❓'
 }
 
 function roleTypeLabel(char: any) {
   if (char.is_system) return '系統流程'
-  return ROLE_TYPE_LABEL[char.role_type as any] ?? char.role_type
+  const type = char.role_type as RoleType
+  return ROLE_TYPE_LABEL[type] ?? type
 }
 
 function getNightReminder(char: any) {

@@ -162,6 +162,25 @@ button {
   background: rgba(255, 255, 255, 0.05);
 }
 
+/* 禁用狀態：統一灰掉且不可點擊 */
+button:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.5;
+  filter: grayscale(0.9);
+  pointer-events: none; /* 確保徹底無法觸發點擊 */
+}
+
+/* 針對不同按鈕的細微調整 */
+.btn-primary:disabled {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn-danger:disabled {
+  background: #444; /* 徹底灰掉紅色 */
+  border-color: #555;
+  color: #888;
+}
+
 /* ─── 面板容器 ──────────────────────────────────────────────── */
 .panel {
   background: var(--color-bg-surface); /* 移除半透明與模糊 */

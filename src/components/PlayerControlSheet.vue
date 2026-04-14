@@ -11,11 +11,16 @@
         <div class="sheet-content">
           <!-- 玩家標題區 -->
           <div class="player-header">
-            <div class="player-avatar" :class="player.role?.role_type.toLowerCase()">
+            <div 
+              class="player-avatar" 
+              :class="player.role?.role_type.toLowerCase()"
+              @click="uiStore.isSingleRoleShowcase = true"
+              title="點擊放大展示"
+            >
               <img v-if="player.role?.image" :src="player.role.image" alt="" />
               <span v-else>{{ player.role ? '🎭' : '👤' }}</span>
             </div>
-            <div class="player-meta" @click="handleRename" style="cursor: pointer;">
+            <div class="player-meta">
               <h2 class="name">{{ player.name }}</h2>
               <p class="role" :class="player.role?.role_type.toLowerCase()">
                 {{ player.role?.name || '未指派角色' }}
@@ -23,6 +28,12 @@
             </div>
             <button class="close-sheet" @click="uiStore.selectPlayer(null)">✕</button>
           </div>
+
+          <!-- 頂部重點操作：提示標記 -->
+          <button class="action-btn reminder-btn-hero" @click="handleReminderPicker">
+            <span class="icon">🔖</span>
+            <span class="label">提示標記 (Reminders)</span>
+          </button>
 
           <!-- 主操作按鈕組 (大按鈕) -->
           <div class="action-grid">
@@ -38,16 +49,6 @@
             <button class="action-btn role-btn" @click="handleRolePicker">
               <span class="icon">🎭</span>
               <span class="label">變更角色</span>
-            </button>
-
-            <button class="action-btn reminder-btn" @click="handleReminderPicker">
-              <span class="icon">🔖</span>
-              <span class="label">提示標記</span>
-            </button>
-
-            <button class="action-btn rename-btn" @click="handleRename">
-              <span class="icon">✏️</span>
-              <span class="label">修改姓名</span>
             </button>
           </div>
 
@@ -151,12 +152,6 @@ function handleReminderPicker() {
   }
 }
 
-function handleRename() {
-  if (player.value) {
-    uiStore.openRenameDialog(player.value)
-    uiStore.selectPlayer(null) // 縮回工具列
-  }
-}
 
 async function handleToggleGhost() {
   if (player.value) await gameStore.toggleGhostVote(player.value.id)
@@ -259,6 +254,12 @@ function handleNominateHim() {
   border: 2px solid #555;
   overflow: hidden;
   flex-shrink: 0;
+  cursor: zoom-in; /* 加入放大圖示暗示 */
+  transition: transform 0.2s;
+}
+
+.player-avatar:active {
+  transform: scale(0.9);
 }
 
 .player-avatar img {
@@ -337,6 +338,23 @@ function handleNominateHim() {
   border-color: rgba(139, 26, 26, 0.4);
 }
 .death-btn.is-dead .label { color: #e87070; }
+
+.reminder-btn-hero {
+  width: 100%;
+  margin-bottom: 12px;
+  background: rgba(201, 168, 76, 0.1);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  padding: 16px;
+  flex-direction: row !important; /* 強制橫向排列 */
+  justify-content: center;
+  gap: 12px !important;
+  border-radius: 18px;
+}
+
+.reminder-btn-hero .label {
+  color: var(--color-gold);
+  font-size: 16px;
+}
 
 .action-grid.mini .action-btn {
   padding: 10px;

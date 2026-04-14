@@ -90,6 +90,12 @@
 
           <div class="instruction">點擊角色可從本局池子中排除（變暗代表不使用）</div>
           
+          <div class="search-bar-assignment">
+            <span class="search-icon">🔍</span>
+            <input v-model="searchQuery" placeholder="搜尋角色名稱..." class="search-input-assignment" />
+            <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
+          </div>
+          
           <div class="selection-status-bar sticky-tabs">
             <div v-for="type in roleTypes" :key="type.key" 
                  class="type-pill interactive"
@@ -137,6 +143,12 @@
             </button>
           </div>
 
+          <div class="search-bar-assignment">
+            <span class="search-icon">🔍</span>
+            <input v-model="searchQuery" placeholder="快速搜尋角色..." class="search-input-assignment" />
+            <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
+          </div>
+
           <div class="selection-status-bar sticky-tabs">
             <div v-for="type in roleTypes" :key="type.key" 
                  class="type-pill interactive" 
@@ -180,26 +192,35 @@
             </button>
           </div>
 
-          <div class="instruction">請挑選 3 個角色作為惡魔虛張 (Bluffs)</div>
-          <div class="selection-status-bar">
+          <div class="search-bar-assignment">
+            <span class="search-icon">🔍</span>
+            <input v-model="searchQuery" placeholder="搜尋虛張角色..." class="search-input-assignment" />
+            <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
+          </div>
+
+          <div class="selection-status-bar sticky-tabs">
             <div class="type-pill" :class="{ 'is-done': selectedBluffIds.length === 3 }">
-              虚张角色 {{ selectedBluffIds.length }}/3
+              惡魔虛張角色 {{ selectedBluffIds.length }}/3
             </div>
+            <div class="step-hint">（剩餘 {{ 3 - selectedBluffIds.length }} 個空位）</div>
           </div>
 
           <div class="role-grid-container">
-            <div class="role-grid">
-              <!-- 只顯示未被選為玩家角色的村民 -->
-              <div v-for="role in availableBluffPool" 
-                   :key="role.id" 
-                   class="role-card"
-                   :class="{ 'is-selected': isBluffSelected(role.id) }"
-                   @click="toggleBluffSelection(role.id)">
-                <div class="role-card-icon">
-                  <img v-if="role.image" :src="role.image" class="r-img" />
-                  <span v-else class="r-emoji">👤</span>
+            <div class="role-group">
+              <div class="group-header" style="color: var(--color-townsfolk)">可選偽裝角色</div>
+              <div class="role-grid">
+                <!-- 只顯示未被選為玩家角色的村民 -->
+                <div v-for="role in availableBluffPool" 
+                     :key="role.id" 
+                     class="role-card"
+                     :class="{ 'is-selected': isBluffSelected(role.id) }"
+                     @click="toggleBluffSelection(role.id)">
+                  <div class="role-card-icon">
+                    <img v-if="role.image" :src="role.image" class="r-img" />
+                    <span v-else class="r-emoji">👤</span>
+                  </div>
+                  <div class="role-card-name">{{ role.name }}</div>
                 </div>
-                <div class="role-card-name">{{ role.name }}</div>
               </div>
             </div>
           </div>
@@ -233,7 +254,7 @@
 
           <div class="preview-actions">
             <button class="btn-ghost" @click="generatePlan">🎲 重新洗牌</button>
-            <button class="btn-primary" @click="confirmAssignment">✅ 確認並正式指派</button>
+            <button class="btn-primary" @click="confirmAssignment">✅ 正式指派</button>
           </div>
         </div>
       </div>
@@ -245,13 +266,11 @@
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
-import { useScriptStore } from '../stores/scriptStore'
-import type { CharacterDef, RoleType } from '../types'
-import { ROLE_TYPE_LABEL, ROLE_TYPE_COLOR } from '../types'
+import type { CharacterDef } from '../types'
+import { ROLE_TYPE_COLOR } from '../types'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
-const scriptStore = useScriptStore()
 
 // 狀態管理
 type Step = 'config' | 'pool' | 'select' | 'bluff' | 'preview'
@@ -280,6 +299,7 @@ const counts = reactive<Record<string, number>>({
 const selectedRoleIds = ref<string[]>([])
 const selectedBluffIds = ref<string[]>([])
 const activePresetId = ref('')
+const searchQuery = ref('') // 新增搜尋關鍵字
 
 // 基礎映射
 const roleTypes = [
@@ -370,24 +390,32 @@ const currentScriptPresets = computed(() => {
 
 const fullGroupedCharacters = computed(() => {
   if (!gameStore.script) return []
+  const query = searchQuery.value.trim().toLowerCase()
   return roleTypes.map(t => ({
     type: t.key,
     label: t.label,
     color: t.color,
-    list: gameStore.script!.characters.filter(c => c.role_type === t.key && !c.setup)
+    list: gameStore.script!.characters.filter(c => {
+      const matchesType = c.role_type === t.key && !c.setup
+      const matchesQuery = !query || c.name.toLowerCase().includes(query)
+      return matchesType && matchesQuery
+    })
   }))
 })
 
 const groupedCharacters = computed(() => {
   if (!gameStore.script) return []
   const excluded = new Set(excludedPoolIds.value)
+  const query = searchQuery.value.trim().toLowerCase()
   return roleTypes.map(t => ({
     type: t.key,
     label: t.label,
     color: t.color,
-    list: gameStore.script!.characters.filter(c => 
-      c.role_type === t.key && !c.setup && !excluded.has(c.id)
-    )
+    list: gameStore.script!.characters.filter(c => {
+      const matchesType = c.role_type === t.key && !c.setup && !excluded.has(c.id)
+      const matchesQuery = !query || c.name.toLowerCase().includes(query)
+      return matchesType && matchesQuery
+    })
   }))
 })
 
@@ -395,11 +423,14 @@ const availableBluffPool = computed(() => {
   if (!gameStore.script) return []
   const usedIds = new Set(selectedRoleIds.value)
   const excluded = new Set(excludedPoolIds.value)
+  const query = searchQuery.value.trim().toLowerCase()
   
   // 虛張從「在池子內」且「未被指派給玩家」的村民與外來者中選擇
   return gameStore.script.characters.filter(c => {
     const isGoodType = c.role_type === 'Townsfolk' || c.role_type === 'Outsider'
-    return isGoodType && !usedIds.has(c.id) && !excluded.has(c.id) && !c.setup
+    const isNotUsed = !usedIds.has(c.id) && !excluded.has(c.id) && !c.setup
+    const matchesQuery = !query || c.name.toLowerCase().includes(query)
+    return isGoodType && isNotUsed && matchesQuery
   })
 })
 
@@ -591,11 +622,12 @@ function getRoleTypeEmoji(type: string) {
 .assignment-panel {
   width: 100%;
   max-width: 480px;
-  max-height: 90vh;
+  height: 90vh; /* 固定高度，防止切換步驟時面板跳動 */
   display: flex;
   flex-direction: column;
-  border-radius: 20px 20px 12px 12px;
+  border-radius: 20px 20px 0 0;
   overflow: hidden;
+  background: #1a1b23;
 }
 
 .panel-header {
@@ -679,11 +711,14 @@ function getRoleTypeEmoji(type: string) {
 }
 
 .btn-xs {
-  padding: 4px 8px;
-  font-size: 14px;
-  min-height: 40px;
-  flex: 1;
-  border-radius: 6px;
+  padding: 4px;
+  font-size: 13px;
+  min-height: 44px;
+  flex: 1; /* 確保按鈕均分寬度 */
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .selection-status-bar.sticky-tabs {
@@ -797,6 +832,50 @@ function getRoleTypeEmoji(type: string) {
 .modal-btns { display: flex; gap: 10px; }
 .modal-btns button { flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 13px; }
 .modal-btns button.primary { background: var(--color-gold); color: black; font-weight: bold; }
+
+/* 搜尋框樣式 */
+.search-bar-assignment {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  opacity: 0.5;
+}
+
+.search-input-assignment {
+  width: 100%;
+  padding: 10px 36px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.search-input-assignment:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-gold-muted);
+}
+
+.search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 14px;
+  cursor: pointer;
+}
 
 .warning-text { font-size: 11px; color: #ff4d4f; margin-left: 8px; font-weight: normal; }
 

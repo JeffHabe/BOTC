@@ -44,9 +44,17 @@
           v-for="char in scriptStore.filteredCharacters" 
           :key="char.id"
           class="role-item"
-          :class="[char.role_type.toLowerCase(), { 'is-selected': isSelected(char) }]"
+          :class="[
+            char.role_type.toLowerCase(), 
+            { 'is-selected': isSelected(char), 'is-occupied': isOccupied(char) && !isSelected(char) }
+          ]"
           @click="selectRole(char)"
         >
+          <!-- 佔用標記 -->
+          <div v-if="isOccupied(char) && !isSelected(char)" class="role-badge-occupied">
+            已在場
+          </div>
+
           <div class="role-icon">
             <img v-if="char.image" :src="char.image" :alt="char.name" />
             <span v-else class="emoji">{{ getEmoji(char.role_type) }}</span>
@@ -111,6 +119,38 @@ function isSelected(char: CharacterDef) {
   return false
 }
 
+// 判斷角色是否已被分配 (場上玩家或其它虛張聲勢)
+const inPlayRoleIds = computed(() => 
+  new Set(gameStore.players.map(p => p.role?.id).filter(Boolean))
+)
+
+const bluffRoleIds = computed(() => 
+  new Set(gameStore.demonBluffs.map(b => b?.id).filter(Boolean))
+)
+
+function isOccupied(char: CharacterDef) {
+  // 對於目前正在選取的對象（玩家或虛張位），不算佔用
+  // 但如果被「其它」玩家或「其它」虛張位佔用，則算佔用
+  
+  if (uiStore.rolePickerPlayer) {
+    // 正在為玩家選角色：看其它玩家 + 所有虛張
+    const otherPlayers = gameStore.players
+      .filter(p => p.id !== uiStore.rolePickerPlayer?.id)
+      .map(p => p.role?.id)
+    return otherPlayers.includes(char.id) || bluffRoleIds.value.has(char.id)
+  }
+  
+  if (uiStore.rolePickerDemonBluffIndex !== null) {
+    // 正在選虛張：看所有玩家 + 其它虛張位
+    const otherBluffs = gameStore.demonBluffs
+      .filter((_, idx) => idx !== uiStore.rolePickerDemonBluffIndex)
+      .map(b => b?.id)
+    return inPlayRoleIds.value.has(char.id) || otherBluffs.includes(char.id)
+  }
+  
+  return inPlayRoleIds.value.has(char.id) || bluffRoleIds.value.has(char.id)
+}
+
 async function selectRole(char: CharacterDef | null) {
   if (uiStore.rolePickerPlayer) {
     await gameStore.assignRole(uiStore.rolePickerPlayer.id, char)
@@ -136,17 +176,19 @@ async function selectRole(char: CharacterDef | null) {
 .role-picker-panel {
   width: 100%;
   max-width: 500px;
-  max-height: 85vh;
+  height: 80vh; /* 固定高度，防止因角色數量不同導致面板跳動 */
   display: flex;
   flex-direction: column;
-  background: #1a1b23; /* 確保不透明 */
-  border-radius: 20px 20px 12px 12px;
+  background: #1a1b23;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
 }
 
 .panel-header {
   display: flex;
   align-items: center;
-  padding: 16px;
+  padding: 0 16px;
+  min-height: 56px; /* 固定高度，防止標題文字換行時推擠下方內容 */
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
@@ -229,6 +271,24 @@ async function selectRole(char: CharacterDef | null) {
 .role-item.is-selected {
   border-color: var(--color-gold);
   background: rgba(201, 168, 76, 0.15);
+}
+
+.role-item.is-occupied {
+  opacity: 0.5;
+  filter: grayscale(0.5);
+}
+
+.role-badge-occupied {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #aaa;
+  font-size: 8px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 2;
 }
 
 .role-item-none { grid-column: span 4; flex-direction: row; justify-content: center; gap: 12px; padding: 12px; }

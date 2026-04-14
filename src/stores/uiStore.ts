@@ -143,11 +143,16 @@ export const useUIStore = defineStore('ui', () => {
     confirmDialog.value = null
   }
 
+  const isBluffsExpanded = ref(true)
+  const isBluffsShowcase = ref(false)
+  const isSingleRoleShowcase = ref(false)
+
   return {
     // 面板
     activePanel, openPanel, closePanel, togglePanel,
     // 佈局
     reminderLayout, setReminderLayout, cycleReminderLayout,
+    isBluffsExpanded, isBluffsShowcase, isSingleRoleShowcase,
     // 右鍵菜單
     contextMenuPlayer, contextMenuPos, openContextMenu, closeContextMenu,
     // 玩家選中

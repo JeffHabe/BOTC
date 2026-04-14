@@ -47,6 +47,48 @@
       </div>
     </div>
 
+    <!-- 虛張聲勢 (Demon Bluffs) - 右下角垂直托盤設計 (可收納) -->
+    <div class="bluffs-drawer" :class="{ 'is-expanded': uiStore.isBluffsExpanded }">
+      <!-- 功能標籤組 -->
+      <div class="bluffs-tabs">
+        <button class="bluffs-toggle-tab" @click="uiStore.isBluffsExpanded = !uiStore.isBluffsExpanded">
+          <span class="tab-icon">{{ uiStore.isBluffsExpanded ? '›' : '‹' }}</span>
+          <span class="tab-text">偽裝</span>
+        </button>
+        <button v-if="uiStore.isBluffsExpanded" class="bluffs-showcase-btn" @click="uiStore.isBluffsShowcase = true" title="展示給惡魔">
+          <span class="icon">👁️</span>
+        </button>
+      </div>
+
+      <div class="bluffs-box-fixed">
+        <div class="bluffs-title">惡魔的偽裝</div>
+        <div class="bluffs-list">
+          <div 
+            v-for="(role, idx) in gameStore.demonBluffs" 
+            :key="idx"
+            class="bluff-slot-vertical"
+            @click="uiStore.openRolePickerForBluff(idx)"
+          >
+            <!-- 角色令片 (應用 token1.png) -->
+            <div v-if="role" class="bluff-token-classic">
+              <div class="bluff-canvas">
+                <img :src="getBluffIcon(role)" class="bluff-img" />
+              </div>
+              <!-- 常駐名稱標籤 -->
+              <div class="bluff-name-label" :class="role.role_type.toLowerCase()">
+                {{ role.name }}
+              </div>
+            </div>
+
+            <!-- 空位樣式 -->
+            <div v-else class="bluff-empty-parchment">
+              <span class="bluff-plus">+</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 側邊或浮動按鈕 -->
     <button class="add-player-btn" @click="uiStore.addPlayerDialogOpen = true">
       <span class="icon">➕</span>
@@ -74,6 +116,70 @@
 
     <!-- 底部操作面板 -->
     <PlayerControlSheet />
+
+    <!-- 惡魔展示模式覆蓋層 (Demon Showcase Mode) -->
+    <transition name="showcase-fade">
+      <div v-if="uiStore.isBluffsShowcase" class="bluffs-showcase-overlay" @click="uiStore.isBluffsShowcase = false">
+        <div class="showcase-header">
+          <h2 class="showcase-title">惡魔的偽裝</h2>
+          <p class="showcase-hint">隨時點擊空白處返回魔典</p>
+        </div>
+        
+        <div class="showcase-grid">
+          <div 
+            v-for="(role, idx) in gameStore.demonBluffs" 
+            :key="idx"
+            class="showcase-item"
+          >
+            <div v-if="role" class="showcase-token-large">
+              <div class="showcase-canvas">
+                <img :src="getBluffIcon(role)" class="showcase-img" />
+              </div>
+              <div class="showcase-name" :class="role.role_type.toLowerCase()">
+                {{ role.name }}
+              </div>
+            </div>
+            <div v-else class="showcase-empty">
+              <div class="empty-circle-dashed">?</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="showcase-close-btn" @click.stop="uiStore.isBluffsShowcase = false">
+          完成閱讀
+        </button>
+      </div>
+    </transition>
+
+    <!-- 單人角色展示模式 (Individual Showcase) -->
+    <transition name="showcase-fade">
+      <div v-if="uiStore.isSingleRoleShowcase && selectedPlayer" class="bluffs-showcase-overlay" @click="uiStore.isSingleRoleShowcase = false">
+        <div class="showcase-header">
+          <h2 class="showcase-title">{{ selectedPlayer.name }} 的角色</h2>
+          <p class="showcase-hint">展示給玩家閱讀</p>
+        </div>
+        
+        <div class="showcase-grid">
+          <div class="showcase-item">
+            <div v-if="selectedPlayer.role" class="showcase-token-large">
+              <div class="showcase-canvas">
+                <img :src="getBluffIcon(selectedPlayer.role)" class="showcase-img" />
+              </div>
+              <div class="showcase-name" :class="selectedPlayer.role.role_type.toLowerCase()">
+                {{ selectedPlayer.role.name }}
+              </div>
+            </div>
+            <div v-else class="showcase-empty">
+              <div class="empty-circle-dashed">未分配</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="showcase-close-btn" @click.stop="uiStore.isSingleRoleShowcase = false">
+          返回控制台
+        </button>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -113,6 +219,9 @@ onMounted(async () => {
 })
 
 const players = computed(() => gameStore.players)
+const selectedPlayer = computed(() => 
+  gameStore.players.find(p => p.id === uiStore.selectedPlayerId)
+)
 
 // 佈局全局參數：統一管理，確保計算與渲染 100% 同步
 const LAYOUT_CONFIG = {
@@ -214,6 +323,10 @@ function getPlayerPosStyle(index: number) {
     height: `${baseSize}px`,
     transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)'
   } as const
+}
+
+function getBluffIcon(role: any) {
+  return role.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${role.id}`
 }
 
 const activePanelComponent = computed(() => {
@@ -391,6 +504,176 @@ function starStyle(i: number) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+   右下角：虛張聲勢可收納托盤 (Collapsible Bluffs Drawer) 
+   ───────────────────────────────────────────────────────────────────────── */
+.bluffs-drawer {
+  position: absolute;
+  bottom: 40px;
+  right: -90px; /* 預設收起狀態 */
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bluffs-drawer.is-expanded {
+  right: 20px;
+}
+
+.bluffs-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bluffs-toggle-tab {
+  width: 28px;
+  height: 90px;
+  background: rgba(42, 27, 21, 0.9);
+  border: 1px solid rgba(210, 180, 140, 0.4);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  color: #d2b48c;
+  box-shadow: -4px 0 15px rgba(0,0,0,0.3);
+  z-index: 2;
+}
+
+.bluffs-showcase-btn {
+  width: 28px;
+  height: 44px;
+  background: #b38b3d;
+  color: #2a1b15;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: -4px 4px 10px rgba(0,0,0,0.2);
+  transition: all 0.2s;
+  z-index: 1;
+}
+
+.bluffs-showcase-btn:hover {
+  background: #d4c8b0;
+  width: 32px;
+}
+
+.tab-icon { font-size: 18px; font-weight: 800; }
+.tab-text { font-size: 10px; writing-mode: vertical-lr; letter-spacing: 2px; }
+
+.bluffs-box-fixed {
+  background: rgba(20, 20, 28, 0.65);
+  border: 1px solid rgba(210, 180, 140, 0.25);
+  border-radius: 14px; /* 修改為四角皆圓角 */
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: 5px 5px 20px rgba(0,0,0,0.5);
+}
+
+.bluffs-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #b38b3d;
+  border-bottom: 1px solid rgba(179, 139, 61, 0.2);
+  padding-bottom: 6px;
+  text-align: center;
+  white-space: nowrap;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.bluffs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* 增加間距給標籤 */
+}
+
+.bluff-slot-vertical {
+  width: 62px;
+  height: 62px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bluff-slot-vertical:hover {
+  transform: scale(1.08);
+}
+
+/* 經典令片樣式 (應用 token1.png) */
+.bluff-token-classic {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: url('/token1.png') no-repeat center center;
+  background-size: cover;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.bluff-canvas {
+  width: 65%;
+  height: 65%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bluff-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: contrast(1.1) brightness(0.9) drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.bluff-name-label {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-label-bg);
+  color: #fff;
+  padding: 1px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+  z-index: 5;
+}
+
+.bluff-name-label.townsfolk { color: var(--color-townsfolk); }
+.bluff-name-label.outsider  { color: var(--color-outsider); }
+.bluff-name-label.minion    { color: var(--color-minion); }
+.bluff-name-label.demon     { color: var(--color-demon); }
+
+.bluff-empty-parchment {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, rgba(244, 228, 188, 0.1), rgba(210, 180, 140, 0.05));
+  border: 1.5px dashed rgba(210, 180, 140, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
    空場提示 (Empty State) 
    ───────────────────────────────────────────────────────────────────────── */
 .empty-hint {
@@ -448,7 +731,7 @@ function starStyle(i: number) {
 
 .menu-btn {
   position: fixed;
-  top: 100px;
+  top: 120px; /* 從 100px 調低至 140px */
   right: 16px;
   width: 44px;
   height: 44px;
@@ -476,6 +759,140 @@ function starStyle(i: number) {
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   惡魔展示模式 (Demon Showcase Overlay) 
+   ───────────────────────────────────────────────────────────────────────── */
+.bluffs-showcase-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.96);
+  backdrop-filter: blur(20px);
+  z-index: 2000; /* 提高層級，確保蓋住所有面板 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  cursor: pointer;
+}
+
+.showcase-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.showcase-title {
+  font-family: var(--font-title);
+  font-size: 28px;
+  color: #d2b48c;
+  letter-spacing: 6px;
+  margin-bottom: 6px;
+  text-shadow: 0 0 15px rgba(210, 180, 140, 0.4);
+}
+
+.showcase-hint {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+  letter-spacing: 1.5px;
+}
+
+.showcase-grid {
+  display: flex;
+  flex-direction: column; /* 改為垂直排列 */
+  gap: 24px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.showcase-item {
+  display: flex;
+  flex-direction: row; /* 令片與名字橫向排列或保持垂直 */
+  align-items: center;
+  gap: 24px;
+  width: auto;
+}
+
+.showcase-token-large {
+  width: 170px; /* 垂直排列可以放大尺寸 */
+  height: 170px;
+  border-radius: 50%;
+  background: url('/token1.png') no-repeat center center;
+  background-size: cover;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.8), 0 0 40px rgba(210, 180, 140, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  animation: tokenFloat 4s ease-in-out infinite alternate;
+}
+
+.showcase-canvas {
+  width: 70%;
+  height: 70%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.showcase-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: contrast(1.1) brightness(0.9) drop-shadow(0 4px 10px rgba(0,0,0,0.6));
+}
+
+.showcase-name {
+  font-family: var(--font-title);
+  font-size: 35px; /* 垂直佈局時名字可以更大 */
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.9);
+  letter-spacing: 4px;
+  white-space: nowrap;
+}
+
+.showcase-empty {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px dashed rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.05);
+  font-size: 50px;
+}
+
+.showcase-close-btn {
+  margin-top: 40px;
+  background: transparent;
+  color: #d2b48c;
+  border: 1px solid #d2b48c;
+  padding: 10px 40px;
+  border-radius: 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.showcase-close-btn:hover {
+  background: #d2b48c;
+  color: #000;
+}
+
+@keyframes tokenFloat {
+  from { transform: translateY(0) rotate(-2deg); }
+  to { transform: translateY(-20px) rotate(2deg); }
+}
+
+.showcase-fade-enter-active, .showcase-fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+.showcase-fade-enter-from, .showcase-fade-leave-to {
+  opacity: 0;
+}
 
 @keyframes fogDrift {
   from { transform: translateX(0); }

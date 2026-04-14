@@ -70,7 +70,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useUIStore } from '../stores/uiStore'
-import { useGameStore } from '../stores/gameStore'
 import type { Player } from '../types'
 
 const props = withDefaults(defineProps<{
@@ -86,7 +85,6 @@ const props = withDefaults(defineProps<{
 })
 
 const uiStore = useUIStore()
-const gameStore = useGameStore()
 
 const roleEmoji = computed(() => {
   if (!props.player.role) return ''
@@ -96,12 +94,12 @@ const roleEmoji = computed(() => {
   return map[props.player.role.role_type] || '❓'
 })
 
-function handleClick(e: MouseEvent) {
+function handleClick() {
   // 手機端單擊改為直接選中
   uiStore.selectPlayer(props.player.id)
 }
 
-function openContextMenu(e: MouseEvent) {
+function openContextMenu() {
   // 為了桌面端兼容性，雖然現在主推 Bottom Sheet
   uiStore.selectPlayer(props.player.id)
 }
@@ -119,7 +117,6 @@ function getReminderStyle(rIdx: number) {
   if (layout === 'inner') {
     // 改為單排垂直向心
     const distV = 62 + rIdx * 28 
-    const distH = 0 // 不做橫向偏移
 
     // 使用標準向心矢量
     const top = 50 - (distV * Math.sin(angle) * 0.72)

@@ -39,7 +39,7 @@
           <span class="stat-icon">💚</span>
           <span class="stat-num">{{ gameStore.alive }}</span>
         </span>
-        <span v-if="gameStore.phase === 'Day'" class="stat-item threshold" title="門檻">
+        <span class="stat-item threshold" :class="{ 'is-hidden': gameStore.phase !== 'Day' }" title="門檻">
           <span class="stat-icon">⚖️</span>
           <span class="stat-num">{{ gameStore.threshold }}</span>
         </span>
@@ -48,26 +48,19 @@
         <button class="layout-btn" @click="uiStore.cycleReminderLayout()" :title="`目前佈局: ${layoutLabel}`">
           <span class="layout-icon">{{ layoutIcon }}</span>
         </button>
-        
-        <!-- 通知圖示預留 -->
-        <button class="notif-btn" title="通知中心">
-          <span class="notif-icon">🔔</span>
-          <span class="notif-badge" v-if="hasUnread"></span>
-        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
 import { PHASE_LABEL } from '../types'
 
 const gameStore = useGameStore()
 const uiStore = useUIStore()
-const hasUnread = ref(false)
 
 const phaseLabel = computed(() => PHASE_LABEL[gameStore.phase])
 
@@ -102,131 +95,120 @@ const layoutIcon = computed(() => {
   left: 0;
   right: 0;
   z-index: 100;
-  background: rgba(18, 18, 24, 0.7);
-  backdrop-filter: blur(10px);
-  border-top: 2px solid #3498db;
-  box-shadow: 0 0 15px rgba(52, 152, 219, 0.3), 0 2px 10px rgba(0,0,0,0.5);
-  height: calc(42px + env(safe-area-inset-top, 0px));
-  transition: all 0.5s ease;
-}
-
-.status-bar.is-night {
-  border-top-color: #8fa8cc;
-  box-shadow: 0 0 15px rgba(143, 168, 204, 0.3);
+  background: rgba(18, 18, 24, 0.85);
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* 改為底邊細線更現代 */
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  height: calc(50px + env(safe-area-inset-top, 0px));
+  transition: all 0.3s ease;
 }
 
 .status-inner {
-  height: 42px;
+  height: 50px;
   margin-top: env(safe-area-inset-top, 0px);
   padding: 0 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
 }
 
 .stat-group {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 14px;
-}
-
-.stat-item .label {
-  font-size: 12px;
-  opacity: 0.7;
-}
-
-.stat-item.townsfolk { color: #4a9bd4; }
-.stat-item.outsider  { color: #49c5b6; }
-.stat-item.minion    { color: #e87070; }
-.stat-item.demon     { color: #ff3e3e; }
-
-.stat-num {
-  font-weight: 700;
-  font-family: 'Roboto Mono', monospace;
+  gap: 8px;
+  z-index: 1; /* 位於中間按鈕下方 */
 }
 
 .phase-display {
   position: absolute;
   left: 50%;
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
   cursor: pointer;
+  z-index: 2; /* 優先級最高，確保點擊有效 */
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.stat-item.is-hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.stat-item .label {
+  font-size: 11px;
+  font-weight: 700;
+  margin-right: 1px;
+}
+
+.stat-item.townsfolk { color: #5dade2; }
+.stat-item.outsider  { color: #48c9b0; }
+.stat-item.minion    { color: #ec7063; }
+.stat-item.demon     { color: #f1948a; }
+
+.stat-num {
+  font-weight: 700;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+}
+
+.phase-display {
+  cursor: pointer;
+  z-index: 2;
 }
 
 .phase-badge {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 16px;
   border-radius: 20px;
   display: flex;
+  flex-direction: column; /* 改為垂直疊放 */
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  line-height: 1.2;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.phase-text {
   font-size: 14px;
-  font-weight: 600;
 }
 
 .phase-day .phase-text { color: #f1c40f; }
-.phase-night .phase-text { color: #8fa8cc; }
+.phase-night .phase-text { color: #a9cce3; }
 
 .round-text {
-  font-size: 12px;
-  opacity: 0.6;
-  border-left: 1px solid rgba(255,255,255,0.2);
-  padding-left: 6px;
-}
-
-.stats-alive {
-  gap: 12px;
+  font-size: 10px; /* 稍微縮小輪次字體 */
+  opacity: 0.5;
+  margin-top: -2px;
 }
 
 .stat-icon {
   font-size: 14px;
-}
-
-.notif-btn {
-  background: none;
-  border: none;
-  padding: 4px;
-  position: relative;
-  margin-left: 6px;
-  color: #888;
-}
-
-.notif-badge {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 6px;
-  height: 6px;
-  background: #ff3e3e;
-  border-radius: 50%;
-  box-shadow: 0 0 5px #ff3e3e;
+  display: flex;
+  align-items: center;
 }
 
 .layout-btn {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.layout-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .layout-icon {
-  font-size: 14px;
+  font-size: 13px;
 }
 </style>
