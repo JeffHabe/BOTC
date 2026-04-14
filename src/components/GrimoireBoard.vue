@@ -42,6 +42,7 @@
           :player="player" 
           :index="index" 
           :is-on-right-side="getIsRightSide(index)"
+          :angle="getEquidistantAngle(index, players.length)"
         />
       </div>
     </div>
@@ -123,32 +124,42 @@ const LAYOUT_CONFIG = {
 }
 
 /**
- * 弧長均分算法 (Arc-Length Parametrization)
- * 確保在長方形螢幕下，鄰近令片的物理間距一致。
+ * 弧長均分數據快取 (Arc-Length Parametrization)
+ * 預先計算超橢圓的弧長分佈，避免每個令片重複運算了 600 次循環。
  */
-function getEquidistantAngle(index: number, n: number) {
+const arcData = computed(() => {
   const { a, b, nFactor, samples } = LAYOUT_CONFIG
   const arcLengths = new Float32Array(samples + 1)
   let totalLength = 0
   
+  const getPt = (ang: number) => {
+    const cosT = Math.cos(ang); const sinT = Math.sin(ang)
+    return {
+      x: a * Math.sign(cosT) * Math.pow(Math.abs(cosT), 2 / nFactor),
+      y: b * Math.sign(sinT) * Math.pow(Math.abs(sinT), 2 / nFactor)
+    }
+  }
+
   for (let i = 0; i <= samples; i++) {
     const t = (i / samples) * 2 * Math.PI
     if (i > 0) {
       const prevT = ((i - 1) / samples) * 2 * Math.PI
-      const getPt = (ang: number) => {
-        const cosT = Math.cos(ang); const sinT = Math.sin(ang)
-        return {
-          x: a * Math.sign(cosT) * Math.pow(Math.abs(cosT), 2 / nFactor),
-          y: b * Math.sign(sinT) * Math.pow(Math.abs(sinT), 2 / nFactor)
-        }
-      }
       const p1 = getPt(prevT); const p2 = getPt(t)
       totalLength += Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2))
     }
     arcLengths[i] = totalLength
   }
 
+  return { arcLengths, totalLength }
+})
+
+function getEquidistantAngle(index: number, n: number) {
+  const { samples } = LAYOUT_CONFIG
+  const { arcLengths, totalLength } = arcData.value
+  
   const targetLen = (index / n) * totalLength
+  
+  // 二分查找 (Binary Search) 加速定位
   let low = 0, high = samples
   while (low < high) {
     const mid = (low + high) >>> 1
@@ -156,7 +167,6 @@ function getEquidistantAngle(index: number, n: number) {
     else high = mid
   }
 
-  // 線性插值以獲得更高精度
   const i = low
   const l1 = arcLengths[i - 1] || 0
   const l2 = arcLengths[i]
@@ -166,7 +176,6 @@ function getEquidistantAngle(index: number, n: number) {
   const fraction = (l2 === l1) ? 0 : (targetLen - l1) / (l2 - l1)
   const rawT = t1 + fraction * (t2 - t1)
   
-  // 返回調整後的角度 (起始點調整為頂部 -90deg)
   return rawT - Math.PI / 2
 }
 
@@ -340,7 +349,7 @@ function starStyle(i: number) {
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  z-index: 100; /* 提升層級確保最優先點擊 */
+  z-index: 1; /* 降低層級，確保標誌作為背景，不遮擋令片與提示標記 */
   pointer-events: auto; /* 重中之重：確保穿透父層的 none */
   transition: all 0.3s ease;
 }

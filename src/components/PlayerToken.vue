@@ -1,13 +1,16 @@
 <template>
   <div 
-    class="player-token" 
-    :class="{ 
-      'is-dead': !player.is_alive,
-      'has-role': !!player.role,
-      'is-selected': uiStore.selectedPlayerId === player.id,
-      'pointer-events-none': renderedPart === 'info',
-      'on-right-side': isOnRightSide
-    }"
+    class="player-token"
+    :class="[
+      { 
+        'is-dead': !player.is_alive,
+        'has-role': !!player.role,
+        'is-selected': uiStore.selectedPlayerId === player.id,
+        'pointer-events-none': renderedPart === 'info',
+        'on-right-side': isOnRightSide
+      },
+      `layout-${uiStore.reminderLayout}`
+    ]"
     @contextmenu.prevent="openContextMenu"
     @click="handleClick"
   >
@@ -47,7 +50,7 @@
           v-for="(rem, rIdx) in player.reminders" 
           :key="rem.id" 
           class="rem-dot-classic"
-          :style="{ '--r-idx': rIdx }"
+          :style="getReminderStyle(rIdx)"
           @click.stop="uiStore.openReminderPicker(player.id)"
         >
           {{ getReminderIcon(rem.text) }}
@@ -75,9 +78,11 @@ const props = withDefaults(defineProps<{
   index: number
   renderedPart?: 'all' | 'body' | 'info'
   isOnRightSide?: boolean
+  angle?: number
 }>(), {
   renderedPart: 'all',
-  isOnRightSide: false
+  isOnRightSide: false,
+  angle: 0
 })
 
 const uiStore = useUIStore()
@@ -100,6 +105,68 @@ function openContextMenu(e: MouseEvent) {
   // 為了桌面端兼容性，雖然現在主推 Bottom Sheet
   uiStore.selectPlayer(props.player.id)
 }
+
+/**
+ * 動態計算提示標記的位置樣式
+ * 解決了 CSS 不支援 取模(%) 與 floor() 的限制，且相容性更高。
+ */
+function getReminderStyle(rIdx: number) {
+  const layout = uiStore.reminderLayout
+  const angle = props.angle || 0 // 弧度
+  const isRight = props.isOnRightSide
+
+  // 1. 內圈向心模式 (Inner - Single Radial Column)
+  if (layout === 'inner') {
+    // 改為單排垂直向心
+    const distV = 62 + rIdx * 28 
+    const distH = 0 // 不做橫向偏移
+
+    // 使用標準向心矢量
+    const top = 50 - (distV * Math.sin(angle) * 0.72)
+    const left = 50 - (distV * Math.cos(angle) * 0.72)
+    
+    return {
+      top: `${top}%`,
+      left: `${left}%`,
+      width: '24px',
+      height: '24px',
+      fontSize: '11px',
+      position: 'absolute',
+      transform: 'translate(-50%, -50%)',
+      zIndex: 25 + rIdx
+    }
+  }
+
+  // 2. 經典弧形 (Arc)
+  if (layout === 'arc') {
+    const deg = (rIdx * 32 - 10) * (Math.PI / 180)
+    let l = 50 + 55 * Math.cos(deg)
+    const t = 50 + 55 * Math.sin(deg)
+    if (isRight) l = 50 - 55 * Math.cos(deg)
+    
+    return {
+      top: `${t}%`,
+      left: `${l}%`,
+      position: 'absolute',
+      transform: 'translate(-50%, -50%)'
+    }
+  }
+
+  // 3. 側面堆疊 (Stack)
+  if (layout === 'stack') {
+    const side = isRight ? 'right' : 'left'
+    return {
+      top: `${rIdx * 26 + 10}px`,
+      [side]: '105%',
+      position: 'absolute'
+    }
+  }
+
+  // 4. 網格模式 (Grid)
+  // Grid 模式比較特殊，我們可以用 CSS Flex 處理，這裡只需傳回索引
+  return { '--r-idx': rIdx } as any
+}
+
 function getReminderIcon(text: string) {
   if (text.includes('中毒')) return '🧪'
   if (text.includes('醉酒')) return '🍺'
@@ -278,19 +345,7 @@ function getReminderIcon(text: string) {
 .rem-dot-classic {
   pointer-events: auto;
   position: absolute;
-  /* 弧形定位邏輯：從右側 30度開始向下排列 */
-  --angle-deg: calc(var(--r-idx) * 32 - 10);
-  --angle: calc(var(--angle-deg) * 1deg);
-  top: calc(50% + 52% * sin(var(--angle)));
-  left: calc(50% + 52% * cos(var(--angle)));
-  
-  /* 如果在右側，則將提示內容翻轉到左邊顯示，避免截斷 */
-  .on-right-side & {
-    left: calc(50% - 52% * cos(var(--angle)));
-  }
-  
   transform: translate(-50%, -50%);
-
   width: 24px;
   height: 24px;
   background: #fff;
@@ -306,9 +361,51 @@ function getReminderIcon(text: string) {
   transition: all 0.3s ease;
 }
 
+/* --- 佈局樣式控制 --- */
+
+/* 經典弧形 (Arc) - JS 已計算座標，這裡僅處理共用樣式 */
+.layout-arc .rem-dot-classic {
+  z-index: 21;
+}
+
+/* 網格模式 (Grid) - 依然使用 Flex 以保持整齊 */
+.layout-grid .reminders-classic-container {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: flex-end;
+  align-content: flex-end;
+  padding: 4px;
+}
+.layout-grid .rem-dot-classic {
+  position: static;
+  transform: none;
+  width: 20px;
+  height: 20px;
+  margin: 1px;
+  font-size: 11px;
+}
+
+/* 側面堆疊 (Stack) - JS 已處理方位 */
+.layout-stack .rem-dot-classic {
+  transform: none;
+  width: 22px;
+  height: 22px;
+}
+
+/* 內圈向心 (Inner) - JS 已計算座標 */
+.layout-inner .rem-dot-classic {
+  z-index: 25;
+}
+
 .rem-dot-classic:hover {
   transform: translate(-50%, -50%) scale(1.2);
   z-index: 25;
+}
+
+/* 僅針對不需要 transform: translate 的模式恢復 scale 效果 */
+.layout-grid .rem-dot-classic:hover,
+.layout-stack .rem-dot-classic:hover {
+  transform: scale(1.2);
 }
 
 .role-name-inner.townsfolk { color: var(--color-townsfolk); }

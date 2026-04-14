@@ -1,118 +1,124 @@
 <template>
-  <transition name="sheet-slide">
-    <div v-if="player" class="control-sheet">
-      <div class="sheet-handle" @click="uiStore.selectPlayer(null)"></div>
-      
-      <div class="sheet-content">
-        <!-- 玩家標題區 -->
-        <div class="player-header">
-          <div class="player-avatar" :class="player.role?.role_type.toLowerCase()">
-            <img v-if="player.role?.image" :src="player.role.image" alt="" />
-            <span v-else>{{ player.role ? '🎭' : '👤' }}</span>
-          </div>
-          <div class="player-meta" @click="handleRename" style="cursor: pointer;">
-            <h2 class="name">{{ player.name }}</h2>
-            <p class="role" :class="player.role?.role_type.toLowerCase()">
-              {{ player.role?.name || '未指派角色' }}
-            </p>
-          </div>
-          <button class="close-sheet" @click="uiStore.selectPlayer(null)">✕</button>
-        </div>
-
-        <!-- 主操作按鈕組 (大按鈕) -->
-        <div class="action-grid">
-          <button 
-            class="action-btn death-btn" 
-            :class="{ 'is-dead': !player.is_alive }"
-            @click="handleToggleAlive"
-          >
-            <span class="icon">{{ player.is_alive ? '💀' : '❤️' }}</span>
-            <span class="label">{{ player.is_alive ? '標記死亡' : '恢復存活' }}</span>
-          </button>
-
-          <button class="action-btn role-btn" @click="handleRolePicker">
-            <span class="icon">🎭</span>
-            <span class="label">變更角色</span>
-          </button>
-
-          <button class="action-btn reminder-btn" @click="handleReminderPicker">
-            <span class="icon">🔖</span>
-            <span class="label">提示標記</span>
-          </button>
-
-          <button class="action-btn rename-btn" @click="handleRename">
-            <span class="icon">✏️</span>
-            <span class="label">修改姓名</span>
-          </button>
-        </div>
-
-        <!-- 次要切換開關 -->
-        <div class="toggle-list">
-          <div class="toggle-item" v-if="!player.is_alive">
-            <div class="toggle-info">
-              <span class="t-icon">👻</span>
-              <div>
-                <div class="t-title">靈魂投票權</div>
-                <div class="t-sub">{{ player.has_ghost_vote ? '尚未使用' : '已使用' }}</div>
-              </div>
+  <div v-if="player" class="sheet-overlay">
+    <!-- 遮罩層：點擊此處關閉 -->
+    <div class="sheet-backdrop" @click="uiStore.selectPlayer(null)"></div>
+    
+    <transition name="sheet-slide" appear>
+      <div class="control-sheet" @click.stop>
+        <!-- 手把條 -->
+        <div class="sheet-handle" @click="uiStore.selectPlayer(null)"></div>
+        
+        <div class="sheet-content">
+          <!-- 玩家標題區 -->
+          <div class="player-header">
+            <div class="player-avatar" :class="player.role?.role_type.toLowerCase()">
+              <img v-if="player.role?.image" :src="player.role.image" alt="" />
+              <span v-else>{{ player.role ? '🎭' : '👤' }}</span>
             </div>
-            <button 
-              class="switch" 
-              :class="{ 'active': player.has_ghost_vote }"
-              @click="handleToggleGhost"
-            >
-              <div class="switch-dot"></div>
-            </button>
-          </div>
-
-          <div class="toggle-item">
-            <div class="toggle-info">
-              <span class="t-icon">🗳️</span>
-              <div>
-                <div class="t-title">今日可提名</div>
-                <div class="t-sub">{{ player.can_nominate ? '可以提名' : '不可提名' }}</div>
-              </div>
+            <div class="player-meta" @click="handleRename" style="cursor: pointer;">
+              <h2 class="name">{{ player.name }}</h2>
+              <p class="role" :class="player.role?.role_type.toLowerCase()">
+                {{ player.role?.name || '未指派角色' }}
+              </p>
             </div>
+            <button class="close-sheet" @click="uiStore.selectPlayer(null)">✕</button>
+          </div>
+
+          <!-- 主操作按鈕組 (大按鈕) -->
+          <div class="action-grid">
             <button 
-              class="switch" 
-              :class="{ 'active': player.can_nominate }"
-              @click="handleToggleNominate"
+              class="action-btn death-btn" 
+              :class="{ 'is-dead': !player.is_alive }"
+              @click="handleToggleAlive"
             >
-              <div class="switch-dot"></div>
+              <span class="icon">{{ player.is_alive ? '💀' : '❤️' }}</span>
+              <span class="label">{{ player.is_alive ? '標記死亡' : '恢復存活' }}</span>
+            </button>
+
+            <button class="action-btn role-btn" @click="handleRolePicker">
+              <span class="icon">🎭</span>
+              <span class="label">變更角色</span>
+            </button>
+
+            <button class="action-btn reminder-btn" @click="handleReminderPicker">
+              <span class="icon">🔖</span>
+              <span class="label">提示標記</span>
+            </button>
+
+            <button class="action-btn rename-btn" @click="handleRename">
+              <span class="icon">✏️</span>
+              <span class="label">修改姓名</span>
             </button>
           </div>
-        </div>
 
-        <!-- 提名操作 (僅白天顯示) -->
-        <div class="nomination-actions" v-if="gameStore.phase === 'Day'">
-          <div class="section-title">提名管理</div>
-          <div class="action-grid mini">
-            <button 
-              class="action-btn nom-btn" 
-              @click="handleStartNominationAs"
-              :disabled="!player.is_alive || !player.can_nominate"
-            >
-              <span class="icon">📢</span>
-              <span class="label">由他發起提名</span>
-            </button>
-            <button 
-              class="action-btn nom-btn" 
-              @click="handleNominateHim"
-              :disabled="player.is_nominated"
-            >
-              <span class="icon">⚖️</span>
-              <span class="label">提名此玩家</span>
-            </button>
+          <!-- 次要切換開關 -->
+          <div class="toggle-list">
+            <div class="toggle-item" v-if="!player.is_alive">
+              <div class="toggle-info">
+                <span class="t-icon">👻</span>
+                <div>
+                  <div class="t-title">靈魂投票權</div>
+                  <div class="t-sub">{{ player.has_ghost_vote ? '尚未使用' : '已使用' }}</div>
+                </div>
+              </div>
+              <button 
+                class="switch" 
+                :class="{ 'active': player.has_ghost_vote }"
+                @click="handleToggleGhost"
+              >
+                <div class="switch-dot"></div>
+              </button>
+            </div>
+
+            <div class="toggle-item">
+              <div class="toggle-info">
+                <span class="t-icon">🗳️</span>
+                <div>
+                  <div class="t-title">今日可提名</div>
+                  <div class="t-sub">{{ player.can_nominate ? '可以提名' : '不可提名' }}</div>
+                </div>
+              </div>
+              <button 
+                class="switch" 
+                :class="{ 'active': player.can_nominate }"
+                @click="handleToggleNominate"
+              >
+                <div class="switch-dot"></div>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <!-- 危險操作 -->
-        <button class="remove-btn" @click="handleRemove">
-          🗑️ 移除此玩家
-        </button>
+          <!-- 提名操作 (僅白天顯示) -->
+          <div class="nomination-actions" v-if="gameStore.phase === 'Day'">
+            <div class="section-title">提名管理</div>
+            <div class="action-grid mini">
+              <button 
+                class="action-btn nom-btn" 
+                @click="handleStartNominationAs"
+                :disabled="!player.is_alive || !player.can_nominate"
+              >
+                <span class="icon">📢</span>
+                <span class="label">由他發起提名</span>
+              </button>
+              <button 
+                class="action-btn nom-btn" 
+                @click="handleNominateHim"
+                :disabled="player.is_nominated"
+              >
+                <span class="icon">⚖️</span>
+                <span class="label">提名此玩家</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 危險操作 -->
+          <button class="remove-btn" @click="handleRemove">
+            🗑️ 移除此玩家
+          </button>
+        </div>
       </div>
-    </div>
-  </transition>
+    </transition>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -193,18 +199,31 @@ function handleNominateHim() {
 </script>
 
 <style scoped>
-.control-sheet {
+.sheet-overlay {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+.control-sheet {
+  position: relative;
+  width: 100%;
   background: #1a1c24;
   background: linear-gradient(to bottom, #242835, #16181f);
   border-top: 2px solid rgba(201, 168, 76, 0.4);
   border-radius: 24px 24px 0 0;
-  z-index: 1000;
   padding-bottom: env(safe-area-inset-bottom, 20px);
   box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+  z-index: 2001;
 }
 
 .sheet-handle {
@@ -213,6 +232,7 @@ function handleNominateHim() {
   background: rgba(255,255,255,0.2);
   border-radius: 2px;
   margin: 12px auto;
+  cursor: pointer;
 }
 
 .sheet-content {
@@ -237,7 +257,7 @@ function handleNominateHim() {
   justify-content: center;
   font-size: 24px;
   border: 2px solid #555;
-  overflow: hidden; /* 防止大圖溢出 */
+  overflow: hidden;
   flex-shrink: 0;
 }
 
@@ -263,7 +283,6 @@ function handleNominateHim() {
 .role {
   font-size: 18px;
   font-weight: 500;
-  opacity: 0.9;
 }
 
 .role.townsfolk { color: var(--color-townsfolk); }
@@ -298,6 +317,7 @@ function handleNominateHim() {
   align-items: center;
   gap: 8px;
   transition: all 0.2s;
+  color: white;
 }
 
 .action-btn:active {
@@ -318,34 +338,10 @@ function handleNominateHim() {
 }
 .death-btn.is-dead .label { color: #e87070; }
 
-.action-grid.mini {
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
 .action-grid.mini .action-btn {
   padding: 10px;
   flex-direction: row;
   justify-content: center;
-}
-
-.action-grid.mini .icon { font-size: 18px; }
-.action-grid.mini .label { font-size: 12px; }
-
-.nomination-actions {
-  margin-bottom: 24px;
-  padding: 16px;
-  background: rgba(201, 168, 76, 0.05);
-  border: 1px solid rgba(201, 168, 76, 0.1);
-  border-radius: 16px;
-}
-
-.nomination-actions .section-title {
-  margin-bottom: 12px;
-  font-size: 11px;
-  color: var(--color-gold-muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
 }
 
 .toggle-list {
@@ -404,6 +400,28 @@ function handleNominateHim() {
   color: #f44336;
   border-radius: 12px;
   font-size: 13px;
+}
+
+.nomination-actions {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(201, 168, 76, 0.05);
+  border: 1px solid rgba(201, 168, 76, 0.1);
+  border-radius: 16px;
+}
+
+.nomination-actions .section-title {
+  margin-bottom: 12px;
+  font-size: 11px;
+  color: var(--color-gold-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.action-grid.mini {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
 .sheet-slide-enter-active, .sheet-slide-leave-active {

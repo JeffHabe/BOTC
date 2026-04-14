@@ -86,6 +86,24 @@
 
         <div class="divider" />
 
+        <!-- 介面設置 -->
+        <div class="section-title">提示標記佈局 (Reminder Layout)</div>
+        <div class="layout-selector-grid">
+          <button 
+            v-for="mode in layouts" 
+            :key="mode.id"
+            class="layout-option"
+            :class="{ active: uiStore.reminderLayout === mode.id }"
+            @click="uiStore.setReminderLayout(mode.id as any)"
+          >
+            <span class="opt-icon">{{ mode.icon }}</span>
+            <span class="opt-label">{{ mode.label }}</span>
+            <div v-if="uiStore.reminderLayout === mode.id" class="active-check">✓</div>
+          </button>
+        </div>
+
+        <div class="divider" />
+
         <!-- 危險區域 -->
         <div class="section-title danger-section">危險區域</div>
 
@@ -117,6 +135,13 @@ import { PHASE_LABEL, type GamePhase } from '../types'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
+
+const layouts = [
+  { id: 'arc', label: '經典環繞', icon: '⭕' },
+  { id: 'grid', label: '角落網格', icon: '⏹️' },
+  { id: 'stack', label: '側面清單', icon: '📋' },
+  { id: 'inner', label: '內圈向心', icon: '⏬' },
+]
 
 const phaseLabel = computed(() => PHASE_LABEL[gameStore.phase])
 
@@ -298,5 +323,59 @@ function resetGame() {
   height: 1px;
   background: rgba(201,168,76,0.1);
   margin: 8px 16px;
+}
+
+/* 佈局選擇器樣式 */
+.layout-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 8px 16px 16px;
+}
+
+.layout-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+.layout-option:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(201, 168, 76, 0.3);
+}
+
+.layout-option.active {
+  background: rgba(201, 168, 76, 0.1);
+  border-color: var(--color-gold);
+  color: var(--color-gold-bright);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.opt-icon {
+  font-size: 24px;
+}
+
+.opt-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.active-check {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 12px;
+  color: var(--color-gold);
+  font-weight: bold;
 }
 </style>

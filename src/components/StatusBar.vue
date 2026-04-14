@@ -43,6 +43,11 @@
           <span class="stat-icon">⚖️</span>
           <span class="stat-num">{{ gameStore.threshold }}</span>
         </span>
+
+        <!-- 提示佈局切換 -->
+        <button class="layout-btn" @click="uiStore.cycleReminderLayout()" :title="`目前佈局: ${layoutLabel}`">
+          <span class="layout-icon">{{ layoutIcon }}</span>
+        </button>
         
         <!-- 通知圖示預留 -->
         <button class="notif-btn" title="通知中心">
@@ -78,6 +83,16 @@ const minionCount = computed(() =>
 const demonCount = computed(() =>
   gameStore.players.filter(p => p.role?.role_type === 'Demon').length
 )
+
+const layoutLabel = computed(() => {
+  const map = { arc: '環繞', grid: '網格', stack: '側面', inner: '內圈' }
+  return map[uiStore.reminderLayout]
+})
+
+const layoutIcon = computed(() => {
+  const map = { arc: '⭕', grid: '⏹️', stack: '📋', inner: '⏬' }
+  return map[uiStore.reminderLayout]
+})
 </script>
 
 <style scoped>
@@ -192,5 +207,26 @@ const demonCount = computed(() =>
   background: #ff3e3e;
   border-radius: 50%;
   box-shadow: 0 0 5px #ff3e3e;
+}
+
+.layout-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.layout-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.layout-icon {
+  font-size: 14px;
 }
 </style>

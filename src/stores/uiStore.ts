@@ -15,8 +15,10 @@ export type Panel =
   | 'player-order'
   | 'role-assignment'
 
+export type ReminderLayout = 'arc' | 'grid' | 'stack' | 'inner'
+
 export const useUIStore = defineStore('ui', () => {
-  // 面板控制
+  // --- 面板控制 ---
   const activePanel = ref<Panel>('none')
 
   function openPanel(panel: Panel) { activePanel.value = panel }
@@ -25,7 +27,24 @@ export const useUIStore = defineStore('ui', () => {
     activePanel.value = activePanel.value === panel ? 'none' : panel
   }
 
-  // 玩家右鍵菜單 (Context Menu)
+  // --- 提示標記佈局方案 ---
+  const reminderLayout = ref<ReminderLayout>(
+    (localStorage.getItem('botc-reminder-layout') as ReminderLayout) || 'arc'
+  )
+
+  function setReminderLayout(layout: ReminderLayout) {
+    reminderLayout.value = layout
+    localStorage.setItem('botc-reminder-layout', layout)
+  }
+
+  function cycleReminderLayout() {
+    const layouts: ReminderLayout[] = ['arc', 'grid', 'stack', 'inner']
+    const idx = layouts.indexOf(reminderLayout.value)
+    const nextIdx = (idx + 1) % layouts.length
+    setReminderLayout(layouts[nextIdx])
+  }
+
+  // --- 玩家右鍵菜單 (Context Menu) ---
   const contextMenuPlayer = ref<Player | null>(null)
   const contextMenuPos = ref({ x: 0, y: 0 })
 
@@ -38,16 +57,17 @@ export const useUIStore = defineStore('ui', () => {
     contextMenuPlayer.value = null
   }
 
-  // 選中玩家 (用於底部面板)
+  // --- 選中玩家 (用於底部面板) ---
   const selectedPlayerId = ref<string | null>(null)
 
   function selectPlayer(playerId: string | null) {
     selectedPlayerId.value = playerId
   }
 
-  // 角色選擇器 (Role Picker)
+  // --- 角色選擇器 (Role Picker) ---
   const rolePickerPlayer = ref<Player | null>(null)
   const rolePickerDemonBluffIndex = ref<number | null>(null)
+  const isRolePickerOpen = ref(false)
 
   function openRolePicker(player: Player) {
     rolePickerPlayer.value = player
@@ -64,9 +84,7 @@ export const useUIStore = defineStore('ui', () => {
     rolePickerDemonBluffIndex.value = null
   }
 
-  const isRolePickerOpen = ref(false)
-
-  // 提示標記 (Reminder Picker)
+  // --- 提示標記選擇器 (Reminder Picker) ---
   const reminderPickerPlayerId = ref<string | null>(null)
 
   function openReminderPicker(playerId: string) {
@@ -77,10 +95,20 @@ export const useUIStore = defineStore('ui', () => {
     reminderPickerPlayerId.value = null
   }
 
-  // 新增玩家對話框
+  // --- 彈窗狀態 ---
   const addPlayerDialogOpen = ref(false)
+  const renameDialogPlayer = ref<Player | null>(null)
 
-  // 投票與提名操作
+  function openRenameDialog(player: Player) {
+    renameDialogPlayer.value = player
+    closeContextMenu()
+  }
+
+  function closeRenameDialog() {
+    renameDialogPlayer.value = null
+  }
+
+  // --- 投票與提名操作 ---
   const activeNominationIndex = ref<number | null>(null)
   const nominationNominatorId = ref('')
   const nominationNomineeId = ref('')
@@ -99,19 +127,7 @@ export const useUIStore = defineStore('ui', () => {
     activePanel.value = 'voting'
   }
 
-  // 重新命名對話框
-  const renameDialogPlayer = ref<Player | null>(null)
-
-  function openRenameDialog(player: Player) {
-    renameDialogPlayer.value = player
-    closeContextMenu()
-  }
-
-  function closeRenameDialog() {
-    renameDialogPlayer.value = null
-  }
-
-  // 確認對話框 (Confirm Dialog)
+  // --- 確認對話框 (Confirm Dialog) ---
   const confirmDialog = ref<{
     title: string
     message: string
@@ -130,23 +146,23 @@ export const useUIStore = defineStore('ui', () => {
   return {
     // 面板
     activePanel, openPanel, closePanel, togglePanel,
+    // 佈局
+    reminderLayout, setReminderLayout, cycleReminderLayout,
     // 右鍵菜單
     contextMenuPlayer, contextMenuPos, openContextMenu, closeContextMenu,
-    // 選中玩家
+    // 玩家選中
     selectedPlayerId, selectPlayer,
     // 角色選擇
     rolePickerPlayer, rolePickerDemonBluffIndex, isRolePickerOpen,
     openRolePicker, openRolePickerForBluff, closeRolePicker,
     // 提示標記
     reminderPickerPlayerId, openReminderPicker, closeReminderPicker,
-    // 新增玩家
-    addPlayerDialogOpen,
+    // 彈窗
+    addPlayerDialogOpen, renameDialogPlayer, openRenameDialog, closeRenameDialog,
     // 投票
     activeNominationIndex, nominationNominatorId, nominationNomineeId,
     openVotingDetail, closeVotingDetail, startNomination,
-    // 改名
-    renameDialogPlayer, openRenameDialog, closeRenameDialog,
-    // 確認對話框
-    confirmDialog, showConfirm, closeConfirm,
+    // 確認框
+    confirmDialog, showConfirm, closeConfirm
   }
 })
