@@ -21,7 +21,7 @@
               <span v-else>{{ player.role ? '🎭' : '👤' }}</span>
             </div>
             <div class="player-meta">
-              <h2 class="name">{{ player.name }}</h2>
+              <h2 class="name" @click="handleRename" title="點擊修改名稱" style="cursor: pointer;">{{ player.name }}</h2>
               <p class="role" :class="player.role?.role_type.toLowerCase()">
                 {{ player.role?.name || '未指派角色' }}
               </p>
@@ -141,6 +141,13 @@ async function handleToggleAlive() {
 function handleRolePicker() {
   if (player.value) {
     uiStore.openRolePicker(player.value)
+    uiStore.selectPlayer(null) // 縮回工具列
+  }
+}
+
+function handleRename() {
+  if (player.value) {
+    uiStore.openRenameDialog(player.value)
     uiStore.selectPlayer(null) // 縮回工具列
   }
 }

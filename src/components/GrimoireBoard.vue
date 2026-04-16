@@ -507,17 +507,19 @@ function starStyle(i: number) {
    右下角：虛張聲勢可收納托盤 (Collapsible Bluffs Drawer) 
    ───────────────────────────────────────────────────────────────────────── */
 .bluffs-drawer {
-  position: absolute;
-  bottom: 40px;
-  right: -90px; /* 預設收起狀態 */
-  z-index: 40;
+  position: fixed; /* 改為 fixed 確保在手機端滾動時位置不變 */
+  bottom: 60px;
+  right: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  /* 關鍵優化：向右位移 100% (藏起來)，但扣掉 32px (留標籤在外) */
+  transform: translateX(calc(100% - 32px)); 
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .bluffs-drawer.is-expanded {
-  right: 20px;
+  transform: translateX(0); /* 展開時回到原點 */
 }
 
 .bluffs-tabs {
@@ -714,7 +716,7 @@ function starStyle(i: number) {
    ───────────────────────────────────────────────────────────────────────── */
 .add-player-btn {
   position: fixed;
-  bottom: 24px;
+  bottom: 50px;
   left: 24px;
   width: 52px;
   height: 52px;

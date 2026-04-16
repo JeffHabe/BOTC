@@ -31,14 +31,6 @@
 
       <!-- 右側：存活狀態 -->
       <div class="stat-group stats-alive">
-        <span class="stat-item total" title="總人數">
-          <span class="stat-icon">👤</span>
-          <span class="stat-num">{{ gameStore.players.length }}</span>
-        </span>
-        <span class="stat-item alive" title="存活">
-          <span class="stat-icon">💚</span>
-          <span class="stat-num">{{ gameStore.alive }}</span>
-        </span>
         <span class="stat-item threshold" :class="{ 'is-hidden': gameStore.phase !== 'Day' }" title="門檻">
           <span class="stat-icon">⚖️</span>
           <span class="stat-num">{{ gameStore.threshold }}</span>
