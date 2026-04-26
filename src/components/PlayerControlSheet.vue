@@ -13,20 +13,25 @@
           <div class="player-header">
             <div 
               class="player-avatar" 
-              :class="player.role?.role_type.toLowerCase()"
+              :class="!uiStore.isRolesHidden ? player.role?.role_type.toLowerCase() : ''"
               @click="uiStore.isSingleRoleShowcase = true"
               title="點擊放大展示"
             >
-              <img v-if="player.role?.image" :src="player.role.image" alt="" />
-              <span v-else>{{ player.role ? '🎭' : '👤' }}</span>
+              <img v-if="player.role?.image && !uiStore.isRolesHidden" :src="player.role.image" alt="" />
+              <span v-else>{{ (player.role && !uiStore.isRolesHidden) ? '🎭' : '👤' }}</span>
             </div>
             <div class="player-meta">
               <h2 class="name" @click="handleRename" title="點擊修改名稱" style="cursor: pointer;">{{ player.name }}</h2>
-              <p class="role" :class="player.role?.role_type.toLowerCase()">
-                {{ player.role?.name || '未指派角色' }}
+              <p class="role" :class="!uiStore.isRolesHidden ? player.role?.role_type.toLowerCase() : ''">
+                {{ uiStore.isRolesHidden ? '角色已隱藏' : (player.role?.name || '未指派角色') }}
               </p>
             </div>
             <button class="close-sheet" @click="uiStore.selectPlayer(null)">✕</button>
+          </div>
+
+          <!-- 角色能力描述 -->
+          <div v-if="player.role?.ability && !uiStore.isRolesHidden" class="player-ability-box">
+            {{ player.role.ability }}
           </div>
 
           <!-- 頂部重點操作：提示標記 -->
@@ -306,6 +311,17 @@ function handleNominateHim() {
   height: 32px;
   border-radius: 50%;
   color: #888;
+}
+
+.player-ability-box {
+  font-size: 13px;
+  color: #bbb;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+  border-left: 3px solid rgba(201, 168, 76, 0.5);
 }
 
 .action-grid {

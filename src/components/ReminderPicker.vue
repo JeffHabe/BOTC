@@ -7,7 +7,7 @@
         <button class="close-btn" @click="uiStore.closeReminderPicker()">✕</button>
       </div>
 
-      <div class="reminder-content">
+      <div class="reminder-content" ref="contentRef">
         <!-- 1. 現有標記 -->
         <div v-if="existingReminders.length > 0" class="section">
           <div class="section-title">現有標記 (點擊修改)</div>
@@ -132,9 +132,9 @@ const existingReminders = computed(() => player.value?.reminders ?? [])
 const customText = ref('')
 const editingId = ref<string | null>(null)
 const inputRef = ref<HTMLInputElement | null>(null)
+const contentRef = ref<HTMLElement | null>(null)
 
-const commonReminders = ['中毒', '醉酒', '已被選中', '已被提名', '即將死亡']
-
+const commonReminders = ['中毒', '醉酒', '已被選中', '已被提名', '即將死亡','善良','邪惡']
 /**
  * 分類場上角色標記
  */
@@ -189,6 +189,12 @@ async function handleDelete() {
 async function quickAdd(text: string) {
   if (!player.value) return
   await gameStore.addReminder(player.value.id, text, '劇本')
+  
+  nextTick(() => {
+    if (contentRef.value) {
+      contentRef.value.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 }
 </script>
 

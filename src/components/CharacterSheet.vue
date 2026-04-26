@@ -55,6 +55,11 @@
           </div>
           <div class="card-body">
             <p class="char-ability">{{ char.ability }}</p>
+            <div v-if="char.conflicts && char.conflicts.length > 0" class="char-conflicts">
+              <div v-for="(rule, idx) in char.conflicts" :key="idx" class="conflict-badge">
+                ⚔️ vs {{ getCharacterName(rule.target || rule.charB) }}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -91,6 +96,12 @@ function getEmoji(type: RoleType) {
     Townsfolk: '🏘️', Outsider: '🧪', Minion: '🔱', Demon: '😈', Traveler: '🧳', Fabled: '📖'
   }
   return map[type] || '❓'
+}
+
+function getCharacterName(id?: string) {
+  if (!id) return '未知'
+  const char = scriptStore.rawCharacterList.find(c => c.id === id)
+  return char ? char.name : id
 }
 </script>
 
@@ -235,6 +246,24 @@ function getEmoji(type: RoleType) {
   font-size: 13px;
   color: var(--color-text-secondary);
   line-height: 1.5;
+}
+
+.char-conflicts {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.conflict-badge {
+  font-size: 11px;
+  color: #e57373;
+  background: rgba(229, 115, 115, 0.1);
+  border: 1px solid rgba(229, 115, 115, 0.2);
+  padding: 3px 8px;
+  border-radius: 4px;
+  width: fit-content;
+  white-space: nowrap;
 }
 
 .empty-state {

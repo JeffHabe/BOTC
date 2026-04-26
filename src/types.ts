@@ -27,6 +27,12 @@ export interface ReminderToken {
   round: number
 }
 
+export interface ConflictRule {
+  target?: string
+  charB?: string
+  desc?: string
+}
+
 export interface CharacterDef {
   id: string
   name: string
@@ -41,6 +47,7 @@ export interface CharacterDef {
   image?: string | null
   first_night_reminder?: string | null
   other_night_reminder?: string | null
+  conflicts?: ConflictRule[]
 }
 
 export interface Player {

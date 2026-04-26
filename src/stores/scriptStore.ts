@@ -4,8 +4,9 @@ import { ref, computed } from 'vue'
 import type { CharacterDef, Script, RoleType } from '../types'
 import { useGameStore } from './gameStore'
 
-import troubleBrewing from '../../src-tauri/data/trouble_brewing.json'
 import allCharacterRaw from '../../src-tauri/data/all_character.json'
+
+import { BaseDirectory, exists, readTextFile, writeTextFile, mkdir } from '@tauri-apps/plugin-fs'
 
 function parseRawArray(raw: any[], id: string, defaultName: string): Script {
   const meta = raw.find((r: any) => r.id === '_meta') || {}
@@ -32,6 +33,7 @@ function parseRawArray(raw: any[], id: string, defaultName: string): Script {
       image: r.image || null,
       first_night_reminder: r.firstNightReminder || null,
       other_night_reminder: r.otherNightReminder || null,
+      conflicts: r.conflicts || [],
     }
   })
 
@@ -45,26 +47,19 @@ function parseRawArray(raw: any[], id: string, defaultName: string): Script {
   }
 }
 
-export const OFFICIAL_SCRIPTS: Script[] = [
-  parseRawArray(allCharacterRaw, 'all_character', '全角色大全'),
-  {
-    id: 'trouble_brewing',
-    name: '暗湧 (Trouble Brewing)',
-    name_en: 'Trouble Brewing',
-    author: 'The Pandemonium Institute',
-    logo: null,
-    characters: troubleBrewing as CharacterDef[],
-  },
-]
-
 export const useScriptStore = defineStore('script', () => {
   const gameStore = useGameStore()
   const searchQuery = ref('')
   const filterType = ref<RoleType | 'All'>('All')
   const customScripts = ref<Script[]>([])
+  
+  // 核心角色大全配置 (具有響應式)
+  const masterScript = ref<Script>(parseRawArray(allCharacterRaw, 'all_character', '全角色大全'))
+  // 保存原始的 JSON 節點，便於寫回
+  const rawCharacterList = ref<any[]>([...allCharacterRaw])
 
   const allScripts = computed<Script[]>(() => [
-    ...OFFICIAL_SCRIPTS,
+    masterScript.value,
     ...customScripts.value,
   ])
 
@@ -87,6 +82,61 @@ export const useScriptStore = defineStore('script', () => {
     return chars
   })
 
+  async function loadCharacters() {
+    try {
+      const dbExists = await exists('all_character.json', { baseDir: BaseDirectory.AppData })
+      if (!dbExists) {
+        // 第一期：把包裝內的靜態檔案自動寫入使用者的 AppData
+        await mkdir('', { baseDir: BaseDirectory.AppData, recursive: true })
+        await writeTextFile('all_character.json', JSON.stringify(allCharacterRaw, null, 2), { baseDir: BaseDirectory.AppData })
+        rawCharacterList.value = [...allCharacterRaw]
+      } else {
+        const content = await readTextFile('all_character.json', { baseDir: BaseDirectory.AppData })
+        const parsed = JSON.parse(content)
+        rawCharacterList.value = parsed
+      }
+      masterScript.value = parseRawArray(rawCharacterList.value, 'all_character', '全角色大全')
+
+      // 如果尚未裝載其他劇本，且遊戲中選擇的是大全，則同步至 gameStore
+      if (!gameStore.script || gameStore.script.id === 'all_character') {
+         await gameStore.setScript(masterScript.value)
+      }
+    } catch (e) {
+      console.error('Failed to load custom all_character.json, falling back to default', e)
+    }
+  }
+
+  async function saveCharacters(newRawList: any[]) {
+    try {
+      await writeTextFile('all_character.json', JSON.stringify(newRawList, null, 2), { baseDir: BaseDirectory.AppData })
+    } catch (e) {
+      console.warn('Failed to save characters to filesystem (maybe running in browser), saving to memory only', e)
+    }
+    
+    rawCharacterList.value = newRawList
+    masterScript.value = parseRawArray(rawCharacterList.value, 'all_character', '全角色大全')
+    
+    // 更新場上已載入的劇本
+    if (gameStore.script && gameStore.script.id === 'all_character') {
+      await gameStore.setScript(masterScript.value)
+    }
+  }
+
+  async function resetToDefault() {
+    try {
+      await writeTextFile('all_character.json', JSON.stringify(allCharacterRaw, null, 2), { baseDir: BaseDirectory.AppData })
+      rawCharacterList.value = [...allCharacterRaw]
+      masterScript.value = parseRawArray(rawCharacterList.value, 'all_character', '全角色大全')
+      
+      if (gameStore.script && gameStore.script.id === 'all_character') {
+        await gameStore.setScript(masterScript.value)
+      }
+    } catch (e) {
+      console.error('Failed to reset characters', e)
+      throw e
+    }
+  }
+
   async function selectScript(script: Script) {
     await gameStore.setScript(script)
   }
@@ -102,6 +152,11 @@ export const useScriptStore = defineStore('script', () => {
     currentScript,
     filteredCharacters,
     customScripts,
+    rawCharacterList,
+    masterScript,
+    loadCharacters,
+    saveCharacters,
+    resetToDefault,
     selectScript,
     importFromJson,
   }

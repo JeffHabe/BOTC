@@ -9,66 +9,32 @@
       </div>
 
       <div class="assignment-content">
-        <!-- 步驟 1: 配置人數配比 -->
-        <div v-if="step === 'config'" class="step-config">
-          <div class="info-banner">
-            <span class="info-icon">👥</span>
-            <span>當前玩家人數: <strong>{{ totalPlayers }}</strong></span>
-          </div>
-
-          <div class="section-title">決定角色配比</div>
-          <div class="counts-editor">
-            <div v-for="type in roleTypes" :key="type.key" class="count-row">
-              <div class="type-info">
-                <span class="type-dot" :style="{ backgroundColor: type.color }"></span>
-                <span class="type-label">{{ type.label }}</span>
-              </div>
-              <div class="count-controls">
-                <button @click="adjustCount(type.key, -1)" class="minus">-</button>
-                <div class="count-val">{{ counts[type.key] }}</div>
-                <button @click="adjustCount(type.key, 1)" class="plus">+</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="config-footer">
-            <div class="total-status" :class="{ 'is-match': totalConfigured === totalPlayers }">
-              總計配置: {{ totalConfigured }} / {{ totalPlayers }}
-            </div>
-            <button 
-              class="btn-primary start-btn" 
-              :disabled="totalConfigured !== totalPlayers"
-              @click="step = 'pool'"
-            >
-              篩選可用角色池 →
-            </button>
-          </div>
-        </div>
-
-        <!-- 步驟 2: 篩選可用角色池 [NEW] -->
-        <div v-else-if="step === 'pool'" class="step-pool">
+        <!-- 步驟 1: 篩選可用角色池 -->
+        <div v-if="step === 'pool'" class="step-pool">
           <div class="action-footer top-actions compact">
-            <button class="btn-ghost btn-xs" @click="step = 'config'">← 返回配置</button>
+            <button class="btn-ghost btn-xs" @click="uiStore.closePanel()">← 關閉面板</button>
             <button 
               class="btn-primary btn-xs" 
-              :disabled="!isPoolLargeEnough"
-              @click="goToSelect"
+              @click="step = 'config'"
             >
-              挑選具體角色 →
+              設定人數配比 →
             </button>
           </div>
 
           <div class="preset-manager">
             <div class="preset-label">角色池預設：</div>
-            <select v-model="activePresetId" class="preset-select" @change="e => {
-              const p = currentScriptPresets.find(p => p.id === (e.target as HTMLSelectElement).value);
-              if (p) applyPreset(p);
-            }">
-              <option value="">-- 選擇預設 --</option>
-              <option v-for="p in currentScriptPresets" :key="p.id" :value="p.id">{{ p.name }}</option>
-            </select>
-            <button v-if="activePresetId" class="btn-delete-preset" @click="deletePreset(activePresetId)">🗑️</button>
-            <button class="btn-save-preset" @click="showSaveModal = true">💾 儲存</button>
+            <div class="preset-controls">
+              <select v-model="activePresetId" class="preset-select" @change="e => {
+                const p = currentScriptPresets.find(p => p.id === (e.target as HTMLSelectElement).value);
+                if (p) applyPreset(p);
+              }">
+                <option value="">-- 選擇預設 --</option>
+                <option v-for="p in currentScriptPresets" :key="p.id" :value="p.id">{{ p.name }}</option>
+              </select>
+              <button v-if="activePresetId" class="btn-icon" @click="updatePreset" title="儲存變更">💾</button>
+              <button class="btn-icon" @click="showSaveModal = true" title="另存新檔">📁</button>
+              <button v-if="activePresetId" class="btn-icon text-danger" @click="deletePreset(activePresetId)" title="刪除預設">🗑️</button>
+            </div>
           </div>
 
           <!-- 儲存預設模態框 -->
@@ -108,9 +74,6 @@
             <div v-for="group in fullGroupedCharacters" :key="group.type" :id="'group-' + group.type" class="role-group">
               <div class="group-header" :style="{ color: group.color }">
                 {{ group.label }} 
-                <span class="warning-text" v-if="poolTypeCount(group.type) < counts[group.type]">
-                  ⚠️ 角色不足 (需要 {{ counts[group.type] }})
-                </span>
               </div>
               <div class="role-grid">
                 <div v-for="role in group.list" 
@@ -129,10 +92,55 @@
           </div>
         </div>
 
+        <!-- 步驟 2: 配置人數配比 -->
+        <div v-else-if="step === 'config'" class="step-config">
+          <div class="info-banner">
+            <span class="info-icon">👥</span>
+            <span>當前玩家人數: <strong>{{ totalPlayers }}</strong></span>
+          </div>
+
+          <div class="section-title">決定角色配比</div>
+          <div class="counts-editor">
+            <div v-for="type in roleTypes" :key="type.key" class="count-row">
+              <div class="type-info">
+                <span class="type-dot" :style="{ backgroundColor: type.color }"></span>
+                <span class="type-label">{{ type.label }}</span>
+              </div>
+              <div class="count-controls">
+                <button @click="adjustCount(type.key, -1)" class="minus">-</button>
+                <div class="count-val">{{ counts[type.key] }}</div>
+                <button @click="adjustCount(type.key, 1)" class="plus">+</button>
+              </div>
+              <div class="pool-hint" :class="{'is-error': poolTypeCount(type.key) < counts[type.key]}">
+                (可用: {{ poolTypeCount(type.key) }})
+              </div>
+            </div>
+          </div>
+
+          <div class="config-footer">
+            <div class="total-status" :class="{ 'is-match': totalConfigured === totalPlayers }">
+              總計配置: {{ totalConfigured }} / {{ totalPlayers }}
+            </div>
+            <div class="footer-btns" style="display:flex; gap:12px;">
+              <button class="btn-ghost" @click="step = 'pool'">← 角色池</button>
+              <button 
+                class="btn-primary start-btn" 
+                :disabled="totalConfigured !== totalPlayers || !isPoolLargeEnough"
+                @click="goToSelect"
+                style="flex:1;"
+              >
+                挑選玩家角色 →
+              </button>
+            </div>
+          </div>
+        </div>
+
+
+
         <!-- 步驟 3: 挑選具體角色 -->
         <div v-else-if="step === 'select'" class="step-select">
           <div class="action-footer top-actions compact">
-            <button class="btn-ghost btn-xs" @click="step = 'pool'">← 篩選池</button>
+            <button class="btn-ghost btn-xs" @click="step = 'config'">← 返回配比</button>
             <button class="btn-secondary btn-xs" @click="autoFillRoles">🎲 隨機補齊</button>
             <button 
               class="btn-primary btn-xs" 
@@ -263,7 +271,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 import type { CharacterDef } from '../types'
@@ -273,12 +281,19 @@ const uiStore = useUIStore()
 const gameStore = useGameStore()
 
 // 狀態管理
-type Step = 'config' | 'pool' | 'select' | 'bluff' | 'preview'
-const step = ref<Step>('config')
+type Step = 'pool' | 'config' | 'select' | 'bluff' | 'preview'
+const step = ref<Step>('pool')
 const totalPlayers = computed(() => gameStore.players.length)
 
-// 角色池過濾狀態
-const excludedPoolIds = ref<string[]>([])
+// 角色池狀態使用 UI Store 持久化
+const excludedPoolIds = computed({
+  get: () => uiStore.excludedPoolIds,
+  set: (val) => uiStore.excludedPoolIds = val
+})
+const activePresetId = computed({
+  get: () => uiStore.activePoolPresetId,
+  set: (val) => uiStore.activePoolPresetId = val
+})
 interface PoolPreset {
   id: string
   name: string
@@ -298,7 +313,6 @@ const counts = reactive<Record<string, number>>({
 
 const selectedRoleIds = ref<string[]>([])
 const selectedBluffIds = ref<string[]>([])
-const activePresetId = ref('')
 const searchQuery = ref('') // 新增搜尋關鍵字
 
 // 基礎映射
@@ -331,8 +345,8 @@ onMounted(() => {
 const totalConfigured = computed(() => Object.values(counts).reduce((a, b) => a + b, 0))
 const panelTitle = computed(() => {
   const titles: Record<Step, string> = {
-    config: '1. 設定人數配比',
-    pool: '2. 篩選可用角色池',
+    pool: '1. 篩選可用角色池',
+    config: '2. 設定人數配比',
     select: '3. 挑選玩家角色',
     bluff: '4. 挑選惡魔虛張',
     preview: '5. 最終預覽'
@@ -340,7 +354,7 @@ const panelTitle = computed(() => {
   return titles[step.value]
 })
 const currentStepNum = computed(() => {
-  const map: Record<Step, number> = { config: 1, pool: 2, select: 3, bluff: 4, preview: 5 }
+  const map: Record<Step, number> = { pool: 1, config: 2, select: 3, bluff: 4, preview: 5 }
   return map[step.value]
 })
 
@@ -373,14 +387,28 @@ function savePreset() {
   showSaveModal.value = false
 }
 
+function updatePreset() {
+  if (!activePresetId.value || !gameStore.script) return
+  const preset = poolPresets.value.find(p => p.id === activePresetId.value)
+  if (preset) {
+    preset.excluded_ids = [...excludedPoolIds.value]
+    localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
+    alert(`角色池預設 "${preset.name}" 已更新！`)
+  }
+}
+
 function applyPreset(preset: PoolPreset) {
   excludedPoolIds.value = [...preset.excluded_ids]
+  uiStore.activePoolPresetName = preset.name
 }
 
 function deletePreset(id: string) {
   poolPresets.value = poolPresets.value.filter(p => p.id !== id)
   localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
-  if (activePresetId.value === id) activePresetId.value = ''
+  if (activePresetId.value === id) {
+    activePresetId.value = ''
+    uiStore.activePoolPresetName = ''
+  }
 }
 
 const currentScriptPresets = computed(() => {
@@ -396,7 +424,7 @@ const fullGroupedCharacters = computed(() => {
     label: t.label,
     color: t.color,
     list: gameStore.script!.characters.filter(c => {
-      const matchesType = c.role_type === t.key && !c.setup
+      const matchesType = c.role_type === t.key
       const matchesQuery = !query || c.name.toLowerCase().includes(query)
       return matchesType && matchesQuery
     })
@@ -412,7 +440,7 @@ const groupedCharacters = computed(() => {
     label: t.label,
     color: t.color,
     list: gameStore.script!.characters.filter(c => {
-      const matchesType = c.role_type === t.key && !c.setup && !excluded.has(c.id)
+      const matchesType = c.role_type === t.key && !excluded.has(c.id)
       const matchesQuery = !query || c.name.toLowerCase().includes(query)
       return matchesType && matchesQuery
     })
@@ -432,6 +460,24 @@ const availableBluffPool = computed(() => {
     const matchesQuery = !query || c.name.toLowerCase().includes(query)
     return isGoodType && isNotUsed && matchesQuery
   })
+})
+
+const validBluffIds = computed(() => {
+  if (!gameStore.script) return new Set<string>()
+  const usedIds = new Set(selectedRoleIds.value)
+  const excluded = new Set(excludedPoolIds.value)
+  
+  const pool = gameStore.script.characters.filter(c => {
+    const isGoodType = c.role_type === 'Townsfolk' || c.role_type === 'Outsider'
+    const isNotUsed = !usedIds.has(c.id) && !excluded.has(c.id) && !c.setup
+    return isGoodType && isNotUsed
+  })
+  return new Set(pool.map(c => c.id))
+})
+
+watch(validBluffIds, (validSet) => {
+  // 當可用名單改變時，過濾掉已經無效的選項，避免幽靈佔位
+  selectedBluffIds.value = selectedBluffIds.value.filter(id => validSet.has(id))
 })
 
 function scriptTypeTotal(type: string) {
@@ -454,10 +500,7 @@ const isPoolLargeEnough = computed(() => {
 })
 
 const isSelectionComplete = computed(() => {
-  for (const type of roleTypes) {
-    if (currentTypeCount(type.key) !== counts[type.key]) return false
-  }
-  return true
+  return selectedRoleIds.value.length === totalPlayers.value
 })
 
 // 方法
@@ -491,9 +534,11 @@ function toggleRoleSelection(role: CharacterDef) {
   if (idx > -1) {
     selectedRoleIds.value.splice(idx, 1)
   } else {
-    // 檢查是否已達上限
-    if (currentTypeCount(role.role_type) < counts[role.role_type]) {
+    // 只要總人數未達上限就可以選，不嚴格限制單一陣營
+    if (selectedRoleIds.value.length < totalPlayers.value) {
       selectedRoleIds.value.push(role.id)
+    } else {
+      alert(`已經選滿 ${totalPlayers.value} 個玩家角色囉！`)
     }
   }
 }
@@ -513,7 +558,7 @@ function includeAllRoles() {
 
 function excludeAllRoles() {
   if (!gameStore.script) return
-  excludedPoolIds.value = gameStore.script.characters.filter(c => !c.setup).map(c => c.id)
+  excludedPoolIds.value = gameStore.script.characters.map(c => c.id)
 }
 
 function toggleBluffSelection(id: string) {
@@ -534,17 +579,33 @@ function autoFillRoles() {
     selectedRoleIds.value = []
   }
   
+  // 優先補齊原始配給人數，但不超過總剩餘空位
   for (const type of roleTypes) {
-    const needed = counts[type.key] - currentTypeCount(type.key)
+    const needed = Math.max(0, counts[type.key] - currentTypeCount(type.key))
     if (needed <= 0) continue
     
+    const remainingSlots = totalPlayers.value - selectedRoleIds.value.length
+    if (remainingSlots <= 0) break
+    
     // 從未被選中的角色中挑選，且必須在篩選後的池子內
+    const actualPick = Math.min(needed, remainingSlots)
     const excluded = new Set(excludedPoolIds.value)
     const available = script.characters.filter(c => 
-      c.role_type === type.key && !c.setup && !isRoleSelected(c.id) && !excluded.has(c.id)
+      c.role_type === type.key && !isRoleSelected(c.id) && !excluded.has(c.id)
     )
     const shuffled = [...available].sort(() => Math.random() - 0.5)
-    selectedRoleIds.value.push(...shuffled.slice(0, needed).map(c => c.id))
+    selectedRoleIds.value.push(...shuffled.slice(0, actualPick).map(c => c.id))
+  }
+  
+  // 如果因為手動挑選打亂了數量，導致配給補完後人數仍然不足，則全隨機補齊剩下的空缺
+  let remainingSlots = totalPlayers.value - selectedRoleIds.value.length
+  if (remainingSlots > 0) {
+    const excluded = new Set(excludedPoolIds.value)
+    const available = script.characters.filter(c => 
+      !c.setup && !isRoleSelected(c.id) && !excluded.has(c.id)
+    )
+    const shuffled = [...available].sort(() => Math.random() - 0.5)
+    selectedRoleIds.value.push(...shuffled.slice(0, remainingSlots).map(c => c.id))
   }
 }
 
@@ -672,6 +733,16 @@ function getRoleTypeEmoji(type: string) {
   margin-bottom: 16px;
 }
 
+.pool-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  flex: 1;
+  text-align: right;
+}
+.pool-hint.is-error {
+  color: #ff5252;
+}
+
 .instruction {
   font-size: 14px;
   color: #fff;
@@ -745,13 +816,53 @@ function getRoleTypeEmoji(type: string) {
 /* Preset Manager */
 .preset-manager {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0,0,0,0.2);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.preset-label {
+  font-size: 11px;
+  color: var(--color-gold);
+}
+
+.preset-controls {
+  display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255,255,255,0.05);
-  padding: 8px 12px;
-  border-radius: 10px;
-  margin-bottom: 8px;
 }
+
+.preset-select {
+  flex: 1;
+  padding: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: white;
+  border-radius: 6px;
+  outline: none;
+  font-size: 13px;
+}
+
+.btn-icon {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: background 0.2s;
+  color: white;
+}
+
+.btn-icon:hover { background: rgba(255,255,255,0.1); }
+.text-danger { border-color: rgba(255, 68, 68, 0.3); }
+.text-danger:hover { background: rgba(255, 68, 68, 0.1); }
 
 .pool-quick-actions {
   display: flex;
@@ -770,34 +881,6 @@ function getRoleTypeEmoji(type: string) {
 .pool-quick-actions button:hover {
   background: rgba(255,255,255,0.08);
   border-color: rgba(255,255,255,0.2);
-}
-
-.preset-label { font-size: 12px; color: var(--color-text-muted); }
-.preset-select {
-  flex: 1;
-  background: #2a2c35;
-  border: 1px solid rgba(255,255,255,0.1);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 13px;
-}
-.btn-save-preset {
-  background: var(--color-gold-muted);
-  border: none;
-  color: #000;
-  font-size: 11px;
-  font-weight: bold;
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-.btn-delete-preset {
-  background: rgba(244, 67, 54, 0.2);
-  border: 1px solid rgba(244, 67, 54, 0.3);
-  color: #f44336;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 14px;
 }
 
 /* Mini Modal */
@@ -969,8 +1052,8 @@ function getRoleTypeEmoji(type: string) {
 }
 
 .counts-editor { display: flex; flex-direction: column; gap: 16px; margin-bottom: 30px; }
-.count-row { display: flex; align-items: center; justify-content: space-between; }
-.type-info { display: flex; align-items: center; gap: 10px; }
+.count-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.type-info { display: flex; align-items: center; gap: 10px; flex: 1; }
 .type-dot { width: 8px; height: 8px; border-radius: 50%; }
 .type-label { font-size: 14px; font-weight: 600; }
 .count-controls { display: flex; align-items: center; background: rgba(0,0,0,0.2); border-radius: 20px; padding: 2px; }

@@ -22,15 +22,25 @@
       </div>
 
       <!-- 中央：輪次與階段 -->
-      <div class="phase-display" @click="uiStore.togglePanel('settings')">
-        <div class="phase-badge" :class="`phase-${gameStore.phase.toLowerCase()}`">
-          <span class="phase-text">{{ phaseLabel }}</span>
-          <span v-if="gameStore.round > 0" class="round-text">Day {{ gameStore.round }}</span>
+      <div class="phase-control">
+        <button class="nav-btn" @click="gameStore.revertPhase()" title="退回上個階段">◀</button>
+        <div class="phase-display" @click="uiStore.togglePanel('settings')" title="開啟設定">
+          <div class="phase-badge" :class="`phase-${gameStore.phase.toLowerCase()}`">
+            <span class="phase-text">{{ phaseLabel }}</span>
+            <span v-if="gameStore.round > 0" class="round-text">Day {{ gameStore.round }}</span>
+          </div>
         </div>
+        <button class="nav-btn" @click="gameStore.advancePhase()" title="推進下個階段">▶</button>
       </div>
 
       <!-- 右側：存活狀態 -->
       <div class="stat-group stats-alive">
+        <!-- 存活人數 -->
+        <span class="stat-item alive" title="存活人數">
+          <span class="stat-icon">❤️</span>
+          <span class="stat-num">{{ gameStore.alive }}</span>
+        </span>
+
         <span class="stat-item threshold" :class="{ 'is-hidden': gameStore.phase !== 'Day' }" title="門檻">
           <span class="stat-icon">⚖️</span>
           <span class="stat-num">{{ gameStore.threshold }}</span>
@@ -112,13 +122,43 @@ const layoutIcon = computed(() => {
   z-index: 1; /* 位於中間按鈕下方 */
 }
 
+.phase-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 2;
+  flex: 1; /* 允許中間區域彈性伸縮，自然推擠左右元素而不重疊 */
+  padding: 0 4px;
+}
+
 .phase-display {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   cursor: pointer;
-  z-index: 2; /* 優先級最高，確保點擊有效 */
+}
+
+.nav-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-gold-muted);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover {
+  background: rgba(201, 168, 76, 0.2);
+  color: var(--color-gold);
+  border-color: var(--color-gold);
+}
+
+.nav-btn:active {
+  transform: scale(0.9);
 }
 
 .stat-item {
@@ -152,10 +192,7 @@ const layoutIcon = computed(() => {
   font-size: 14px;
 }
 
-.phase-display {
-  cursor: pointer;
-  z-index: 2;
-}
+
 
 .phase-badge {
   background: rgba(255, 255, 255, 0.08);

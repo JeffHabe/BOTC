@@ -5,89 +5,92 @@
 /* ─── CSS 設計令牌 ───────────────────────────────────────────── */
 :root {
   /* 主色調 (古典風格：深邃木質與皮革感) */
-  --color-bg-deep:      #0b0c10;
-  --color-bg-dark:      #1a1d23;
-  --color-bg-mid:       #22272e;
-  --color-bg-surface:   #2d333b;
-  --color-bg-elevated:  #363d42;
+  --color-bg-deep: #0b0c10;
+  --color-bg-dark: #1a1d23;
+  --color-bg-mid: #22272e;
+  --color-bg-surface: #2d333b;
+  --color-bg-elevated: #363d42;
 
   /* 經典羊皮紙質感 */
-  --color-parchment:      #f4e4bc;
+  --color-parchment: #f4e4bc;
   --color-parchment-dark: #d2b48c;
-  --color-label-bg:       rgba(20, 15, 10, 0.85);
+  --color-label-bg: rgba(20, 15, 10, 0.85);
 
   /* 金色系 (古典風格：古銅金與暗金) */
-  --color-gold-bright:  #e5b54f;
-  --color-gold:         #b38b3d;
-  --color-gold-muted:   #8c6d30;
-  --color-gold-dark:    #4a3a1a;
+  --color-gold-bright: #e5b54f;
+  --color-gold: #b38b3d;
+  --color-gold-muted: #8c6d30;
+  --color-gold-dark: #4a3a1a;
 
   /* 血紅系 (古典風格：深奧紅) */
-  --color-red-bright:   #c43232;
-  --color-red:          #7a1a1a;
-  --color-red-muted:    #4d1212;
-  --color-red-dark:     #2d0a0a;
+  --color-red-bright: #c43232;
+  --color-red: #7a1a1a;
+  --color-red-muted: #4d1212;
+  --color-red-dark: #2d0a0a;
 
   /* 傳統藍 (古典風格：普魯士藍) */
-  --color-blue-bright:  #4a89c4;
-  --color-blue:         #2a5a8a;
-  --color-blue-muted:   #1a3a5a;
+  --color-blue-bright: #4a89c4;
+  --color-blue: #2a5a8a;
+  --color-blue-muted: #1a3a5a;
 
   /* 文字 */
   --color-text-primary: #d4c8b0;
   --color-text-secondary: #9a8a6d;
-  --color-text-muted:   #7a6a4d;
-  --color-text-bright:  #f4ecd8;
+  --color-text-muted: #7a6a4d;
+  --color-text-bright: #f4ecd8;
 
   /* 角色類型顏色 (古典色偏) */
-  --color-townsfolk:    #3e7bb3;
-  --color-outsider:     #7a52aa;
-  --color-minion:       #a83e3e;
-  --color-demon:        #c42020;
-  --color-traveler:     #4ac49a;
-  --color-fabled:       #d4a840;
+  --color-townsfolk: #3e7bb3;
+  --color-outsider: #7a52aa;
+  --color-minion: #a83e3e;
+  --color-demon: #c42020;
+  --color-traveler: #4ac49a;
+  --color-fabled: #d4a840;
 
   /* 邊框 */
-  --border-token:       1px solid rgba(201, 168, 76, 0.4);
-  --border-panel:       1px solid rgba(201, 168, 76, 0.2);
+  --border-token: 1px solid rgba(201, 168, 76, 0.4);
+  --border-panel: 1px solid rgba(201, 168, 76, 0.2);
 
   /* 陰影 */
-  --shadow-token:       0 8px 16px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255,255,255,0.4);
-  --shadow-token-glow:  0 0 15px rgba(201, 168, 76, 0.3);
-  --shadow-panel:       0 20px 60px rgba(0, 0, 0, 0.9);
-  --shadow-dead:        0 8px 24px rgba(0, 0, 0, 0.9), inset 0 0 30px rgba(0,0,0,0.6);
+  --shadow-token: 0 8px 16px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  --shadow-token-glow: 0 0 15px rgba(201, 168, 76, 0.3);
+  --shadow-panel: 0 20px 60px rgba(0, 0, 0, 0.9);
+  --shadow-dead: 0 8px 24px rgba(0, 0, 0, 0.9), inset 0 0 30px rgba(0, 0, 0, 0.6);
 
   /* 圓角 */
-  --radius-token:       50%;
-  --radius-panel:       12px;
-  --radius-button:      8px;
-  --radius-small:       4px;
+  --radius-token: 50%;
+  --radius-panel: 12px;
+  --radius-button: 8px;
+  --radius-small: 4px;
 
   /* 字型 */
-  --font-title:         'Cinzel', serif;
-  --font-body:          'Noto Sans TC', sans-serif;
+  --font-title: 'Cinzel', serif;
+  --font-body: 'Noto Sans TC', sans-serif;
 
   /* 間距 */
-  --spacing-xs:         4px;
-  --spacing-sm:         8px;
-  --spacing-md:         16px;
-  --spacing-lg:         24px;
-  --spacing-xl:         32px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
 
   /* 動畫 */
-  --transition-fast:    0.15s ease;
-  --transition-mid:     0.3s ease;
-  --transition-slow:    0.6s ease;
+  --transition-fast: 0.15s ease;
+  --transition-mid: 0.3s ease;
+  --transition-slow: 0.6s ease;
 }
 
 /* ─── 重置與基礎 ─────────────────────────────────────────────── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -167,7 +170,8 @@ button:disabled {
   cursor: not-allowed !important;
   opacity: 0.5;
   filter: grayscale(0.9);
-  pointer-events: none; /* 確保徹底無法觸發點擊 */
+  pointer-events: none;
+  /* 確保徹底無法觸發點擊 */
 }
 
 /* 針對不同按鈕的細微調整 */
@@ -176,14 +180,16 @@ button:disabled {
 }
 
 .btn-danger:disabled {
-  background: #444; /* 徹底灰掉紅色 */
+  background: #444;
+  /* 徹底灰掉紅色 */
   border-color: #555;
   color: #888;
 }
 
 /* ─── 面板容器 ──────────────────────────────────────────────── */
 .panel {
-  background: var(--color-bg-surface); /* 移除半透明與模糊 */
+  background: var(--color-bg-surface);
+  /* 移除半透明與模糊 */
   border: 1px solid var(--color-gold-muted);
   border-radius: var(--radius-panel);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
@@ -252,7 +258,9 @@ button:disabled {
 }
 
 /* ─── 輸入框 ─────────────────────────────────────────────────── */
-input[type="text"], input[type="search"], textarea {
+input[type="text"],
+input[type="search"],
+textarea {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(201, 168, 76, 0.3);
   border-radius: var(--radius-button);
@@ -265,7 +273,8 @@ input[type="text"], input[type="search"], textarea {
   transition: border-color var(--transition-fast);
 }
 
-input[type="text"]:focus, input[type="search"]:focus {
+input[type="text"]:focus,
+input[type="search"]:focus {
   border-color: var(--color-gold);
   background: rgba(201, 168, 76, 0.05);
 }
@@ -273,7 +282,7 @@ input[type="text"]:focus, input[type="search"]:focus {
 /* ─── 分隔線 ─────────────────────────────────────────────────── */
 .divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.3), transparent);
   margin: var(--spacing-md) 0;
 }
 
@@ -298,33 +307,75 @@ input[type="text"]:focus, input[type="search"]:focus {
 
 /* ─── 動畫關鍵幀 ─────────────────────────────────────────────── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.6; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
 }
 
 @keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(201, 168, 76, 0.3); }
-  50%       { box-shadow: 0 0 20px rgba(201, 168, 76, 0.7); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(201, 168, 76, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(201, 168, 76, 0.7);
+  }
 }
 
 @keyframes deathDrop {
-  from { transform: translateY(-100%) rotate(-10deg); opacity: 0; }
-  to   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  from {
+    transform: translateY(-100%) rotate(-10deg);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
 }
 
 @keyframes moonRise {
-  from { opacity: 0; transform: translateY(20px) scale(0.9); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .animate-in {
@@ -339,7 +390,8 @@ input[type="text"]:focus, input[type="search"]:focus {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85); /* 增加不透明度 */
+  background: rgba(0, 0, 0, 0.85);
+  /* 增加不透明度 */
   z-index: 100;
   display: flex;
   align-items: center;
@@ -363,11 +415,51 @@ input[type="text"]:focus, input[type="search"]:focus {
 }
 
 /* ─── 響應式輔助 ─────────────────────────────────────────────── */
-.hidden { display: none !important; }
+.hidden {
+  display: none !important;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
   overflow: hidden;
-  clip: rect(0,0,0,0);
+  clip: rect(0, 0, 0, 0);
+}
+
+/* 📱 手機端高解析度自動縮放優化 */
+@media (max-width: 768px) {
+  :root {
+    /* 提升基礎字型大小，讓 rem 單位自動放大 */
+    font-size: 18px;
+  }
+
+  /* 放大標題與主要文字 */
+  .center-script-name {
+    font-size: 24px;
+    letter-spacing: 3px;
+  }
+
+  .empty-title {
+    font-size: 28px;
+  }
+
+  .empty-sub {
+    font-size: 16px;
+  }
+
+  /* 擴大狀態列點擊區域與文字 */
+  .status-inner {
+    height: 54px;
+  }
+
+  .stat-num {
+    font-size: 16px;
+  }
+
+  /* 讓魔典中心的圖示也稍微放大 */
+  .center-logo-img {
+    width: 90px;
+    height: 90px;
+  }
 }

@@ -212,14 +212,23 @@ export const useGameStore = defineStore('game', () => {
     await syncState(gs)
   }
 
+  async function revertPhase() {
+    const gs = await callCommand<GameState>('revert_phase')
+    await syncState(gs)
+  }
+
   async function setPhase(phase: GamePhase) {
     const gs = await callCommand<GameState>('set_phase', { phase })
     await syncState(gs)
   }
 
-  // 投票與提名
   async function nominate(nominatorId: string, nomineeId: string) {
     const gs = await callCommand<GameState>('nominate', { nominatorId, nomineeId })
+    await syncState(gs)
+  }
+
+  async function editNomination(nominationIndex: number, newNominatorId: string, newNomineeId: string) {
+    const gs = await callCommand<GameState>('edit_nomination', { nominationIndex, newNominatorId, newNomineeId })
     await syncState(gs)
   }
 
@@ -264,8 +273,8 @@ export const useGameStore = defineStore('game', () => {
     assignRole, setDemonBluff, bulkAssignRoles,
     addReminder, removeReminder, updateReminder,
     killPlayer, revivePlayer, toggleAlive, toggleGhostVote, toggleCanNominate, useGhostVote,
-    advancePhase, setPhase,
-    nominate, vote, execute, undoExecution,
+    advancePhase, revertPhase, setPhase,
+    nominate, editNomination, vote, execute, undoExecution,
     exportState, importState, importCustomScript,
   }
 })

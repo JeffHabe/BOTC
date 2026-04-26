@@ -103,42 +103,16 @@ const SYSTEM_ACTIONS: any[] = [
   }
 ]
 
-/**
- * 前端排序權重 (針對暗流湧動劇本進行視圖層優化)
- */
-const TROUBLE_BREWING_ORDER = {
-  first: {
-    'poisoner': 3, 'washerwoman': 4, 'librarian': 5, 'investigator': 6,
-    'chef': 7, 'empath': 8, 'fortuneteller': 9, 'butler': 10, 'spy': 11
-  },
-  other: {
-    'poisoner': 1, 'monk': 2, 'scarlet_woman': 3, 'imp': 4, 'ravenkeeper': 5,
-    'empath': 6, 'fortuneteller': 7, 'butler': 8, 'undertaker': 9, 'spy': 10
-  }
-}
 
 const currentOrder = computed(() => {
   const isFirst = activeTab.value === 'first'
   
-  // 1. 獲取基礎清單 (劇本中所有有順序的角色)
-  let baseOrder = [...(isFirst ? gameStore.firstNightOrder : gameStore.otherNightOrder)]
-
   // 2. 過濾已上場的角色
   const inPlayRoleIds = new Set(gameStore.players.map(p => p.role?.id).filter(Boolean))
+  let baseOrder = [...(isFirst ? gameStore.firstNightOrder : gameStore.otherNightOrder)]
   baseOrder = baseOrder.filter(char => inPlayRoleIds.has(char.id))
 
-  // 3. 排序優化 (針對暗流湧動進行排序優化)
-  const isTB = gameStore.script?.id === 'trouble_brewing'
-  if (isTB) {
-    const weights = isFirst ? TROUBLE_BREWING_ORDER.first : TROUBLE_BREWING_ORDER.other
-    baseOrder.sort((a, b) => {
-      const wa = (weights as any)[a.id] || 999
-      const wb = (weights as any)[b.id] || 999
-      return wa - wb
-    })
-  }
-
-  // 4. 首夜添加系統步驟 (任何劇本首夜皆顯示)
+  // 3. 首夜添加系統步驟 (任何劇本首夜皆顯示)
   if (isFirst) {
     return [...SYSTEM_ACTIONS, ...baseOrder]
   }

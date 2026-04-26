@@ -61,6 +61,16 @@
           <span class="settings-arrow">›</span>
         </button>
 
+        <!-- 自定義角色庫 -->
+        <button class="settings-item" @click="openCharacterEditor">
+          <span class="settings-icon">📝</span>
+          <div class="settings-info">
+            <div class="settings-label">自定義角色庫</div>
+            <div class="settings-sub">管理本地角色自訂資料庫</div>
+          </div>
+          <span class="settings-arrow">›</span>
+        </button>
+
         <!-- 階段推進 -->
         <button class="settings-item" @click="advance">
           <span class="settings-icon">⌛</span>
@@ -174,6 +184,10 @@ function openPlayerOrder() {
 
 function openAssignment() {
   uiStore.openPanel('role-assignment')
+}
+
+function openCharacterEditor() {
+  uiStore.openPanel('character-editor')
 }
 
 async function advance() {

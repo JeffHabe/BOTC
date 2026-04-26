@@ -3,23 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
 import GrimoireBoard from './components/GrimoireBoard.vue'
-import { useGameStore } from './stores/gameStore'
-import { useScriptStore, OFFICIAL_SCRIPTS } from './stores/scriptStore'
-
-const gameStore = useGameStore()
-const scriptStore = useScriptStore()
-
-onMounted(async () => {
-  // 載入遊戲狀態
-  await gameStore.loadState()
-
-  // 初始化選擇劇本，預設使用第一個官方劇本
-  if (!gameStore.script || (gameStore.script.id === 'custom' && gameStore.script.characters.length === 0)) {
-    await scriptStore.selectScript(OFFICIAL_SCRIPTS[0])
-  }
-})
 </script>
 
 <style>

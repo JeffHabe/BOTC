@@ -42,9 +42,11 @@ pub fn run() {
             commands::toggle_can_nominate,
             // 遊戲階段
             commands::advance_phase,
+            commands::revert_phase,
             commands::set_phase,
             // 投票
             commands::nominate,
+            commands::edit_nomination,
             commands::vote,
             commands::execute,
             commands::undo_execution,

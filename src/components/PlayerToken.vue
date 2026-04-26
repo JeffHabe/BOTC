@@ -15,7 +15,7 @@
     @click="handleClick"
   >
     <!-- 背景光暈 -->
-    <div v-if="renderedPart === 'all' || renderedPart === 'body'" class="token-glow" :class="player.role?.role_type.toLowerCase()" />
+    <div v-if="renderedPart === 'all' || renderedPart === 'body'" class="token-glow" :class="uiStore.isRolesHidden ? 'hidden-role' : player.role?.role_type.toLowerCase()" />
 
     <!-- 玩家令片主體 -->
     <div v-if="renderedPart === 'all' || renderedPart === 'body'" class="token-body classic">
@@ -27,15 +27,16 @@
       <!-- 核心圓形令片 (羊皮紙質感) -->
       <div class="token-canvas">
         <!-- 角色圖示 -->
-        <div class="role-icon-classic" :class="player.role?.role_type.toLowerCase()">
-          <img v-if="player.role?.image" :src="player.role.image" :alt="player.role.name" class="role-img" />
+        <div class="role-icon-classic" :class="uiStore.isRolesHidden ? 'hidden-role' : player.role?.role_type.toLowerCase()">
+          <span v-if="player.role && uiStore.isRolesHidden" class="role-emoji">❓</span>
+          <img v-else-if="player.role?.image" :src="player.role.image" :alt="player.role.name" class="role-img" />
           <span v-else-if="player.role" class="role-emoji">{{ roleEmoji }}</span>
           <!-- 移除預設人頭，以展示自定義背景 -->
         </div>
       </div>
 
       <!-- 角色名稱標籤 -->
-      <div v-if="player.role" class="role-label-box" :class="player.role.role_type.toLowerCase()">
+      <div v-if="player.role && !uiStore.isRolesHidden" class="role-label-box" :class="player.role.role_type.toLowerCase()">
         {{ player.role.name }}
       </div>
 
@@ -208,6 +209,7 @@ function getReminderIcon(text: string) {
 .token-glow.outsider  { background: #49c5b6; }
 .token-glow.minion    { background: #e87070; }
 .token-glow.demon     { background: #8b1a1a; }
+.token-glow.hidden-role { background: #888; }
 
 .player-token:hover .token-glow { opacity: 0.3; }
 

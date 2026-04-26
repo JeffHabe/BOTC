@@ -23,12 +23,12 @@
     <!-- 玩家令片容器 (矩形環狀佈局) -->
     <div class="tokens-fixed-area">
       <!-- 中央劇本標誌 -->
-      <div class="center-logo-box" @click="uiStore.openPanel('script-selector')">
+      <div class="center-logo-box" @click="uiStore.openPanel('role-assignment')">
         <div class="center-logo-inner">
           <img v-if="gameStore.script?.logo" :src="gameStore.script.logo" class="center-logo-img" />
           <span v-else class="center-logo-icon">📖</span>
         </div>
-        <div class="center-script-name">{{ gameStore.script?.name || '選擇劇本' }}</div>
+        <div class="center-script-name">{{ uiStore.activePoolPresetName || gameStore.script?.name || '選擇劇本' }}</div>
       </div>
 
       <!-- 玩家令片 (絕對定位) -->
@@ -94,9 +94,18 @@
       <span class="icon">➕</span>
     </button>
 
-    <button class="menu-btn" @click="uiStore.openPanel('settings')">
-      <span class="icon">⚙️</span>
-    </button>
+    <div class="side-action-group">
+      <button class="menu-btn" @click="uiStore.openPanel('settings')">
+        <span class="icon">⚙️</span>
+      </button>
+
+      <button class="privacy-btn" :class="{ 'is-active': uiStore.isRolesHidden }" @click="uiStore.toggleRolesHidden()" :title="uiStore.isRolesHidden ? '顯示角色' : '隱藏角色'">
+        <div class="privacy-icon-wrapper">
+          <span class="icon">👁️</span>
+          <span v-if="uiStore.isRolesHidden" class="ban-icon">🚫</span>
+        </div>
+      </button>
+    </div>
 
     <!-- 面板層 -->
     <transition name="fade">
@@ -194,7 +203,7 @@ import SettingsPanel from './SettingsPanel.vue'
 import VotingPanel from './VotingPanel.vue'
 import NightOrder from './NightOrder.vue'
 import CharacterSheet from './CharacterSheet.vue'
-import ScriptSelector from './ScriptSelector.vue'
+import CharacterEditorPanel from './CharacterEditorPanel.vue'
 import PlayerOrderPanel from './PlayerOrderPanel.vue'
 import RoleAssignmentPanel from './RoleAssignmentPanel.vue'
 import StatusBar from './StatusBar.vue'
@@ -211,6 +220,7 @@ const uiStore = useUIStore()
 const scriptStore = useScriptStore()
 
 onMounted(async () => {
+  await scriptStore.loadCharacters()
   await gameStore.loadState()
   // 如果目前沒有劇本，預設選擇第一項（全角色大全）
   if (!gameStore.script && scriptStore.allScripts.length > 0) {
@@ -335,7 +345,7 @@ const activePanelComponent = computed(() => {
     case 'voting': return VotingPanel
     case 'night-order': return NightOrder
     case 'character-sheet': return CharacterSheet
-    case 'script-selector': return ScriptSelector
+    case 'character-editor': return CharacterEditorPanel
     case 'player-order': return PlayerOrderPanel
     case 'role-assignment': return RoleAssignmentPanel
     default: return null
@@ -716,7 +726,7 @@ function starStyle(i: number) {
    ───────────────────────────────────────────────────────────────────────── */
 .add-player-btn {
   position: fixed;
-  bottom: 50px;
+  bottom: 65px;
   left: 24px;
   width: 52px;
   height: 52px;
@@ -731,10 +741,17 @@ function starStyle(i: number) {
   box-shadow: 0 6px 16px rgba(0,0,0,0.4);
 }
 
-.menu-btn {
+.side-action-group {
   position: fixed;
-  top: 120px; /* 從 100px 調低至 140px */
+  top: calc(50px + env(safe-area-inset-top, 0px) + 10px);
   right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 50;
+}
+
+.menu-btn, .privacy-btn {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -744,8 +761,34 @@ function starStyle(i: number) {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+}
+
+.privacy-btn.is-active {
+  background: rgba(244, 67, 54, 0.15);
+  border-color: rgba(244, 67, 54, 0.5);
+  box-shadow: 0 0 15px rgba(244, 67, 54, 0.2);
+}
+
+.privacy-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.ban-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -55%);
+  font-size: 24px;
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 .panel-overlay-mask {

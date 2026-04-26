@@ -9,7 +9,6 @@
         <button class="close-btn" @click="uiStore.closeRolePicker()">✕</button>
       </div>
 
-      <!-- 搜索與過濾 -->
       <div class="picker-search">
         <input 
           v-model="scriptStore.searchQuery" 
@@ -17,15 +16,20 @@
           class="search-input"
           ref="searchInput"
         />
-        <div class="type-filters">
-          <button 
-            v-for="t in filterOptions" 
-            :key="t.value"
-            class="filter-btn"
-            :class="{ active: scriptStore.filterType === t.value }"
-            @click="scriptStore.filterType = t.value"
-          >
-            {{ t.label }}
+        <div class="filter-row">
+          <div class="type-filters">
+            <button 
+              v-for="t in filterOptions" 
+              :key="t.value"
+              class="filter-btn"
+              :class="{ active: scriptStore.filterType === t.value }"
+              @click="scriptStore.filterType = t.value"
+            >
+              {{ t.label }}
+            </button>
+          </div>
+          <button class="pool-toggle-btn" :class="{ 'is-active': showAllRoles }" @click="showAllRoles = !showAllRoles">
+            {{ showAllRoles ? '☑️ 顯示全部' : '◻️ 僅限池內' }}
           </button>
         </div>
       </div>
@@ -41,7 +45,7 @@
         </button>
 
         <button 
-          v-for="char in scriptStore.filteredCharacters" 
+          v-for="char in displayedCharacters" 
           :key="char.id"
           class="role-item"
           :class="[
@@ -92,6 +96,16 @@ const title = computed(() => {
     return `設定惡魔虛張角色 #${uiStore.rolePickerDemonBluffIndex + 1}`
   }
   return '選擇角色'
+})
+
+const showAllRoles = ref(false)
+
+const displayedCharacters = computed(() => {
+  const all = scriptStore.filteredCharacters
+  if (showAllRoles.value) return all
+  
+  const excluded = new Set(uiStore.excludedPoolIds)
+  return all.filter(c => !excluded.has(c.id))
 })
 
 const filterOptions: { label: string, value: RoleType | 'All' }[] = [
@@ -222,10 +236,36 @@ async function selectRole(char: CharacterDef | null) {
   outline: none;
 }
 
+.filter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
 .type-filters {
   display: flex;
   gap: 8px;
   overflow-x: auto;
+  flex: 1;
+}
+
+.pool-toggle-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--color-text-muted);
+  border-radius: 14px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.pool-toggle-btn.is-active {
+  background: rgba(201,168,76,0.15);
+  border-color: var(--color-gold);
+  color: var(--color-gold);
 }
 
 .filter-btn {

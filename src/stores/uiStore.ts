@@ -1,13 +1,13 @@
 // UI Store ：管理頁面面板、彈窗與點選菜單狀態
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import type { Player } from '../types'
 
 export type Panel =
   | 'none'
   | 'night-order'
   | 'character-sheet'
-  | 'script-selector'
+  | 'character-editor'
   | 'script-import'
   | 'voting'
   | 'settings'
@@ -143,9 +143,40 @@ export const useUIStore = defineStore('ui', () => {
     confirmDialog.value = null
   }
 
-  const isBluffsExpanded = ref(true)
+  const isBluffsExpanded = ref(false)
   const isBluffsShowcase = ref(false)
   const isSingleRoleShowcase = ref(false)
+
+  // --- 角色池與劇本預設標籤 ---
+  const activePoolPresetId = ref(localStorage.getItem('botc-pool-id') || '')
+  const activePoolPresetName = ref(localStorage.getItem('botc-pool-name') || '')
+  
+  let initialExcluded: string[] = []
+  try {
+    const saved = localStorage.getItem('botc-pool-excluded')
+    if (saved) initialExcluded = JSON.parse(saved)
+  } catch (e) {}
+  const excludedPoolIds = ref<string[]>(initialExcluded)
+
+  watch(activePoolPresetId, (val) => {
+    if (val) localStorage.setItem('botc-pool-id', val)
+    else localStorage.removeItem('botc-pool-id')
+  })
+
+  watch(activePoolPresetName, (val) => {
+    if (val) localStorage.setItem('botc-pool-name', val)
+    else localStorage.removeItem('botc-pool-name')
+  })
+
+  watch(excludedPoolIds, (val) => {
+    localStorage.setItem('botc-pool-excluded', JSON.stringify(val))
+  }, { deep: true })
+
+  // --- 隱私模式 (隱藏所有角色) ---
+  const isRolesHidden = ref(false)
+  function toggleRolesHidden() {
+    isRolesHidden.value = !isRolesHidden.value
+  }
 
   return {
     // 面板
@@ -168,6 +199,10 @@ export const useUIStore = defineStore('ui', () => {
     activeNominationIndex, nominationNominatorId, nominationNomineeId,
     openVotingDetail, closeVotingDetail, startNomination,
     // 確認框
-    confirmDialog, showConfirm, closeConfirm
+    confirmDialog, showConfirm, closeConfirm,
+    // 角色池
+    activePoolPresetId, activePoolPresetName, excludedPoolIds,
+    // 隱私模式
+    isRolesHidden, toggleRolesHidden
   }
 })

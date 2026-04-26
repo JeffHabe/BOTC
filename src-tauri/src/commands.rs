@@ -369,6 +369,29 @@ pub fn advance_phase(state: State<AppState>) -> GameState {
     gs.clone()
 }
 
+#[tauri::command]
+pub fn revert_phase(state: State<AppState>) -> GameState {
+    let mut gs = state.0.lock().unwrap();
+    gs.phase = match gs.phase {
+        GamePhase::Setup => GamePhase::Setup,
+        GamePhase::FirstNight => {
+            gs.round = 0;
+            GamePhase::Setup
+        }
+        GamePhase::Day => {
+            if gs.round <= 1 {
+                GamePhase::FirstNight
+            } else {
+                gs.round -= 1;
+                GamePhase::Night
+            }
+        }
+        GamePhase::Night => GamePhase::Day,
+    };
+    gs.touch();
+    gs.clone()
+}
+
 /// 直接設定遊戲階段
 #[tauri::command]
 pub fn set_phase(phase: GamePhase, state: State<AppState>) -> GameState {
@@ -425,6 +448,96 @@ pub fn nominate(nominator_id: String, nominee_id: String, state: State<AppState>
     }
     if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominee_id) {
         p.is_nominated = true;
+    }
+
+    gs.touch();
+    Ok(gs.clone())
+}
+
+/// 修改提名
+#[tauri::command]
+pub fn edit_nomination(
+    nomination_index: usize, 
+    new_nominator_id: String, 
+    new_nominee_id: String, 
+    state: State<AppState>
+) -> Result<GameState, String> {
+    let mut gs = state.0.lock().unwrap();
+
+    let current_round = gs.round;
+    
+    // 取得舊的提名者與被提名者 ID，並檢查是否合法
+    let old_nominator_id;
+    let old_nominee_id;
+
+    {
+        let nom = gs.nominations.get(nomination_index).ok_or("找不到指定提名")?;
+        if nom.executed {
+            return Err("已執行的提名無法修改".into());
+        }
+        if nom.round != current_round {
+            return Err("只能修改當日的提名".into());
+        }
+        old_nominator_id = nom.nominator_id.clone();
+        old_nominee_id = nom.nominee_id.clone();
+    }
+
+    // 暫時釋放舊的狀態
+    if let Some(p) = gs.players.iter_mut().find(|p| p.id == old_nominator_id) {
+        p.can_nominate = true;
+    }
+    if let Some(p) = gs.players.iter_mut().find(|p| p.id == old_nominee_id) {
+        p.is_nominated = false;
+    }
+
+    // 驗證新狀態
+    let mut valid = true;
+    let mut err_msg = "";
+
+    // 1. 驗證提名者
+    if let Some(nominator) = gs.players.iter().find(|p| p.id == new_nominator_id) {
+        if !nominator.is_alive {
+            valid = false; err_msg = "死亡玩家無法發起提名";
+        } else if !nominator.can_nominate {
+            valid = false; err_msg = "該提名者今日已發起過提名";
+        }
+    } else {
+        valid = false; err_msg = "找不到提名者";
+    }
+
+    // 2. 驗證被提名者
+    if valid {
+        if let Some(nominee) = gs.players.iter().find(|p| p.id == new_nominee_id) {
+            if nominee.is_nominated {
+                valid = false; err_msg = "該被提名者今日已被提名過";
+            }
+        } else {
+            valid = false; err_msg = "找不到被提名者";
+        }
+    }
+
+    // 如果驗證失敗，還原舊狀態並報錯
+    if !valid {
+        if let Some(p) = gs.players.iter_mut().find(|p| p.id == old_nominator_id) {
+            p.can_nominate = false;
+        }
+        if let Some(p) = gs.players.iter_mut().find(|p| p.id == old_nominee_id) {
+            p.is_nominated = true;
+        }
+        return Err(err_msg.into());
+    }
+
+    // 套用新狀態
+    if let Some(p) = gs.players.iter_mut().find(|p| p.id == new_nominator_id) {
+        p.can_nominate = false;
+    }
+    if let Some(p) = gs.players.iter_mut().find(|p| p.id == new_nominee_id) {
+        p.is_nominated = true;
+    }
+
+    if let Some(nom) = gs.nominations.get_mut(nomination_index) {
+        nom.nominator_id = new_nominator_id;
+        nom.nominee_id = new_nominee_id;
     }
 
     gs.touch();
@@ -644,6 +757,18 @@ pub fn import_custom_script(json_str: String, state: State<AppState>) -> Result<
                 }
             }
             
+            let first_night_reminder = val.get("firstNightReminder").and_then(|v| v.as_str()).map(|s| s.to_string());
+            let other_night_reminder = val.get("otherNightReminder").and_then(|v| v.as_str()).map(|s| s.to_string());
+            
+            let mut conflicts = Vec::new();
+            if let Some(confs) = val.get("conflicts").and_then(|v| v.as_array()) {
+                for c in confs {
+                    if let Ok(rule) = serde_json::from_value(c.clone()) {
+                        conflicts.push(rule);
+                    }
+                }
+            }
+            
             characters.push(CharacterDef {
                 id,
                 name,
@@ -656,6 +781,9 @@ pub fn import_custom_script(json_str: String, state: State<AppState>) -> Result<
                 reminders,
                 setup,
                 image,
+                first_night_reminder,
+                other_night_reminder,
+                conflicts,
             });
         }
         script.characters = characters;

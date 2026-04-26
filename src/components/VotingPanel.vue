@@ -56,12 +56,46 @@
           @click="toggleExpand(index)"
         >
           <div class="nom-header">
-            <div class="nom-names">
-              <span class="nom-round-tag">第 {{ nom.round }} 輪</span>
-              {{ playerName(nom.nominator_id) }} 提名了 {{ playerName(nom.nominee_id) }}
-            </div>
-            <div class="nom-score" :class="{ 'score-pass': nom.votes_for.length >= nom.threshold }">
-              {{ nom.votes_for.length }} / {{ nom.threshold }} 票
+            <!-- 一般檢視模式 -->
+            <template v-if="editingNomIndex !== index">
+              <div class="nom-names">
+                <span class="nom-round-tag">第 {{ nom.round }} 輪</span>
+                {{ playerName(nom.nominator_id) }} 提名了 {{ playerName(nom.nominee_id) }}
+                
+                <button 
+                  v-if="!nom.executed && nom.round === currentRound" 
+                  class="btn-edit-nom" 
+                  @click.stop="startEditNomination(index)"
+                  title="修改提名"
+                >
+                  ✍️
+                </button>
+              </div>
+              <div class="nom-score" :class="{ 'score-pass': nom.votes_for.length >= nom.threshold }">
+                {{ nom.votes_for.length }} / {{ nom.threshold }} 票
+              </div>
+            </template>
+
+            <!-- 編輯模式 -->
+            <div class="nom-edit-form" v-else @click.stop>
+              <div class="edit-row">
+                <select v-model="editNominatorId" class="player-select mini">
+                  <option v-for="p in availableNominatorsForEdit" :key="p.id" :value="p.id">
+                    {{ pIndex(p.id) }}. {{ p.name }}
+                  </option>
+                </select>
+                <span class="nominate-arrow">提名</span>
+                <select v-model="editNomineeId" class="player-select mini">
+                  <option v-for="p in availableNomineesForEdit" :key="p.id" :value="p.id">
+                    {{ pIndex(p.id) }}. {{ p.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="edit-actions">
+                <button class="btn-primary mini-btn" @click="saveEditNomination">儲存</button>
+                <button class="btn-danger mini-btn" @click="cancelEditNomination">取消</button>
+              </div>
+              <div v-if="editError" class="edit-error">{{ editError }}</div>
             </div>
           </div>
 
@@ -140,6 +174,12 @@ const nominations = computed(() => gameStore.nominations)
 
 const expandedNoms = ref(new Set<number>())
 
+// 編輯模式狀態
+const editingNomIndex = ref<number | null>(null)
+const editNominatorId = ref('')
+const editNomineeId = ref('')
+const editError = ref('')
+
 function toggleExpand(index: number) {
   const nom = nominations.value[index]
   if (nom.executed || nom.round !== currentRound.value) {
@@ -200,6 +240,53 @@ function playerName(id: string) {
   const idx = all.findIndex(p => p.id === id)
   if (idx === -1) return '未知'
   return `${idx + 1}. ${all[idx].name}`
+}
+
+function pIndex(id: string) {
+  return gameStore.players.findIndex(p => p.id === id) + 1
+}
+
+const availableNominatorsForEdit = computed(() => {
+  if (editingNomIndex.value === null) return []
+  const currentNom = nominations.value[editingNomIndex.value]
+  return gameStore.players.filter(p => 
+    p.is_alive && (p.can_nominate || p.id === currentNom.nominator_id)
+  )
+})
+
+const availableNomineesForEdit = computed(() => {
+  if (editingNomIndex.value === null) return []
+  const currentNom = nominations.value[editingNomIndex.value]
+  return gameStore.players.filter(p => 
+    !p.is_nominated || p.id === currentNom.nominee_id
+  )
+})
+
+function startEditNomination(index: number) {
+  const nom = nominations.value[index]
+  editingNomIndex.value = index
+  editNominatorId.value = nom.nominator_id
+  editNomineeId.value = nom.nominee_id
+  editError.value = ''
+}
+
+function cancelEditNomination() {
+  editingNomIndex.value = null
+  editError.value = ''
+}
+
+async function saveEditNomination() {
+  if (editingNomIndex.value === null) return
+  if (!editNominatorId.value || !editNomineeId.value) {
+    editError.value = '請選擇提名人與被提名人'
+    return
+  }
+  await gameStore.editNomination(editingNomIndex.value, editNominatorId.value, editNomineeId.value)
+  if (gameStore.error) {
+    editError.value = gameStore.error
+  } else {
+    editingNomIndex.value = null
+  }
 }
 
 async function doNominate() {
@@ -380,6 +467,62 @@ async function doUndoExecute(nomIndex: number) {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap; /* 允許換行以免過長 */
+}
+
+.btn-edit-nom {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+  opacity: 0.7;
+}
+
+.btn-edit-nom:hover {
+  background: rgba(255,255,255,0.1);
+  opacity: 1;
+}
+
+.nom-edit-form {
+  width: 100%;
+  background: rgba(0,0,0,0.15);
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px dashed rgba(201,168,76,0.3);
+}
+
+.edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.player-select.mini {
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.mini-btn {
+  padding: 4px 12px;
+  font-size: 11px;
+  border-radius: 6px;
+}
+
+.edit-error {
+  color: #ff5252;
+  font-size: 11px;
+  margin-top: 6px;
+  text-align: right;
 }
 
 .nom-round-tag {

@@ -65,6 +65,18 @@ pub struct CharacterDef {
     pub reminders: Vec<String>, // 提供的提醒令牌文字
     pub setup: bool,            // 是否在準備階段使用
     pub image: Option<String>,  // 圖片路徑或 URL
+    pub first_night_reminder: Option<String>,
+    pub other_night_reminder: Option<String>,
+    #[serde(default)]
+    pub conflicts: Vec<ConflictRule>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConflictRule {
+    pub target: Option<String>,
+    #[serde(rename = "charB")]
+    pub char_b: Option<String>,
+    pub desc: Option<String>,
 }
 
 // ─── 玩家令牌 ─────────────────────────────────────────────────
