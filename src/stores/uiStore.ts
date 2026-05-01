@@ -180,7 +180,7 @@ export const useUIStore = defineStore('ui', () => {
 
   // --- 倒數計時器 (Timer) ---
   const timerRemaining = ref(0) // 剩餘秒數
-  const timerTotal = ref(300) // 預設 5 分鐘
+  const timerTotal = ref(0) // 預設 0 分鐘
   const isTimerRunning = ref(false)
   const isTimerExpanded = ref(false)
   const timerTargetTimestamp = ref<number | null>(null) // 結束的時間戳記

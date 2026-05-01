@@ -86,7 +86,12 @@
           
           <div class="search-bar-assignment">
             <span class="search-icon">🔍</span>
-            <input v-model="searchQuery" placeholder="搜尋角色名稱..." class="search-input-assignment" />
+            <input 
+              v-model="searchQuery" 
+              placeholder="搜尋角色名稱..." 
+              class="search-input-assignment" 
+              @keyup.enter="handleSearchEnter"
+            />
             <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
           </div>
           
@@ -185,7 +190,7 @@
               v-model="searchQuery" 
               placeholder="快速搜尋角色..." 
               class="search-input-assignment" 
-              @keyup.enter="($event.target as HTMLInputElement).blur()"
+              @keyup.enter="handleSearchEnter"
             />
             <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
           </div>
@@ -205,6 +210,7 @@
               <div class="role-grid">
                 <div v-for="role in group.list" 
                      :key="role.id" 
+                     :id="'role-item-' + role.id"
                      class="role-card"
                      :class="{ 'is-selected': isRoleSelected(role.id) }"
                      @click="toggleRoleSelection(role)"
@@ -252,6 +258,7 @@
               <div class="role-grid">
                 <div v-for="role in availableDrunkFakes" 
                      :key="role.id" 
+                     :id="'role-item-' + role.id"
                      class="role-card"
                      :class="{ 'is-selected': drunkFakeRoleId === role.id }"
                      @click="selectDrunkFake(role.id)">
@@ -282,7 +289,12 @@
 
           <div class="search-bar-assignment">
             <span class="search-icon">🔍</span>
-            <input v-model="searchQuery" placeholder="搜尋虛張角色..." class="search-input-assignment" />
+            <input 
+              v-model="searchQuery" 
+              placeholder="搜尋虛張角色..." 
+              class="search-input-assignment" 
+              @keyup.enter="handleSearchEnter"
+            />
             <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
           </div>
 
@@ -300,6 +312,7 @@
                 <!-- 只顯示未被選為玩家角色的村民 -->
                 <div v-for="role in availableBluffPool" 
                      :key="role.id" 
+                     :id="'role-item-' + role.id"
                      class="role-card"
                      :class="{ 'is-selected': isBluffSelected(role.id) }"
                      @click="toggleBluffSelection(role.id)"
@@ -440,7 +453,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, watch } from 'vue'
+import { ref, computed, reactive, onMounted, watch, nextTick } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 import { useScriptStore } from '../stores/scriptStore'
@@ -796,6 +809,58 @@ function goToSelect() {
   selectedRoleIds.value = []
   drunkFakeRoleId.value = null
   step.value = 'select'
+}
+
+/**
+ * 處理搜尋框按下 Enter：跳轉到第一個符合條件的角色
+ */
+function handleSearchEnter() {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return
+
+  let targetId: string | null = null
+
+  // 1. 找到第一個匹配的角色 ID
+  if (step.value === 'pool') {
+    for (const group of fullGroupedCharacters.value) {
+      if (group.list.length > 0) {
+        targetId = group.list[0].id
+        break
+      }
+    }
+  } else if (step.value === 'select') {
+    for (const group of groupedCharacters.value) {
+      if (group.list.length > 0) {
+        targetId = group.list[0].id
+        break
+      }
+    }
+  } else if (step.value === 'drunk') {
+    if (availableDrunkFakes.value.length > 0) {
+      targetId = availableDrunkFakes.value[0].id
+    }
+  } else if (step.value === 'bluff') {
+    if (availableBluffPool.value.length > 0) {
+      targetId = availableBluffPool.value[0].id
+    }
+  }
+
+  if (targetId) {
+    const finalId = targetId
+    // 2. 先清空搜尋，恢復完整列表
+    searchQuery.value = ''
+    
+    // 3. 等待 DOM 更新後捲動到目標
+    nextTick(() => {
+      const el = document.getElementById('role-item-' + finalId)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        // 4. 加入一個暫時的閃爍效果
+        el.classList.add('jump-highlight')
+        setTimeout(() => el.classList.remove('jump-highlight'), 2000)
+      }
+    })
+  }
 }
 
 function handleSelectNext() {
@@ -1773,6 +1838,16 @@ function getRoleTypeEmoji(type: string) {
 }
 
 .result-header { font-size: 14px; color: var(--color-text-muted); margin-bottom: 24px; text-transform: uppercase; letter-spacing: 2px; }
+.role-card.jump-highlight {
+  animation: jump-blink 1s ease-in-out infinite;
+  box-shadow: 0 0 20px var(--color-gold);
+  z-index: 10;
+}
+
+@keyframes jump-blink {
+  0%, 100% { border-color: rgba(201, 168, 76, 0.3); transform: scale(1); }
+  50% { border-color: var(--color-gold); transform: scale(1.05); background: rgba(201, 168, 76, 0.2); }
+}
 
 .result-token-wrapper {
   position: relative;

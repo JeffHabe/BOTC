@@ -1,7 +1,11 @@
 <template>
   <div 
     class="grimoire-board" 
-    :class="{ 'is-night': gameStore.isNight, 'is-dragging': isDragging }"
+    :class="{ 
+      'is-night': gameStore.isNight, 
+      'is-dragging': isDragging,
+      'panel-open': uiStore.activePanel !== 'none' || uiStore.reminderPickerPlayerId !== null || uiStore.isRolePickerOpen
+    }"
     @mousedown="handleMouseDown"
     @touchstart="handleMouseDown"
   >
@@ -125,18 +129,19 @@
         <span class="icon">{{ layoutIcon }}</span>
       </button>
 
-      <!-- 縮放按鈕 -->
-      <div class="zoom-controls-side">
-        <button class="side-action-btn" @click="uiStore.zoomIn()" title="放大">
-          <span class="icon">➕</span>
-        </button>
-        <button class="side-action-btn" @click="uiStore.resetZoom()" title="重置縮放">
-          <span class="icon" style="font-size: 10px;">{{ Math.round(uiStore.grimoireScale * 100) }}%</span>
-        </button>
-        <button class="side-action-btn" @click="uiStore.zoomOut()" title="縮小">
-          <span class="icon">➖</span>
-        </button>
-      </div>
+    </div>
+    
+    <!-- 縮放按鈕 (底部中央水平排列) -->
+    <div class="zoom-controls-bottom">
+      <button class="side-action-btn" @click="uiStore.zoomOut()" title="縮小">
+        <span class="icon">➖</span>
+      </button>
+      <button class="side-action-btn reset-btn" @click="uiStore.resetZoom()" title="重置縮放">
+        <span class="percentage">{{ Math.round(uiStore.grimoireScale * 100) }}%</span>
+      </button>
+      <button class="side-action-btn" @click="uiStore.zoomIn()" title="放大">
+        <span class="icon">➕</span>
+      </button>
     </div>
 
     <!-- 面板層 -->
@@ -315,11 +320,24 @@ const startPos = { x: 0, y: 0 }
 const startTranslate = { x: 0, y: 0 }
 
 function handleMouseDown(e: MouseEvent | TouchEvent) {
-  // 如果點擊的是令片或按鈕，則不觸發拖拽
+  // 核心修正：如果「任何」面板正在開啟中，禁止拖拽背景
+  // 判斷：activePanel(設定/劇本)、reminderPicker(提示)、rolePicker(選角色)、selectedPlayer(底部控制台)
+  if (
+    uiStore.activePanel !== 'none' || 
+    uiStore.reminderPickerPlayerId !== null || 
+    uiStore.isRolePickerOpen || 
+    uiStore.selectedPlayerId !== null
+  ) {
+    return
+  }
+
+  // 額外保險：如果點擊到了特定組件的範圍，也不觸發拖拽
   if ((e.target as HTMLElement).closest('.token-wrapper') || 
       (e.target as HTMLElement).closest('button') || 
       (e.target as HTMLElement).closest('.bluffs-drawer') ||
-      (e.target as HTMLElement).closest('.panel-overlay-mask')) return
+      (e.target as HTMLElement).closest('.panel-overlay-mask') ||
+      (e.target as HTMLElement).closest('.overlay') || // ReminderPicker 的外層
+      (e.target as HTMLElement).closest('.control-sheet')) return
 
   isDragging.value = true
   const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
@@ -930,25 +948,59 @@ function starStyle(i: number) {
   position: fixed;
   top: calc(70px + env(safe-area-inset-top, 0px));
   right: 16px;
-  display: flex;
-  flex-direction: column;
   gap: 12px;
-  z-index: 1000;
+  z-index: 900; /* 降低層級，確保在面板 (1500+) 之下 */
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.zoom-controls-side {
+/* 當有面板開啟時，隱藏右上角的功能按鈕，避免干擾 */
+.panel-open .side-action-group {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(20px);
+}
+
+.zoom-controls-bottom {
+  position: fixed;
+  bottom: 35px; /* 貼近底部，最大限度留出魔典空間 */
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  background: rgba(42, 27, 21, 0.4);
-  padding: 6px;
-  border-radius: 25px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px; /* 縮減間距 */
+  background: rgba(42, 27, 21, 0.5);
+  padding: 4px 10px; /* 縮減內邊距 */
+  border-radius: 20px;
   border: 1px solid rgba(141, 110, 99, 0.3);
-  backdrop-filter: blur(8px);
-  margin-top: 4px;
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  transition: all 0.3s ease;
 }
 
-.menu-btn, .privacy-btn, .side-action-btn.layout-toggle-side, .zoom-controls-side .side-action-btn {
+/* 當有面板打開時隱藏，避免視覺擁擠 */
+.panel-open .zoom-controls-bottom {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.zoom-controls-bottom .side-action-btn {
+  width: 32px; /* 縮小按鈕 */
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(42, 27, 21, 0.85);
+  border: 1px solid #8d6e63;
+  color: #f4e4bc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+}
+
+.menu-btn, .privacy-btn, .side-action-btn.layout-toggle-side {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -963,7 +1015,18 @@ function starStyle(i: number) {
   cursor: pointer;
 }
 
-.menu-btn:hover, .privacy-btn:hover, .side-action-btn.layout-toggle-side:hover, .zoom-controls-side .side-action-btn:hover {
+.zoom-controls-bottom .reset-btn {
+  width: 46px; /* 同步縮小寬度 */
+  border-radius: 12px;
+}
+
+.zoom-controls-bottom .percentage {
+  font-size: 10px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+}
+
+.menu-btn:hover, .privacy-btn:hover, .side-action-btn.layout-toggle-side:hover, .zoom-controls-bottom .side-action-btn:hover {
   background: #b38b3d;
   color: #1a1b23;
   transform: scale(1.1);

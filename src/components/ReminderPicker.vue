@@ -203,19 +203,18 @@ async function quickAdd(text: string) {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
-  z-index: 250;
+  z-index: 2000; /* 提高層級，確保在所有 UI 之上 */
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0 0 8px;
 }
 
 .reminder-panel {
   width: 100%;
-  max-width: 400px;
-  background: #1a1b23; /* 確保不透明 */
-  border: var(--border-panel);
-  border-radius: 20px 20px 12px 12px;
+  /* 移除 max-width 以達到滿版效果 */
+  background: #1a1b23;
+  border-top: 2px solid rgba(201, 168, 76, 0.4); /* 頂部金邊 */
+  border-radius: 20px 20px 0 0; /* 僅保留頂部圓角 */
   overflow: hidden;
   box-shadow: var(--shadow-panel);
   display: flex;
