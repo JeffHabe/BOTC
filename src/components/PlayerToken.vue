@@ -236,6 +236,11 @@ function getReminderIcon(text: string) {
   transform: scale(1.04);
 }
 
+.is-dead .token-body.classic {
+  filter: grayscale(0.0) brightness(1.0);
+  opacity: 1.0;
+}
+
 .name-label-box {
   position: absolute;
   top: -12px;
@@ -312,24 +317,24 @@ function getReminderIcon(text: string) {
   top: 50%;
   left: -15%;
   right: -15%;
-  height: 22px;
-  background: linear-gradient(90deg, transparent 5%, rgba(139, 26, 26, 0.9) 20%, rgba(139, 26, 26, 0.9) 80%, transparent 95%);
-  border-top: 1px solid rgba(255,255,255,0.1);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  height: 15px;
+  background: linear-gradient(90deg, transparent 10%, rgba(139, 26, 26, 0.55) 20%, rgba(139, 26, 26, 0.55) 80%, transparent 95%);
+  border-top: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
   transform: translateY(-50%) rotate(-18deg);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 5;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .ribbon-text {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 800;
   color: #fff;
-  letter-spacing: 4px;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  letter-spacing: 3px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
 }
 
 .reminders-classic-container {
