@@ -13,16 +13,27 @@
           v-model="scriptStore.searchQuery" 
           placeholder="搜索角色名稱或能力..." 
           class="search-input"
+          @keyup.enter="($event.target as HTMLInputElement).blur()"
         />
-        <div class="filter-tabs">
+        <div class="filter-row">
+          <div class="filter-tabs">
+            <button 
+              v-for="type in filterOptions" 
+              :key="type.value"
+              class="filter-tag"
+              :class="{ active: scriptStore.filterType === type.value }"
+              @click="scriptStore.filterType = type.value"
+            >
+              {{ type.label }}
+            </button>
+          </div>
           <button 
-            v-for="type in filterOptions" 
-            :key="type.value"
-            class="filter-tag"
-            :class="{ active: scriptStore.filterType === type.value }"
-            @click="scriptStore.filterType = type.value"
+            class="pool-toggle-btn" 
+            :class="{ 'is-active': showAllRoles }" 
+            @click="showAllRoles = !showAllRoles"
+            title="切換顯示全部劇本或僅限本局角色池"
           >
-            {{ type.label }}
+            {{ showAllRoles ? '☑️ 全部劇本' : '◻️ 僅限池內' }}
           </button>
         </div>
       </div>
@@ -56,8 +67,9 @@
           <div class="card-body">
             <p class="char-ability">{{ char.ability }}</p>
             <div v-if="char.conflicts && char.conflicts.length > 0" class="char-conflicts">
-              <div v-for="(rule, idx) in char.conflicts" :key="idx" class="conflict-badge">
-                ⚔️ vs {{ getCharacterName(rule.target || rule.charB) }}
+              <div v-for="(rule, idx) in char.conflicts" :key="idx" class="conflict-item">
+                <div class="conflict-badge">⚔️ vs {{ getCharacterName(rule.target || rule.charB) }}</div>
+                <div v-if="rule.desc" class="conflict-desc">{{ rule.desc }}</div>
               </div>
             </div>
           </div>
@@ -68,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
 import { ROLE_TYPE_LABEL, type RoleType } from '../types'
@@ -76,7 +88,15 @@ import { ROLE_TYPE_LABEL, type RoleType } from '../types'
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
 
-const characters = computed(() => scriptStore.filteredCharacters)
+const showAllRoles = ref(false)
+
+const characters = computed(() => {
+  const all = scriptStore.filteredCharacters
+  if (showAllRoles.value) return all
+  
+  const excluded = new Set(uiStore.excludedPoolIds)
+  return all.filter(c => !excluded.has(c.id))
+})
 
 const filterOptions: { label: string, value: RoleType | 'All' }[] = [
   { label: '全部', value: 'All' },
@@ -163,11 +183,38 @@ function getCharacterName(id?: string) {
   outline: none;
 }
 
+.filter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
 .filter-tabs {
   display: flex;
   gap: 6px;
   overflow-x: auto;
   padding-bottom: 4px;
+  flex: 1;
+}
+
+.pool-toggle-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--color-text-muted);
+  border-radius: 14px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.pool-toggle-btn.is-active {
+  background: rgba(201,168,76,0.15);
+  border-color: var(--color-gold);
+  color: var(--color-gold);
 }
 
 .filter-tag {
@@ -249,21 +296,31 @@ function getCharacterName(id?: string) {
 }
 
 .char-conflicts {
-  margin-top: 8px;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+}
+
+.conflict-item {
+  background: rgba(229, 115, 115, 0.05);
+  border: 1px solid rgba(229, 115, 115, 0.15);
+  border-radius: 8px;
+  padding: 6px 10px;
 }
 
 .conflict-badge {
   font-size: 11px;
   color: #e57373;
-  background: rgba(229, 115, 115, 0.1);
-  border: 1px solid rgba(229, 115, 115, 0.2);
-  padding: 3px 8px;
-  border-radius: 4px;
-  width: fit-content;
-  white-space: nowrap;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.conflict-desc {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  font-style: italic;
 }
 
 .empty-state {

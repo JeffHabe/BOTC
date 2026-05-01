@@ -178,6 +178,51 @@ export const useUIStore = defineStore('ui', () => {
     isRolesHidden.value = !isRolesHidden.value
   }
 
+  // --- 倒數計時器 (Timer) ---
+  const timerRemaining = ref(0) // 剩餘秒數
+  const timerTotal = ref(300) // 預設 5 分鐘
+  const isTimerRunning = ref(false)
+  const isTimerExpanded = ref(false)
+  let timerInterval: number | null = null
+
+  function startTimer() {
+    if (timerRemaining.value <= 0) return
+    if (!isTimerRunning.value) {
+      isTimerRunning.value = true
+      timerInterval = window.setInterval(() => {
+        if (timerRemaining.value > 0) {
+          timerRemaining.value--
+        } else {
+          pauseTimer()
+        }
+      }, 1000)
+    }
+  }
+
+  function pauseTimer() {
+    isTimerRunning.value = false
+    if (timerInterval) {
+      clearInterval(timerInterval)
+      timerInterval = null
+    }
+  }
+
+  function resetTimer() {
+    pauseTimer()
+    timerRemaining.value = 0
+    timerTotal.value = 0
+  }
+
+  function addTimerSeconds(seconds: number) {
+    timerTotal.value = Math.max(0, timerTotal.value + seconds)
+    // 如果計時器未啟動或已歸零，則同步更新剩餘時間
+    if (!isTimerRunning.value) {
+      timerRemaining.value = timerTotal.value
+    } else {
+      timerRemaining.value = Math.max(0, timerRemaining.value + seconds)
+    }
+  }
+
   return {
     // 面板
     activePanel, openPanel, closePanel, togglePanel,
@@ -203,6 +248,9 @@ export const useUIStore = defineStore('ui', () => {
     // 角色池
     activePoolPresetId, activePoolPresetName, excludedPoolIds,
     // 隱私模式
-    isRolesHidden, toggleRolesHidden
+    isRolesHidden, toggleRolesHidden,
+    // 計時器
+    timerRemaining, timerTotal, isTimerRunning, isTimerExpanded,
+    startTimer, pauseTimer, resetTimer, addTimerSeconds
   }
 })

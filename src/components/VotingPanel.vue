@@ -43,6 +43,19 @@
       <!-- 提名列表 -->
       <div class="nominations-list">
         <div class="section-title">提名記錄 (第 {{ currentRound }} 輪)</div>
+
+        <!-- 邪惡勢力統計 (僅說書人可見，若隱藏角色則不顯示) -->
+        <div class="evil-stats-bar" v-if="!uiStore.isRolesHidden && nominations.length > 0">
+          <div class="stat-box">
+            <span class="label">🔱 爪牙提名:</span>
+            <span class="value">{{ evilStats.minionNoms }}</span>
+          </div>
+          <div class="stat-divider">|</div>
+          <div class="stat-box">
+            <span class="label">👹 惡魔投票:</span>
+            <span class="value">{{ evilStats.demonVotes }}</span>
+          </div>
+        </div>
         
         <div v-if="nominations.length === 0" class="empty-nominations">
           今日尚未有任何提名
@@ -60,7 +73,9 @@
             <template v-if="editingNomIndex !== index">
               <div class="nom-names">
                 <span class="nom-round-tag">第 {{ nom.round }} 輪</span>
-                {{ playerName(nom.nominator_id) }} 提名了 {{ playerName(nom.nominee_id) }}
+                <span :style="{ color: getPlayerColor(nom.nominator_id) }">{{ playerName(nom.nominator_id) }}</span> 
+                <span class="nom-verb">提名了</span> 
+                <span :style="{ color: getPlayerColor(nom.nominee_id) }">{{ playerName(nom.nominee_id) }}</span>
                 
                 <button 
                   v-if="!nom.executed && nom.round === currentRound" 
@@ -142,7 +157,11 @@
           
           <div class="nom-history-badge" v-if="nom.executed || nom.round < currentRound || expandedNoms.has(index)">
             <div class="vote-summary" v-if="nom.votes_for.length > 0">
-              贊成者 ({{ nom.votes_for.length }}位): {{ nom.votes_for.map(playerName).join(', ') }}
+              贊成者 ({{ nom.votes_for.length }}位): 
+              <span v-for="(vId, vIdx) in nom.votes_for" :key="vId" class="voter-item">
+                <span :style="{ color: getPlayerColor(vId) }">{{ playerName(vId) }}</span>
+                <span v-if="vIdx < nom.votes_for.length - 1" class="voter-sep">, </span>
+              </span>
             </div>
             <div class="vote-summary" v-else>今日無人投贊成票</div>
           </div>
@@ -156,6 +175,7 @@
 import { computed, ref } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
+import { ROLE_TYPE_COLOR } from '../types'
 
 const gameStore = useGameStore()
 const uiStore = useUIStore()
@@ -235,11 +255,46 @@ const notYetNominated = computed(() =>
   gameStore.players.filter(p => !p.is_nominated)
 )
 
+function isMinion(id: string) {
+  const p = gameStore.players.find(p => p.id === id)
+  if (!p || !p.role) return false
+  return p.role.role_type === 'Minion'
+}
+
+function isDemon(id: string) {
+  const p = gameStore.players.find(p => p.id === id)
+  if (!p || !p.role) return false
+  return p.role.role_type === 'Demon'
+}
+
+const evilStats = computed(() => {
+  const todayNoms = nominations.value.filter(n => n.round === currentRound.value)
+  
+  // 僅計算爪牙發起的提名次數
+  const minionNoms = todayNoms.filter(n => isMinion(n.nominator_id)).length
+  
+  // 僅計算惡魔在今日所有投票中投出的總票數
+  let demonVotes = 0
+  todayNoms.forEach(n => {
+    n.votes_for.forEach(vId => {
+      if (isDemon(vId)) demonVotes++
+    })
+  })
+  
+  return { minionNoms, demonVotes }
+})
+
 function playerName(id: string) {
   const all = gameStore.players
   const idx = all.findIndex(p => p.id === id)
   if (idx === -1) return '未知'
   return `${idx + 1}. ${all[idx].name}`
+}
+
+function getPlayerColor(id: string) {
+  const p = gameStore.players.find(p => p.id === id)
+  if (!p || !p.role || uiStore.isRolesHidden) return 'var(--color-text-primary)'
+  return ROLE_TYPE_COLOR[p.role.role_type] || 'var(--color-text-primary)'
 }
 
 function pIndex(id: string) {
@@ -431,6 +486,39 @@ async function doUndoExecute(nomIndex: number) {
   padding: 12px 16px;
 }
 
+.evil-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(224, 32, 32, 0.1);
+  border: 1px solid rgba(224, 32, 32, 0.2);
+  padding: 6px 12px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+
+.evil-stats-bar .stat-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.evil-stats-bar .label {
+  color: #f1948a;
+  font-weight: 500;
+}
+
+.evil-stats-bar .value {
+  color: #fff;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.evil-stats-bar .stat-divider {
+  color: rgba(255,255,255,0.1);
+}
+
 .nomination-card {
   background: var(--color-bg-elevated);
   border: 1px solid rgba(255,255,255,0.08);
@@ -461,13 +549,19 @@ async function doUndoExecute(nomIndex: number) {
 }
 
 .nom-names {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-text-primary);
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap; /* 允許換行以免過長 */
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.nom-verb {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: normal;
 }
 
 .btn-edit-nom {
@@ -642,10 +736,25 @@ async function doUndoExecute(nomIndex: number) {
 }
 
 .nom-history-badge {
-  padding: 8px;
-  background: rgba(0,0,0,0.1);
-  border-radius: 6px;
-  font-size: 11px;
+  padding: 10px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
+  font-size: 12px;
   color: var(--color-text-muted);
+  margin-top: 8px;
+}
+
+.vote-summary {
+  line-height: 1.6;
+}
+
+.voter-item {
+  display: inline-block;
+}
+
+.voter-sep {
+  color: var(--color-text-muted);
+  margin-right: 4px;
 }
 </style>

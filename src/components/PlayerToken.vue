@@ -24,20 +24,19 @@
         <span class="seat-num">{{ index + 1 }}</span> {{ player.name }}
       </div>
 
-      <!-- 核心圓形令片 (羊皮紙質感) -->
-      <div class="token-canvas">
+      <!-- 核心圓形令片內部 (圖示與角色名) -->
+      <div class="token-inner-content">
         <!-- 角色圖示 -->
-        <div class="role-icon-classic" :class="uiStore.isRolesHidden ? 'hidden-role' : player.role?.role_type.toLowerCase()">
-          <span v-if="player.role && uiStore.isRolesHidden" class="role-emoji">❓</span>
-          <img v-else-if="player.role?.image" :src="player.role.image" :alt="player.role.name" class="role-img" />
-          <span v-else-if="player.role" class="role-emoji">{{ roleEmoji }}</span>
-          <!-- 移除預設人頭，以展示自定義背景 -->
+        <div class="role-icon-inner" :class="uiStore.isRolesHidden ? 'hidden-role' : player.role?.role_type.toLowerCase()">
+          <!-- 隱藏模式時完全留白，不渲染任何圖示 -->
+          <img v-if="player.role?.image && !uiStore.isRolesHidden" :src="player.role.image" :alt="player.role.name" class="role-img" />
+          <span v-else-if="player.role && !uiStore.isRolesHidden" class="role-emoji">{{ roleEmoji }}</span>
         </div>
-      </div>
-
-      <!-- 角色名稱標籤 -->
-      <div v-if="player.role && !uiStore.isRolesHidden" class="role-label-box" :class="player.role.role_type.toLowerCase()">
-        {{ player.role.name }}
+        
+        <!-- 角色名稱 -->
+        <div v-if="player.role && !uiStore.isRolesHidden" class="role-name-inner">
+          {{ player.role.name }}
+        </div>
       </div>
 
       <!-- 死亡緞帶 (絲綢風格 繁體/簡體) -->
@@ -264,20 +263,24 @@ function getReminderIcon(text: string) {
   opacity: 0.9;
 }
 
-.token-canvas {
-  width: 65%;
-  height: 65%;
+.token-inner-content {
+  width: 76%;
+  height: 76%;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  padding-bottom: 2px;
 }
 
-.role-icon-classic {
+.role-icon-inner {
+  flex: 1;
   width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 0;
+  margin-bottom: -4px;
 }
 
 .role-img {
@@ -288,25 +291,20 @@ function getReminderIcon(text: string) {
 }
 
 .role-emoji, .role-placeholder {
-  font-size: 48px;
+  font-size: 44px;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
-.role-label-box {
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--color-label-bg);
-  color: #fff;
-  padding: 1px 12px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 700;
+.role-name-inner {
+  font-size: 11.5px;
+  font-weight: 900;
+  color: #1a1b23;
+  letter-spacing: 1.5px;
+  text-align: center;
   white-space: nowrap;
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.6);
-  z-index: 10;
+  font-family: var(--font-title), sans-serif;
+  text-shadow: 0 1px 3px rgba(255,255,255,0.8);
+  transform: scale(0.95);
 }
 
 .death-ribbon {
@@ -407,15 +405,7 @@ function getReminderIcon(text: string) {
   transform: scale(1.2);
 }
 
-.role-name-inner.townsfolk { color: var(--color-townsfolk); }
-.role-name-inner.outsider  { color: var(--color-outsider); }
-.role-name-inner.minion    { color: var(--color-minion); }
-.role-name-inner.demon     { color: var(--color-demon); }
 
-.role-name.townsfolk { color: var(--color-townsfolk); }
-.role-name.outsider  { color: var(--color-outsider); }
-.role-name.minion    { color: var(--color-minion); }
-.role-name.demon     { color: var(--color-demon); }
 
 .status-indicators {
   position: absolute;

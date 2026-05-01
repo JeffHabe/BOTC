@@ -4,7 +4,7 @@
       <div class="panel-header">
         <span class="panel-icon">🎲</span>
         <h2 class="panel-title">{{ panelTitle }}</h2>
-        <div class="step-indicator">Step {{ currentStepNum }} / 4</div>
+        <div class="step-indicator">Step {{ currentStepNum }} / 6</div>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
 
@@ -21,19 +21,47 @@
             </button>
           </div>
 
-          <div class="preset-manager">
-            <div class="preset-label">角色池預設：</div>
-            <div class="preset-controls">
-              <select v-model="activePresetId" class="preset-select" @change="e => {
-                const p = currentScriptPresets.find(p => p.id === (e.target as HTMLSelectElement).value);
-                if (p) applyPreset(p);
-              }">
-                <option value="">-- 選擇預設 --</option>
-                <option v-for="p in currentScriptPresets" :key="p.id" :value="p.id">{{ p.name }}</option>
-              </select>
-              <button v-if="activePresetId" class="btn-icon" @click="updatePreset" title="儲存變更">💾</button>
-              <button class="btn-icon" @click="showSaveModal = true" title="另存新檔">📁</button>
-              <button v-if="activePresetId" class="btn-icon text-danger" @click="deletePreset(activePresetId)" title="刪除預設">🗑️</button>
+          <div class="collapsible-header" @click="isPresetExpanded = !isPresetExpanded">
+            <span class="header-text">📋 角色池配置 & 預設</span>
+            <span class="header-toggle">{{ isPresetExpanded ? '收起 ▲' : '展開 ▼' }}</span>
+          </div>
+
+          <div v-if="isPresetExpanded" class="collapsible-body animate-slide-down">
+            <div class="info-banner">
+              <span class="info-icon">ℹ️</span>
+              <span><strong>角色池：</strong> 勾選的角色將參與隨機分派。未勾選的角色將被排除。</span>
+            </div>
+
+            <div class="preset-manager">
+              <div class="preset-label">角色池預設：</div>
+              <div class="preset-controls">
+                <select v-model="activePresetId" class="preset-select" @change="e => {
+                  const p = currentScriptPresets.find(p => p.id === (e.target as HTMLSelectElement).value);
+                  if (p) applyPreset(p);
+                }">
+                  <option value="">-- 選擇預設 --</option>
+                  <option v-for="p in currentScriptPresets" :key="p.id" :value="p.id">{{ p.name }}</option>
+                </select>
+                <div class="preset-actions">
+                  <button v-if="activePresetId" class="btn-icon" @click="updatePreset" title="儲存變更">💾</button>
+                  <button class="btn-icon" @click="showSaveModal = true" title="另存新檔">📁</button>
+                  <button v-if="activePresetId" class="btn-icon" @click="exportPreset(activePresetId)" title="匯出預設 (複製)">📤</button>
+                  <button class="btn-icon" @click="showImportModal = true" title="匯入預設">📥</button>
+                  <button v-if="activePresetId" class="btn-icon text-danger" @click="deletePreset(activePresetId)" title="刪除預設">🗑️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 匯入預設模態框 -->
+          <div v-if="showImportModal" class="mini-modal">
+            <div class="modal-content">
+              <h4>匯入角色池配置</h4>
+              <textarea v-model="importString" placeholder="請貼上匯出代碼..." class="import-textarea"></textarea>
+              <div class="modal-btns">
+                <button @click="showImportModal = false">取消</button>
+                <button class="primary" @click="handleImport">確認匯入</button>
+              </div>
             </div>
           </div>
 
@@ -145,15 +173,20 @@
             <button 
               class="btn-primary btn-xs" 
               :disabled="!isSelectionComplete"
-              @click="step = 'bluff'"
+              @click="handleSelectNext"
             >
-              選虛張 →
+              下一步 →
             </button>
           </div>
 
           <div class="search-bar-assignment">
             <span class="search-icon">🔍</span>
-            <input v-model="searchQuery" placeholder="快速搜尋角色..." class="search-input-assignment" />
+            <input 
+              v-model="searchQuery" 
+              placeholder="快速搜尋角色..." 
+              class="search-input-assignment" 
+              @keyup.enter="($event.target as HTMLInputElement).blur()"
+            />
             <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
           </div>
 
@@ -174,10 +207,57 @@
                      :key="role.id" 
                      class="role-card"
                      :class="{ 'is-selected': isRoleSelected(role.id) }"
-                     @click="toggleRoleSelection(role)">
+                     @click="toggleRoleSelection(role)"
+                     @touchstart="handlePressStart(role)"
+                     @touchend="handlePressEnd"
+                     @mousedown="handlePressStart(role)"
+                     @mouseup="handlePressEnd">
                   <div class="role-card-icon">
                     <img v-if="role.image" :src="role.image" class="r-img" />
                     <span v-else class="r-emoji">{{ getRoleTypeEmoji(role.role_type) }}</span>
+                  </div>
+                  <div class="role-card-name">{{ role.name }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 步驟 3.5: 酒鬼偽裝選擇 -->
+        <div v-else-if="step === 'drunk'" class="step-drunk">
+          <div class="action-footer top-actions compact">
+            <button class="btn-ghost btn-xs" @click="step = 'select'">← 返回</button>
+            <div class="step-hint">請為酒鬼選擇一個偽裝角色</div>
+            <button class="btn-primary btn-xs" :disabled="!drunkFakeRoleId" @click="step = 'bluff'">
+              下一步 →
+            </button>
+          </div>
+          
+          <div class="search-bar-assignment">
+            <span class="search-icon">🔍</span>
+            <input 
+              v-model="searchQuery" 
+              placeholder="搜尋偽裝角色..." 
+              class="search-input-assignment" 
+              @keyup.enter="($event.target as HTMLInputElement).blur()"
+            />
+          </div>
+
+          <div class="role-grid-container">
+            <div v-if="availableDrunkFakes.length === 0" class="empty-pool-hint">
+              無可用鎮民角色 (可能已全被選入玩家角色)
+            </div>
+            <div class="role-group">
+              <div class="group-header" style="color: var(--color-townsfolk)">可選鎮民角色 (不在場)</div>
+              <div class="role-grid">
+                <div v-for="role in availableDrunkFakes" 
+                     :key="role.id" 
+                     class="role-card"
+                     :class="{ 'is-selected': drunkFakeRoleId === role.id }"
+                     @click="selectDrunkFake(role.id)">
+                  <div class="role-card-icon">
+                    <img v-if="role.image" :src="role.image" class="r-img" />
+                    <span v-else class="r-emoji">👤</span>
                   </div>
                   <div class="role-card-name">{{ role.name }}</div>
                 </div>
@@ -222,7 +302,11 @@
                      :key="role.id" 
                      class="role-card"
                      :class="{ 'is-selected': isBluffSelected(role.id) }"
-                     @click="toggleBluffSelection(role.id)">
+                     @click="toggleBluffSelection(role.id)"
+                     @touchstart="handlePressStart(role)"
+                     @touchend="handlePressEnd"
+                     @mousedown="handlePressStart(role)"
+                     @mouseup="handlePressEnd">
                   <div class="role-card-icon">
                     <img v-if="role.image" :src="role.image" class="r-img" />
                     <span v-else class="r-emoji">👤</span>
@@ -235,7 +319,7 @@
         </div>
 
         <!-- 步驟 4: 預覽結果 -->
-        <div v-else class="step-preview">
+        <div v-else-if="step === 'preview'" class="step-preview">
           <div class="preview-header">
             <button class="btn-ghost btn-sm" @click="step = 'bluff'">← 返回修改</button>
             <h3 class="preview-title">預覽分配結果</h3>
@@ -262,11 +346,96 @@
 
           <div class="preview-actions">
             <button class="btn-ghost" @click="generatePlan">🎲 重新洗牌</button>
-            <button class="btn-primary" @click="confirmAssignment">✅ 正式指派</button>
+            <button class="btn-secondary" @click="startLottery">🎡 輪盤抽獎模式</button>
+            <button class="btn-primary" @click="confirmAssignment">✅ 直接指派</button>
+          </div>
+        </div>
+
+        <!-- 步驟 5: 輪盤抽獎 -->
+        <div v-else-if="step === 'draw'" class="step-draw">
+          <div class="preview-header">
+            <button class="btn-ghost btn-sm" @click="step = 'preview'">← 返回預覽</button>
+            <h3 class="preview-title">玩家抽取角色</h3>
+          </div>
+
+          <div class="draw-grid">
+            <div v-for="(player, index) in gameStore.players" 
+                 :key="player.id" 
+                 class="draw-player-card"
+                 :class="{ 'is-drawn': drawnPlayerIds.includes(player.id) }"
+                 @click="!drawnPlayerIds.includes(player.id) && openWheel(player.id)">
+              <div class="player-avatar">
+                <span class="player-index-badge">{{ index + 1 }}</span>
+                <span class="avatar-icon">👤</span>
+                <div v-if="drawnPlayerIds.includes(player.id)" class="drawn-check">✅</div>
+              </div>
+              <div class="player-info">
+                <div class="player-name">{{ player.name }}</div>
+                <div v-if="drawnPlayerIds.includes(player.id)" class="drawn-status">
+                  已完成抽獎
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="draw-footer" v-if="drawnPlayerIds.length === totalPlayers">
+            <button class="btn-primary confirm-all-btn" @click="finishLottery">查看最終分配結果 →</button>
+          </div>
+
+          <!-- 輪盤動畫 Overlay -->
+          <div v-if="isSpinning || showResultModal || showReadyModal" class="wheel-overlay">
+            <!-- 準備抽獎介面 -->
+            <div v-if="showReadyModal" class="ready-modal animate-scale-up">
+              <div class="ready-header">準備抽取角色</div>
+              <div class="ready-player-name">{{ spinningPlayerName }}</div>
+              <div class="ready-hint">請按下按鈕開始隨機篩選您的命運</div>
+              <button class="btn-primary start-draw-btn" @click="startActualDraw">開始抽獎</button>
+            </div>
+
+            <!-- 全角色閃爍選擇器 -->
+            <div v-if="isSpinning" class="flicker-container">
+              <div class="flicker-grid">
+                <div v-for="role in fullPoolCharacters" 
+                     :key="role.id" 
+                     class="flicker-item"
+                     :class="{ 'is-highlighted': activeFlickerId === role.id }">
+                  <img v-if="role.image" :src="role.image || undefined" class="flicker-token" />
+                  <div v-else class="flicker-placeholder">👤</div>
+                </div>
+              </div>
+              <div class="flicker-scanline"></div>
+              <div class="flicker-status">
+                從 {{ fullPoolCharacters.length }} 個劇本角色中篩選命運...
+              </div>
+              <div class="spinning-text">正在為 {{ spinningPlayerName }} 抽取角色...</div>
+            </div>
+
+            <div v-if="showResultModal" class="result-modal animate-scale-up">
+              <div class="result-header">抽取結果</div>
+              <div class="result-body">
+                <div class="result-token-wrapper">
+                  <div class="token-glow"></div>
+                  <img v-if="getCharacterById(spinningResultId!)?.image" 
+                       :src="getCharacterById(spinningResultId!)?.image || undefined" 
+                       class="result-token-img" />
+                  <span v-else class="result-token-placeholder">👤</span>
+                </div>
+                <div class="result-role-name">{{ getRoleName(spinningResultId!) }}</div>
+                <div class="result-role-desc">您的角色已經準備就緒</div>
+              </div>
+              <button class="btn-primary" @click="closeResult">確認</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 角色詳情彈窗 -->
+    <CharacterDetailOverlay 
+      v-if="longPressChar" 
+      :character="longPressChar" 
+      @close="longPressChar = null" 
+    />
   </div>
 </template>
 
@@ -274,14 +443,17 @@
 import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
+import { useScriptStore } from '../stores/scriptStore'
 import type { CharacterDef } from '../types'
 import { ROLE_TYPE_COLOR } from '../types'
+import CharacterDetailOverlay from './CharacterDetailOverlay.vue'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
+const scriptStore = useScriptStore()
 
 // 狀態管理
-type Step = 'pool' | 'config' | 'select' | 'bluff' | 'preview'
+type Step = 'pool' | 'config' | 'select' | 'drunk' | 'bluff' | 'preview' | 'draw'
 const step = ref<Step>('pool')
 const totalPlayers = computed(() => gameStore.players.length)
 
@@ -303,6 +475,48 @@ interface PoolPreset {
 const poolPresets = ref<PoolPreset[]>([])
 const presetNameInput = ref('')
 const showSaveModal = ref(false)
+const showImportModal = ref(false)
+const importString = ref('')
+const isPresetExpanded = ref(false)
+
+// 抽獎與酒鬼邏輯
+const drunkFakeRoleId = ref<string | null>(null)
+const drawingResults = reactive<Record<string, string>>({}) // player_id -> role_id
+const isSpinning = ref(false)
+const spinningPlayerId = ref<string | null>(null)
+const spinningResultId = ref<string | null>(null)
+const showResultModal = ref(false)
+const showReadyModal = ref(false)
+const activeFlickerId = ref<string | null>(null)
+
+const fullPoolCharacters = computed(() => {
+  if (!gameStore.script) return []
+  const excluded = new Set(excludedPoolIds.value)
+  return gameStore.script.characters.filter(c => !excluded.has(c.id))
+})
+
+const drawnPlayerIds = computed(() => Object.keys(drawingResults))
+
+const hasDrunk = computed(() => selectedRoleIds.value.includes('drunk'))
+
+const lotteryPool = computed(() => {
+  if (!gameStore.script) return []
+  
+  // 基礎池：已選中的角色 ID
+  let ids = [...selectedRoleIds.value]
+  
+  // 如果有酒鬼，將「酒鬼」替換為「偽裝角色」
+  if (hasDrunk.value && drunkFakeRoleId.value) {
+    const drunkIdx = ids.indexOf('drunk')
+    if (drunkIdx > -1) {
+      ids.splice(drunkIdx, 1, drunkFakeRoleId.value)
+    }
+  }
+  
+  // 排除已經被抽走的 ID
+  const drawnRoleIds = Object.values(drawingResults)
+  return ids.filter(id => !drawnRoleIds.includes(id))
+})
 
 const counts = reactive<Record<string, number>>({
   Townsfolk: 0,
@@ -314,6 +528,21 @@ const counts = reactive<Record<string, number>>({
 const selectedRoleIds = ref<string[]>([])
 const selectedBluffIds = ref<string[]>([])
 const searchQuery = ref('') // 新增搜尋關鍵字
+
+// 長按顯示詳情邏輯
+const longPressChar = ref<CharacterDef | null>(null)
+let pressTimer: any = null
+
+function handlePressStart(char: CharacterDef) {
+  clearTimeout(pressTimer)
+  pressTimer = setTimeout(() => {
+    longPressChar.value = char
+  }, 500) // 500ms 觸發長按
+}
+
+function handlePressEnd() {
+  clearTimeout(pressTimer)
+}
 
 // 基礎映射
 const roleTypes = [
@@ -348,13 +577,15 @@ const panelTitle = computed(() => {
     pool: '1. 篩選可用角色池',
     config: '2. 設定人數配比',
     select: '3. 挑選玩家角色',
+    drunk: '3.5 酒鬼偽裝',
     bluff: '4. 挑選惡魔虛張',
-    preview: '5. 最終預覽'
+    preview: '5. 最終預覽',
+    draw: '6. 輪盤抽獎'
   }
   return titles[step.value]
 })
 const currentStepNum = computed(() => {
-  const map: Record<Step, number> = { pool: 1, config: 2, select: 3, bluff: 4, preview: 5 }
+  const map: Record<Step, number> = { pool: 1, config: 2, select: 3, drunk: 3, bluff: 4, preview: 5, draw: 6 }
   return map[step.value]
 })
 
@@ -411,6 +642,59 @@ function deletePreset(id: string) {
   }
 }
 
+function exportPreset(id: string) {
+  const p = poolPresets.value.find(p => p.id === id)
+  if (!p) return
+  
+  // 匯出關鍵資料
+  const exportData = {
+    name: p.name,
+    script_id: p.script_id,
+    excluded_ids: p.excluded_ids
+  }
+  
+  try {
+    // 處理中文編碼
+    const str = btoa(encodeURIComponent(JSON.stringify(exportData)))
+    navigator.clipboard.writeText(str).then(() => {
+      alert('✅ 匯出成功！已將代碼複製到剪貼簿，請分享給其他說書人。')
+    })
+  } catch (e) {
+    alert('❌ 匯出失敗')
+  }
+}
+
+function handleImport() {
+  if (!importString.value.trim()) return
+  
+  try {
+    // 解碼 Base64
+    const jsonStr = decodeURIComponent(atob(importString.value.trim()))
+    const data = JSON.parse(jsonStr)
+    
+    if (!data.excluded_ids || !Array.isArray(data.excluded_ids)) {
+      throw new Error('無效資料格式')
+    }
+
+    const newPreset: PoolPreset = {
+      id: Date.now().toString(),
+      name: (data.name || '匯入配置') + ' (匯入)',
+      script_id: data.script_id || gameStore.script?.id || '',
+      excluded_ids: data.excluded_ids
+    }
+
+    poolPresets.value.push(newPreset)
+    localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
+    
+    importString.value = ''
+    showImportModal.value = false
+    alert('✅ 匯入成功！您可以在預設清單中選取它了。')
+  } catch (e) {
+    console.error(e)
+    alert('❌ 匯入失敗，請確認代碼是否完整且正確。')
+  }
+}
+
 const currentScriptPresets = computed(() => {
   if (!gameStore.script) return []
   return poolPresets.value.filter(p => p.script_id === gameStore.script!.id)
@@ -456,7 +740,7 @@ const availableBluffPool = computed(() => {
   // 虛張從「在池子內」且「未被指派給玩家」的村民與外來者中選擇
   return gameStore.script.characters.filter(c => {
     const isGoodType = c.role_type === 'Townsfolk' || c.role_type === 'Outsider'
-    const isNotUsed = !usedIds.has(c.id) && !excluded.has(c.id) && !c.setup
+    const isNotUsed = !usedIds.has(c.id) && !excluded.has(c.id) && c.id !== drunkFakeRoleId.value
     const matchesQuery = !query || c.name.toLowerCase().includes(query)
     return isGoodType && isNotUsed && matchesQuery
   })
@@ -469,7 +753,7 @@ const validBluffIds = computed(() => {
   
   const pool = gameStore.script.characters.filter(c => {
     const isGoodType = c.role_type === 'Townsfolk' || c.role_type === 'Outsider'
-    const isNotUsed = !usedIds.has(c.id) && !excluded.has(c.id) && !c.setup
+    const isNotUsed = !usedIds.has(c.id) && !excluded.has(c.id) && c.id !== drunkFakeRoleId.value
     return isGoodType && isNotUsed
   })
   return new Set(pool.map(c => c.id))
@@ -481,14 +765,14 @@ watch(validBluffIds, (validSet) => {
 })
 
 function scriptTypeTotal(type: string) {
-  return gameStore.script?.characters.filter(c => c.role_type === type && !c.setup).length || 0
+  return gameStore.script?.characters.filter(c => c.role_type === type).length || 0
 }
 
 function poolTypeCount(type: string) {
   if (!gameStore.script) return 0
   const excluded = new Set(excludedPoolIds.value)
   return gameStore.script.characters.filter(c => 
-    c.role_type === type && !c.setup && !excluded.has(c.id)
+    c.role_type === type && !excluded.has(c.id)
   ).length
 }
 
@@ -510,7 +794,125 @@ function adjustCount(key: string, delta: number) {
 
 function goToSelect() {
   selectedRoleIds.value = []
+  drunkFakeRoleId.value = null
   step.value = 'select'
+}
+
+function handleSelectNext() {
+  searchQuery.value = '' // 切換步驟時清除搜尋內容，避免看不到角色
+  if (hasDrunk.value) {
+    step.value = 'drunk'
+  } else {
+    step.value = 'bluff'
+  }
+}
+
+const availableDrunkFakes = computed(() => {
+  if (!gameStore.script) return []
+  const query = searchQuery.value.toLowerCase()
+  const used = new Set(selectedRoleIds.value)
+  const excluded = new Set(excludedPoolIds.value) // 第一步排除的角色
+  
+  return gameStore.script.characters.filter(c => {
+    // 必須是鎮民，且未被指派給玩家，且必須在第一步的角色池中（未被排除）
+    const isInPool = !excluded.has(c.id)
+    const isGood = c.role_type === 'Townsfolk' && !used.has(c.id) && isInPool
+    const matchesQuery = !query || c.name.toLowerCase().includes(query)
+    return isGood && matchesQuery
+  })
+})
+
+function selectDrunkFake(id: string) {
+  drunkFakeRoleId.value = id
+  step.value = 'bluff'
+}
+
+function startLottery() {
+  // 初始化抽獎狀態
+  for (const key in drawingResults) delete drawingResults[key]
+  step.value = 'draw'
+}
+
+const spinningPlayerName = computed(() => {
+  const p = gameStore.players.find(p => p.id === spinningPlayerId.value)
+  return p ? p.name : ''
+})
+
+function openWheel(playerId: string) {
+  spinningPlayerId.value = playerId
+  showReadyModal.value = true
+}
+
+function startActualDraw() {
+  showReadyModal.value = false
+  isSpinning.value = true
+  
+  // 實際抽取的池子（未被抽走的角色）
+  const pool = lotteryPool.value
+  if (pool.length === 0) return
+
+  const resultId = pool[Math.floor(Math.random() * pool.length)]
+  const allChoices = fullPoolCharacters.value
+  
+  let count = 0
+  const maxFlickers = 25 // 增加閃爍次數
+  const flickerDelay = 70
+
+  const runFlicker = () => {
+    if (count < maxFlickers) {
+      activeFlickerId.value = allChoices[Math.floor(Math.random() * allChoices.length)].id
+      count++
+      setTimeout(runFlicker, flickerDelay)
+    } else {
+      activeFlickerId.value = resultId
+      setTimeout(() => {
+        isSpinning.value = false
+        spinningResultId.value = resultId
+        showResultModal.value = true
+        activeFlickerId.value = null
+      }, 600)
+    }
+  }
+
+  runFlicker()
+}
+
+function closeResult() {
+  if (spinningPlayerId.value && spinningResultId.value) {
+    drawingResults[spinningPlayerId.value] = spinningResultId.value
+  }
+  showResultModal.value = false
+  spinningPlayerId.value = null
+  spinningResultId.value = null
+}
+
+function getRoleName(id: string) {
+  const char = scriptStore.rawCharacterList.find(c => c.id === id)
+  return char ? char.name : id
+}
+
+function getCharacterById(id: string) {
+  return scriptStore.masterScript.characters.find(c => c.id === id)
+}
+
+async function finishLottery() {
+  // 將抽獎結果轉換為實際指派
+  // 注意：如果抽中酒鬼的偽裝角色，實際要指派「酒鬼」給該玩家
+  const finalPlan = gameStore.players.map(p => {
+    let roleId = drawingResults[p.id]
+    
+    // 酒鬼邏輯：如果抽中偽裝角色，則該玩家實際是酒鬼
+    if (hasDrunk.value && roleId === drunkFakeRoleId.value) {
+      roleId = 'drunk'
+    }
+    
+    const char = gameStore.script!.characters.find(c => c.id === roleId)
+    return { player_id: p.id, role: char || null }
+  })
+
+  // 更新預覽列表並跳回預覽頁面
+  previewAssignments.value = finalPlan
+  step.value = 'preview'
 }
 
 function currentTypeCount(type: string) {
@@ -602,7 +1004,7 @@ function autoFillRoles() {
   if (remainingSlots > 0) {
     const excluded = new Set(excludedPoolIds.value)
     const available = script.characters.filter(c => 
-      !c.setup && !isRoleSelected(c.id) && !excluded.has(c.id)
+      !isRoleSelected(c.id) && !excluded.has(c.id)
     )
     const shuffled = [...available].sort(() => Math.random() - 0.5)
     selectedRoleIds.value.push(...shuffled.slice(0, remainingSlots).map(c => c.id))
@@ -651,7 +1053,32 @@ function playerName(id: string) {
 }
 
 async function confirmAssignment() {
-  await gameStore.bulkAssignRoles(previewAssignments.value, previewBluffs.value)
+  if (!gameStore.script) return
+
+  // 為了符合用戶需求：酒鬼要顯示偽裝角色的頭像
+  // 我們在正式指派時，將酒鬼玩家的角色替換為「偽裝角色」
+  // 但會額外加上一個「酒鬼」的提示詞供說書人辨識
+  const assignments = previewAssignments.value.map(a => {
+    if (a.role?.id === 'drunk' && drunkFakeRoleId.value) {
+      const fakeRole = getCharacterById(drunkFakeRoleId.value)
+      return { player_id: a.player_id, role: fakeRole || a.role }
+    }
+    return a
+  })
+
+  await gameStore.bulkAssignRoles(assignments, previewBluffs.value)
+  
+  // 自動添加酒鬼提示詞
+  if (hasDrunk.value && drunkFakeRoleId.value) {
+    const drunkEntry = previewAssignments.value.find(a => a.role?.id === 'drunk')
+    if (drunkEntry) {
+      // 延遲一下確保狀態已同步
+      setTimeout(async () => {
+        await gameStore.addReminder(drunkEntry.player_id, '酒鬼 (Drunk)', 'drunk')
+      }, 500)
+    }
+  }
+
   uiStore.closePanel()
 }
 
@@ -813,6 +1240,34 @@ function getRoleTypeEmoji(type: string) {
   background: rgba(255,255,255,0.1);
 }
 
+/* Collapsible Section */
+.collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.header-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-gold-muted);
+}
+
+.header-toggle {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.collapsible-body {
+  margin-bottom: 20px;
+}
+
 /* Preset Manager */
 .preset-manager {
   display: flex;
@@ -831,7 +1286,12 @@ function getRoleTypeEmoji(type: string) {
 
 .preset-controls {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preset-actions {
+  display: flex;
   gap: 8px;
 }
 
@@ -903,14 +1363,20 @@ function getRoleTypeEmoji(type: string) {
   max-width: 300px;
 }
 .modal-content h4 { margin-top: 0; font-size: 14px; margin-bottom: 16px; color: var(--color-gold); }
-.modal-content input {
+.modal-content input, .mini-modal textarea {
   width: 100%;
   padding: 10px;
-  background: rgba(0,0,0,0.3);
+  background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.1);
   color: white;
   border-radius: 8px;
   margin-bottom: 20px;
+}
+.import-textarea {
+  height: 120px;
+  font-family: monospace;
+  font-size: 11px;
+  resize: none;
 }
 .modal-btns { display: flex; gap: 10px; }
 .modal-btns button { flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 13px; }
@@ -1083,6 +1549,294 @@ function getRoleTypeEmoji(type: string) {
 .divider { display: flex; align-items: center; margin: 16px 0; font-size: 11px; color: var(--color-text-muted); }
 .divider::before, .divider::after { content: ''; flex: 1; border-top: 1px solid rgba(255,255,255,0.08); }
 .divider span { padding: 0 10px; }
+
+/* Lottery Draw Styles */
+.step-draw {
+  padding: 10px;
+}
+
+.draw-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.draw-player-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.draw-player-card:active { transform: scale(0.95); }
+.draw-player-card.is-drawn {
+  background: rgba(46, 204, 113, 0.1);
+  border-color: rgba(46, 204, 113, 0.3);
+  cursor: default;
+}
+
+.player-avatar {
+  width: 50px;
+  height: 50px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.avatar-icon { font-size: 24px; opacity: 0.5; }
+
+.player-index-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  background: var(--color-gold);
+  color: #000;
+  font-size: 10px;
+  font-weight: bold;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.drawn-check {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 16px;
+}
+
+.player-name { font-size: 13px; font-weight: 600; text-align: center; }
+.drawn-status { font-size: 11px; color: var(--color-gold-muted); margin-top: 2px; }
+
+.wheel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wheel-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+}
+
+.flicker-container {
+  width: 90%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+}
+
+.flicker-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  padding: 20px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 24px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  width: 100%;
+  max-height: 60vh;
+  overflow-y: auto;
+  /* 隱藏捲動條但保留功能 */
+  scrollbar-width: none;
+}
+.flicker-grid::-webkit-scrollbar { display: none; }
+
+.flicker-status {
+  font-size: 12px;
+  color: var(--color-gold-muted);
+  margin-top: 10px;
+  letter-spacing: 1px;
+}
+
+.flicker-item {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  opacity: 0.2;
+  transform: scale(0.85);
+  transition: all 0.1s ease-out;
+  background: rgba(255,255,255,0.05);
+}
+
+.flicker-item.is-highlighted {
+  opacity: 1;
+  transform: scale(1.1);
+  box-shadow: 0 0 15px var(--color-gold);
+  background: rgba(212,175,55,0.2);
+  z-index: 10;
+}
+
+.flicker-token {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.flicker-placeholder { font-size: 20px; opacity: 0.5; }
+
+.flicker-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: rgba(212,175,55,0.2);
+  box-shadow: 0 0 10px var(--color-gold);
+  pointer-events: none;
+  animation: scan 3s linear infinite;
+}
+
+@keyframes scan {
+  from { transform: translateY(0); }
+  to { transform: translateY(400px); }
+}
+
+.wheel-spinner {
+  width: 240px;
+  height: 240px;
+  border: 8px solid var(--color-gold);
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #1a1b23;
+}
+
+.wheel-slot {
+  position: absolute;
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  transform-origin: center center;
+  white-space: nowrap;
+}
+
+/* 簡單排列轉盤文字 */
+.wheel-slot:nth-child(1) { transform: rotate(0deg) translateY(-80px); }
+.wheel-slot:nth-child(2) { transform: rotate(45deg) translateY(-80px); }
+.wheel-slot:nth-child(3) { transform: rotate(90deg) translateY(-80px); }
+.wheel-slot:nth-child(4) { transform: rotate(135deg) translateY(-80px); }
+.wheel-slot:nth-child(5) { transform: rotate(180deg) translateY(-80px); }
+.wheel-slot:nth-child(6) { transform: rotate(225deg) translateY(-80px); }
+.wheel-slot:nth-child(7) { transform: rotate(270deg) translateY(-80px); }
+.wheel-slot:nth-child(8) { transform: rotate(315deg) translateY(-80px); }
+
+.wheel-pointer {
+  font-size: 32px;
+  color: var(--color-gold);
+  margin-top: -20px;
+  z-index: 2;
+}
+
+.spinning-text { color: white; font-size: 16px; font-weight: bold; }
+
+.result-modal {
+  background: #1a1b23;
+  padding: 40px 30px;
+  border-radius: 32px;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 50px rgba(0,0,0,0.5), 0 0 20px rgba(212, 175, 55, 0.2);
+  text-align: center;
+  width: 85%;
+  max-width: 340px;
+}
+
+.result-header { font-size: 14px; color: var(--color-text-muted); margin-bottom: 24px; text-transform: uppercase; letter-spacing: 2px; }
+
+.result-token-wrapper {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.token-glow {
+  position: absolute;
+  inset: -10px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.2); opacity: 0.6; }
+}
+
+.result-token-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+  z-index: 2;
+}
+
+.result-token-placeholder {
+  font-size: 60px;
+  opacity: 0.3;
+}
+
+.result-role-name { font-size: 32px; font-weight: bold; color: var(--color-gold); margin-bottom: 12px; }
+.result-role-desc { font-size: 14px; color: #888; margin-bottom: 30px; }
+
+/* Ready Modal Styles */
+.ready-modal {
+  background: #1a1b23;
+  padding: 40px 30px;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  width: 85%;
+  max-width: 340px;
+}
+
+.ready-header { font-size: 14px; color: var(--color-text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px; }
+.ready-player-name { font-size: 28px; font-weight: bold; color: white; margin-bottom: 20px; }
+.ready-hint { font-size: 14px; color: #888; margin-bottom: 32px; line-height: 1.5; }
+.start-draw-btn { width: 100%; padding: 16px; font-size: 18px; letter-spacing: 1px; }
+
+.animate-spin { animation: spin 0.15s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.draw-footer { padding: 20px; }
+.confirm-all-btn { width: 100%; padding: 16px; font-size: 16px; }
+
+.step-drunk { padding: 10px; }
+.step-hint { font-size: 13px; color: var(--color-gold-muted); flex: 1; text-align: center; }
 
 .preview-actions { display: flex; gap: 10px; }
 .preview-actions button { flex: 1; }

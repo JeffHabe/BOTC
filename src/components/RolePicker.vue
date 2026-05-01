@@ -15,6 +15,7 @@
           placeholder="搜索角色..." 
           class="search-input"
           ref="searchInput"
+          @keyup.enter="($event.target as HTMLInputElement).blur()"
         />
         <div class="filter-row">
           <div class="type-filters">
@@ -53,6 +54,10 @@
             { 'is-selected': isSelected(char), 'is-occupied': isOccupied(char) && !isSelected(char) }
           ]"
           @click="selectRole(char)"
+          @touchstart="handlePressStart(char)"
+          @touchend="handlePressEnd"
+          @mousedown="handlePressStart(char)"
+          @mouseup="handlePressEnd"
         >
           <!-- 佔用標記 -->
           <div v-if="isOccupied(char) && !isSelected(char)" class="role-badge-occupied">
@@ -68,6 +73,13 @@
         </button>
       </div>
     </div>
+
+    <!-- 角色詳情彈窗 -->
+    <CharacterDetailOverlay 
+      v-if="longPressChar" 
+      :character="longPressChar" 
+      @close="longPressChar = null" 
+    />
   </div>
 </template>
 
@@ -77,6 +89,7 @@ import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
 import { useGameStore } from '../stores/gameStore'
 import type { CharacterDef, RoleType } from '../types'
+import CharacterDetailOverlay from './CharacterDetailOverlay.vue'
 
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
@@ -99,6 +112,21 @@ const title = computed(() => {
 })
 
 const showAllRoles = ref(false)
+
+// 長按顯示詳情邏輯
+const longPressChar = ref<CharacterDef | null>(null)
+let pressTimer: any = null
+
+function handlePressStart(char: CharacterDef) {
+  clearTimeout(pressTimer)
+  pressTimer = setTimeout(() => {
+    longPressChar.value = char
+  }, 500)
+}
+
+function handlePressEnd() {
+  clearTimeout(pressTimer)
+}
 
 const displayedCharacters = computed(() => {
   const all = scriptStore.filteredCharacters

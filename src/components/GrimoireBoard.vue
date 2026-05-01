@@ -1,6 +1,7 @@
 <template>
   <div class="grimoire-board" :class="{ 'is-night': gameStore.isNight }">
     <StatusBar />
+    <TimerWidget />
 
     <!-- 背景層 -->
     <div class="scene-bg">
@@ -69,14 +70,16 @@
             class="bluff-slot-vertical"
             @click="uiStore.openRolePickerForBluff(idx)"
           >
-            <!-- 角色令片 (應用 token1.png) -->
+            <!-- 角色令片內部設計 -->
             <div v-if="role" class="bluff-token-classic">
-              <div class="bluff-canvas">
-                <img :src="getBluffIcon(role)" class="bluff-img" />
-              </div>
-              <!-- 常駐名稱標籤 -->
-              <div class="bluff-name-label" :class="role.role_type.toLowerCase()">
-                {{ role.name }}
+              <div class="bluff-inner-content">
+                <div class="bluff-canvas-inner">
+                  <img :src="getBluffIcon(role)" class="bluff-img" />
+                </div>
+                <!-- 角色名稱 (內部) -->
+                <div class="bluff-name-inner">
+                  {{ role.name }}
+                </div>
               </div>
             </div>
 
@@ -104,6 +107,11 @@
           <span class="icon">👁️</span>
           <span v-if="uiStore.isRolesHidden" class="ban-icon">🚫</span>
         </div>
+      </button>
+
+      <!-- 遷移過來的佈局控制項 (單獨放置在隱藏按鈕下方) -->
+      <button class="side-action-btn layout-toggle-side" @click="uiStore.cycleReminderLayout()" :title="`佈局: ${layoutLabel}`">
+        <span class="icon">{{ layoutIcon }}</span>
       </button>
     </div>
 
@@ -140,14 +148,18 @@
             :key="idx"
             class="showcase-item"
           >
-            <div v-if="role" class="showcase-token-large">
-              <div class="showcase-canvas">
-                <img :src="getBluffIcon(role)" class="showcase-img" />
+            <template v-if="role">
+              <div class="showcase-token-large">
+                <div class="showcase-inner-content">
+                  <div class="showcase-canvas-inner">
+                    <img :src="getBluffIcon(role)" class="showcase-img" />
+                  </div>
+                  <div class="showcase-name-inner">
+                    {{ role.name }}
+                  </div>
+                </div>
               </div>
-              <div class="showcase-name" :class="role.role_type.toLowerCase()">
-                {{ role.name }}
-              </div>
-            </div>
+            </template>
             <div v-else class="showcase-empty">
               <div class="empty-circle-dashed">?</div>
             </div>
@@ -170,14 +182,18 @@
         
         <div class="showcase-grid">
           <div class="showcase-item">
-            <div v-if="selectedPlayer.role" class="showcase-token-large">
-              <div class="showcase-canvas">
-                <img :src="getBluffIcon(selectedPlayer.role)" class="showcase-img" />
+            <template v-if="selectedPlayer.role">
+              <div class="showcase-token-large">
+                <div class="showcase-inner-content">
+                  <div class="showcase-canvas-inner">
+                    <img :src="getBluffIcon(selectedPlayer.role)" class="showcase-img" />
+                  </div>
+                  <div class="showcase-name-inner">
+                    {{ selectedPlayer.role.name }}
+                  </div>
+                </div>
               </div>
-              <div class="showcase-name" :class="selectedPlayer.role.role_type.toLowerCase()">
-                {{ selectedPlayer.role.name }}
-              </div>
-            </div>
+            </template>
             <div v-else class="showcase-empty">
               <div class="empty-circle-dashed">未分配</div>
             </div>
@@ -207,6 +223,7 @@ import CharacterEditorPanel from './CharacterEditorPanel.vue'
 import PlayerOrderPanel from './PlayerOrderPanel.vue'
 import RoleAssignmentPanel from './RoleAssignmentPanel.vue'
 import StatusBar from './StatusBar.vue'
+import TimerWidget from './TimerWidget.vue'
 
 import AddPlayerDialog from './AddPlayerDialog.vue'
 import RenameDialog from './RenameDialog.vue'
@@ -232,6 +249,16 @@ const players = computed(() => gameStore.players)
 const selectedPlayer = computed(() => 
   gameStore.players.find(p => p.id === uiStore.selectedPlayerId)
 )
+
+const layoutLabel = computed(() => {
+  const map = { arc: '環繞', grid: '網格', stack: '側面', inner: '內圈' }
+  return map[uiStore.reminderLayout as keyof typeof map]
+})
+
+const layoutIcon = computed(() => {
+  const map = { arc: '⭕', grid: '⏹️', stack: '📋', inner: '⏬' }
+  return map[uiStore.reminderLayout as keyof typeof map]
+})
 
 // 佈局全局參數：統一管理，確保計算與渲染 100% 同步
 const LAYOUT_CONFIG = {
@@ -427,6 +454,44 @@ function starStyle(i: number) {
   background: white;
   animation: pulse 2s ease-in-out infinite;
   z-index: 1;
+}
+
+.showcase-inner-content {
+  width: 76%;
+  height: 76%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 6px;
+}
+
+.showcase-canvas-inner {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  margin-bottom: -6px;
+}
+
+.showcase-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: contrast(1.2) brightness(0.95) drop-shadow(0 4px 10px rgba(0,0,0,0.4));
+}
+
+.showcase-name-inner {
+  font-size: 20px;
+  font-weight: 900;
+  color: #1a1b23;
+  letter-spacing: 2px;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--font-title), sans-serif;
+  text-shadow: 0 1px 4px rgba(255,255,255,0.8);
 }
 
 .fog {
@@ -637,12 +702,24 @@ function starStyle(i: number) {
   position: relative;
 }
 
-.bluff-canvas {
-  width: 65%;
-  height: 65%;
+.bluff-inner-content {
+  width: 76%;
+  height: 76%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 2px;
+}
+
+.bluff-canvas-inner {
+  flex: 1;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 0;
+  margin-bottom: -4px;
 }
 
 .bluff-img {
@@ -652,27 +729,17 @@ function starStyle(i: number) {
   filter: contrast(1.1) brightness(0.9) drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
-.bluff-name-label {
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--color-label-bg);
-  color: #fff;
-  padding: 1px 10px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 700;
+.bluff-name-inner {
+  font-size: 8px; /* 側邊欄令片較小，所以字體也縮小 */
+  font-weight: 900;
+  color: #1a1b23;
+  letter-spacing: 1px;
+  text-align: center;
   white-space: nowrap;
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 3px 6px rgba(0,0,0,0.5);
-  z-index: 5;
+  font-family: var(--font-title), sans-serif;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.7);
+  transform: scale(0.95);
 }
-
-.bluff-name-label.townsfolk { color: var(--color-townsfolk); }
-.bluff-name-label.outsider  { color: var(--color-outsider); }
-.bluff-name-label.minion    { color: var(--color-minion); }
-.bluff-name-label.demon     { color: var(--color-demon); }
 
 .bluff-empty-parchment {
   width: 100%;
@@ -772,6 +839,24 @@ function starStyle(i: number) {
   box-shadow: 0 0 15px rgba(244, 67, 54, 0.2);
 }
 
+.side-action-btn.layout-toggle-side {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(42, 27, 21, 0.85);
+  border: 1.5px solid #8d6e63;
+  color: #f4e4bc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+
+.side-action-btn.layout-toggle-side .icon {
+  font-size: 18px;
+}
+
 .privacy-icon-wrapper {
   position: relative;
   display: flex;
@@ -844,8 +929,8 @@ function starStyle(i: number) {
 
 .showcase-grid {
   display: flex;
-  flex-direction: column; /* 改為垂直排列 */
-  gap: 24px;
+  flex-direction: column;
+  gap: 16px; /* 緊湊的垂直間距 */
   align-items: center;
   justify-content: center;
   width: 100%;
@@ -853,15 +938,15 @@ function starStyle(i: number) {
 
 .showcase-item {
   display: flex;
-  flex-direction: row; /* 令片與名字橫向排列或保持垂直 */
+  flex-direction: column; /* 令片與名字垂直排列 */
   align-items: center;
-  gap: 24px;
+  gap: 12px; /* 縮小令片與名字間距 */
   width: auto;
 }
 
 .showcase-token-large {
-  width: 170px; /* 垂直排列可以放大尺寸 */
-  height: 170px;
+  width: 130px; /* 縮小尺寸以適應並排與垂直空間 */
+  height: 130px;
   border-radius: 50%;
   background: url('/token1.png') no-repeat center center;
   background-size: cover;
@@ -873,29 +958,42 @@ function starStyle(i: number) {
   animation: tokenFloat 4s ease-in-out infinite alternate;
 }
 
-.showcase-canvas {
-  width: 70%;
-  height: 70%;
+.showcase-inner-content {
+  width: 76%;
+  height: 76%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 6px;
+}
+
+.showcase-canvas-inner {
+  flex: 1;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 0;
+  margin-bottom: -6px;
 }
 
 .showcase-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: contrast(1.1) brightness(0.9) drop-shadow(0 4px 10px rgba(0,0,0,0.6));
+  filter: contrast(1.2) brightness(0.95) drop-shadow(0 4px 10px rgba(0,0,0,0.4));
 }
 
-.showcase-name {
-  font-family: var(--font-title);
-  font-size: 35px; /* 垂直佈局時名字可以更大 */
-  font-weight: 800;
-  color: #fff;
-  text-shadow: 0 4px 10px rgba(0,0,0,0.9);
-  letter-spacing: 4px;
+.showcase-name-inner {
+  font-size: 20px;
+  font-weight: 900;
+  color: #1a1b23;
+  letter-spacing: 2px;
+  text-align: center;
   white-space: nowrap;
+  font-family: var(--font-title), sans-serif;
+  text-shadow: 0 1px 4px rgba(255,255,255,0.8);
 }
 
 .showcase-empty {

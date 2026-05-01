@@ -14,7 +14,6 @@
           <input v-model="searchQuery" placeholder="搜尋角色名稱/ID..." class="search-input" />
           <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
         </div>
-
         <div class="header-actions">
           <button class="btn-primary add-btn" @click="openAdd">
             + 新增角色
@@ -43,7 +42,8 @@
               <div class="char-sub">{{ char.id }}</div>
               <div v-if="char.conflicts && char.conflicts.length > 0" class="char-conflicts">
                 <div v-for="(rule, idx) in char.conflicts" :key="idx" class="conflict-badge">
-                  ⚔️ vs {{ getCharacterName(rule.target || rule.charB) }}
+                  <div class="conflict-badge-title">⚔️ vs {{ getCharacterName(rule.target || rule.charB) }}</div>
+                  <div v-if="rule.desc" class="conflict-badge-desc">{{ rule.desc }}</div>
                 </div>
               </div>
             </div>
@@ -215,15 +215,18 @@ async function saveCharacter() {
   if (!isFormValid.value) return
 
   const newList = [...scriptStore.rawCharacterList]
-  const newChar = {
+  // 準備要儲存的資料，確保所有編輯過的欄位都能正確覆蓋
+  const newChar: any = {
     id: formData.value.id.trim(),
     name: formData.value.name.trim(),
     team: formData.value.team,
     ability: formData.value.ability,
     image: formData.value.image,
-    ... (formData.value.firstNight ? { firstNight: Number(formData.value.firstNight) } : {}),
-    ... (formData.value.otherNight ? { otherNight: Number(formData.value.otherNight) } : {}),
-    ... (formData.value.conflicts && formData.value.conflicts.length > 0 ? { conflicts: formData.value.conflicts } : {})
+    // 如果為空則設為 undefined，合併時會覆蓋舊值並在序列化時移除
+    firstNight: formData.value.firstNight ? Number(formData.value.firstNight) : undefined,
+    otherNight: formData.value.otherNight ? Number(formData.value.otherNight) : undefined,
+    // 過濾掉沒有選擇對象的無效規則，並確保空陣列也能正確覆蓋舊規則
+    conflicts: (formData.value.conflicts || []).filter((r: any) => r.target)
   }
 
   if (editingId.value) {
@@ -462,15 +465,22 @@ async function resetToDefault() {
 .conflict-badge {
   font-size: 10px;
   color: #e57373;
-  background: rgba(229, 115, 115, 0.1);
-  border: 1px solid rgba(229, 115, 115, 0.2);
-  padding: 2px 6px;
-  border-radius: 4px;
-  width: fit-content;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
+  background: rgba(229, 115, 115, 0.08);
+  border: 1px solid rgba(229, 115, 115, 0.15);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.conflict-badge-title {
+  font-weight: 700;
+  margin-bottom: 1px;
+}
+
+.conflict-badge-desc {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  line-height: 1.3;
+  font-style: italic;
 }
 
 .arrow {

@@ -2,7 +2,7 @@
   <div class="status-bar" :class="{ 'is-night': gameStore.isNight }">
     <div class="status-inner">
       <!-- 左側：角色類型計數 (統計配置) -->
-      <div class="stat-group stats-config">
+      <div class="stat-group stats-config" :class="{ 'is-hidden': uiStore.isRolesHidden }">
         <span class="stat-item townsfolk">
           <span class="label">民</span>
           <span class="stat-num">{{ townCount }}</span>
@@ -33,23 +33,16 @@
         <button class="nav-btn" @click="gameStore.advancePhase()" title="推進下個階段">▶</button>
       </div>
 
-      <!-- 右側：存活狀態 -->
+      <!-- 右側：存活狀態 (保留核心數據) -->
       <div class="stat-group stats-alive">
-        <!-- 存活人數 -->
+        <span class="stat-item threshold" v-if="gameStore.phase === 'Day'" title="門檻">
+          <span class="stat-icon">⚖️</span>
+          <span class="stat-num">{{ gameStore.threshold }}</span>
+        </span>
         <span class="stat-item alive" title="存活人數">
           <span class="stat-icon">❤️</span>
           <span class="stat-num">{{ gameStore.alive }}</span>
         </span>
-
-        <span class="stat-item threshold" :class="{ 'is-hidden': gameStore.phase !== 'Day' }" title="門檻">
-          <span class="stat-icon">⚖️</span>
-          <span class="stat-num">{{ gameStore.threshold }}</span>
-        </span>
-
-        <!-- 提示佈局切換 -->
-        <button class="layout-btn" @click="uiStore.cycleReminderLayout()" :title="`目前佈局: ${layoutLabel}`">
-          <span class="layout-icon">{{ layoutIcon }}</span>
-        </button>
       </div>
     </div>
   </div>
@@ -79,15 +72,7 @@ const demonCount = computed(() =>
   gameStore.players.filter(p => p.role?.role_type === 'Demon').length
 )
 
-const layoutLabel = computed(() => {
-  const map = { arc: '環繞', grid: '網格', stack: '側面', inner: '內圈' }
-  return map[uiStore.reminderLayout]
-})
 
-const layoutIcon = computed(() => {
-  const map = { arc: '⭕', grid: '⏹️', stack: '📋', inner: '⏬' }
-  return map[uiStore.reminderLayout]
-})
 </script>
 
 <style scoped>
@@ -120,15 +105,31 @@ const layoutIcon = computed(() => {
   align-items: center;
   gap: 8px;
   z-index: 1; /* 位於中間按鈕下方 */
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.stats-config {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-group.is-hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .phase-control {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   z-index: 2;
-  flex: 1; /* 允許中間區域彈性伸縮，自然推擠左右元素而不重疊 */
   padding: 0 4px;
 }
 

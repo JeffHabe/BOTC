@@ -161,7 +161,6 @@
     "reminders": [
       "得知"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -216,7 +215,6 @@
     "reminders": [
       "得知"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -271,7 +269,6 @@
     "reminders": [
       "醉酒"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -609,7 +606,6 @@
     "reminders": [
       "失去能力"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -781,7 +777,6 @@
     "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/choirboy.png",
     "otherNight": 73,
     "otherNightReminder": "如果惡魔殺死了國王，喚醒唱詩男孩，對他指向惡魔。",
-    "setup": true,
     "conflicts": []
   },
   {
@@ -877,7 +872,6 @@
     "ability": "說書人可以打破遊戲規則。如果說書人被處決，善良陣營獲勝，即使你已死亡。[無邪惡角色在場]",
     "team": "townsfolk",
     "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/atheist.png",
-    "setup": true,
     "conflicts": []
   },
   {
@@ -945,7 +939,6 @@
     "remindersGlobal": [
       "是瘋子"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1159,7 +1152,6 @@
       "死於今日",
       "死亡"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1306,7 +1298,6 @@
     "reminders": [
       "？"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1339,7 +1330,6 @@
       "第三夜",
       "大限已至"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1353,7 +1343,6 @@
     "remindersGlobal": [
       "是提線木偶"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1381,7 +1370,6 @@
       "第二晚",
       "第三晚"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1466,7 +1454,6 @@
     "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/boffin.png",
     "firstNight": 1.45,
     "firstNightReminder": "（分別或同時）喚醒科學怪人和惡魔，通知他們惡魔因為科學怪人而獲得的善良角色的能力。",
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1475,7 +1462,6 @@
     "ability": "會有額外的外來者在場。[+2外來者]",
     "team": "minion",
     "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/baron.png",
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1523,7 +1509,6 @@
       "是惡魔",
       "死亡"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1593,7 +1578,6 @@
     "reminders": [
       "死亡"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1637,7 +1621,6 @@
       "保留能力",
       "中毒"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1665,7 +1648,6 @@
       "即將被處決",
       "死亡"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1680,7 +1662,6 @@
       "死亡",
       "限一次"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1696,7 +1677,6 @@
     "reminders": [
       "死亡"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1772,7 +1752,6 @@
     "remindersGlobal": [
       "是酒鬼"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1919,7 +1898,6 @@
     "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/xizi.png",
     "firstNight": 3012,
     "firstNightReminder": "喚醒所有戲子並讓他們互認。",
-    "setup": true,
     "conflicts": []
   },
   {
@@ -1931,7 +1909,6 @@
     "remindersGlobal": [
       "是悟道者"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -2188,7 +2165,6 @@
     "image": "https://botc.letshare.fun/imgs/icons/townsfolk/pagan.png",
     "firstNight": 200,
     "firstNightReminder": "如果異教徒和異端分子都在場，喚醒所有善良的鎮民，並告知他們都成為了異教徒。",
-    "setup": true,
     "conflicts": []
   },
   {
@@ -2468,7 +2444,6 @@
     "reminders": [
       "活屍"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -2542,7 +2517,6 @@
       "新玩偶",
       "初始玩偶"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -2585,7 +2559,6 @@
       "死亡",
       "活屍"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -2616,7 +2589,6 @@
     "reminders": [
       "死亡"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -2770,7 +2742,6 @@
       "死亡",
       "冤吶"
     ],
-    "setup": true,
     "conflicts": []
   },
   {
@@ -3288,7 +3259,6 @@
     "reminders": [
       "是癮君子"
     ],
-    "setup": true,
     "conflicts": []
   },
   {

@@ -36,8 +36,26 @@
 
           <!-- 頂部重點操作：提示標記 -->
           <button class="action-btn reminder-btn-hero" @click="handleReminderPicker">
-            <span class="icon">🔖</span>
-            <span class="label">提示標記 (Reminders)</span>
+            <div class="reminder-hero-header">
+              <span class="icon">🔖</span>
+              <span class="label">提示標記 (Reminders)</span>
+            </div>
+            
+            <template v-if="!uiStore.isRolesHidden">
+              <div v-if="player.reminders && player.reminders.length > 0" class="reminder-tags">
+                <span v-for="rem in player.reminders" :key="rem.id" class="rem-tag">
+                  {{ rem.text }}
+                </span>
+              </div>
+              <div v-else class="reminder-empty-hint">
+                點擊以檢視或新增
+              </div>
+            </template>
+            <template v-else>
+              <div class="reminder-empty-hint">
+                標記已隱藏
+              </div>
+            </template>
           </button>
 
           <!-- 主操作按鈕組 (大按鈕) -->
@@ -367,16 +385,48 @@ function handleNominateHim() {
   margin-bottom: 12px;
   background: rgba(201, 168, 76, 0.1);
   border: 1px solid rgba(201, 168, 76, 0.3);
-  padding: 16px;
-  flex-direction: row !important; /* 強制橫向排列 */
-  justify-content: center;
-  gap: 12px !important;
+  padding: 12px 16px;
+  flex-direction: column !important; /* 垂直排列以容納標籤 */
+  align-items: stretch !important;
+  gap: 8px !important;
   border-radius: 18px;
+}
+
+.reminder-hero-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 
 .reminder-btn-hero .label {
   color: var(--color-gold);
   font-size: 16px;
+}
+
+.reminder-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.rem-tag {
+  background: rgba(201, 168, 76, 0.2);
+  border: 1px solid rgba(201, 168, 76, 0.5);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.reminder-empty-hint {
+  font-size: 12px;
+  color: rgba(201, 168, 76, 0.6);
+  text-align: center;
+  margin-top: 2px;
 }
 
 .action-grid.mini .action-btn {
