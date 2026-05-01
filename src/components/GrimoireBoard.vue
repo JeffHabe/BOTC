@@ -1,5 +1,10 @@
 <template>
-  <div class="grimoire-board" :class="{ 'is-night': gameStore.isNight }">
+  <div 
+    class="grimoire-board" 
+    :class="{ 'is-night': gameStore.isNight, 'is-dragging': isDragging }"
+    @mousedown="handleMouseDown"
+    @touchstart="handleMouseDown"
+  >
     <StatusBar />
     <TimerWidget />
 
@@ -22,7 +27,13 @@
     </div>
 
     <!-- 玩家令片容器 (矩形環狀佈局) -->
-    <div class="tokens-fixed-area">
+    <div 
+      class="tokens-fixed-area"
+      :style="{ 
+        transform: `translate(${uiStore.grimoireTranslateX}px, ${uiStore.grimoireTranslateY}px) scale(${uiStore.grimoireScale})`,
+        transformOrigin: 'center 55%'
+      }"
+    >
       <!-- 中央劇本標誌 -->
       <div class="center-logo-box" @click="uiStore.openPanel('role-assignment')">
         <div class="center-logo-inner">
@@ -109,10 +120,23 @@
         </div>
       </button>
 
-      <!-- 遷移過來的佈局控制項 (單獨放置在隱藏按鈕下方) -->
+      <!-- 佈局與縮放控制項 -->
       <button class="side-action-btn layout-toggle-side" @click="uiStore.cycleReminderLayout()" :title="`佈局: ${layoutLabel}`">
         <span class="icon">{{ layoutIcon }}</span>
       </button>
+
+      <!-- 縮放按鈕 -->
+      <div class="zoom-controls-side">
+        <button class="side-action-btn" @click="uiStore.zoomIn()" title="放大">
+          <span class="icon">➕</span>
+        </button>
+        <button class="side-action-btn" @click="uiStore.resetZoom()" title="重置縮放">
+          <span class="icon" style="font-size: 10px;">{{ Math.round(uiStore.grimoireScale * 100) }}%</span>
+        </button>
+        <button class="side-action-btn" @click="uiStore.zoomOut()" title="縮小">
+          <span class="icon">➖</span>
+        </button>
+      </div>
     </div>
 
     <!-- 面板層 -->
@@ -209,7 +233,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
@@ -249,6 +273,55 @@ const players = computed(() => gameStore.players)
 const selectedPlayer = computed(() => 
   gameStore.players.find(p => p.id === uiStore.selectedPlayerId)
 )
+
+// --- 拖拽平移邏輯 (Panning Logic) ---
+const isDragging = ref(false)
+const startPos = { x: 0, y: 0 }
+const startTranslate = { x: 0, y: 0 }
+
+function handleMouseDown(e: MouseEvent | TouchEvent) {
+  // 如果點擊的是令片或按鈕，則不觸發拖拽
+  if ((e.target as HTMLElement).closest('.token-wrapper') || 
+      (e.target as HTMLElement).closest('button') || 
+      (e.target as HTMLElement).closest('.bluffs-drawer') ||
+      (e.target as HTMLElement).closest('.panel-overlay-mask')) return
+
+  isDragging.value = true
+  const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+  const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+  
+  startPos.x = clientX
+  startPos.y = clientY
+  startTranslate.x = uiStore.grimoireTranslateX
+  startTranslate.y = uiStore.grimoireTranslateY
+
+  window.addEventListener('mousemove', handleMouseMove)
+  window.addEventListener('mouseup', handleMouseUp)
+  window.addEventListener('touchmove', handleMouseMove, { passive: false })
+  window.addEventListener('touchend', handleMouseUp)
+}
+
+function handleMouseMove(e: MouseEvent | TouchEvent) {
+  if (!isDragging.value) return
+  
+  const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+  const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+  
+  const dx = clientX - startPos.x
+  const dy = clientY - startPos.y
+  
+  uiStore.setGrimoireTranslate(startTranslate.x + dx, startTranslate.y + dy)
+  
+  if (e.cancelable) e.preventDefault()
+}
+
+function handleMouseUp() {
+  isDragging.value = false
+  window.removeEventListener('mousemove', handleMouseMove)
+  window.removeEventListener('mouseup', handleMouseUp)
+  window.removeEventListener('touchmove', handleMouseMove)
+  window.removeEventListener('touchend', handleMouseUp)
+}
 
 const layoutLabel = computed(() => {
   const map = { arc: '環繞', grid: '網格', stack: '側面', inner: '內圈' }
@@ -514,11 +587,21 @@ function starStyle(i: number) {
 /* ─────────────────────────────────────────────────────────────────────────
    主要令片佈局區域 
    ───────────────────────────────────────────────────────────────────────── */
+.grimoire-board.is-dragging {
+  cursor: grabbing;
+}
+
 .tokens-fixed-area {
   position: absolute;
   inset: 0;
   z-index: 5;
   pointer-events: none;
+  /* 拖拽時取消 transition 以獲得即時反饋，非拖拽時（如縮放）保持平滑 */
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.is-dragging .tokens-fixed-area {
+  transition: none;
 }
 
 .token-wrapper {
@@ -810,15 +893,27 @@ function starStyle(i: number) {
 
 .side-action-group {
   position: fixed;
-  top: calc(50px + env(safe-area-inset-top, 0px) + 10px);
+  top: calc(70px + env(safe-area-inset-top, 0px));
   right: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  z-index: 50;
+  gap: 12px;
+  z-index: 1000;
 }
 
-.menu-btn, .privacy-btn {
+.zoom-controls-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(42, 27, 21, 0.4);
+  padding: 6px;
+  border-radius: 25px;
+  border: 1px solid rgba(141, 110, 99, 0.3);
+  backdrop-filter: blur(8px);
+  margin-top: 4px;
+}
+
+.menu-btn, .privacy-btn, .side-action-btn.layout-toggle-side, .zoom-controls-side .side-action-btn {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -833,24 +928,16 @@ function starStyle(i: number) {
   cursor: pointer;
 }
 
+.menu-btn:hover, .privacy-btn:hover, .side-action-btn.layout-toggle-side:hover, .zoom-controls-side .side-action-btn:hover {
+  background: #b38b3d;
+  color: #1a1b23;
+  transform: scale(1.1);
+}
+
 .privacy-btn.is-active {
   background: rgba(244, 67, 54, 0.15);
   border-color: rgba(244, 67, 54, 0.5);
   box-shadow: 0 0 15px rgba(244, 67, 54, 0.2);
-}
-
-.side-action-btn.layout-toggle-side {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(42, 27, 21, 0.85);
-  border: 1.5px solid #8d6e63;
-  color: #f4e4bc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  cursor: pointer;
 }
 
 .side-action-btn.layout-toggle-side .icon {

@@ -185,6 +185,36 @@ export const useUIStore = defineStore('ui', () => {
   const isTimerExpanded = ref(false)
   let timerInterval: number | null = null
 
+  // --- 縮放控制 (Zoom Control) ---
+  const grimoireScale = ref(Number(localStorage.getItem('botc-grimoire-scale')) || 1.0)
+  
+  function setGrimoireScale(scale: number) {
+    const clamped = Math.min(Math.max(scale, 0.5), 2.0)
+    grimoireScale.value = clamped
+    localStorage.setItem('botc-grimoire-scale', String(clamped))
+  }
+
+  function zoomIn() { setGrimoireScale(grimoireScale.value + 0.1) }
+  function zoomOut() { setGrimoireScale(grimoireScale.value - 0.1) }
+  function resetZoom() { 
+    setGrimoireScale(1.0) 
+    resetPan()
+  }
+
+  // --- 平移控制 (Pan Control) ---
+  const grimoireTranslateX = ref(0)
+  const grimoireTranslateY = ref(0)
+
+  function setGrimoireTranslate(x: number, y: number) {
+    grimoireTranslateX.value = x
+    grimoireTranslateY.value = y
+  }
+
+  function resetPan() {
+    grimoireTranslateX.value = 0
+    grimoireTranslateY.value = 0
+  }
+
   function startTimer() {
     if (timerRemaining.value <= 0) return
     if (!isTimerRunning.value) {
@@ -251,6 +281,9 @@ export const useUIStore = defineStore('ui', () => {
     isRolesHidden, toggleRolesHidden,
     // 計時器
     timerRemaining, timerTotal, isTimerRunning, isTimerExpanded,
-    startTimer, pauseTimer, resetTimer, addTimerSeconds
+    startTimer, pauseTimer, resetTimer, addTimerSeconds,
+    // 縮放與平移控制
+    grimoireScale, setGrimoireScale, zoomIn, zoomOut, resetZoom,
+    grimoireTranslateX, grimoireTranslateY, setGrimoireTranslate, resetPan
   }
 })
