@@ -183,6 +183,7 @@ export const useUIStore = defineStore('ui', () => {
   const timerTotal = ref(300) // 預設 5 分鐘
   const isTimerRunning = ref(false)
   const isTimerExpanded = ref(false)
+  const timerTargetTimestamp = ref<number | null>(null) // 結束的時間戳記
   let timerInterval: number | null = null
 
   // --- 縮放控制 (Zoom Control) ---
@@ -219,11 +220,21 @@ export const useUIStore = defineStore('ui', () => {
     if (timerRemaining.value <= 0) return
     if (!isTimerRunning.value) {
       isTimerRunning.value = true
+      
+      // 核心改進：記錄結束的時間點，防止鎖屏暫停
+      timerTargetTimestamp.value = Date.now() + (timerRemaining.value * 1000)
+
       timerInterval = window.setInterval(() => {
-        if (timerRemaining.value > 0) {
-          timerRemaining.value--
-        } else {
-          pauseTimer()
+        if (timerTargetTimestamp.value) {
+          const now = Date.now()
+          const diff = Math.ceil((timerTargetTimestamp.value - now) / 1000)
+          
+          if (diff > 0) {
+            timerRemaining.value = diff
+          } else {
+            timerRemaining.value = 0
+            pauseTimer()
+          }
         }
       }, 1000)
     }
@@ -231,6 +242,7 @@ export const useUIStore = defineStore('ui', () => {
 
   function pauseTimer() {
     isTimerRunning.value = false
+    timerTargetTimestamp.value = null
     if (timerInterval) {
       clearInterval(timerInterval)
       timerInterval = null
@@ -241,6 +253,19 @@ export const useUIStore = defineStore('ui', () => {
     pauseTimer()
     timerRemaining.value = 0
     timerTotal.value = 0
+    timerTargetTimestamp.value = null
+  }
+
+  /**
+   * 當 App 從背景回到前景時校準時間
+   */
+  function calibrateTimer() {
+    if (isTimerRunning.value && timerTargetTimestamp.value) {
+      const now = Date.now()
+      const diff = Math.ceil((timerTargetTimestamp.value - now) / 1000)
+      timerRemaining.value = Math.max(0, diff)
+      if (diff <= 0) pauseTimer()
+    }
   }
 
   function addTimerSeconds(seconds: number) {
@@ -280,8 +305,8 @@ export const useUIStore = defineStore('ui', () => {
     // 隱私模式
     isRolesHidden, toggleRolesHidden,
     // 計時器
-    timerRemaining, timerTotal, isTimerRunning, isTimerExpanded,
-    startTimer, pauseTimer, resetTimer, addTimerSeconds,
+    timerRemaining, timerTotal, isTimerRunning, isTimerExpanded, timerTargetTimestamp,
+    startTimer, pauseTimer, resetTimer, addTimerSeconds, calibrateTimer,
     // 縮放與平移控制
     grimoireScale, setGrimoireScale, zoomIn, zoomOut, resetZoom,
     grimoireTranslateX, grimoireTranslateY, setGrimoireTranslate, resetPan

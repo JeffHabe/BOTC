@@ -233,7 +233,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
@@ -260,6 +260,29 @@ const gameStore = useGameStore()
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
 
+// --- 螢幕喚醒鎖 (Wake Lock) ---
+let wakeLock: any = null
+
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await (navigator as any).wakeLock.request('screen')
+      console.log('Wake Lock is active')
+    } catch (err: any) {
+      console.error(`${err.name}, ${err.message}`)
+    }
+  }
+}
+
+function handleVisibilityChange() {
+  if (document.visibilityState === 'visible') {
+    // 回到前景時校準計時器
+    uiStore.calibrateTimer()
+    // 重新請求喚醒鎖
+    requestWakeLock()
+  }
+}
+
 onMounted(async () => {
   await scriptStore.loadCharacters()
   await gameStore.loadState()
@@ -267,6 +290,18 @@ onMounted(async () => {
   if (!gameStore.script && scriptStore.allScripts.length > 0) {
     await scriptStore.selectScript(scriptStore.allScripts[0])
   }
+
+  // 啟用喚醒鎖
+  requestWakeLock()
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+})
+
+onUnmounted(() => {
+  if (wakeLock) {
+    wakeLock.release()
+    wakeLock = null
+  }
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 
 const players = computed(() => gameStore.players)
@@ -666,11 +701,11 @@ function starStyle(i: number) {
    ───────────────────────────────────────────────────────────────────────── */
 .bluffs-drawer {
   position: fixed; /* 改為 fixed 確保在手機端滾動時位置不變 */
-  bottom: 60px;
+  bottom: 40px;
   right: 0;
   z-index: 1000;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   /* 關鍵優化：向右位移 100% (藏起來)，但扣掉 32px (留標籤在外) */
   transform: translateX(calc(100% - 32px)); 
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
