@@ -41,7 +41,8 @@
 
       <!-- 死亡緞帶 (絲綢風格 繁體/簡體) -->
       <div v-if="!player.is_alive" class="death-ribbon">
-        <span class="ribbon-text">死亡</span>
+        <span class="ribbon-text">死</span>
+        <span class="ribbon-text">亡</span>
       </div>
 
       <!-- 提示標記容器 (弧形分佈) -->
@@ -314,27 +315,36 @@ function getReminderIcon(text: string) {
 
 .death-ribbon {
   position: absolute;
-  top: 50%;
+  top: 55%; /* 稍微偏下方，完美環繞角色圖示 */
   left: -15%;
   right: -15%;
   height: 15px;
-  background: linear-gradient(90deg, transparent 10%, rgba(139, 26, 26, 0.55) 20%, rgba(139, 26, 26, 0.55) 80%, transparent 95%);
-  border-top: 1px solid rgba(255,255,255,0.05);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  transform: translateY(-50%) rotate(-18deg);
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(122, 26, 26, 0.9) 10%, 
+    rgba(159, 26, 26, 0.6) 25%, 
+    rgba(159, 26, 26, 0.6) 75%, 
+    rgba(122, 26, 26, 0.9) 90%, 
+    transparent 100%
+  );
+  border-top: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  transform: translateY(-50%) rotate(-15deg);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between; /* 讓 "死" 與 "亡" 分居兩側 */
+  padding: 0 18%; /* 調整間距，確保文字剛好在令片邊緣內側 */
   z-index: 5;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .ribbon-text {
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 900;
   color: #fff;
-  letter-spacing: 3px;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  /* 移除原有的 letter-spacing，因為現在是分開的 */
 }
 
 .reminders-classic-container {
