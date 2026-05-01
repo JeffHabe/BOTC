@@ -7,15 +7,15 @@ pub enum RoleType {
     #[serde(alias = "townsfolk", alias = "Townsfolk")]
     Townsfolk, // 鎮民
     #[serde(alias = "outsider", alias = "Outsider")]
-    Outsider,  // 外來者
+    Outsider, // 外來者
     #[serde(alias = "minion", alias = "Minion")]
-    Minion,    // 爪牙
+    Minion, // 爪牙
     #[serde(alias = "demon", alias = "Demon")]
-    Demon,     // 惡魔
+    Demon, // 惡魔
     #[serde(alias = "traveler", alias = "Traveler")]
-    Traveler,  // 旅行者
+    Traveler, // 旅行者
     #[serde(alias = "fabled", alias = "Fabled")]
-    Fabled,    // 傳說
+    Fabled, // 傳說
 }
 
 impl RoleType {
@@ -35,9 +35,9 @@ impl RoleType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReminderToken {
     pub id: String,
-    pub text: String,       // 提醒文字
+    pub text: String,        // 提醒文字
     pub source_role: String, // 來自哪個角色
-    pub round: u32,         // 標註在哪一輪創建
+    pub round: u32,          // 標註在哪一輪創建
 }
 
 impl ReminderToken {
@@ -55,16 +55,16 @@ impl ReminderToken {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CharacterDef {
     pub id: String,
-    pub name: String,           // 繁體中文名稱
-    pub name_en: String,        // 英文名稱
+    pub name: String,    // 繁體中文名稱
+    pub name_en: String, // 英文名稱
     pub role_type: RoleType,
-    pub ability: String,        // 能力說明（繁中）
-    pub flavor: Option<String>, // 風味文字
-    pub night_order_first: Option<f64>,  // 首夜順序（None = 不行動，用f64兼容小數值如3.3）
-    pub night_order_other: Option<f64>,  // 其他夜順序
-    pub reminders: Vec<String>, // 提供的提醒令牌文字
-    pub setup: bool,            // 是否在準備階段使用
-    pub image: Option<String>,  // 圖片路徑或 URL
+    pub ability: String,                // 能力說明（繁中）
+    pub flavor: Option<String>,         // 風味文字
+    pub night_order_first: Option<f64>, // 首夜順序（None = 不行動，用f64兼容小數值如3.3）
+    pub night_order_other: Option<f64>, // 其他夜順序
+    pub reminders: Vec<String>,         // 提供的提醒令牌文字
+    pub setup: bool,                    // 是否在準備階段使用
+    pub image: Option<String>,          // 圖片路徑或 URL
     pub first_night_reminder: Option<String>,
     pub other_night_reminder: Option<String>,
     #[serde(default)]
@@ -84,13 +84,13 @@ pub struct ConflictRule {
 pub struct Player {
     pub id: String,
     pub name: String,
-    pub seat: u32,              // 座位編號（1-indexed, 順時針）
+    pub seat: u32, // 座位編號（1-indexed, 順時針）
     pub role: Option<CharacterDef>,
     pub is_alive: bool,
-    pub has_ghost_vote: bool,   // 死亡玩家的最後投票權
+    pub has_ghost_vote: bool,          // 死亡玩家的最後投票權
     pub reminders: Vec<ReminderToken>, // 附加的提醒令牌
-    pub is_nominated: bool,     // 本輪是否被提名
-    pub can_nominate: bool,     // 本日是否可提名
+    pub is_nominated: bool,            // 本輪是否被提名
+    pub can_nominate: bool,            // 本日是否可提名
 }
 
 impl Player {
@@ -113,10 +113,10 @@ impl Player {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Script {
     pub id: String,
-    pub name: String,           // 腳本名稱
+    pub name: String, // 腳本名稱
     pub name_en: Option<String>,
     pub author: Option<String>,
-    pub logo: Option<String>,   // 腳本圖示路徑
+    pub logo: Option<String>, // 腳本圖示路徑
     pub characters: Vec<CharacterDef>,
 }
 
@@ -134,16 +134,22 @@ impl Script {
 
     /// 依類型取得角色
     pub fn characters_of_type(&self, role_type: &RoleType) -> Vec<&CharacterDef> {
-        self.characters.iter().filter(|c| &c.role_type == role_type).collect()
+        self.characters
+            .iter()
+            .filter(|c| &c.role_type == role_type)
+            .collect()
     }
 
     /// 取得夜晚順序（首夜）
     pub fn first_night_order(&self) -> Vec<&CharacterDef> {
-        let mut chars: Vec<&CharacterDef> = self.characters.iter()
+        let mut chars: Vec<&CharacterDef> = self
+            .characters
+            .iter()
             .filter(|c| c.night_order_first.is_some())
             .collect();
         chars.sort_by(|a, b| {
-            a.night_order_first.unwrap_or(f64::MAX)
+            a.night_order_first
+                .unwrap_or(f64::MAX)
                 .partial_cmp(&b.night_order_first.unwrap_or(f64::MAX))
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
@@ -152,11 +158,14 @@ impl Script {
 
     /// 取得夜晚順序（其他夜）
     pub fn other_night_order(&self) -> Vec<&CharacterDef> {
-        let mut chars: Vec<&CharacterDef> = self.characters.iter()
+        let mut chars: Vec<&CharacterDef> = self
+            .characters
+            .iter()
             .filter(|c| c.night_order_other.is_some())
             .collect();
         chars.sort_by(|a, b| {
-            a.night_order_other.unwrap_or(f64::MAX)
+            a.night_order_other
+                .unwrap_or(f64::MAX)
                 .partial_cmp(&b.night_order_other.unwrap_or(f64::MAX))
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
@@ -182,7 +191,7 @@ pub struct Nomination {
     pub threshold: u32,         // 行刑所需票數
     pub executed: bool,
     #[serde(default)]
-    pub round: u32,             // 哪一輪 (Day N) 發起的
+    pub round: u32, // 哪一輪 (Day N) 發起的
 }
 
 // ─── 主遊戲狀態 ───────────────────────────────────────────────
@@ -192,9 +201,9 @@ pub struct GameState {
     pub script: Script,
     pub players: Vec<Player>,
     pub phase: GamePhase,
-    pub round: u32,             // 當前輪次（Day 1, Night 1, ...）
+    pub round: u32,                              // 當前輪次（Day 1, Night 1, ...）
     pub demon_bluffs: Vec<Option<CharacterDef>>, // 惡魔虛張角色（最多3）
-    pub nominations: Vec<Nomination>, // 本輪提名記錄
+    pub nominations: Vec<Nomination>,            // 本輪提名記錄
     pub created_at: String,
     pub updated_at: String,
 }
@@ -217,7 +226,11 @@ impl Default for GameState {
 
 impl GameState {
     pub fn alive_count(&self) -> usize {
-        self.players.iter().filter(|p| p.is_alive).collect::<Vec<_>>().len()
+        self.players
+            .iter()
+            .filter(|p| p.is_alive)
+            .collect::<Vec<_>>()
+            .len()
     }
 
     pub fn dead_count(&self) -> usize {

@@ -847,8 +847,12 @@ function handleSearchEnter() {
 
   if (targetId) {
     const finalId = targetId
-    // 2. 先清空搜尋，恢復完整列表
-    searchQuery.value = ''
+    // 1. 保留搜尋文字
+    
+    // 2. 核心修正：收起手機鍵盤
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
     
     // 3. 等待 DOM 更新後捲動到目標
     nextTick(() => {
@@ -1338,10 +1342,12 @@ function getRoleTypeEmoji(type: string) {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: rgba(0,0,0,0.2);
+  background: #252731; /* 改為不透明深色 */
   padding: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
   border-radius: 12px;
   margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 .preset-label {
@@ -1572,7 +1578,8 @@ function getRoleTypeEmoji(type: string) {
 
 /* Existing preserved styles */
 .info-banner {
-  background: rgba(201, 168, 76, 0.1);
+  background: #2a251a; /* 改為不透明深色底 */
+  border: 1px solid rgba(201, 168, 76, 0.3);
   border-radius: 10px;
   padding: 10px 16px;
   margin-bottom: 24px;

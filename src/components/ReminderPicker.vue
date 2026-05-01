@@ -97,7 +97,7 @@
                     v-for="rem in group.reminders"
                     :key="rem"
                     class="reminder-badge in-play-badge"
-                    @click="quickAdd(rem)"
+                    @click="quickAdd(rem, group.roleName)"
                   >
                     {{ rem }}
                   </button>
@@ -186,9 +186,9 @@ async function handleDelete() {
   }
 }
 
-async function quickAdd(text: string) {
+async function quickAdd(text: string, source: string = '劇本') {
   if (!player.value) return
-  await gameStore.addReminder(player.value.id, text, '劇本')
+  await gameStore.addReminder(player.value.id, text, source)
   
   nextTick(() => {
     if (contentRef.value) {

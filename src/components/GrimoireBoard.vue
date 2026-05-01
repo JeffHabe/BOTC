@@ -946,10 +946,12 @@ function starStyle(i: number) {
 
 .side-action-group {
   position: fixed;
-  top: calc(70px + env(safe-area-inset-top, 0px));
+  top: calc(65px + env(safe-area-inset-top, 0px));
   right: 16px;
-  gap: 12px;
-  z-index: 900; /* 降低層級，確保在面板 (1500+) 之下 */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 900;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 

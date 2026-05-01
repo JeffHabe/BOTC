@@ -44,7 +44,7 @@
             <template v-if="!uiStore.isRolesHidden">
               <div v-if="player.reminders && player.reminders.length > 0" class="reminder-tags">
                 <span v-for="rem in player.reminders" :key="rem.id" class="rem-tag">
-                  {{ rem.text }}
+                  {{ (rem.source_role !== '劇本' && rem.source_role !== '自定義') ? `${rem.source_role}: ` : '' }}{{ rem.text }}
                 </span>
               </div>
               <div v-else class="reminder-empty-hint">

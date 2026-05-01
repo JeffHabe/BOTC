@@ -19,9 +19,10 @@
 
     <!-- 玩家令片主體 -->
     <div v-if="renderedPart === 'all' || renderedPart === 'body'" class="token-body classic">
-      <!-- 玩家姓名標籤 (包含編號) -->
-      <div class="name-label-box">
-        <span class="seat-num">{{ index + 1 }}</span> {{ player.name }}
+      <!-- 玩家姓名與編號標籤 -->
+      <div class="name-label-box" :class="namePositionClass">
+        <span class="seat-num">{{ index + 1 }}.</span>
+        <span class="player-name-text">{{ player.name || '空白' }}</span>
       </div>
 
       <!-- 核心圓形令片內部 (圖示與角色名) -->
@@ -45,16 +46,32 @@
         <span class="ribbon-text">亡</span>
       </div>
 
-      <!-- 提示標記容器 (弧形分佈) -->
+      <!-- 提示標記容器 (分層渲染以確保文字置頂) -->
       <div class="reminders-classic-container">
+        <!-- 第一層：所有的圓圈圖示 -->
         <div 
           v-for="(rem, rIdx) in player.reminders" 
-          :key="rem.id" 
+          :key="'circle-' + rem.id" 
           class="rem-dot-classic"
           :style="getReminderStyle(rIdx)"
           @click.stop="uiStore.openReminderPicker(player.id)"
         >
-          {{ getReminderIcon(rem.text) }}
+          <div class="rem-inner">
+            <img v-if="getSourceChar(rem.source_role)?.image" 
+                 :src="getSourceChar(rem.source_role)!.image!" 
+                 class="rem-role-img" />
+            <span v-else class="rem-emoji-icon">{{ getReminderIcon(rem.text) }}</span>
+          </div>
+        </div>
+
+        <!-- 第二層：所有的文字標籤 (置頂) -->
+        <div 
+          v-for="(rem, rIdx) in player.reminders" 
+          :key="'label-' + rem.id" 
+          class="rem-label-container"
+          :style="getReminderStyle(rIdx)"
+        >
+          <span class="rem-text-label">{{ rem.text }}</span>
         </div>
       </div>
     </div>
@@ -71,6 +88,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useUIStore } from '../stores/uiStore'
+import { useScriptStore } from '../stores/scriptStore'
 import type { Player } from '../types'
 
 const props = withDefaults(defineProps<{
@@ -86,6 +104,27 @@ const props = withDefaults(defineProps<{
 })
 
 const uiStore = useUIStore()
+const scriptStore = useScriptStore()
+
+const namePositionClass = computed(() => {
+  if (props.angle === undefined) return 'pos-bottom'
+  const deg = (props.angle * 180) / Math.PI
+  // 正規化角度到 -180 ~ 180
+  let norm = deg
+  while (norm > 180) norm -= 360
+  while (norm < -180) norm += 360
+  // 上半部玩家：-165 ~ -15 度
+  return (norm < -15 && norm > -165) ? 'pos-top' : 'pos-bottom'
+})
+
+/**
+ * 根據來源角色名稱獲取角色定義 (用於獲取頭像)
+ */
+function getSourceChar(sourceName: string) {
+  if (!sourceName || sourceName === '劇本' || sourceName === '自定義') return null
+  // 修正：scriptStore 中正確的屬性是 masterScript.characters
+  return scriptStore.masterScript?.characters?.find(c => c.name === sourceName) || null
+}
 
 const roleEmoji = computed(() => {
   if (!props.player.role) return ''
@@ -117,7 +156,7 @@ function getReminderStyle(rIdx: number) {
   // 1. 內圈向心模式 (Inner - Single Radial Column)
   if (layout === 'inner') {
     // 改為單排垂直向心
-    const distV = 62 + rIdx * 28 
+    const distV = 75 + rIdx * 50 /* 增加間距 32 -> 40 */
 
     // 使用標準向心矢量
     const top = 50 - (distV * Math.sin(angle) * 0.72)
@@ -126,21 +165,21 @@ function getReminderStyle(rIdx: number) {
     return {
       top: `${top}%`,
       left: `${left}%`,
-      width: '24px',
-      height: '24px',
-      fontSize: '11px',
+      width: '30px',
+      height: '30px',
+      fontSize: '9px',
       position: 'absolute',
       transform: 'translate(-50%, -50%)',
-      zIndex: 25 + rIdx
+      /* 移除行內 zIndex，改由 CSS 控制 */
     }
   }
 
   // 2. 經典弧形 (Arc)
   if (layout === 'arc') {
-    const deg = (rIdx * 32 - 10) * (Math.PI / 180)
-    let l = 50 + 55 * Math.cos(deg)
-    const t = 50 + 55 * Math.sin(deg)
-    if (isRight) l = 50 - 55 * Math.cos(deg)
+    const deg = (rIdx * 55 - 10) * (Math.PI / 180) /* 增加角度 45 -> 55 */
+    let l = 50 + 68 * Math.cos(deg)
+    const t = 50 + 68 * Math.sin(deg)
+    if (isRight) l = 50 - 68 * Math.cos(deg)
     
     return {
       top: `${t}%`,
@@ -154,8 +193,8 @@ function getReminderStyle(rIdx: number) {
   if (layout === 'stack') {
     const side = isRight ? 'right' : 'left'
     return {
-      top: `${rIdx * 26 + 10}px`,
-      [side]: '105%',
+      top: `${rIdx * 38 + 10}px`,
+      [side]: '125%', /* 增加側邊距離 110% -> 125% */
       position: 'absolute'
     }
   }
@@ -244,39 +283,48 @@ function getReminderIcon(text: string) {
 
 .name-label-box {
   position: absolute;
-  top: -12px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--color-label-bg);
   color: #fff;
-  padding: 2px 14px;
-  border-radius: 12px;
-  font-size: 14px;
+  padding: 0px 4px;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 1;
   font-weight: 700;
   white-space: nowrap;
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.5);
   z-index: 10;
   max-width: 120%;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 1px;
+  height: 14px;
+}
+
+.pos-bottom {
+  bottom: -18px;
+}
+
+.pos-top {
+  top: -18px;
 }
 
 .seat-num {
   color: var(--color-gold-bright);
-  font-size: 13px;
+  font-size: 10px;
   opacity: 0.9;
 }
 
 .token-inner-content {
-  width: 76%;
-  height: 76%;
+  width: 85%; /* 從 76% 提升到 85% */
+  height: 85%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  padding-bottom: 2px;
+  padding-bottom: 0px;
 }
 
 .role-icon-inner {
@@ -297,20 +345,23 @@ function getReminderIcon(text: string) {
 }
 
 .role-emoji, .role-placeholder {
-  font-size: 44px;
+  font-size: 52px; /* 從 44px 提升到 52px */
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
 .role-name-inner {
-  font-size: 11.5px;
+  font-size: 10px; /* 稍微縮小字體以適應長名稱 */
   font-weight: 900;
   color: #1a1b23;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.5px; /* 縮減間距 */
   text-align: center;
   white-space: nowrap;
   font-family: var(--font-title), sans-serif;
-  text-shadow: 0 1px 3px rgba(255,255,255,0.8);
-  transform: scale(0.95);
+  text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+  max-width: 90%; /* 限制寬度 */
+  overflow: hidden;
+  text-overflow: clip;
+  transform: scale(0.9);
 }
 
 .death-ribbon {
@@ -358,19 +409,72 @@ function getReminderIcon(text: string) {
   pointer-events: auto;
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 24px;
-  height: 24px;
-  background: #fff;
+  width: 30px; /* 縮小基礎尺寸 36 -> 30 */
+  height: 30px;
+  background: rgba(255, 255, 255, 0.95);
   color: #2a1b15;
-  border: 1.5px solid #5d4037;
+  border: 1.2px solid #5d4037;
   border-radius: 50%;
-  font-size: 14px;
-  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 2px 3px 6px rgba(0,0,0,0.4);
+  box-shadow: 2px 4px 8px rgba(0,0,0,0.4);
   transition: all 0.3s ease;
+  overflow: visible;
+  z-index: 20; /* 基礎層級 */
+}
+
+.rem-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.rem-role-img {
+  width: 85%;
+  height: 85%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+}
+
+.rem-emoji-icon {
+  font-size: 22px; /* 提升尺寸，與角色圖示視覺一致 */
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+}
+
+.rem-text-label {
+  background: rgba(20, 20, 25, 0.95);
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 8.5px;
+  white-space: nowrap;
+  pointer-events: none;
+  border: 0.5px solid rgba(255,255,255,0.15);
+  line-height: 1.1;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.rem-label-container {
+  pointer-events: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100; /* 顯著高於所有圓圈 (20+) */
+}
+
+.rem-label-container .rem-text-label {
+  position: absolute;
+  bottom: 23px; /* 調整至圓圈下方（因為定位點在中心） */
+  /* 因為 30px 圓圈半徑是 15px，文字在下方 offset 約 8px = 23px */
+  transform: translateY(38px); 
 }
 
 /* --- 佈局樣式控制 --- */
@@ -424,7 +528,8 @@ function getReminderIcon(text: string) {
 
 .status-indicators {
   position: absolute;
-  bottom: 0;
+  top: 0;
+  left: 0; /* 移到左上方 */
   display: flex;
   gap: 4px;
 }

@@ -51,11 +51,11 @@
           <span class="settings-arrow">›</span>
         </button>
 
-        <!-- 分配角色 -->
+        <!-- 選取劇本 -->
         <button v-if="gameStore.phase === 'Setup'" class="settings-item" @click="openAssignment">
           <span class="settings-icon">🎭</span>
           <div class="settings-info">
-            <div class="settings-label">分配角色 (設置)</div>
+            <div class="settings-label">選取劇本</div>
             <div class="settings-sub">根據人數配置自動發派角色</div>
           </div>
           <span class="settings-arrow">›</span>

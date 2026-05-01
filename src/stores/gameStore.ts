@@ -83,13 +83,27 @@ export const useGameStore = defineStore('game', () => {
   }
 
   async function newGame() {
+    const currentScript = script.value // 備份劇本
     const gs = await callCommand<GameState>('new_game')
-    await syncState(gs)
+    if (gs) {
+      state.value = gs
+      // 如果重置前有劇本，則還原它
+      if (currentScript) {
+        await setScript(currentScript)
+      }
+    }
   }
 
   async function resetPlayersState() {
+    const currentScript = script.value // 備份劇本
     const gs = await callCommand<GameState>('reset_players_state')
-    await syncState(gs)
+    if (gs) {
+      state.value = gs
+      // 確保劇本被還原
+      if (currentScript) {
+        await setScript(currentScript)
+      }
+    }
   }
 
   async function setScript(script: Script) {
