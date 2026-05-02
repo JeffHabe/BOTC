@@ -14,6 +14,7 @@ export type Panel =
   | 'new-game'
   | 'player-order'
   | 'role-assignment'
+  | 'game-log'
 
 export type ReminderLayout = 'arc' | 'grid' | 'stack' | 'inner'
 

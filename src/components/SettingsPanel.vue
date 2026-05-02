@@ -21,6 +21,16 @@
           <span class="settings-arrow">›</span>
         </button>
 
+        <!-- 對局記錄 -->
+        <button class="settings-item" @click="openGameLog">
+          <span class="settings-icon">📋</span>
+          <div class="settings-info">
+            <div class="settings-label">對局記錄回顧</div>
+            <div class="settings-sub">查看與匯出說書人操作日誌</div>
+          </div>
+          <span class="settings-arrow">›</span>
+        </button>
+
         <!-- 角色清單 -->
         <button class="settings-item" @click="openCharSheet">
           <span class="settings-icon">📜</span>
@@ -168,6 +178,10 @@ const nextPhaseLabel = computed(() =>
 
 function openNightOrder() {
   uiStore.openPanel('night-order')
+}
+
+function openGameLog() {
+  uiStore.openPanel('game-log')
 }
 
 function openCharSheet() {

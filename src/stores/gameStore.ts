@@ -5,11 +5,22 @@ import { invoke } from '@tauri-apps/api/core'
 import type { GameState, CharacterDef, Script, GamePhase } from '../types'
 import { aliveCount, deadCount, executionThreshold } from '../types'
 
+export interface GameLogEntry {
+  id: string
+  timestamp: number
+  day: number
+  phase: GamePhase
+  type: 'phase' | 'action' | 'death' | 'assignment' | 'note' | 'reminder'
+  content: string
+  details?: any
+}
+
 export const useGameStore = defineStore('game', () => {
   // 核心狀態
   const state = ref<GameState | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const logs = ref<GameLogEntry[]>([])
 
   // 計算屬性
   const players = computed(() => state.value?.players ?? [])
@@ -76,6 +87,18 @@ export const useGameStore = defineStore('game', () => {
     if (newState) state.value = newState
   }
 
+  function addLog(type: GameLogEntry['type'], content: string, details?: any) {
+    logs.value.push({
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      day: round.value,
+      phase: phase.value,
+      type,
+      content,
+      details
+    })
+  }
+
   // 遊戲與初始化
   async function loadState() {
     const gs = await callCommand<GameState>('get_game_state')
@@ -87,6 +110,8 @@ export const useGameStore = defineStore('game', () => {
     const gs = await callCommand<GameState>('new_game')
     if (gs) {
       state.value = gs
+      logs.value = [] // 重置日誌
+      addLog('action', '開始新遊戲')
       // 如果重置前有劇本，則還原它
       if (currentScript) {
         await setScript(currentScript)
@@ -150,8 +175,15 @@ export const useGameStore = defineStore('game', () => {
 
   // 角色發派
   async function assignRole(playerId: string, role: CharacterDef | null) {
+    const player = players.value.find(p => p.id === playerId)
+    const oldRole = player?.role?.name || '無'
+    const newRole = role?.name || '無'
+    
     const gs = await callCommand<GameState>('assign_role', { playerId, role })
-    await syncState(gs)
+    if (gs) {
+      await syncState(gs)
+      addLog('assignment', `玩家 ${player?.name} 角色變更: ${oldRole} -> ${newRole}`)
+    }
   }
 
   async function setDemonBluff(index: number, role: CharacterDef | null) {
@@ -161,34 +193,62 @@ export const useGameStore = defineStore('game', () => {
 
   async function bulkAssignRoles(assignments: { player_id: string, role: CharacterDef | null }[], bluffs: (CharacterDef | null)[]) {
     const gs = await callCommand<GameState>('bulk_assign_roles', { assignments, bluffs })
-    await syncState(gs)
+    if (gs) {
+      await syncState(gs)
+      addLog('assignment', '執行批量角色指派')
+    }
   }
 
   // 標記與提示
   async function addReminder(playerId: string, text: string, sourceRole: string) {
+    const player = players.value.find(p => p.id === playerId)
+    const roleName = player?.role?.name || '無角色'
     const gs = await callCommand<GameState>('add_reminder', { playerId, text, sourceRole })
-    await syncState(gs)
+    if (gs) {
+      await syncState(gs)
+      addLog('reminder', `在 ${player?.name} (${roleName}) 上新增標記: ${text} (${sourceRole})`)
+    }
   }
 
   async function removeReminder(playerId: string, reminderId: string) {
+    const player = players.value.find(p => p.id === playerId)
+    const roleName = player?.role?.name || '無角色'
     const gs = await callCommand<GameState>('remove_reminder', { playerId, reminderId })
-    await syncState(gs)
+    if (gs) {
+      await syncState(gs)
+      addLog('reminder', `移除 ${player?.name} (${roleName}) 的標記`)
+    }
   }
 
   async function updateReminder(playerId: string, reminderId: string, newText: string) {
+    const player = players.value.find(p => p.id === playerId)
+    const roleName = player?.role?.name || '無角色'
     const gs = await callCommand<GameState>('update_reminder', { playerId, reminderId, newText })
-    await syncState(gs)
+    if (gs) {
+      await syncState(gs)
+      addLog('reminder', `更新 ${player?.name} (${roleName}) 的標記為: ${newText}`)
+    }
   }
 
   // 死亡與幽靈票
   async function killPlayer(playerId: string) {
+    const player = players.value.find(p => p.id === playerId)
+    const roleName = player?.role?.name || '無角色'
     const gs = await callCommand<GameState>('kill_player', { playerId })
-    await syncState(gs)
+    if (gs) {
+      await syncState(gs)
+      addLog('death', `玩家 ${player?.name} (${roleName}) 已死亡`)
+    }
   }
 
   async function revivePlayer(playerId: string) {
+    const player = players.value.find(p => p.id === playerId)
+    const roleName = player?.role?.name || '無角色'
     const gs = await callCommand<GameState>('revive_player', { playerId })
-    await syncState(gs)
+    if (gs) {
+      await syncState(gs)
+      addLog('death', `玩家 ${player?.name} (${roleName}) 已復活`)
+    }
   }
 
   async function toggleAlive(playerId: string) {
@@ -222,8 +282,12 @@ export const useGameStore = defineStore('game', () => {
 
   // 遊戲階段轉換
   async function advancePhase() {
+    const oldPhase = phase.value
     const gs = await callCommand<GameState>('advance_phase')
-    await syncState(gs)
+    if (gs) {
+      await syncState(gs)
+      addLog('phase', `切換階段: ${oldPhase} -> ${gs.phase}`)
+    }
   }
 
   async function revertPhase() {
@@ -263,10 +327,29 @@ export const useGameStore = defineStore('game', () => {
 
   // 數據匯入匯出
   async function exportState(): Promise<string | null> {
-    return await callCommand<string>('export_game_state')
+    const stateJson = await callCommand<string>('export_game_state')
+    if (stateJson) {
+      try {
+        const fullState = JSON.parse(stateJson)
+        // 注入對局日誌
+        fullState.game_logs = logs.value
+        return JSON.stringify(fullState, null, 2)
+      } catch (e) {
+        return stateJson
+      }
+    }
+    return null
   }
 
   async function importState(jsonStr: string) {
+    try {
+      const data = JSON.parse(jsonStr)
+      // 如果 JSON 中包含日誌，則恢復它
+      if (data.game_logs) {
+        logs.value = data.game_logs
+      }
+    } catch (e) {}
+    
     const gs = await callCommand<GameState>('import_game_state', { jsonStr })
     await syncState(gs)
   }
@@ -290,5 +373,6 @@ export const useGameStore = defineStore('game', () => {
     advancePhase, revertPhase, setPhase,
     nominate, editNomination, vote, execute, undoExecution,
     exportState, importState, importCustomScript,
+    logs, addLog
   }
 })

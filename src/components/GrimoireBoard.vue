@@ -67,12 +67,12 @@
     <div class="bluffs-drawer" :class="{ 'is-expanded': uiStore.isBluffsExpanded }">
       <!-- 功能標籤組 -->
       <div class="bluffs-tabs">
+        <button v-if="uiStore.isBluffsExpanded" class="bluffs-showcase-btn" @click="uiStore.isBluffsShowcase = true" title="展示給惡魔">
+          <span class="icon">👁️</span>
+        </button>
         <button class="bluffs-toggle-tab" @click="uiStore.isBluffsExpanded = !uiStore.isBluffsExpanded">
           <span class="tab-icon">{{ uiStore.isBluffsExpanded ? '›' : '‹' }}</span>
           <span class="tab-text">偽裝</span>
-        </button>
-        <button v-if="uiStore.isBluffsExpanded" class="bluffs-showcase-btn" @click="uiStore.isBluffsShowcase = true" title="展示給惡魔">
-          <span class="icon">👁️</span>
         </button>
       </div>
 
@@ -251,6 +251,7 @@ import CharacterSheet from './CharacterSheet.vue'
 import CharacterEditorPanel from './CharacterEditorPanel.vue'
 import PlayerOrderPanel from './PlayerOrderPanel.vue'
 import RoleAssignmentPanel from './RoleAssignmentPanel.vue'
+import GameLogPanel from './GameLogPanel.vue'
 import StatusBar from './StatusBar.vue'
 import TimerWidget from './TimerWidget.vue'
 
@@ -501,6 +502,7 @@ const activePanelComponent = computed(() => {
     case 'character-editor': return CharacterEditorPanel
     case 'player-order': return PlayerOrderPanel
     case 'role-assignment': return RoleAssignmentPanel
+    case 'game-log': return GameLogPanel
     default: return null
   }
 })
@@ -718,60 +720,67 @@ function starStyle(i: number) {
    右下角：虛張聲勢可收納托盤 (Collapsible Bluffs Drawer) 
    ───────────────────────────────────────────────────────────────────────── */
 .bluffs-drawer {
-  position: fixed; /* 改為 fixed 確保在手機端滾動時位置不變 */
+  position: fixed;
   bottom: 40px;
   right: 0;
   z-index: 1000;
   display: flex;
   align-items: flex-end;
-  /* 關鍵優化：向右位移 100% (藏起來)，但扣掉 32px (留標籤在外) */
   transform: translateX(calc(100% - 32px)); 
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(-5px 5px 20px rgba(0,0,0,0.5));
 }
 
 .bluffs-drawer.is-expanded {
-  transform: translateX(0); /* 展開時回到原點 */
+  transform: translateX(0);
+}
+
+/* 當面板開啟時，隱藏偽裝托盤，避免視覺干擾 */
+.panel-open .bluffs-drawer {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(100%);
 }
 
 .bluffs-tabs {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  margin-right: -1px; /* 負邊距讓標籤與面板無縫銜接 */
+  z-index: 2;
 }
 
 .bluffs-toggle-tab {
-  width: 28px;
-  height: 90px;
-  background: rgba(42, 27, 21, 0.9);
-  border: 1px solid rgba(210, 180, 140, 0.4);
+  width: 32px;
+  height: 96px;
+  background: linear-gradient(to right, rgba(42, 27, 21, 0.95), rgba(62, 39, 35, 0.95));
+  border: 1px solid rgba(210, 180, 140, 0.3);
   border-right: none;
-  border-radius: 8px 0 0 8px;
+  border-radius: 12px 0 0 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   cursor: pointer;
   color: #d2b48c;
-  box-shadow: -4px 0 15px rgba(0,0,0,0.3);
-  z-index: 2;
+  transition: all 0.3s ease;
 }
 
 .bluffs-showcase-btn {
-  width: 28px;
-  height: 44px;
-  background: #b38b3d;
+  width: 32px;
+  height: 48px;
+  background: linear-gradient(135deg, #b38b3d 0%, #8c6d2f 100%);
   color: #2a1b15;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-right: none;
-  border-radius: 6px 0 0 6px;
+  border-radius: 10px 0 0 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: -4px 4px 10px rgba(0,0,0,0.2);
-  transition: all 0.2s;
-  z-index: 1;
+  box-shadow: -4px 2px 10px rgba(0,0,0,0.3);
+  transition: all 0.2s ease;
 }
 
 .bluffs-showcase-btn:hover {
@@ -783,15 +792,31 @@ function starStyle(i: number) {
 .tab-text { font-size: 10px; writing-mode: vertical-lr; letter-spacing: 2px; }
 
 .bluffs-box-fixed {
-  background: rgba(20, 20, 28, 0.65);
-  border: 1px solid rgba(210, 180, 140, 0.25);
-  border-radius: 14px; /* 修改為四角皆圓角 */
-  padding: 12px;
+  background: linear-gradient(145deg, rgba(20, 20, 28, 0.9), rgba(30, 30, 40, 0.85));
+  border: 1px solid rgba(210, 180, 140, 0.35);
+  border-left: none;
+  border-radius: 16px 0 0 0; /* 左下角改為直角 */
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  backdrop-filter: blur(10px);
-  box-shadow: 5px 5px 20px rgba(0,0,0,0.5);
+  gap: 16px;
+  backdrop-filter: blur(15px);
+  box-shadow: -10px 0 30px rgba(0,0,0,0.6);
+  position: relative;
+}
+
+.bluffs-box-fixed::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px 0 0 0; /* 同步改為直角 */
+  padding: 1px;
+  background: linear-gradient(to bottom, rgba(210, 180, 140, 0.3), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 .bluffs-title {
@@ -964,13 +989,13 @@ function starStyle(i: number) {
 
 .zoom-controls-bottom {
   position: fixed;
-  bottom: 35px; /* 貼近底部，最大限度留出魔典空間 */
+  bottom: 25px; /* 貼近底部，最大限度留出魔典空間 */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px; /* 縮減間距 */
+  gap: 10px; /* 縮減間距 */
   background: rgba(42, 27, 21, 0.5);
   padding: 4px 10px; /* 縮減內邊距 */
   border-radius: 20px;
