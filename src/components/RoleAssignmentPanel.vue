@@ -222,7 +222,7 @@
                     <img v-if="role.image" :src="role.image" class="r-img" />
                     <span v-else class="r-emoji">{{ getRoleTypeEmoji(role.role_type) }}</span>
                   </div>
-                  <div class="role-card-name">{{ role.name }}</div>
+                  <div class="role-card-name">{{ (role as any).displayName || role.name }}</div>
                 </div>
               </div>
             </div>
@@ -411,7 +411,7 @@
                 <div v-for="role in fullPoolCharacters" 
                      :key="role.id" 
                      class="flicker-item"
-                     :class="{ 'is-highlighted': activeFlickerId === role.id }">
+                     :class="{ 'is-highlighted': isIdMatch(activeFlickerId, role.id) }">
                   <img v-if="role.image" :src="role.image || undefined" class="flicker-token" />
                   <div v-else class="flicker-placeholder">👤</div>
                 </div>
@@ -721,7 +721,9 @@ const fullGroupedCharacters = computed(() => {
     label: t.label,
     color: t.color,
     list: gameStore.script!.characters.filter(c => {
-      const matchesType = c.role_type === t.key
+      const cType = c.role_type.trim().toLowerCase()
+      const tType = t.key.trim().toLowerCase()
+      const matchesType = cType === tType
       const matchesQuery = !query || c.name.toLowerCase().includes(query)
       return matchesType && matchesQuery
     })
@@ -732,16 +734,35 @@ const groupedCharacters = computed(() => {
   if (!gameStore.script) return []
   const excluded = new Set(excludedPoolIds.value)
   const query = searchQuery.value.trim().toLowerCase()
-  return roleTypes.map(t => ({
-    type: t.key,
-    label: t.label,
-    color: t.color,
-    list: gameStore.script!.characters.filter(c => {
-      const matchesType = c.role_type === t.key && !excluded.has(c.id)
+  
+  return roleTypes.map(t => {
+    let list: any[] = []
+    
+    gameStore.script!.characters.forEach(c => {
+      const cType = c.role_type.trim().toLowerCase()
+      const tType = t.key.trim().toLowerCase()
+      const matchesType = cType === tType && !excluded.has(c.id)
       const matchesQuery = !query || c.name.toLowerCase().includes(query)
-      return matchesType && matchesQuery
+      
+      if (matchesType && matchesQuery) {
+        // 如果是「村夫」，則提供 3 個可選項
+        if (c.name === '村夫') {
+          list.push({ ...c, id: c.id })
+          list.push({ ...c, id: c.id + '::COPY::2', displayName: '村夫 (2)' })
+          list.push({ ...c, id: c.id + '::COPY::3', displayName: '村夫 (3)' })
+        } else {
+          list.push(c)
+        }
+      }
     })
-  }))
+    
+    return {
+      type: t.key,
+      label: t.label,
+      color: t.color,
+      list
+    }
+  })
 })
 
 const availableBluffPool = computed(() => {
@@ -778,14 +799,16 @@ watch(validBluffIds, (validSet) => {
 })
 
 function scriptTypeTotal(type: string) {
-  return gameStore.script?.characters.filter(c => c.role_type === type).length || 0
+  const targetType = type.toLowerCase()
+  return gameStore.script?.characters.filter(c => c.role_type.toLowerCase() === targetType).length || 0
 }
 
 function poolTypeCount(type: string) {
   if (!gameStore.script) return 0
+  const targetType = type.toLowerCase()
   const excluded = new Set(excludedPoolIds.value)
   return gameStore.script.characters.filter(c => 
-    c.role_type === type && !excluded.has(c.id)
+    c.role_type.toLowerCase() === targetType && !excluded.has(c.id)
   ).length
 }
 
@@ -956,12 +979,23 @@ function closeResult() {
 }
 
 function getRoleName(id: string) {
-  const char = scriptStore.rawCharacterList.find(c => c.id === id)
+  const char = getCharacterById(id)
   return char ? char.name : id
 }
 
 function getCharacterById(id: string) {
-  return scriptStore.masterScript.characters.find(c => c.id === id)
+  if (!id) return null
+  // 處理村夫副本 ID：從 "villager::COPY::2" 還原成 "villager"
+  const realId = id.split('::COPY::')[0]
+  
+  // 優先從當前劇本找，找不到則從原始全域列表找
+  return gameStore.script?.characters.find(c => c.id === realId) || 
+         scriptStore.rawCharacterList.find(c => c.id === realId)
+}
+
+function isIdMatch(id1: string | null, id2: string | null) {
+  if (!id1 || !id2) return false
+  return id1.split('::COPY::')[0] === id2.split('::COPY::')[0]
 }
 
 async function finishLottery() {
@@ -975,7 +1009,7 @@ async function finishLottery() {
       roleId = 'drunk'
     }
     
-    const char = gameStore.script!.characters.find(c => c.id === roleId)
+    const char = getCharacterById(roleId)
     return { player_id: p.id, role: char || null }
   })
 
@@ -986,9 +1020,10 @@ async function finishLottery() {
 
 function currentTypeCount(type: string) {
   if (!gameStore.script) return 0
+  const targetType = type.trim().toLowerCase()
   return selectedRoleIds.value.filter(id => {
-    const char = gameStore.script!.characters.find(c => c.id === id)
-    return char?.role_type === type
+    const char = getCharacterById(id)
+    return char?.role_type.trim().toLowerCase() === targetType
   }).length
 }
 
@@ -1100,17 +1135,16 @@ const previewBluffs = ref<(CharacterDef | null)[]>([null, null, null])
 
 function generatePlan() {
   if (!gameStore.script) return
-  const script = gameStore.script
   
-  // 從選中的 ID 獲取完整角色定義
-  const pool = selectedRoleIds.value.map(id => script.characters.find(c => c.id === id)!).filter(Boolean)
-  const bluffs = selectedBluffIds.value.map(id => script.characters.find(c => c.id === id)!).filter(Boolean)
+  // 修正：使用 getCharacterById 獲取定義，以支援虛擬 ID (如村夫副本)
+  const pool = selectedRoleIds.value.map(id => getCharacterById(id)).filter(Boolean) as CharacterDef[]
+  const bluffs = selectedBluffIds.value.map(id => getCharacterById(id)).filter(Boolean) as CharacterDef[]
   
   // 隨機洗牌分配給玩家
   const finalPool = [...pool].sort(() => Math.random() - 0.5)
   previewAssignments.value = gameStore.players.map((p, i) => ({
     player_id: p.id,
-    role: finalPool[i] || null
+    role: finalPool[i] || null // 這裡 finalPool[i] 已經是物件了，直接指派
   }))
   
   previewBluffs.value = bluffs
