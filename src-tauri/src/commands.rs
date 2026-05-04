@@ -57,6 +57,19 @@ pub fn set_script(script: Script, state: State<AppState>) -> Result<GameState, S
 
 // ─── 玩家管理指令 ────────────────────────────────────────────
 
+/// 切換傳說角色啟用狀態
+#[tauri::command]
+pub fn toggle_fabled(fabled_id: String, state: State<AppState>) -> Result<GameState, String> {
+    let mut gs = state.0.lock().unwrap();
+    if let Some(pos) = gs.active_fabled.iter().position(|id| id == &fabled_id) {
+        gs.active_fabled.remove(pos);
+    } else {
+        gs.active_fabled.push(fabled_id);
+    }
+    gs.touch();
+    Ok(gs.clone())
+}
+
 /// 新增玩家
 #[tauri::command]
 pub fn add_player(name: String, state: State<AppState>) -> Result<GameState, String> {

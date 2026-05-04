@@ -18,6 +18,9 @@
           <button class="btn-primary add-btn" @click="openAdd">
             + 新增角色
           </button>
+          <button class="btn-ghost" @click="exportLibrary" title="匯出當前角色庫備份">
+             📤 匯出備份
+          </button>
           <button class="btn-ghost" @click="resetToDefault" title="恢復成官方預設全庫">
              🔄 恢復預設
           </button>
@@ -84,7 +87,19 @@
 
         <div class="form-group">
           <label>圖片網址 (URL)</label>
-          <input class="form-input" v-model="formData.image" placeholder="https://..." />
+          <div class="input-with-action">
+            <input class="form-input" v-model="formData.image" placeholder="https://..." />
+            <button class="btn-ghost action-btn" @click="fileInput?.click()" title="從本機上傳圖片">
+              📂 上傳
+            </button>
+            <input 
+              type="file" 
+              ref="fileInput" 
+              style="display: none" 
+              accept="image/*" 
+              @change="handleFileUpload" 
+            />
+          </div>
         </div>
 
         <div class="form-row">
@@ -135,10 +150,13 @@
 import { ref, computed } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
+import { save } from '@tauri-apps/plugin-dialog'
+import { writeTextFile } from '@tauri-apps/plugin-fs'
 
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
 
+const fileInput = ref<HTMLInputElement | null>(null)
 const mode = ref<'list' | 'form'>('list')
 const searchQuery = ref('')
 const editingId = ref<string | null>(null)
@@ -265,18 +283,60 @@ function removeConflictRule(index: number | string) {
   formData.value.conflicts.splice(Number(index), 1)
 }
 
+function handleFileUpload(event: Event) {
+  const target = event.target as HTMLInputElement
+  if (!target.files || target.files.length === 0) return
+  
+  const file = target.files[0]
+  if (file.size > 2 * 1024 * 1024) {
+    alert('圖片太大了 (超過 2MB)，請壓縮後再上傳。')
+    return
+  }
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    formData.value.image = e.target?.result as string
+    // 清除 input，以便下次選擇同一張檔案也能觸發 change
+    target.value = ''
+  }
+  reader.readAsDataURL(file)
+}
+
 async function resetToDefault() {
-  if (!confirm('確定要將角色庫恢復成官方預設狀態嗎？這將會覆蓋您新增或修改過的所有角色且無法復原！')) {
+  if (!confirm('確定要將角色庫恢復成官方預設狀態嗎？這將會覆蓋您新增或修改過的所有角色且無法復原！建議先執行「匯出備份」。')) {
     return
   }
   
   try {
-    // 透過呼叫後端重建或重新存入默認 json
-    // 我們可以從 tauri plugin-fs 直接把 default 的 static 列表蓋回去
-    // 不過由於 scriptStore 目前沒有暴露重置方法，我們需要從內部發起
     await scriptStore.resetToDefault()
   } catch (e) {
     alert('恢復失敗：' + String(e))
+  }
+}
+
+async function exportLibrary() {
+  const json = JSON.stringify(scriptStore.rawCharacterList, null, 2)
+  const fileName = `botc-characters-${Date.now()}.json`
+
+  try {
+    const filePath = await save({
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+      defaultPath: fileName
+    })
+
+    if (filePath) {
+      await writeTextFile(filePath, json)
+      alert('角色庫已成功匯出至：' + filePath)
+    }
+  } catch (e) {
+    console.warn('Tauri export failed, falling back to browser download', e)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    a.click()
+    URL.revokeObjectURL(url)
   }
 }
 </script>
@@ -301,17 +361,16 @@ async function resetToDefault() {
   flex-direction: column;
   border-radius: 20px 20px 12px 12px;
   overflow: hidden;
-  background: var(--color-bg-base);
 }
 
 .panel-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 16px 16px 10px;
+  padding: 10px 16px; /* 縮小上下內距 */
   border-bottom: 1px solid rgba(201,168,76,0.1);
   flex-shrink: 0;
-  background: var(--color-bg-elevated);
+  background: var(--color-bg-surface);
 }
 
 .panel-icon { font-size: 18px; }
@@ -335,12 +394,17 @@ async function resetToDefault() {
 .panel-body {
   flex: 1;
   overflow-y: auto;
+  padding: 0;
+}
+
+.panel-body.form-mode {
   padding: 16px;
 }
 
 .search-bar {
   position: relative;
-  margin-bottom: 12px;
+  margin: 10px 16px; /* 縮小上下外距 */
+  margin-bottom: 8px;
 }
 
 .search-icon {
@@ -378,7 +442,7 @@ async function resetToDefault() {
 .header-actions {
   display: flex;
   gap: 8px;
-  margin-bottom: 16px;
+  margin: 0 16px 16px;
 }
 
 .add-btn {
@@ -395,17 +459,15 @@ async function resetToDefault() {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 12px;
-  margin-bottom: 8px;
+  padding: 18px 16px;
+  background: none;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
-.char-item:hover {
-  background: rgba(255,255,255,0.06);
+.char-item:active {
+  background: rgba(255,255,255,0.05);
 }
 
 .char-logo {
@@ -522,7 +584,22 @@ async function resetToDefault() {
   border-radius: 8px;
   color: white;
   font-size: 14px;
+  flex: 1;
 }
+
+.input-with-action {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-btn {
+  white-space: nowrap;
+  padding: 10px 12px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
 .form-input:disabled {
   opacity: 0.5;
   cursor: not-allowed;

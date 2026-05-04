@@ -67,10 +67,18 @@ export const useScriptStore = defineStore('script', () => {
 
   const filteredCharacters = computed<CharacterDef[]>(() => {
     if (!currentScript.value) return []
+    
+    // 預設從當前腳本撈取
     let chars = currentScript.value.characters
-    if (filterType.value !== 'All') {
+    
+    // 如果篩選條件是旅行者，因為旅行者通常不寫在特定腳本中（可加入任何腳本），
+    // 所以我們直接從「全角色大全 (masterScript)」中提取所有旅行者。
+    if (filterType.value === 'Traveler') {
+      chars = masterScript.value.characters.filter(c => c.role_type === 'Traveler')
+    } else if (filterType.value !== 'All') {
       chars = chars.filter(c => c.role_type === filterType.value)
     }
+
     if (searchQuery.value.trim()) {
       const q = searchQuery.value.trim().toLowerCase()
       chars = chars.filter(c =>

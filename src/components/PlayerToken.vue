@@ -23,6 +23,11 @@
       <div class="name-label-box" :class="namePositionClass">
         <span class="seat-num">{{ index + 1 }}.</span>
         <span class="player-name-text">{{ player.name || '空白' }}</span>
+        <!-- 狀態圖示 (是否有投票權等) 移入姓名標籤中 -->
+        <div class="status-indicators-inline">
+          <span v-if="!player.is_alive && player.has_ghost_vote" class="ghost-vote" title="擁有靈魂投票權">👻</span>
+          <span v-if="!player.can_nominate" class="nominate-lock" title="今日已不能提名">🚫</span>
+        </div>
       </div>
 
       <!-- 核心圓形令片內部 (圖示與角色名) -->
@@ -47,7 +52,7 @@
       </div>
 
       <!-- 提示標記容器 (分層渲染以確保文字置頂) -->
-      <div class="reminders-classic-container">
+      <div class="reminders-classic-container" v-if="!uiStore.isRolesHidden">
         <!-- 第一層：所有的圓圈圖示 -->
         <div 
           v-for="(rem, rIdx) in player.reminders" 
@@ -77,11 +82,7 @@
     </div>
 
 
-    <!-- 狀態圖示 (是否有投票權等) -->
-    <div class="status-indicators">
-      <span v-if="!player.is_alive && player.has_ghost_vote" class="ghost-vote" title="擁有靈魂投票權">👻</span>
-      <span v-if="!player.can_nominate" class="nominate-lock" title="今日已不能提名">🚫</span>
-    </div>
+    <!-- 狀態圖示已移至姓名標籤中 -->
   </div>
 </template>
 
@@ -155,12 +156,15 @@ function getReminderStyle(rIdx: number) {
 
   // 1. 內圈向心模式 (Inner - Single Radial Column)
   if (layout === 'inner') {
-    // 改為單排垂直向心
-    const distV = 75 + rIdx * 50 /* 增加間距 32 -> 40 */
+    // 單排垂直向心：沿著真實向心向量排列
+    const baseDist = 75 
+    const gap = 42 
+    const distV = baseDist + rIdx * gap
 
-    // 使用標準向心矢量
-    const top = 50 - (distV * Math.sin(angle) * 0.72)
-    const left = 50 - (distV * Math.cos(angle) * 0.72)
+    // 這裡的 angle 已經是從中心指向玩家的真實幾何角度
+    // 往中心移動就是減去向量
+    const top = 50 - (distV * Math.sin(angle) * 0.75)
+    const left = 50 - (distV * Math.cos(angle) * 0.75)
     
     return {
       top: `${top}%`,
@@ -526,18 +530,19 @@ function getReminderIcon(text: string) {
 
 
 
-.status-indicators {
-  position: absolute;
-  top: 0;
-  left: 0; /* 移到左上方 */
+.status-indicators-inline {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px; /* 與名字保持一點間距 */
 }
 
-.status-indicators span {
-  font-size: 14px;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));
+.status-indicators-inline span {
+  font-size: 11px; /* 稍微縮小以配合標籤高度 */
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));
+  line-height: 1;
 }
+
 .pointer-events-none {
   pointer-events: none;
 }

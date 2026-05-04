@@ -1,6 +1,6 @@
 // UI Store ：管理頁面面板、彈窗與點選菜單狀態
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import type { Player } from '../types'
 
 export type Panel =
@@ -15,8 +15,10 @@ export type Panel =
   | 'player-order'
   | 'role-assignment'
   | 'game-log'
+  | 'fabled-selector'
 
 export type ReminderLayout = 'arc' | 'grid' | 'stack' | 'inner'
+export type GrimoireShape = 'circle' | 'oval' | 'rect'
 
 export const useUIStore = defineStore('ui', () => {
   // --- 面板控制 ---
@@ -30,12 +32,28 @@ export const useUIStore = defineStore('ui', () => {
 
   // --- 提示標記佈局方案 ---
   const reminderLayout = ref<ReminderLayout>(
-    (localStorage.getItem('botc-reminder-layout') as ReminderLayout) || 'arc'
+    (localStorage.getItem('botc-reminder-layout') as ReminderLayout) || 'inner'
+  )
+
+  const grimoireShape = ref<GrimoireShape>(
+    (localStorage.getItem('botc-grimoire-shape') as GrimoireShape) || 'oval'
   )
 
   function setReminderLayout(layout: ReminderLayout) {
     reminderLayout.value = layout
     localStorage.setItem('botc-reminder-layout', layout)
+  }
+
+  function setGrimoireShape(shape: GrimoireShape) {
+    grimoireShape.value = shape
+    localStorage.setItem('botc-grimoire-shape', shape)
+  }
+
+  function cycleGrimoireShape() {
+    const shapes: GrimoireShape[] = ['circle', 'oval', 'rect']
+    const currentIndex = shapes.indexOf(grimoireShape.value)
+    const nextIndex = (currentIndex + 1) % shapes.length
+    setGrimoireShape(shapes[nextIndex])
   }
 
   function cycleReminderLayout() {
@@ -68,7 +86,7 @@ export const useUIStore = defineStore('ui', () => {
   // --- 角色選擇器 (Role Picker) ---
   const rolePickerPlayer = ref<Player | null>(null)
   const rolePickerDemonBluffIndex = ref<number | null>(null)
-  const isRolePickerOpen = ref(false)
+  const isRolePickerOpen = computed(() => rolePickerPlayer.value !== null || rolePickerDemonBluffIndex.value !== null)
 
   function openRolePicker(player: Player) {
     rolePickerPlayer.value = player
@@ -151,12 +169,12 @@ export const useUIStore = defineStore('ui', () => {
   // --- 角色池與劇本預設標籤 ---
   const activePoolPresetId = ref(localStorage.getItem('botc-pool-id') || '')
   const activePoolPresetName = ref(localStorage.getItem('botc-pool-name') || '')
-  
+
   let initialExcluded: string[] = []
   try {
     const saved = localStorage.getItem('botc-pool-excluded')
     if (saved) initialExcluded = JSON.parse(saved)
-  } catch (e) {}
+  } catch (e) { }
   const excludedPoolIds = ref<string[]>(initialExcluded)
 
   watch(activePoolPresetId, (val) => {
@@ -189,7 +207,7 @@ export const useUIStore = defineStore('ui', () => {
 
   // --- 縮放控制 (Zoom Control) ---
   const grimoireScale = ref(Number(localStorage.getItem('botc-grimoire-scale')) || 1.0)
-  
+
   function setGrimoireScale(scale: number) {
     const clamped = Math.min(Math.max(scale, 0.5), 2.0)
     grimoireScale.value = clamped
@@ -198,8 +216,8 @@ export const useUIStore = defineStore('ui', () => {
 
   function zoomIn() { setGrimoireScale(grimoireScale.value + 0.1) }
   function zoomOut() { setGrimoireScale(grimoireScale.value - 0.1) }
-  function resetZoom() { 
-    setGrimoireScale(1.0) 
+  function resetZoom() {
+    setGrimoireScale(1.0)
     resetPan()
   }
 
@@ -221,7 +239,7 @@ export const useUIStore = defineStore('ui', () => {
     if (timerRemaining.value <= 0) return
     if (!isTimerRunning.value) {
       isTimerRunning.value = true
-      
+
       // 核心改進：記錄結束的時間點，防止鎖屏暫停
       timerTargetTimestamp.value = Date.now() + (timerRemaining.value * 1000)
 
@@ -229,7 +247,7 @@ export const useUIStore = defineStore('ui', () => {
         if (timerTargetTimestamp.value) {
           const now = Date.now()
           const diff = Math.ceil((timerTargetTimestamp.value - now) / 1000)
-          
+
           if (diff > 0) {
             timerRemaining.value = diff
           } else {
@@ -284,6 +302,7 @@ export const useUIStore = defineStore('ui', () => {
     activePanel, openPanel, closePanel, togglePanel,
     // 佈局
     reminderLayout, setReminderLayout, cycleReminderLayout,
+    grimoireShape, setGrimoireShape, cycleGrimoireShape,
     isBluffsExpanded, isBluffsShowcase, isSingleRoleShowcase,
     // 右鍵菜單
     contextMenuPlayer, contextMenuPos, openContextMenu, closeContextMenu,

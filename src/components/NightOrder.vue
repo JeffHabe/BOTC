@@ -34,7 +34,14 @@
           :class="{
             'order-item-active': isActiveInGame(char),
             'order-item-evil': isEvilRole(char),
+            'order-item-pressable': getPlayerByRole(char.id)
           }"
+          @mousedown="getPlayerByRole(char.id) && startLongPress(getPlayerByRole(char.id)!.id)"
+          @mouseup="cancelLongPress"
+          @mouseleave="cancelLongPress"
+          @touchstart.passive="getPlayerByRole(char.id) && startLongPress(getPlayerByRole(char.id)!.id)"
+          @touchend.passive="cancelLongPress"
+          @touchmove.passive="cancelLongPress"
         >
           <!-- 序號 -->
           <div class="order-index">{{ i + 1 }}</div>
@@ -154,6 +161,29 @@ function getNightReminder(char: any) {
     ? char.first_night_reminder 
     : char.other_night_reminder
 }
+
+// 長按邏輯
+let longPressTimer: number | null = null
+
+function startLongPress(playerId: string) {
+  cancelLongPress() // 先清除舊的
+  longPressTimer = window.setTimeout(() => {
+    uiStore.openReminderPicker(playerId)
+    uiStore.closePanel() // 跳轉後自動關閉行動順序面板
+    
+    // 手動震動回饋 (如果裝置支援)
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50)
+    }
+  }, 500) // 500ms 觸發
+}
+
+function cancelLongPress() {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
+}
 </script>
 
 <style scoped>
@@ -171,7 +201,7 @@ function getNightReminder(char: any) {
 .night-order-panel {
   width: 100%;
   max-width: 440px;
-  max-height: 80vh;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   border-radius: 20px 20px 12px 12px;
@@ -255,6 +285,11 @@ function getNightReminder(char: any) {
   background: rgba(139, 26, 26, 0.05);
 }
 
+.order-item-pressable:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .order-index {
   width: 24px;
   height: 24px;
@@ -326,8 +361,9 @@ function getNightReminder(char: any) {
 }
 
 .order-player-name {
-  font-size: 12px;
-  color: var(--color-text-secondary);
+  font-size: 13px;
+  color: var(--color-gold);
+  font-weight: 600;
 }
 
 .order-player-dead { font-size: 12px; }

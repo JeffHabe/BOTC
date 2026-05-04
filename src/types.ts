@@ -97,6 +97,7 @@ export interface GameState {
   round: number
   demon_bluffs: (CharacterDef | null)[]
   nominations: Nomination[]
+  active_fabled: string[]
   created_at: string
   updated_at: string
 }

@@ -48,6 +48,8 @@
 import { ref, computed } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
+import { save } from '@tauri-apps/plugin-dialog'
+import { writeTextFile } from '@tauri-apps/plugin-fs'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
@@ -94,14 +96,41 @@ function clearLogs() {
 
 async function exportGame() {
   const json = await gameStore.exportState()
-  if (!json) return
-  const blob = new Blob([json], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `botc-log-${Date.now()}.json`
-  a.click()
-  URL.revokeObjectURL(url)
+  if (!json) {
+    uiStore.showConfirm('匯出失敗', '無法獲取遊戲數據，請檢查控制台。', () => {}, false)
+    return
+  }
+
+  const fileName = `botc-log-${new Date().toISOString().slice(0, 10)}.json`
+
+  try {
+    // 嘗試使用 Tauri 原生對話框
+    const filePath = await save({
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+      defaultPath: fileName
+    })
+
+    if (filePath) {
+      await writeTextFile(filePath, json)
+      alert('對局記錄已成功匯出至：' + filePath)
+    }
+  } catch (e) {
+    // 退回到網頁下載方式
+    console.warn('Tauri export failed, falling back to browser download', e)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    a.download = fileName
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => {
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }, 100)
+    uiStore.showConfirm('匯出成功', '對局 JSON 檔已嘗試透過瀏覽器下載。', () => {}, false)
+  }
 }
 </script>
 
@@ -120,7 +149,7 @@ async function exportGame() {
 .log-panel {
   width: 100%;
   max-width: 460px;
-  max-height: 85vh;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   border-radius: 20px 20px 12px 12px;
@@ -143,6 +172,24 @@ async function exportGame() {
   font-size: 16px;
   color: var(--color-gold);
   flex: 1;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  color: #fff;
+  transform: scale(1.1);
 }
 
 .note-input-area {

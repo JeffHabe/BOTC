@@ -61,6 +61,19 @@
           :angle="getEquidistantAngle(index, players.length)"
         />
       </div>
+
+      <!-- 傳說角色展示區 (Fabled Zone) -->
+      <div v-if="gameStore.activeFabled.length > 0" class="fabled-zone">
+        <div 
+          v-for="id in gameStore.activeFabled" 
+          :key="id"
+          class="fabled-active-token"
+          @click="showFabledTooltip(id)"
+          @contextmenu.prevent="uiStore.openPanel('fabled-selector')"
+        >
+          <img :src="getCharacterIcon(id)" class="fabled-active-img" />
+        </div>
+      </div>
     </div>
 
     <!-- 虛張聲勢 (Demon Bluffs) - 右下角垂直托盤設計 (可收納) -->
@@ -83,7 +96,8 @@
             v-for="(role, idx) in gameStore.demonBluffs" 
             :key="idx"
             class="bluff-slot-vertical"
-            @click="uiStore.openRolePickerForBluff(idx)"
+            :class="{ 'is-locked': gameStore.phase !== 'Setup' }"
+            @click="gameStore.phase === 'Setup' && uiStore.openRolePickerForBluff(idx)"
           >
             <!-- 角色令片內部設計 -->
             <div v-if="role" class="bluff-token-classic">
@@ -113,23 +127,53 @@
     </button>
 
     <div class="side-action-group">
-      <button class="menu-btn" @click="uiStore.openPanel('settings')">
+      <button class="menu-btn" @click="uiStore.openPanel('settings')" title="設置">
         <span class="icon">⚙️</span>
       </button>
 
-      <button class="privacy-btn" :class="{ 'is-active': uiStore.isRolesHidden }" @click="uiStore.toggleRolesHidden()" :title="uiStore.isRolesHidden ? '顯示角色' : '隱藏角色'">
+      <button class="menu-btn" @click="uiStore.openPanel('night-order')" title="夜晚順序">
+        <span class="icon">🌙</span>
+      </button>
+
+      <button 
+        class="privacy-btn" 
+        :class="{ 'is-active': uiStore.isRolesHidden }"
+        @click="uiStore.toggleRolesHidden()"
+        :title="uiStore.isRolesHidden ? '顯示角色' : '隱藏角色'"
+      >
         <div class="privacy-icon-wrapper">
           <span class="icon">👁️</span>
           <span v-if="uiStore.isRolesHidden" class="ban-icon">🚫</span>
         </div>
       </button>
+      
+            <!-- 魔典排列圖形切換 (移至側邊欄) -->
+            <button 
+              class="side-action-btn" 
+              @click="uiStore.cycleGrimoireShape" 
+              :title="`魔典圖形: ${currentShapeLabel}`"
+            >
+              <span class="icon">{{ currentShapeIcon }}</span>
+            </button>
 
-      <!-- 佈局與縮放控制項 -->
-      <button class="side-action-btn layout-toggle-side" @click="uiStore.cycleReminderLayout()" :title="`佈局: ${layoutLabel}`">
+      <!-- 佈局切換按鈕 (移至隱私按鈕下方) -->
+      <!-- <button 
+        class="side-action-btn layout-toggle-side" 
+        @click="uiStore.cycleReminderLayout()" 
+        :title="`佈局: ${layoutLabel}`"
+      >
         <span class="icon">{{ layoutIcon }}</span>
-      </button>
+      </button> -->
 
-    </div>
+      <!-- 玩家排序按鈕 -->
+      <!-- <button 
+        class="side-action-btn" 
+        @click="uiStore.openPanel('player-order')" 
+        title="玩家排序"
+      >
+        <span class="icon">🔃</span>
+      </button> -->
+    </div> 
     
     <!-- 縮放按鈕 (底部中央水平排列) -->
     <div class="zoom-controls-bottom">
@@ -252,6 +296,7 @@ import CharacterEditorPanel from './CharacterEditorPanel.vue'
 import PlayerOrderPanel from './PlayerOrderPanel.vue'
 import RoleAssignmentPanel from './RoleAssignmentPanel.vue'
 import GameLogPanel from './GameLogPanel.vue'
+import FabledSelectorPanel from './FabledSelectorPanel.vue'
 import StatusBar from './StatusBar.vue'
 import TimerWidget from './TimerWidget.vue'
 
@@ -265,6 +310,20 @@ import PlayerControlSheet from './PlayerControlSheet.vue'
 const gameStore = useGameStore()
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
+
+// --- 視窗大小追蹤 (用於修正正圓形比例) ---
+const windowSize = ref({ width: window.innerWidth, height: window.innerHeight })
+function updateWindowSize() {
+  windowSize.value = { width: window.innerWidth, height: window.innerHeight }
+}
+
+onMounted(() => {
+  window.addEventListener('resize', updateWindowSize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateWindowSize)
+})
 
 // --- 螢幕喚醒鎖 (Wake Lock) ---
 let wakeLock: any = null
@@ -377,34 +436,70 @@ function handleMouseUp() {
   window.removeEventListener('touchend', handleMouseUp)
 }
 
-const layoutLabel = computed(() => {
-  const map = { arc: '環繞', grid: '網格', stack: '側面', inner: '內圈' }
-  return map[uiStore.reminderLayout as keyof typeof map]
+
+
+const currentShapeIcon = computed(() => {
+  const map = { circle: '⚪', oval: '🥚', rect: '🔲' }
+  return map[uiStore.grimoireShape as keyof typeof map] || '⚪'
 })
 
-const layoutIcon = computed(() => {
-  const map = { arc: '⭕', grid: '⏹️', stack: '📋', inner: '⏬' }
-  return map[uiStore.reminderLayout as keyof typeof map]
+const currentShapeLabel = computed(() => {
+  const map = { circle: '經典正圓', oval: '優雅橢圓', rect: '工整矩形' }
+  return map[uiStore.grimoireShape as keyof typeof map] || ''
 })
 
-// 佈局全局參數：統一管理，確保計算與渲染 100% 同步
-const LAYOUT_CONFIG = {
-  a: 38,       // 水平半徑 (%)
-  b: 30,       // 垂直半徑 (%) - 配合圓形公式縮小垂直比，分散頂底擁擠
-  nFactor: 2.0, // 回歸圓形/正橢圓，這在長屏下能提供最均勻的視覺佈局
-  yCenter: 55, // 整體垂直重心 (%)
-  samples: 600  // 弧長取樣精度
-}
+// 佈局全局參數：改為計算屬性，支援動態切換形狀
+const LAYOUT_CONFIG = computed(() => {
+  const shape = uiStore.grimoireShape
+  const ratio = windowSize.value.width / windowSize.value.height
+
+  switch (shape) {
+    case 'circle':
+      // 核心邏輯：擴大半徑 (44%) 以增加周長，減少擁擠
+      const baseA = 50
+      return {
+        a: baseA,
+        b: baseA * ratio, // 修正比例
+        nFactor: 2,
+        yCenter: 55, // 圓形模式下完全居中
+        samples: 600
+      }
+    case 'rect':
+      // 矩形模式優化：增加響應式高度，並稍微降低 nFactor 讓過渡更平滑
+      const baseARect = 41
+      return {
+        a: baseARect,
+        b: Math.min(baseARect * ratio * 1.3, 38), // 隨比例增加高度，但設定上限防止太長
+        nFactor: 3.2, // 從 4.0 降到 3.2，讓角落不那麼死板
+        yCenter: 50,
+        samples: 800
+      }
+    case 'oval':
+    default:
+      return {
+        a: 38,
+        b: 30,
+        nFactor: 2.0,
+        yCenter: 55,
+        samples: 600
+      }
+  }
+})
 
 /**
  * 弧長均分數據快取 (Arc-Length Parametrization)
  * 預先計算超橢圓的弧長分佈，避免每個令片重複運算了 600 次循環。
  */
 const arcData = computed(() => {
-  const { a, b, nFactor, samples } = LAYOUT_CONFIG
+  const { a, b, nFactor, samples } = LAYOUT_CONFIG.value
   const arcLengths = new Float32Array(samples + 1)
   let totalLength = 0
   
+  // 核心修正：只有「正圓形」需要強制物理等距
+  // 矩形和橢圓為了順著長螢幕邊緣佈置，使用百分比空間均分最自然
+  const needsRatioFix = uiStore.grimoireShape === 'circle'
+  const ratio = needsRatioFix ? (windowSize.value.width / windowSize.value.height) : 1.0
+
   const getPt = (ang: number) => {
     const cosT = Math.cos(ang); const sinT = Math.sin(ang)
     return {
@@ -418,7 +513,11 @@ const arcData = computed(() => {
     if (i > 0) {
       const prevT = ((i - 1) / samples) * 2 * Math.PI
       const p1 = getPt(prevT); const p2 = getPt(t)
-      totalLength += Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2))
+      
+      // 根據模式決定是否修正 y 軸權重
+      const dx = p2.x - p1.x
+      const dy = (p2.y - p1.y) / ratio
+      totalLength += Math.sqrt(dx * dx + dy * dy)
     }
     arcLengths[i] = totalLength
   }
@@ -427,7 +526,7 @@ const arcData = computed(() => {
 })
 
 function getEquidistantAngle(index: number, n: number) {
-  const { samples } = LAYOUT_CONFIG
+  const { samples } = LAYOUT_CONFIG.value
   const { arcLengths, totalLength } = arcData.value
   
   const targetLen = (index / n) * totalLength
@@ -465,11 +564,12 @@ function getPlayerPosStyle(index: number) {
   if (n === 0) return {}
 
   // 根據人數動態縮放令片
-  const baseSize = n > 14 ? 75 : n > 11 ? 82 : n > 8 ? 92 : 105
+  // 根據人數動態縮放令片 (針對多人模式進一步縮小以釋放空間)
+  const baseSize = n > 14 ? 68 : n > 11 ? 80 : n > 8 ? 92 : 105
   
   // 獲取等距角度
   const angle = getEquidistantAngle(index, n)
-  const { a, b, nFactor, yCenter } = LAYOUT_CONFIG
+  const { a, b, nFactor, yCenter } = LAYOUT_CONFIG.value
   
   const cosT = Math.cos(angle)
   const sinT = Math.sin(angle)
@@ -493,6 +593,18 @@ function getBluffIcon(role: any) {
   return role.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${role.id}`
 }
 
+function getCharacterIcon(id: string) {
+  const char = scriptStore.rawCharacterList.find(c => c.id === id)
+  return char?.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${id}`
+}
+
+function showFabledTooltip(id: string) {
+  const char = scriptStore.rawCharacterList.find(c => c.id === id)
+  if (char) {
+    uiStore.showConfirm('傳說角色: ' + char.name, char.ability, () => {}, false)
+  }
+}
+
 const activePanelComponent = computed(() => {
   switch (uiStore.activePanel) {
     case 'settings': return SettingsPanel
@@ -503,6 +615,7 @@ const activePanelComponent = computed(() => {
     case 'player-order': return PlayerOrderPanel
     case 'role-assignment': return RoleAssignmentPanel
     case 'game-log': return GameLogPanel
+    case 'fabled-selector': return FabledSelectorPanel
     default: return null
   }
 })
@@ -553,7 +666,7 @@ function starStyle(i: number) {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url("https://www.transparenttextures.com/patterns/p6.png");
+  background-image: url('/p6.png');
   opacity: 0.3;
   mix-blend-mode: multiply;
   pointer-events: none;
@@ -716,6 +829,55 @@ function starStyle(i: number) {
   text-shadow: 0 1px 1px rgba(255,255,255,0.3);
 }
 
+/* 傳說角色展示區 */
+.fabled-zone {
+  position: absolute;
+  top: 15%; /* 放在上半部 */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.fabled-active-token {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  /* 改為深色漸層背景，與黃色外框形成強烈對比 */
+  background: radial-gradient(circle at 30% 30%, #3a2318 0%, #1a0f08 100%);
+  border: 2px solid #e6c547;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  /* 增加黑色深陰影與金色微光，讓它像個立體的徽章 */
+  box-shadow: 
+    0 4px 12px rgba(0,0,0,0.7),
+    0 0 15px rgba(230, 197, 71, 0.4) inset,
+    0 0 8px rgba(230, 197, 71, 0.3);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.fabled-active-token:hover {
+  transform: scale(1.15) translateY(-2px);
+  box-shadow: 
+    0 6px 16px rgba(0,0,0,0.8),
+    0 0 20px rgba(230, 197, 71, 0.6) inset,
+    0 0 15px rgba(230, 197, 71, 0.5);
+}
+
+.fabled-active-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 /* ─────────────────────────────────────────────────────────────────────────
    右下角：虛張聲勢可收納托盤 (Collapsible Bluffs Drawer) 
    ───────────────────────────────────────────────────────────────────────── */
@@ -728,7 +890,6 @@ function starStyle(i: number) {
   align-items: flex-end;
   transform: translateX(calc(100% - 32px)); 
   transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  filter: drop-shadow(-5px 5px 20px rgba(0,0,0,0.5));
 }
 
 .bluffs-drawer.is-expanded {
@@ -779,7 +940,6 @@ function starStyle(i: number) {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: -4px 2px 10px rgba(0,0,0,0.3);
   transition: all 0.2s ease;
 }
 
@@ -801,7 +961,6 @@ function starStyle(i: number) {
   flex-direction: column;
   gap: 16px;
   backdrop-filter: blur(15px);
-  box-shadow: -10px 0 30px rgba(0,0,0,0.6);
   position: relative;
 }
 
@@ -1026,10 +1185,10 @@ function starStyle(i: number) {
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
 }
-
-.menu-btn, .privacy-btn, .side-action-btn.layout-toggle-side {
-  width: 44px;
-  height: 44px;
+/*Menu Button 的 圖標設定區域*/
+.menu-btn, .privacy-btn, .side-action-group .side-action-btn {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: rgba(42, 27, 21, 0.85);
   border: 1.5px solid #8d6e63;
@@ -1040,6 +1199,10 @@ function starStyle(i: number) {
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
+}
+
+.menu-btn .icon, .privacy-btn .icon, .side-action-group .side-action-btn .icon {
+  font-size: 10px;
 }
 
 .zoom-controls-bottom .reset-btn {
@@ -1053,10 +1216,22 @@ function starStyle(i: number) {
   font-family: 'Inter', sans-serif;
 }
 
-.menu-btn:hover, .privacy-btn:hover, .side-action-btn.layout-toggle-side:hover, .zoom-controls-bottom .side-action-btn:hover {
+.menu-btn:hover, .privacy-btn:hover, .side-action-group .side-action-btn:hover, .zoom-controls-bottom .side-action-btn:hover {
   background: #b38b3d;
   color: #1a1b23;
   transform: scale(1.1);
+}
+
+.bluff-slot-vertical:hover:not(.is-locked) {
+  transform: translateX(5px) scale(1.05);
+  border-color: rgba(232, 112, 112, 0.4);
+  box-shadow: 0 4px 15px rgba(139, 26, 26, 0.3);
+}
+
+.bluff-slot-vertical.is-locked {
+  cursor: default;
+  opacity: 0.6;
+  filter: grayscale(0.5);
 }
 
 .privacy-btn.is-active {
@@ -1066,7 +1241,7 @@ function starStyle(i: number) {
 }
 
 .side-action-btn.layout-toggle-side .icon {
-  font-size: 18px;
+  font-size: 12px;
 }
 
 .privacy-icon-wrapper {
@@ -1083,7 +1258,7 @@ function starStyle(i: number) {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -55%);
-  font-size: 24px;
+  font-size: 16px;
   opacity: 0.85;
   pointer-events: none;
 }

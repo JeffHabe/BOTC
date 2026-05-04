@@ -204,6 +204,8 @@ pub struct GameState {
     pub round: u32,                              // 當前輪次（Day 1, Night 1, ...）
     pub demon_bluffs: Vec<Option<CharacterDef>>, // 惡魔虛張角色（最多3）
     pub nominations: Vec<Nomination>,            // 本輪提名記錄
+    #[serde(default)]
+    pub active_fabled: Vec<String>,              // 當前啟用的傳說角色 ID
     pub created_at: String,
     pub updated_at: String,
 }
@@ -218,6 +220,7 @@ impl Default for GameState {
             round: 0,
             demon_bluffs: vec![None, None, None],
             nominations: Vec::new(),
+            active_fabled: Vec::new(),
             created_at: chrono::Utc::now().to_rfc3339(),
             updated_at: chrono::Utc::now().to_rfc3339(),
         }

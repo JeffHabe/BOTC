@@ -10,7 +10,8 @@
         v-for="(bluff, index) in gameStore.demonBluffs" 
         :key="index"
         class="bluff-slot"
-        @click="uiStore.openRolePickerForBluff(index)"
+        :class="{ 'is-locked': gameStore.phase !== 'Setup' }"
+        @click="gameStore.phase === 'Setup' && uiStore.openRolePickerForBluff(index)"
       >
         <div v-if="bluff" class="bluff-token">
           <img v-if="bluff.image" :src="bluff.image" :alt="bluff.name" class="bluff-img" />
@@ -18,8 +19,8 @@
           <div class="bluff-name">{{ bluff.name }}</div>
         </div>
         <div v-else class="bluff-empty">
-          <span class="empty-plus">+</span>
-          <div class="empty-text">設置</div>
+          <span class="empty-plus">{{ gameStore.phase === 'Setup' ? '+' : '🔒' }}</span>
+          <div class="empty-text">{{ gameStore.phase === 'Setup' ? '設置' : '已鎖定' }}</div>
         </div>
       </div>
     </div>
@@ -79,9 +80,17 @@ const uiStore = useUIStore()
   overflow: hidden;
 }
 
-.bluff-slot:hover {
+.bluff-slot:hover:not(.is-locked) {
   background: rgba(0,0,0,0.3);
   border-color: rgba(232, 112, 112, 0.4);
+}
+
+.bluff-slot.is-locked {
+  cursor: default;
+  opacity: 0.6;
+  filter: grayscale(0.5);
+  border-style: solid;
+  border-color: rgba(255,255,255,0.05);
 }
 
 .bluff-token {

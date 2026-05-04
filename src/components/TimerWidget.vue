@@ -1,9 +1,13 @@
 <template>
   <div class="timer-widget" :class="{ 'is-expanded': uiStore.isTimerExpanded, 'is-running': uiStore.isTimerRunning, 'is-urgent': isUrgent }">
-    <!-- 縮小狀態 (Mini Mode) -->
-    <div class="timer-mini" @click="uiStore.isTimerExpanded = !uiStore.isTimerExpanded">
-      <span class="icon">⏱️</span>
-      <span class="time-text">{{ formattedTime }}</span>
+    <!-- 頂部工具列容器 (碼錶 + 形狀切換) -->
+    <div class="timer-controls-row">
+      <!-- 縮小狀態 (Mini Mode) -->
+      <div class="timer-mini" @click="uiStore.isTimerExpanded = !uiStore.isTimerExpanded">
+        <span class="icon">⏱️</span>
+        <span class="time-text">{{ formattedTime }}</span>
+      </div>
+
     </div>
 
     <!-- 展開狀態 (Panel Mode) -->
@@ -67,6 +71,12 @@ const isUrgent = computed(() => uiStore.timerRemaining > 0 && uiStore.timerRemai
   align-items: flex-start;
 }
 
+.timer-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .timer-mini {
   background: rgba(18, 18, 24, 0.85);
   backdrop-filter: blur(10px);
@@ -108,6 +118,31 @@ const isUrgent = computed(() => uiStore.timerRemaining > 0 && uiStore.timerRemai
 
 .is-urgent .time-text {
   color: #ff8888;
+}
+
+/* 形狀切換按鈕 (單按鈕模式) */
+.shape-toggle-mini {
+  background: rgba(18, 18, 24, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  width: 42px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transition: all 0.3s ease;
+}
+
+.shape-toggle-mini:hover {
+  background: rgba(201, 168, 76, 0.2);
+  border-color: rgba(201, 168, 76, 0.4);
+}
+
+.shape-toggle-mini .icon {
+  font-size: 16px;
 }
 
 .timer-panel {

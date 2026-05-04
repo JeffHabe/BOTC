@@ -29,6 +29,7 @@ export const useGameStore = defineStore('game', () => {
   const round = computed(() => state.value?.round ?? 0)
   const demonBluffs = computed(() => state.value?.demon_bluffs ?? [null, null, null])
   const nominations = computed(() => state.value?.nominations ?? [])
+  const activeFabled = computed(() => state.value?.active_fabled ?? [])
 
   const alive = computed(() => state.value ? aliveCount(state.value) : 0)
   const dead = computed(() => state.value ? deadCount(state.value) : 0)
@@ -170,6 +171,11 @@ export const useGameStore = defineStore('game', () => {
 
   async function reorderPlayers(playerIds: string[]) {
     const gs = await callCommand<GameState>('reorder_players', { playerIds })
+    await syncState(gs)
+  }
+
+  async function toggleFabled(fabledId: string) {
+    const gs = await callCommand<GameState>('toggle_fabled', { fabledId })
     await syncState(gs)
   }
 
@@ -364,9 +370,10 @@ export const useGameStore = defineStore('game', () => {
     players, script, phase, round, demonBluffs, nominations,
     alive, dead, threshold, isNight,
     townfolkCount, outsiderCount, minionCount, demonCount,
-    firstNightOrder, otherNightOrder,
+    firstNightOrder, otherNightOrder, activeFabled,
     loadState, newGame, resetPlayersState, setScript,
     addPlayer, setPlayerCount, removePlayer, renamePlayer, swapSeats, reorderPlayers,
+    toggleFabled,
     assignRole, setDemonBluff, bulkAssignRoles,
     addReminder, removeReminder, updateReminder,
     killPlayer, revivePlayer, toggleAlive, toggleGhostVote, toggleCanNominate, useGhostVote,

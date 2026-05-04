@@ -26,6 +26,7 @@ pub fn run() {
             commands::rename_player,
             commands::swap_seats,
             commands::reorder_players,
+            commands::toggle_fabled,
             // 角色指派
             commands::assign_role,
             commands::bulk_assign_roles,

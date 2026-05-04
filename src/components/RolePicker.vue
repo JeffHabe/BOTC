@@ -130,7 +130,11 @@ function handlePressEnd() {
 
 const displayedCharacters = computed(() => {
   const all = scriptStore.filteredCharacters
-  if (showAllRoles.value) return all
+  
+  // 如果是旅行者或傳說角色，不受到「僅限池內」的限制，因為他們本來就不在標準抽籤池中
+  if (showAllRoles.value || scriptStore.filterType === 'Traveler' || scriptStore.filterType === 'Fabled') {
+    return all
+  }
   
   const excluded = new Set(uiStore.excludedPoolIds)
   return all.filter(c => !excluded.has(c.id))
@@ -142,6 +146,7 @@ const filterOptions: { label: string, value: RoleType | 'All' }[] = [
   { label: '外來者', value: 'Outsider' },
   { label: '爪牙', value: 'Minion' },
   { label: '惡魔', value: 'Demon' },
+  { label: '旅行者', value: 'Traveler' },
 ]
 
 function getEmoji(type: RoleType) {
@@ -276,6 +281,16 @@ async function selectRole(char: CharacterDef | null) {
   gap: 8px;
   overflow-x: auto;
   flex: 1;
+  padding-left: 16px;
+  padding-right: 24px; /* 預留右側空間，讓最後一個項目能完整滑入清晰區 */
+  margin-left: -16px; /* 補償 padding-left 保持視覺對齊 */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 16px, black calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, black 16px, black calc(100% - 24px), transparent 100%);
+  scrollbar-width: none; /* 隱藏 Firefox 捲軸 */
+}
+
+.type-filters::-webkit-scrollbar {
+  display: none; /* 隱藏 Chrome/Safari 捲軸 */
 }
 
 .pool-toggle-btn {
@@ -371,6 +386,7 @@ async function selectRole(char: CharacterDef | null) {
 .role-item.outsider  { border-top: 3px solid var(--color-outsider); }
 .role-item.minion    { border-top: 3px solid var(--color-minion); }
 .role-item.demon     { border-top: 3px solid var(--color-demon); }
+.role-item.traveler  { border-top: 3px solid var(--color-traveler, #9b59b6); }
 
 .role-check {
   position: absolute;

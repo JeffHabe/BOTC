@@ -81,6 +81,16 @@
           <span class="settings-arrow">›</span>
         </button>
 
+        <!-- 傳說角色設定 -->
+        <button class="settings-item" @click="openFabled">
+          <span class="settings-icon">🦄</span>
+          <div class="settings-info">
+            <div class="settings-label">傳說角色設定</div>
+            <div class="settings-sub">啟用或停用全域的傳說角色</div>
+          </div>
+          <span class="settings-arrow">›</span>
+        </button>
+
         <!-- 階段推進 -->
         <button class="settings-item" @click="advance">
           <span class="settings-icon">⌛</span>
@@ -106,9 +116,10 @@
 
         <div class="divider" />
 
-        <!-- 介面設置 -->
+        <!-- 介面設置 (暫時隱藏，預設為內圈向心) -->
+        <!--
         <div class="section-title">提示標記佈局 (Reminder Layout)</div>
-        <div class="layout-selector-grid">
+        <div class="layout-selector-grid cols-4">
           <button 
             v-for="mode in layouts" 
             :key="mode.id"
@@ -121,6 +132,27 @@
             <div v-if="uiStore.reminderLayout === mode.id" class="active-check">✓</div>
           </button>
         </div>
+
+        <div class="divider" />
+        -->
+
+        <!-- 魔典排列圖形 (已移至頂部工具列) -->
+        
+        <div class="section-title">魔典排列圖形 (Grimoire Shape)</div>
+        <div class="layout-selector-grid cols-3">
+          <button 
+            v-for="shape in shapes" 
+            :key="shape.id"
+            class="layout-option"
+            :class="{ active: uiStore.grimoireShape === shape.id }"
+            @click="uiStore.setGrimoireShape(shape.id as any)"
+          >
+            <span class="opt-icon">{{ shape.icon }}</span>
+            <span class="opt-label">{{ shape.label }}</span>
+            <div v-if="uiStore.grimoireShape === shape.id" class="active-check">✓</div>
+          </button>
+        </div>
+       
 
         <div class="divider" />
 
@@ -152,15 +184,18 @@ import { computed } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 import { PHASE_LABEL, type GamePhase } from '../types'
+import { save } from '@tauri-apps/plugin-dialog'
+import { writeTextFile } from '@tauri-apps/plugin-fs'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
 
-const layouts = [
-  { id: 'arc', label: '經典環繞', icon: '⭕' },
-  { id: 'grid', label: '角落網格', icon: '⏹️' },
-  { id: 'stack', label: '側面清單', icon: '📋' },
-  { id: 'inner', label: '內圈向心', icon: '⏬' },
+
+
+const shapes = [
+  { id: 'circle', label: '經典正圓', icon: '⚪' },
+  { id: 'oval', label: '優雅橢圓', icon: '🥚' },
+  { id: 'rect', label: '工整矩形', icon: '🔲' },
 ]
 
 const phaseLabel = computed(() => PHASE_LABEL[gameStore.phase])
@@ -204,6 +239,10 @@ function openCharacterEditor() {
   uiStore.openPanel('character-editor')
 }
 
+function openFabled() {
+  uiStore.openPanel('fabled-selector')
+}
+
 async function advance() {
   await gameStore.advancePhase()
   uiStore.closePanel()
@@ -212,13 +251,31 @@ async function advance() {
 async function exportGame() {
   const json = await gameStore.exportState()
   if (!json) return
-  const blob = new Blob([json], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `botc-game-${Date.now()}.json`
-  a.click()
-  URL.revokeObjectURL(url)
+
+  const fileName = `botc-game-${Date.now()}.json`
+
+  try {
+    // 嘗試使用 Tauri 原生對話框 (適用於 Android/Desktop)
+    const filePath = await save({
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+      defaultPath: fileName
+    })
+
+    if (filePath) {
+      await writeTextFile(filePath, json)
+      alert('已成功匯出至：' + filePath)
+    }
+  } catch (e) {
+    // 如果不在 Tauri 環境或發生錯誤，退回到網頁下載方式
+    console.warn('Tauri export failed, falling back to browser download', e)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 }
 
 function resetStates() {
@@ -261,7 +318,7 @@ function resetGame() {
 .settings-panel {
   width: 100%;
   max-width: 440px;
-  max-height: 75vh;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   border-radius: 20px 20px 12px 12px;
@@ -272,7 +329,7 @@ function resetGame() {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 16px 16px 10px;
+  padding: 10px 16px;
   border-bottom: 1px solid rgba(201,168,76,0.1);
   flex-shrink: 0;
 }
@@ -315,7 +372,7 @@ function resetGame() {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 13px 16px;
+  padding: 18px 16px;
   background: none;
   text-align: left;
   border-bottom: 1px solid rgba(255,255,255,0.04);
@@ -353,12 +410,20 @@ function resetGame() {
   margin: 8px 16px;
 }
 
-/* 佈局選擇器樣式 */
+/* 佈局選擇器樣式 (優化為緊湊模式) */
 .layout-selector-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  padding: 8px 16px 16px;
+  gap: 8px;
+  padding: 6px 16px 12px;
+}
+
+.layout-selector-grid.cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.layout-selector-grid.cols-4 {
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .layout-option {
@@ -366,11 +431,11 @@ function resetGame() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 16px 10px;
+  gap: 6px;
+  padding: 10px 4px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  border-radius: 10px;
   transition: all 0.2s ease;
   cursor: pointer;
   color: var(--color-text-muted);
@@ -389,13 +454,14 @@ function resetGame() {
 }
 
 .opt-icon {
-  font-size: 24px;
+  font-size: 18px;
 }
 
 .opt-label {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: 0px;
+  white-space: nowrap;
 }
 
 .active-check {

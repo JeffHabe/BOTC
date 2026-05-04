@@ -31,7 +31,7 @@
       </div>
 
       <div class="panel-actions">
-        <button class="btn-primary" @click="saveAndClose">完成</button>
+        <button class="btn-primary" @click="closePanel">關閉</button>
       </div>
     </div>
   </div>
@@ -58,13 +58,16 @@ function onDragOver(index: number) {
   dragOver.value = index
 }
 
-function onDrop(index: number) {
+async function onDrop(index: number) {
   if (dragging.value === null || dragging.value === index) return
 
   const arr = [...players.value]
   const [removed] = arr.splice(dragging.value, 1)
   arr.splice(index, 0, removed)
   players.value = arr
+
+  // 自動儲存：直接更新 store
+  await gameStore.reorderPlayers(players.value.map(p => p.id))
 
   dragging.value = index
   dragOver.value = null
@@ -75,8 +78,7 @@ function onDragEnd() {
   dragOver.value = null
 }
 
-async function saveAndClose() {
-  await gameStore.reorderPlayers(players.value.map(p => p.id))
+function closePanel() {
   uiStore.closePanel()
 }
 </script>
@@ -96,7 +98,7 @@ async function saveAndClose() {
 .order-panel {
   width: 100%;
   max-width: 400px;
-  max-height: 80vh;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   border-radius: 20px 20px 12px 12px;
