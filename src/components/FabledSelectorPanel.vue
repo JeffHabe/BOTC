@@ -26,6 +26,11 @@
               </div>
               <div class="char-ability">{{ char.ability }}</div>
             </div>
+            
+            <button class="view-btn" @click.stop="showDetails(char)" title="檢視詳細內容">
+              <span class="icon">ℹ️</span>
+            </button>
+            
             <div class="toggle-btn">
               <div class="toggle-track" :class="{ 'track-active': isFabledActive(char.id) }">
                 <div class="toggle-thumb" :class="{ 'thumb-active': isFabledActive(char.id) }"></div>
@@ -39,14 +44,22 @@
         </div>
       </div>
     </div>
+    <!-- 角色詳情彈窗 -->
+    <CharacterDetailOverlay 
+      v-if="longPressChar" 
+      :character="longPressChar" 
+      @close="longPressChar = null" 
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 import { useScriptStore } from '../stores/scriptStore'
+import type { CharacterDef } from '../types'
+import CharacterDetailOverlay from './CharacterDetailOverlay.vue'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
@@ -54,8 +67,8 @@ const scriptStore = useScriptStore()
 
 // 從全庫中取得傳說角色
 const fabledCharacters = computed(() => {
-  return scriptStore.rawCharacterList.filter(
-    c => (c.team || c.role_type || '').toLowerCase() === 'fabled'
+  return scriptStore.masterScript.characters.filter(
+    c => c.role_type === 'Fabled'
   )
 })
 
@@ -65,6 +78,13 @@ function isFabledActive(id: string) {
 
 function toggleFabled(id: string) {
   gameStore.toggleFabled(id)
+}
+
+// 顯示詳情邏輯
+const longPressChar = ref<CharacterDef | null>(null)
+
+function showDetails(char: any) {
+  longPressChar.value = char as CharacterDef
 }
 </script>
 
@@ -138,6 +158,9 @@ function toggleFabled(id: string) {
   border-bottom: 1px solid rgba(255,255,255,0.04);
   cursor: pointer;
   transition: all var(--transition-fast);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .fabled-item:active {
@@ -192,6 +215,31 @@ function toggleFabled(id: string) {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.view-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  margin-right: 4px;
+}
+
+.view-btn:active {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(0.95);
+}
+
+.icon {
+  font-size: 14px;
 }
 
 /* 簡單的 Toggle Switch 樣式 */
