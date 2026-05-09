@@ -108,6 +108,9 @@ const title = computed(() => {
   if (uiStore.rolePickerDemonBluffIndex !== null) {
     return `設定惡魔虛張角色 #${uiStore.rolePickerDemonBluffIndex + 1}`
   }
+  if (uiStore.rolePickerLunaticBluffIndex !== null) {
+    return `設定瘋子偽裝角色 #${uiStore.rolePickerLunaticBluffIndex + 1}`
+  }
   return '選擇角色'
 })
 
@@ -163,6 +166,9 @@ function isSelected(char: CharacterDef) {
   if (uiStore.rolePickerDemonBluffIndex !== null) {
     return gameStore.demonBluffs[uiStore.rolePickerDemonBluffIndex]?.id === char.id
   }
+  if (uiStore.rolePickerLunaticBluffIndex !== null) {
+    return gameStore.lunaticBluffs[uiStore.rolePickerLunaticBluffIndex]?.id === char.id
+  }
   return false
 }
 
@@ -172,7 +178,10 @@ const inPlayRoleIds = computed(() =>
 )
 
 const bluffRoleIds = computed(() => 
-  new Set(gameStore.demonBluffs.map(b => b?.id).filter(Boolean))
+  new Set([
+    ...gameStore.demonBluffs.map(b => b?.id),
+    ...gameStore.lunaticBluffs.map(b => b?.id)
+  ].filter(Boolean))
 )
 
 function isOccupied(char: CharacterDef) {
@@ -188,11 +197,21 @@ function isOccupied(char: CharacterDef) {
   }
   
   if (uiStore.rolePickerDemonBluffIndex !== null) {
-    // 正在選虛張：看所有玩家 + 其它虛張位
+    // 正在選惡魔虛張：看所有玩家 + 其它惡魔虛張位 + 所有瘋子偽裝
     const otherBluffs = gameStore.demonBluffs
       .filter((_, idx) => idx !== uiStore.rolePickerDemonBluffIndex)
       .map(b => b?.id)
-    return inPlayRoleIds.value.has(char.id) || otherBluffs.includes(char.id)
+    const lunaticBluffs = gameStore.lunaticBluffs.map(b => b?.id)
+    return inPlayRoleIds.value.has(char.id) || otherBluffs.includes(char.id) || lunaticBluffs.includes(char.id)
+  }
+
+  if (uiStore.rolePickerLunaticBluffIndex !== null) {
+    // 正在選瘋子偽裝：看所有玩家 + 所有惡魔虛張 + 其它瘋子偽裝位
+    const otherLunaticBluffs = gameStore.lunaticBluffs
+      .filter((_, idx) => idx !== uiStore.rolePickerLunaticBluffIndex)
+      .map(b => b?.id)
+    const demonBluffs = gameStore.demonBluffs.map(b => b?.id)
+    return inPlayRoleIds.value.has(char.id) || demonBluffs.includes(char.id) || otherLunaticBluffs.includes(char.id)
   }
   
   return inPlayRoleIds.value.has(char.id) || bluffRoleIds.value.has(char.id)
@@ -203,6 +222,8 @@ async function selectRole(char: CharacterDef | null) {
     await gameStore.assignRole(uiStore.rolePickerPlayer.id, char)
   } else if (uiStore.rolePickerDemonBluffIndex !== null) {
     await gameStore.setDemonBluff(uiStore.rolePickerDemonBluffIndex, char)
+  } else if (uiStore.rolePickerLunaticBluffIndex !== null) {
+    await gameStore.setLunaticBluff(uiStore.rolePickerLunaticBluffIndex, char)
   }
   uiStore.closeRolePicker()
 }

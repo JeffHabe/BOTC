@@ -229,12 +229,12 @@
           </div>
         </div>
 
-        <!-- 步驟 3.5: 酒鬼偽裝選擇 -->
+        <!-- 步驟 3.5: 酒鬼認知選擇 -->
         <div v-else-if="step === 'drunk'" class="step-drunk">
           <div class="action-footer top-actions compact">
             <button class="btn-ghost btn-xs" @click="step = 'select'">← 返回</button>
-            <div class="step-hint">請為酒鬼選擇一個偽裝角色</div>
-            <button class="btn-primary btn-xs" :disabled="!drunkFakeRoleId" @click="step = 'bluff'">
+            <div class="step-hint">請為酒鬼選擇一個認知角色</div>
+            <button class="btn-primary btn-xs" :disabled="!drunkFakeRoleId" @click="selectDrunkFake(drunkFakeRoleId!)">
               下一步 →
             </button>
           </div>
@@ -243,7 +243,7 @@
             <span class="search-icon">🔍</span>
             <input 
               v-model="searchQuery" 
-              placeholder="搜尋偽裝角色..." 
+              placeholder="搜尋認知角色..." 
               class="search-input-assignment" 
               @keyup.enter="($event.target as HTMLInputElement).blur()"
             />
@@ -262,6 +262,50 @@
                      class="role-card"
                      :class="{ 'is-selected': drunkFakeRoleId === role.id }"
                      @click="selectDrunkFake(role.id)">
+                  <div class="role-card-icon">
+                    <img v-if="role.image" :src="role.image" class="r-img" />
+                    <span v-else class="r-emoji">👤</span>
+                  </div>
+                  <div class="role-card-name">{{ role.name }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 步驟 3.6: 提線木偶認知選擇 -->
+        <div v-else-if="step === 'marionette'" class="step-drunk">
+          <div class="action-footer top-actions compact">
+            <button class="btn-ghost btn-xs" @click="hasDrunk ? (step = 'drunk') : (step = 'select')">← 返回</button>
+            <div class="step-hint">請為提線木偶選擇一個認知角色</div>
+            <button class="btn-primary btn-xs" :disabled="!marionetteFakeRoleId" @click="selectMarionetteFake(marionetteFakeRoleId!)">
+              下一步 →
+            </button>
+          </div>
+          
+          <div class="search-bar-assignment">
+            <span class="search-icon">🔍</span>
+            <input 
+              v-model="searchQuery" 
+              placeholder="搜尋認知角色..." 
+              class="search-input-assignment" 
+              @keyup.enter="($event.target as HTMLInputElement).blur()"
+            />
+          </div>
+
+          <div class="role-grid-container">
+            <div v-if="availableMarionetteFakes.length === 0" class="empty-pool-hint">
+              無可用善良角色 (可能已全被選入玩家角色)
+            </div>
+            <div class="role-group">
+              <div class="group-header" style="color: var(--color-townsfolk)">可選善良角色 (不在場)</div>
+              <div class="role-grid">
+                <div v-for="role in availableMarionetteFakes" 
+                     :key="role.id" 
+                     :id="'role-item-' + role.id"
+                     class="role-card"
+                     :class="{ 'is-selected': marionetteFakeRoleId === role.id }"
+                     @click="selectMarionetteFake(role.id)">
                   <div class="role-card-icon">
                     <img v-if="role.image" :src="role.image" class="r-img" />
                     <span v-else class="r-emoji">👤</span>
@@ -466,7 +510,7 @@ const gameStore = useGameStore()
 const scriptStore = useScriptStore()
 
 // 狀態管理
-type Step = 'pool' | 'config' | 'select' | 'drunk' | 'bluff' | 'preview' | 'draw'
+type Step = 'pool' | 'config' | 'select' | 'drunk' | 'marionette' | 'bluff' | 'preview' | 'draw'
 const step = ref<Step>('pool')
 const totalPlayers = computed(() => gameStore.players.length)
 
@@ -494,6 +538,7 @@ const isPresetExpanded = ref(false)
 
 // 抽獎與酒鬼邏輯
 const drunkFakeRoleId = ref<string | null>(null)
+const marionetteFakeRoleId = ref<string | null>(null)
 const drawingResults = reactive<Record<string, string>>({}) // player_id -> role_id
 const isSpinning = ref(false)
 const spinningPlayerId = ref<string | null>(null)
@@ -505,12 +550,17 @@ const activeFlickerId = ref<string | null>(null)
 const fullPoolCharacters = computed(() => {
   if (!gameStore.script) return []
   const excluded = new Set(excludedPoolIds.value)
-  return gameStore.script.characters.filter(c => !excluded.has(c.id))
+  const validTypes = new Set(['townsfolk', 'outsider', 'minion', 'demon'])
+  return gameStore.script.characters.filter(c => {
+    const cType = c.role_type.trim().toLowerCase()
+    return validTypes.has(cType) && !excluded.has(c.id)
+  })
 })
 
 const drawnPlayerIds = computed(() => Object.keys(drawingResults))
 
 const hasDrunk = computed(() => selectedRoleIds.value.includes('drunk'))
+const hasMarionette = computed(() => selectedRoleIds.value.includes('marionette'))
 
 const lotteryPool = computed(() => {
   if (!gameStore.script) return []
@@ -523,6 +573,14 @@ const lotteryPool = computed(() => {
     const drunkIdx = ids.indexOf('drunk')
     if (drunkIdx > -1) {
       ids.splice(drunkIdx, 1, drunkFakeRoleId.value)
+    }
+  }
+
+  // 如果有提線木偶，將「提線木偶」替換為「認知角色」
+  if (hasMarionette.value && marionetteFakeRoleId.value) {
+    const marionetteIdx = ids.indexOf('marionette')
+    if (marionetteIdx > -1) {
+      ids.splice(marionetteIdx, 1, marionetteFakeRoleId.value)
     }
   }
   
@@ -591,6 +649,7 @@ const panelTitle = computed(() => {
     config: '2. 設定人數配比',
     select: '3. 挑選玩家角色',
     drunk: '3.5 酒鬼偽裝',
+    marionette: '3.6 木偶偽裝',
     bluff: '4. 挑選惡魔虛張',
     preview: '5. 最終預覽',
     draw: '6. 輪盤抽獎'
@@ -598,7 +657,7 @@ const panelTitle = computed(() => {
   return titles[step.value]
 })
 const currentStepNum = computed(() => {
-  const map: Record<Step, number> = { pool: 1, config: 2, select: 3, drunk: 3, bluff: 4, preview: 5, draw: 6 }
+  const map: Record<Step, number> = { pool: 1, config: 2, select: 3, drunk: 3, marionette: 3, bluff: 4, preview: 5, draw: 6 }
   return map[step.value]
 })
 
@@ -862,6 +921,10 @@ function handleSearchEnter() {
     if (availableDrunkFakes.value.length > 0) {
       targetId = availableDrunkFakes.value[0].id
     }
+  } else if (step.value === 'marionette') {
+    if (availableMarionetteFakes.value.length > 0) {
+      targetId = availableMarionetteFakes.value[0].id
+    }
   } else if (step.value === 'bluff') {
     if (availableBluffPool.value.length > 0) {
       targetId = availableBluffPool.value[0].id
@@ -894,6 +957,8 @@ function handleSelectNext() {
   searchQuery.value = '' // 切換步驟時清除搜尋內容，避免看不到角色
   if (hasDrunk.value) {
     step.value = 'drunk'
+  } else if (hasMarionette.value) {
+    step.value = 'marionette'
   } else {
     step.value = 'bluff'
   }
@@ -910,14 +975,42 @@ const availableDrunkFakes = computed(() => {
     const isInPool = !excluded.has(c.id)
     const isGood = c.role_type === 'Townsfolk' && !used.has(c.id) && isInPool
     const matchesQuery = !query || c.name.toLowerCase().includes(query)
-    return isGood && matchesQuery
+    // 不能和提線木偶的假角色重複
+    const notMarionetteFake = c.id !== marionetteFakeRoleId.value
+    return isGood && matchesQuery && notMarionetteFake
   })
 })
 
 function selectDrunkFake(id: string) {
   drunkFakeRoleId.value = id
+  if (hasMarionette.value) {
+    step.value = 'marionette'
+  } else {
+    step.value = 'bluff'
+  }
+}
+
+const availableMarionetteFakes = computed(() => {
+  if (!gameStore.script) return []
+  const query = searchQuery.value.toLowerCase()
+  const used = new Set(selectedRoleIds.value)
+  const excluded = new Set(excludedPoolIds.value)
+  
+  return gameStore.script.characters.filter(c => {
+    const isInPool = !excluded.has(c.id)
+    const isGood = (c.role_type === 'Townsfolk' || c.role_type === 'Outsider') && !used.has(c.id) && isInPool
+    const matchesQuery = !query || c.name.toLowerCase().includes(query)
+    const notDrunkFake = c.id !== drunkFakeRoleId.value
+    return isGood && matchesQuery && notDrunkFake
+  })
+})
+
+function selectMarionetteFake(id: string) {
+  marionetteFakeRoleId.value = id
   step.value = 'bluff'
 }
+
+
 
 function startLottery() {
   // 初始化抽獎狀態
@@ -935,15 +1028,84 @@ function openWheel(playerId: string) {
   showReadyModal.value = true
 }
 
+// 驗證某個抽獎狀態是否能保證提線木偶與惡魔相鄰
+function isValidDrawState(testResults: Record<string, string>, remaining: string[]): boolean {
+  if (!hasMarionette.value) return true // 沒有提線木偶則無限制
+
+  const players = gameStore.players
+  const N = players.length
+  
+  let mRoleId = 'marionette'
+  if (marionetteFakeRoleId.value) mRoleId = marionetteFakeRoleId.value
+
+  let dSeat = -1
+  let mSeat = -1
+  
+  for (let s = 0; s < N; s++) {
+    const roleId = testResults[players[s].id]
+    if (!roleId) continue
+    if (roleId === mRoleId) {
+      mSeat = s
+    } else {
+      const char = getCharacterById(roleId)
+      if (char?.role_type.toLowerCase() === 'demon') dSeat = s
+    }
+  }
+
+  const hasDInRemaining = remaining.some(id => getCharacterById(id)?.role_type.toLowerCase() === 'demon')
+  const hasMInRemaining = remaining.includes(mRoleId)
+
+  const isAdj = (s1: number, s2: number) => (s1 === (s2 + 1) % N) || (s1 === (s2 - 1 + N) % N)
+  const isSeatEmpty = (s: number) => !testResults[players[s].id]
+
+  // 兩者皆已抽出
+  if (!hasDInRemaining && !hasMInRemaining) {
+    return isAdj(dSeat, mSeat)
+  }
+
+  // 抽出惡魔，剩下木偶
+  if (!hasDInRemaining && hasMInRemaining) {
+    return isSeatEmpty((dSeat + 1) % N) || isSeatEmpty((dSeat - 1 + N) % N)
+  }
+
+  // 抽出木偶，剩下惡魔
+  if (hasDInRemaining && !hasMInRemaining) {
+    return isSeatEmpty((mSeat + 1) % N) || isSeatEmpty((mSeat - 1 + N) % N)
+  }
+
+  // 兩者皆未抽出，必須保證場上至少還有「相鄰的兩個空位」
+  for (let s = 0; s < N; s++) {
+    if (isSeatEmpty(s) && isSeatEmpty((s + 1) % N)) {
+      return true
+    }
+  }
+  return false
+}
+
 function startActualDraw() {
   showReadyModal.value = false
   isSpinning.value = true
   
-  // 實際抽取的池子（未被抽走的角色）
-  const pool = lotteryPool.value
-  if (pool.length === 0) return
+  const basePool = lotteryPool.value
+  if (basePool.length === 0) return
 
-  const resultId = pool[Math.floor(Math.random() * pool.length)]
+  const curPlayerId = spinningPlayerId.value!
+
+  // 動態過濾：只保留符合相鄰條件的角色
+  const validPool = basePool.filter(roleId => {
+    // 模擬將 roleId 分配給當前玩家
+    const testResults = { ...drawingResults, [curPlayerId]: roleId }
+    // 模擬剩餘池子
+    const remaining = [...basePool]
+    remaining.splice(remaining.indexOf(roleId), 1)
+
+    return isValidDrawState(testResults, remaining)
+  })
+
+  // 從合法池中隨機抽取（防呆：如果沒有合法選項，就 fallback 抽原本的池子）
+  const finalPool = validPool.length > 0 ? validPool : basePool
+  const resultId = finalPool[Math.floor(Math.random() * finalPool.length)]
+
   const allChoices = fullPoolCharacters.value
   
   let count = 0
@@ -1000,13 +1162,18 @@ function isIdMatch(id1: string | null, id2: string | null) {
 
 async function finishLottery() {
   // 將抽獎結果轉換為實際指派
-  // 注意：如果抽中酒鬼的偽裝角色，實際要指派「酒鬼」給該玩家
+  // 注意：如果抽中酒鬼的認知角色，實際要指派「酒鬼」給該玩家
   const finalPlan = gameStore.players.map(p => {
     let roleId = drawingResults[p.id]
     
-    // 酒鬼邏輯：如果抽中偽裝角色，則該玩家實際是酒鬼
+    // 酒鬼邏輯：如果抽中認知角色，則該玩家實際是酒鬼
     if (hasDrunk.value && roleId === drunkFakeRoleId.value) {
       roleId = 'drunk'
+    }
+    
+    // 提線木偶邏輯：如果抽中認知角色，則該玩家實際是提線木偶
+    if (hasMarionette.value && roleId === marionetteFakeRoleId.value) {
+      roleId = 'marionette'
     }
     
     const char = getCharacterById(roleId)
@@ -1133,18 +1300,69 @@ function autoFillBluffs() {
 const previewAssignments = ref<{ player_id: string, role: CharacterDef | null }[]>([])
 const previewBluffs = ref<(CharacterDef | null)[]>([null, null, null])
 
+
+
+function createAdjacencyPlan(baseRoleIds: string[]): string[] {
+  let pool = [...baseRoleIds]
+  let finalPool: string[] = []
+  
+  // 找出提線木偶的目標 ID（可能是原 ID，也可能是替換後的認知角色 ID）
+  let mRoleId = 'marionette'
+  if (hasMarionette.value) {
+    if (marionetteFakeRoleId.value && pool.includes(marionetteFakeRoleId.value)) {
+      mRoleId = marionetteFakeRoleId.value
+    } else if (pool.includes('marionette')) {
+      mRoleId = 'marionette'
+    }
+  }
+
+  const hasM = pool.includes(mRoleId)
+  const demonId = pool.find(id => {
+    const char = getCharacterById(id)
+    return char?.role_type.toLowerCase() === 'demon'
+  })
+
+  // 若同時存在提線木偶與惡魔，強制綁定座位
+  if (hasMarionette.value && hasM && demonId) {
+    pool.splice(pool.indexOf(mRoleId), 1)
+    pool.splice(pool.indexOf(demonId), 1)
+
+    pool.sort(() => Math.random() - 0.5)
+
+    const totalCount = pool.length + 2
+    const demonPos = Math.floor(Math.random() * totalCount)
+    // 隨機決定木偶在惡魔左邊或右邊（處理陣列環狀邊界）
+    const offset = Math.random() < 0.5 ? 1 : -1
+    const marionettePos = (demonPos + offset + totalCount) % totalCount
+
+    finalPool = new Array(totalCount)
+    finalPool[demonPos] = demonId
+    finalPool[marionettePos] = mRoleId
+
+    let pIdx = 0
+    for (let i = 0; i < totalCount; i++) {
+      if (!finalPool[i]) {
+        finalPool[i] = pool[pIdx]
+        pIdx++
+      }
+    }
+  } else {
+    // 正常隨機洗牌
+    finalPool = [...pool].sort(() => Math.random() - 0.5)
+  }
+  return finalPool
+}
+
 function generatePlan() {
   if (!gameStore.script) return
   
-  // 修正：使用 getCharacterById 獲取定義，以支援虛擬 ID (如村夫副本)
-  const pool = selectedRoleIds.value.map(id => getCharacterById(id)).filter(Boolean) as CharacterDef[]
   const bluffs = selectedBluffIds.value.map(id => getCharacterById(id)).filter(Boolean) as CharacterDef[]
   
-  // 隨機洗牌分配給玩家
-  const finalPool = [...pool].sort(() => Math.random() - 0.5)
+  const finalPoolIds = createAdjacencyPlan(selectedRoleIds.value)
+  
   previewAssignments.value = gameStore.players.map((p, i) => ({
     player_id: p.id,
-    role: finalPool[i] || null // 這裡 finalPool[i] 已經是物件了，直接指派
+    role: getCharacterById(finalPoolIds[i]) || null
   }))
   
   previewBluffs.value = bluffs
@@ -1158,12 +1376,16 @@ function playerName(id: string) {
 async function confirmAssignment() {
   if (!gameStore.script) return
 
-  // 為了符合用戶需求：酒鬼要顯示偽裝角色的頭像
-  // 我們在正式指派時，將酒鬼玩家的角色替換為「偽裝角色」
-  // 但會額外加上一個「酒鬼」的提示詞供說書人辨識
+  // 為了符合用戶需求：酒鬼與提線木偶要顯示認知角色的頭像
+  // 我們在正式指派時，將玩家的角色替換為「認知角色」
+  // 但會額外加上一個對應的提示詞供說書人辨識
   const assignments = previewAssignments.value.map(a => {
     if (a.role?.id === 'drunk' && drunkFakeRoleId.value) {
       const fakeRole = getCharacterById(drunkFakeRoleId.value)
+      return { player_id: a.player_id, role: fakeRole || a.role }
+    }
+    if (a.role?.id === 'marionette' && marionetteFakeRoleId.value) {
+      const fakeRole = getCharacterById(marionetteFakeRoleId.value)
       return { player_id: a.player_id, role: fakeRole || a.role }
     }
     return a
@@ -1174,10 +1396,27 @@ async function confirmAssignment() {
   // 自動添加酒鬼提示詞
   if (hasDrunk.value && drunkFakeRoleId.value) {
     const drunkEntry = previewAssignments.value.find(a => a.role?.id === 'drunk')
+    const drunkChar = getCharacterById('drunk')
+    const reminderText = drunkChar?.reminders?.[0] || '是酒鬼'
+    const sourceName = drunkChar?.name || '酒鬼'
+    
     if (drunkEntry) {
-      // 延遲一下確保狀態已同步
       setTimeout(async () => {
-        await gameStore.addReminder(drunkEntry.player_id, '酒鬼 (Drunk)', 'drunk')
+        await gameStore.addReminder(drunkEntry.player_id, reminderText, sourceName)
+      }, 500)
+    }
+  }
+
+  // 自動添加提線木偶提示詞
+  if (hasMarionette.value && marionetteFakeRoleId.value) {
+    const marionetteEntry = previewAssignments.value.find(a => a.role?.id === 'marionette')
+    const marionetteChar = getCharacterById('marionette')
+    const reminderText = marionetteChar?.reminders?.[0] || '是提線木偶'
+    const sourceName = marionetteChar?.name || '提線木偶'
+    
+    if (marionetteEntry) {
+      setTimeout(async () => {
+        await gameStore.addReminder(marionetteEntry.player_id, reminderText, sourceName)
       }, 500)
     }
   }

@@ -31,6 +31,7 @@ pub fn run() {
             commands::assign_role,
             commands::bulk_assign_roles,
             commands::set_demon_bluff,
+            commands::set_lunatic_bluff,
             // 提醒令牌
             commands::add_reminder,
             commands::remove_reminder,

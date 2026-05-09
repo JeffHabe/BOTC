@@ -2764,27 +2764,11 @@
     "conflicts": []
   },
   {
-    "id": "bootlegger2",
-    "name": "我是村規王",
-    "ability": "這個劇本採用村規。",
-    "team": "fabled",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/bootlegger.png",
-    "conflicts": []
-  },
-  {
     "id": "buddhist",
-    "name": "佛陀",
+    "name": "佛教徒",
     "ability": "每個白天的前兩分鐘，老玩家不能發言。",
     "team": "fabled",
     "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/buddhist.png",
-    "conflicts": []
-  },
-  {
-    "id": "deus_ex_fiasco2",
-    "name": "強權上帝",
-    "ability": "上帝在本場遊戲就是規則的主宰，但是一旦宣佈了特殊規則就必須遵守，否則可能會被玩家群毆。",
-    "team": "fabled",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/deusexfiasco.png",
     "conflicts": []
   },
   {
@@ -2904,17 +2888,6 @@
     "conflicts": []
   },
   {
-    "id": "stormcatcher",
-    "name": "暴風捕手",
-    "ability": "遊戲開始時，你要宣佈一個善良角色。如果該角色在場，他只能死於處決，但所有邪惡玩家會在首個夜晚得知他是哪—名玩家。",
-    "team": "fabled",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/stormcatcher.png",
-    "reminders": [
-      "改名"
-    ],
-    "conflicts": []
-  },
-  {
     "id": "toymaker",
     "name": "玩具匠",
     "ability": "惡魔可以在夜晚選擇放棄攻擊（每局遊戲至少一次)。邪惡玩家照常獲取初始信息",
@@ -2951,7 +2924,7 @@
     "name": "大聰花",
     "ability": "這是一個傳奇大聰花。",
     "team": "fabled",
-    "image": "/imgs/icons/fabled/onion.png",
+    "image": "https://botc.letshare.fun/imgs/icons/fabled/onion.webp",
     "conflicts": []
   },
   {
@@ -2976,11 +2949,59 @@
     "conflicts": []
   },
   {
+    "id": "godofug_loric",
+    "name": "訥神",
+    "ability": "會有一頂訥帽。當玩家戴著訥帽的時候，只能說單音節詞，但投票算作兩票。如果違反規則，訥帽會被轉移。",
+    "team": "loric",
+    "image": "https://wiki.bloodontheclocktower.com/images/4/4c/Icon_godofug.png",
+    "reminders": [
+      "訥帽"
+    ]
+  },
+  {
+    "id": "stormcatcher",
+    "name": "暴風捕手",
+    "ability": "遊戲開始時，你要宣佈一個善良角色。如果該角色在場，他只能死於處決，但所有邪惡玩家會在首個夜晚得知他是哪—名玩家。",
+    "team": "loric",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/stormcatcher.png",
+    "reminders": [
+      "改名"
+    ],
+    "conflicts": []
+  },
+  {
+    "id": "knaves_loric",
+    "name": "詭詐傑克",
+    "ability": "場上有兩位說書人：一人說真話，一人說假話。每局遊戲限一次，他們可能會在黃昏互換。",
+    "team": "loric",
+    "image": "https://wiki.bloodontheclocktower.com/images/2/2a/Icon_knaves.png"
+  },
+  {
+    "id": "ventriloquist_loric",
+    "name": "腹語師",
+    "ability": "如果一名玩家在被提名時\"瘋狂\"地證明自己是一個新的角色，他可能不會死於當天的處決。",
+    "team": "loric",
+    "image": "https://wiki.bloodontheclocktower.com/images/0/09/Icon_ventriloquist.png",
+    "reminders": [
+      "瘋狂"
+    ]
+  },
+  {
+    "id": "gardener",
+    "name": "園丁",
+    "ability": "由說書人來為一位或更多玩家派發角色。",
+    "team": "loric",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/gardener.png",
+    "reminders": [
+      "已使用"
+    ]
+  },
+  {
     "id": "pope_loric",
     "name": "教皇",
     "ability": "場上存在重複的善良角色。它們可能也是偽裝身份。",
     "team": "loric",
-    "image": "https://botc.letshare.fun/imgs/icons/Loric/pope_loric.png",
+    "image": "https://botc.letshare.fun/imgs/icons/Loric/pope_loric.webp",
     "conflicts": []
   },
   {

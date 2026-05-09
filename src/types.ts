@@ -1,23 +1,25 @@
 // 血染鐘樓助手 TypeScript 型別定義
 
-export type RoleType = 'Townsfolk' | 'Outsider' | 'Minion' | 'Demon' | 'Traveler' | 'Fabled'
+export type RoleType = 'Townsfolk' | 'Outsider' | 'Minion' | 'Demon' | 'Traveler' | 'Fabled' | 'Loric'
 
 export const ROLE_TYPE_LABEL: Record<RoleType, string> = {
   Townsfolk: '村民',
-  Outsider:  '外來者',
-  Minion:    '爪牙',
-  Demon:     '惡魔',
-  Traveler:  '旅行者',
-  Fabled:    '傳奇',
+  Outsider: '外來者',
+  Minion: '爪牙',
+  Demon: '惡魔',
+  Traveler: '旅行者',
+  Fabled: '傳奇',
+  Loric: '奇遇',
 }
 
 export const ROLE_TYPE_COLOR: Record<RoleType, string> = {
-  Townsfolk: '#4a9bd4',
-  Outsider:  '#8a5cc7',
-  Minion:    '#c44a4a',
-  Demon:     '#e02020',
-  Traveler:  '#4ac49a',
-  Fabled:    '#d4a840',
+  Townsfolk: '#0398E5',
+  Outsider: '#056498',
+  Minion: '#7e0303',
+  Demon: '#cd0000',
+  Traveler: '#b46baf',
+  Fabled: '#dca938',
+  Loric: '#3c9438',
 }
 
 export interface ReminderToken {
@@ -74,19 +76,19 @@ export interface Script {
 export type GamePhase = 'Setup' | 'FirstNight' | 'Day' | 'Night'
 
 export const PHASE_LABEL: Record<GamePhase, string> = {
-  Setup:      '準備',
+  Setup: '準備',
   FirstNight: '首夜',
-  Day:        '白天',
-  Night:      '夜晚',
+  Day: '白天',
+  Night: '夜晚',
 }
 
 export interface Nomination {
   nominator_id: string
-  nominee_id:   string
-  votes_for:    string[]
-  threshold:    number
-  executed:     boolean
-  round:        number
+  nominee_id: string
+  votes_for: string[]
+  threshold: number
+  executed: boolean
+  round: number
 }
 
 export interface GameState {
@@ -96,6 +98,7 @@ export interface GameState {
   phase: GamePhase
   round: number
   demon_bluffs: (CharacterDef | null)[]
+  lunatic_bluffs: (CharacterDef | null)[]
   nominations: Nomination[]
   active_fabled: string[]
   created_at: string

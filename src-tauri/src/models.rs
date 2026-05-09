@@ -16,6 +16,8 @@ pub enum RoleType {
     Traveler, // 旅行者
     #[serde(alias = "fabled", alias = "Fabled")]
     Fabled, // 傳說
+    #[serde(alias = "loric", alias = "Loric")]
+    Loric, // 奇遇
 }
 
 impl RoleType {
@@ -27,6 +29,7 @@ impl RoleType {
             RoleType::Demon => "惡魔",
             RoleType::Traveler => "旅行者",
             RoleType::Fabled => "傳說",
+            RoleType::Loric => "奇遇",
         }
     }
 }
@@ -203,6 +206,8 @@ pub struct GameState {
     pub phase: GamePhase,
     pub round: u32,                              // 當前輪次（Day 1, Night 1, ...）
     pub demon_bluffs: Vec<Option<CharacterDef>>, // 惡魔虛張角色（最多3）
+    #[serde(default)]
+    pub lunatic_bluffs: Vec<Option<CharacterDef>>, // 瘋子偽裝角色（最多3）
     pub nominations: Vec<Nomination>,            // 本輪提名記錄
     #[serde(default)]
     pub active_fabled: Vec<String>,              // 當前啟用的傳說角色 ID
@@ -219,6 +224,7 @@ impl Default for GameState {
             phase: GamePhase::Setup,
             round: 0,
             demon_bluffs: vec![None, None, None],
+            lunatic_bluffs: vec![None, None, None],
             nominations: Vec::new(),
             active_fabled: Vec::new(),
             created_at: chrono::Utc::now().to_rfc3339(),

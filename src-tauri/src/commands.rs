@@ -32,6 +32,7 @@ pub fn reset_players_state(state: State<AppState>) -> GameState {
     gs.round = 0;
     gs.nominations.clear();
     gs.demon_bluffs = vec![None, None, None];
+    gs.lunatic_bluffs = vec![None, None, None];
     
     for p in gs.players.iter_mut() {
         p.role = None;
@@ -203,6 +204,18 @@ pub fn set_demon_bluff(index: usize, role: Option<CharacterDef>, state: State<Ap
         return Err("虛張索引必須為 0, 1, 或 2".into());
     }
     gs.demon_bluffs[index] = role;
+    gs.touch();
+    Ok(gs.clone())
+}
+
+/// 設定瘋子偽裝角色
+#[tauri::command]
+pub fn set_lunatic_bluff(index: usize, role: Option<CharacterDef>, state: State<AppState>) -> Result<GameState, String> {
+    let mut gs = state.0.lock().unwrap();
+    if index >= 3 {
+        return Err("虛張索引必須為 0, 1, 或 2".into());
+    }
+    gs.lunatic_bluffs[index] = role;
     gs.touch();
     Ok(gs.clone())
 }

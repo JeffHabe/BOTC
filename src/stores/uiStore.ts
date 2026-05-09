@@ -86,21 +86,35 @@ export const useUIStore = defineStore('ui', () => {
   // --- 角色選擇器 (Role Picker) ---
   const rolePickerPlayer = ref<Player | null>(null)
   const rolePickerDemonBluffIndex = ref<number | null>(null)
-  const isRolePickerOpen = computed(() => rolePickerPlayer.value !== null || rolePickerDemonBluffIndex.value !== null)
+  const rolePickerLunaticBluffIndex = ref<number | null>(null)
+  const isRolePickerOpen = computed(() => 
+    rolePickerPlayer.value !== null || 
+    rolePickerDemonBluffIndex.value !== null ||
+    rolePickerLunaticBluffIndex.value !== null
+  )
 
   function openRolePicker(player: Player) {
     rolePickerPlayer.value = player
     rolePickerDemonBluffIndex.value = null
+    rolePickerLunaticBluffIndex.value = null
   }
 
   function openRolePickerForBluff(index: number) {
     rolePickerPlayer.value = null
     rolePickerDemonBluffIndex.value = index
+    rolePickerLunaticBluffIndex.value = null
+  }
+
+  function openRolePickerForLunaticBluff(index: number) {
+    rolePickerPlayer.value = null
+    rolePickerDemonBluffIndex.value = null
+    rolePickerLunaticBluffIndex.value = index
   }
 
   function closeRolePicker() {
     rolePickerPlayer.value = null
     rolePickerDemonBluffIndex.value = null
+    rolePickerLunaticBluffIndex.value = null
   }
 
   // --- 提示標記選擇器 (Reminder Picker) ---
@@ -164,6 +178,7 @@ export const useUIStore = defineStore('ui', () => {
 
   const isBluffsExpanded = ref(false)
   const isBluffsShowcase = ref(false)
+  const activeBluffTab = ref<'demon' | 'lunatic'>('demon')
   const isSingleRoleShowcase = ref(false)
 
   // --- 角色池與劇本預設標籤 ---
@@ -309,14 +324,14 @@ export const useUIStore = defineStore('ui', () => {
     // 佈局
     reminderLayout, setReminderLayout, cycleReminderLayout,
     grimoireShape, setGrimoireShape, cycleGrimoireShape,
-    isBluffsExpanded, isBluffsShowcase, isSingleRoleShowcase,
+    isBluffsExpanded, isBluffsShowcase, isSingleRoleShowcase, activeBluffTab,
     // 右鍵菜單
     contextMenuPlayer, contextMenuPos, openContextMenu, closeContextMenu,
     // 玩家選中
     selectedPlayerId, selectPlayer,
     // 角色選擇
-    rolePickerPlayer, rolePickerDemonBluffIndex, isRolePickerOpen,
-    openRolePicker, openRolePickerForBluff, closeRolePicker,
+    rolePickerPlayer, rolePickerDemonBluffIndex, rolePickerLunaticBluffIndex, isRolePickerOpen,
+    openRolePicker, openRolePickerForBluff, openRolePickerForLunaticBluff, closeRolePicker,
     // 提示標記
     reminderPickerPlayerId, openReminderPicker, closeReminderPicker,
     // 彈窗

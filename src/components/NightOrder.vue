@@ -145,7 +145,7 @@ function roleEmoji(char: any) {
   if (char.id === 'sys_demon_info') return '😈'
   const map: Record<RoleType, string> = {
     Townsfolk: '👤', Outsider: '👤', Minion: '🔱', Demon: '😈',
-    Traveler: '👤', Fabled: '👤'
+    Traveler: '👤', Fabled: '👤', Loric: '👤'
   }
   return map[char.role_type as RoleType] ?? '❓'
 }

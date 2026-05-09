@@ -18,6 +18,7 @@ function parseRawArray(raw: any[], id: string, defaultName: string): Script {
     if (t === 'demon') mappedType = 'Demon'
     if (t === 'traveler') mappedType = 'Traveler'
     if (t === 'fabled') mappedType = 'Fabled'
+    if (t === 'loric') mappedType = 'Loric'
 
     return {
       id: r.id,

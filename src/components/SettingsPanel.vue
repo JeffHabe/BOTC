@@ -11,6 +11,36 @@
         <!-- 遊戲控制 -->
         <div class="section-title">遊戲控制</div>
 
+         <!-- 選取劇本 -->
+        <button v-if="gameStore.phase === 'Setup'" class="settings-item" @click="openAssignment">
+          <span class="settings-icon">🎭</span>
+          <div class="settings-info">
+            <div class="settings-label">選取劇本</div>
+            <div class="settings-sub">根據人數配置自動發派角色</div>
+          </div>
+          <span class="settings-arrow">›</span>
+        </button>
+
+        <!-- 投票面板 -->
+        <button class="settings-item" @click="openVoting">
+          <span class="settings-icon">🗳️</span>
+          <div class="settings-info">
+            <div class="settings-label">投票面板</div>
+            <div class="settings-sub">管理今日投票與處決流程</div>
+          </div>
+          <span class="settings-arrow">›</span>
+        </button>
+        
+        <!-- 傳說角色設定 -->
+        <button class="settings-item" @click="openFabled">
+          <span class="settings-icon">🦄</span>
+          <div class="settings-info">
+            <div class="settings-label">傳說角色設定</div>
+            <div class="settings-sub">啟用或停用全域的傳說角色</div>
+          </div>
+          <span class="settings-arrow">›</span>
+        </button>
+
         <!-- 夜晚順序 -->
         <button class="settings-item" @click="openNightOrder">
           <span class="settings-icon">🌙</span>
@@ -50,43 +80,13 @@
           </div>
           <span class="settings-arrow">›</span>
         </button>
-
-        <!-- 投票面板 -->
-        <button class="settings-item" @click="openVoting">
-          <span class="settings-icon">🗳️</span>
-          <div class="settings-info">
-            <div class="settings-label">投票面板</div>
-            <div class="settings-sub">管理今日投票與處決流程</div>
-          </div>
-          <span class="settings-arrow">›</span>
-        </button>
-
-        <!-- 選取劇本 -->
-        <button v-if="gameStore.phase === 'Setup'" class="settings-item" @click="openAssignment">
-          <span class="settings-icon">🎭</span>
-          <div class="settings-info">
-            <div class="settings-label">選取劇本</div>
-            <div class="settings-sub">根據人數配置自動發派角色</div>
-          </div>
-          <span class="settings-arrow">›</span>
-        </button>
-
+    
         <!-- 自定義角色庫 -->
         <button class="settings-item" @click="openCharacterEditor">
           <span class="settings-icon">📝</span>
           <div class="settings-info">
             <div class="settings-label">自定義角色庫</div>
             <div class="settings-sub">管理本地角色自訂資料庫</div>
-          </div>
-          <span class="settings-arrow">›</span>
-        </button>
-
-        <!-- 傳說角色設定 -->
-        <button class="settings-item" @click="openFabled">
-          <span class="settings-icon">🦄</span>
-          <div class="settings-info">
-            <div class="settings-label">傳說角色設定</div>
-            <div class="settings-sub">啟用或停用全域的傳說角色</div>
           </div>
           <span class="settings-arrow">›</span>
         </button>

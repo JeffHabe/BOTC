@@ -28,6 +28,7 @@ export const useGameStore = defineStore('game', () => {
   const phase = computed(() => state.value?.phase ?? 'Setup')
   const round = computed(() => state.value?.round ?? 0)
   const demonBluffs = computed(() => state.value?.demon_bluffs ?? [null, null, null])
+  const lunaticBluffs = computed(() => state.value?.lunatic_bluffs ?? [null, null, null])
   const nominations = computed(() => state.value?.nominations ?? [])
   const activeFabled = computed(() => state.value?.active_fabled ?? [])
 
@@ -194,6 +195,11 @@ export const useGameStore = defineStore('game', () => {
 
   async function setDemonBluff(index: number, role: CharacterDef | null) {
     const gs = await callCommand<GameState>('set_demon_bluff', { index, role })
+    await syncState(gs)
+  }
+
+  async function setLunaticBluff(index: number, role: CharacterDef | null) {
+    const gs = await callCommand<GameState>('set_lunatic_bluff', { index, role })
     await syncState(gs)
   }
 
@@ -367,14 +373,14 @@ export const useGameStore = defineStore('game', () => {
 
   return {
     state, loading, error,
-    players, script, phase, round, demonBluffs, nominations,
+    players, script, phase, round, demonBluffs, lunaticBluffs, nominations,
     alive, dead, threshold, isNight,
     townfolkCount, outsiderCount, minionCount, demonCount,
     firstNightOrder, otherNightOrder, activeFabled,
     loadState, newGame, resetPlayersState, setScript,
     addPlayer, setPlayerCount, removePlayer, renamePlayer, swapSeats, reorderPlayers,
     toggleFabled,
-    assignRole, setDemonBluff, bulkAssignRoles,
+    assignRole, setDemonBluff, setLunaticBluff, bulkAssignRoles,
     addReminder, removeReminder, updateReminder,
     killPlayer, revivePlayer, toggleAlive, toggleGhostVote, toggleCanNominate, useGhostVote,
     advancePhase, revertPhase, setPhase,

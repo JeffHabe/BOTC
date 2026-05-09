@@ -8,39 +8,29 @@
       </div>
 
       <div class="panel-body">
-        <div class="fabled-list">
-          <div 
+        <div class="role-grid" v-if="fabledCharacters.length > 0">
+          <button 
             v-for="char in fabledCharacters" 
             :key="char.id" 
-            class="fabled-item" 
-            :class="{ active: isFabledActive(char.id) }"
+            class="role-item" 
+            :class="[char.role_type.toLowerCase(), { 'is-selected': isFabledActive(char.id) }]"
             @click="toggleFabled(char.id)"
+            @touchstart="handlePressStart(char)"
+            @touchend="handlePressEnd"
+            @mousedown="handlePressStart(char)"
+            @mouseup="handlePressEnd"
           >
-            <div class="char-logo">
-              <img v-if="char.image" :src="char.image" class="char-img" />
-              <span v-else>❓</span>
+            <div class="role-icon">
+              <img v-if="char.image" :src="char.image" :alt="char.name" />
+              <span v-else class="emoji">🦄</span>
             </div>
-            <div class="char-info">
-              <div class="char-name">
-                {{ char.name }}
-              </div>
-              <div class="char-ability">{{ char.ability }}</div>
-            </div>
-            
-            <button class="view-btn" @click.stop="showDetails(char)" title="檢視詳細內容">
-              <span class="icon">ℹ️</span>
-            </button>
-            
-            <div class="toggle-btn">
-              <div class="toggle-track" :class="{ 'track-active': isFabledActive(char.id) }">
-                <div class="toggle-thumb" :class="{ 'thumb-active': isFabledActive(char.id) }"></div>
-              </div>
-            </div>
-          </div>
-          
-          <div v-if="fabledCharacters.length === 0" class="empty-state">
-            尚未在全域角色庫中找到傳說角色。
-          </div>
+            <div class="role-name">{{ char.name }}</div>
+            <div class="role-check" v-if="isFabledActive(char.id)">✓</div>
+          </button>
+        </div>
+        
+        <div v-if="fabledCharacters.length === 0" class="empty-state">
+          尚未在全域角色庫中找到傳說角色。
         </div>
       </div>
     </div>
@@ -65,10 +55,10 @@ const uiStore = useUIStore()
 const gameStore = useGameStore()
 const scriptStore = useScriptStore()
 
-// 從全庫中取得傳說角色
+// 從全庫中取得傳說與奇遇角色
 const fabledCharacters = computed(() => {
   return scriptStore.masterScript.characters.filter(
-    c => c.role_type === 'Fabled'
+    c => c.role_type === 'Fabled' || c.role_type === 'Loric'
   )
 })
 
@@ -82,9 +72,17 @@ function toggleFabled(id: string) {
 
 // 顯示詳情邏輯
 const longPressChar = ref<CharacterDef | null>(null)
+let pressTimer: any = null
 
-function showDetails(char: any) {
-  longPressChar.value = char as CharacterDef
+function handlePressStart(char: CharacterDef) {
+  clearTimeout(pressTimer)
+  pressTimer = setTimeout(() => {
+    longPressChar.value = char
+  }, 500)
+}
+
+function handlePressEnd() {
+  clearTimeout(pressTimer)
 }
 </script>
 
@@ -144,136 +142,63 @@ function showDetails(char: any) {
   padding: 0;
 }
 
-.fabled-list {
-  display: flex;
-  flex-direction: column;
-}
 
-.fabled-item {
-  display: flex;
-  align-items: center;
+.role-grid {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   padding: 16px;
-  background: none;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.role-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 10px 4px;
+  gap: 6px;
+  position: relative;
+  transition: all 0.2s;
   cursor: pointer;
-  transition: all var(--transition-fast);
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
 
-.fabled-item:active {
-  background: rgba(255,255,255,0.05);
+.role-item:active { transform: scale(0.92); background: rgba(255,255,255,0.08); }
+
+.role-item.is-selected {
+  border-color: var(--color-gold);
+  background: rgba(201, 168, 76, 0.15);
 }
 
-.fabled-item.active {
-  background: rgba(212, 168, 64, 0.05); /* 金色微亮背景 */
-}
+.role-icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2); border-radius: 50%; }
+.role-icon img { width: 36px; height: 36px; object-fit: contain; }
+.emoji { font-size: 24px; }
 
-.char-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%; /* 傳說角色通常圓形 */
-  background: rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 2px solid transparent;
-  transition: border-color 0.2s;
-}
+.role-name { font-size: 11px; font-weight: 600; text-align: center; color: var(--color-text-primary); }
 
-.fabled-item.active .char-logo {
-  border-color: #d4a840;
-}
+.role-item.fabled { border-top: 3px solid #d4a840; }
+.role-item.loric { border-top: 3px solid var(--color-loric, #ff8c00); }
 
-.char-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.char-info { flex: 1; overflow: hidden; }
-
-.char-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 4px;
-}
-
-.fabled-item.active .char-name {
-  color: #d4a840;
-}
-
-.char-ability {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.view-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--color-text-muted);
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.2s;
-  margin-right: 4px;
-}
-
-.view-btn:active {
-  background: rgba(255, 255, 255, 0.15);
-  transform: scale(0.95);
-}
-
-.icon {
-  font-size: 14px;
-}
-
-/* 簡單的 Toggle Switch 樣式 */
-.toggle-btn {
-  flex-shrink: 0;
-}
-
-.toggle-track {
-  width: 40px;
-  height: 22px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 11px;
-  position: relative;
-  transition: background 0.3s;
-}
-
-.toggle-track.track-active {
-  background: #d4a840;
-}
-
-.toggle-thumb {
-  width: 18px;
-  height: 18px;
-  background: white;
-  border-radius: 50%;
+.role-check {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  transition: transform 0.3s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-.toggle-thumb.thumb-active {
-  transform: translateX(18px);
+  top: -4px;
+  right: -4px;
+  background: var(--color-gold);
+  color: black;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
 }
 
 .empty-state {

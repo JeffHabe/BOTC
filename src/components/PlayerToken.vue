@@ -69,7 +69,9 @@
           @click.stop="uiStore.openReminderPicker(player.id)"
         >
           <div class="rem-inner">
-            <img v-if="getSourceChar(rem.source_role)?.image" 
+            <img v-if="rem.text.includes('善良')" src="/good.png" class="rem-role-img" />
+            <img v-else-if="rem.text.includes('邪惡')" src="/evil.png" class="rem-role-img" />
+            <img v-else-if="getSourceChar(rem.source_role)?.image" 
                  :src="getSourceChar(rem.source_role)!.image!" 
                  class="rem-role-img" />
             <span v-else class="rem-emoji-icon">{{ getReminderIcon(rem.text) }}</span>
@@ -84,6 +86,18 @@
           :style="getReminderStyle(rIdx)"
         >
           <span class="rem-text-label">{{ rem.text }}</span>
+        </div>
+
+        <!-- 新增/編輯提示標記的加號按鈕 -->
+        <div 
+          class="add-reminder-btn"
+          :style="getReminderStyle(player.reminders.length > 0 ? player.reminders.length + 0.3 : 0)"
+          @click.stop="uiStore.openReminderPicker(player.id)"
+          title="新增/編輯提示標記"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+            <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/>
+          </svg>
         </div>
       </div>
     </div>
@@ -165,7 +179,7 @@ function openContextMenu(e: Event) {
 let longPressTimer: any = null
 let hasTriggeredLongPress = false
 
-function onPointerDown(e: Event) {
+function onPointerDown() {
   if (uiStore.isArrangingPlayers) return
   hasTriggeredLongPress = false
   longPressTimer = setTimeout(() => {
@@ -207,7 +221,7 @@ function getReminderStyle(rIdx: number) {
   if (layout === 'inner') {
     // 單排垂直向心：沿著真實向心向量排列
     const baseDist = 75 
-    const gap = 42 
+    const gap = 30
     const distV = baseDist + rIdx * gap
 
     // 這裡的 angle 已經是從中心指向玩家的真實幾何角度
@@ -258,10 +272,11 @@ function getReminderStyle(rIdx: number) {
 }
 
 function getReminderIcon(text: string) {
-  if (text.includes('中毒')) return '🧪'
+  if (text.includes('中毒')) return '⚗️'
   if (text.includes('醉酒')) return '🍺'
-  if (text.includes('處決')) return '⚖️'
+  if (text.includes('處決')) return '🪦'
   if (text.includes('選中')) return '🎯'
+  if (text.includes('刀') || text.includes('殺')) return '🔪'
   if (text.includes('守衛') || text.includes('保護')) return '🛡️'
   if (text.includes('死亡') || text.includes('亡')) return '💀'
   if (text.includes('真')) return '✅'
@@ -464,9 +479,9 @@ function getReminderIcon(text: string) {
   transform: translate(-50%, -50%);
   width: 30px; /* 縮小基礎尺寸 36 -> 30 */
   height: 30px;
-  background: rgba(255, 255, 255, 0.95);
+  background: url('/reminder1.png') no-repeat center center;
+  background-size: cover;
   color: #2a1b15;
-  border: 1.2px solid #5d4037;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -488,14 +503,20 @@ function getReminderIcon(text: string) {
 }
 
 .rem-role-img {
-  width: 85%;
-  height: 85%;
+  width: 75%;
+  height: 75%;
   object-fit: contain;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
 }
 
 .rem-emoji-icon {
-  font-size: 22px; /* 提升尺寸，與角色圖示視覺一致 */
+  font-size: 14px; /* 縮小尺寸以免超出圓圈 */
+  font-weight: 700;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
 }
 
@@ -594,5 +615,33 @@ function getReminderIcon(text: string) {
 
 .pointer-events-none {
   pointer-events: none;
+}
+
+.add-reminder-btn {
+  position: absolute;
+  width: 20px !important;
+  height: 20px !important;
+  background: rgba(42, 42, 53, 0.9);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 25;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  transition: all 0.2s ease;
+  pointer-events: auto;
+}
+
+.add-reminder-btn:hover {
+  background: rgba(60, 60, 75, 0.95);
+  transform: translate(-50%, -50%) scale(1.15) !important;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.add-reminder-btn:active {
+  transform: translate(-50%, -50%) scale(0.95) !important;
 }
 </style>

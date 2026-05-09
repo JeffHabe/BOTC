@@ -40,12 +40,13 @@
   --color-text-bright: #f4ecd8;
 
   /* 角色類型顏色 (古典色偏) */
-  --color-townsfolk: #3e7bb3;
-  --color-outsider: #7a52aa;
-  --color-minion: #a83e3e;
-  --color-demon: #c42020;
-  --color-traveler: #4ac49a;
-  --color-fabled: #d4a840;
+  --color-townsfolk: #0398E5;
+  --color-outsider: #056498;
+  --color-minion: #7e0303;
+  --color-demon: #cd0000;
+  --color-traveler: #b46baf;
+  --color-fabled: #dca938;
+  --color-loric: #3c9438;
 
   /* 邊框 */
   --border-token: 1px solid rgba(201, 168, 76, 0.4);

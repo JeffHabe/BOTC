@@ -92,12 +92,37 @@
     </div>
 
     <!-- 虛張聲勢 (Demon Bluffs) - 右下角垂直托盤設計 (可收納) -->
-    <div class="bluffs-drawer" :class="{ 'is-expanded': uiStore.isBluffsExpanded }">
+    <div class="bluffs-drawer" :class="{ 'is-expanded': uiStore.isBluffsExpanded, 'tab-lunatic': uiStore.activeBluffTab === 'lunatic' }">
       <!-- 功能標籤組 -->
       <div class="bluffs-tabs">
-        <button v-if="uiStore.isBluffsExpanded" class="bluffs-showcase-btn" @click="uiStore.isBluffsShowcase = true" title="展示給惡魔">
+        <!-- 瘋子分頁 (僅展開時顯示) -->
+        <button 
+          v-if="uiStore.isBluffsExpanded" 
+          class="bluffs-tab-btn lunatic-tab" 
+          :class="{ active: uiStore.activeBluffTab === 'lunatic' }"
+          @click="uiStore.activeBluffTab = 'lunatic'"
+          title="瘋子偽裝"
+        >
+          <span class="icon">🌀</span>
+        </button>
+
+        <!-- 檢視按鈕 (僅展開時顯示) -->
+        <button v-if="uiStore.isBluffsExpanded" class="bluffs-showcase-btn" @click="uiStore.isBluffsShowcase = true" title="展示給惡魔/瘋子">
           <span class="icon">👁️</span>
         </button>
+
+        <!-- 惡魔分頁 (僅展開時顯示) -->
+        <button 
+          v-if="uiStore.isBluffsExpanded" 
+          class="bluffs-tab-btn demon-tab" 
+          :class="{ active: uiStore.activeBluffTab === 'demon' }"
+          @click="uiStore.activeBluffTab = 'demon'"
+          title="惡魔虛張"
+        >
+          <span class="icon">👹</span>
+        </button>
+
+        <!-- 收納按鈕 -->
         <button class="bluffs-toggle-tab" @click="uiStore.isBluffsExpanded = !uiStore.isBluffsExpanded">
           <span class="tab-icon">{{ uiStore.isBluffsExpanded ? '›' : '‹' }}</span>
           <span class="tab-text">偽裝</span>
@@ -105,14 +130,16 @@
       </div>
 
       <div class="bluffs-box-fixed">
-        <div class="bluffs-title">惡魔的偽裝</div>
+        <div class="bluffs-title">
+          {{ uiStore.activeBluffTab === 'lunatic' ? '瘋子的偽裝' : '惡魔的偽裝' }}
+        </div>
         <div class="bluffs-list">
           <div 
-            v-for="(role, idx) in gameStore.demonBluffs" 
+            v-for="(role, idx) in (uiStore.activeBluffTab === 'lunatic' ? gameStore.lunaticBluffs : gameStore.demonBluffs)" 
             :key="idx"
             class="bluff-slot-vertical"
             :class="{ 'is-locked': gameStore.phase !== 'Setup' }"
-            @click="gameStore.phase === 'Setup' && uiStore.openRolePickerForBluff(idx)"
+            @click="gameStore.phase === 'Setup' && (uiStore.activeBluffTab === 'lunatic' ? uiStore.openRolePickerForLunaticBluff(idx) : uiStore.openRolePickerForBluff(idx))"
           >
             <!-- 角色令片內部設計 -->
             <div v-if="role" class="bluff-token-classic">
@@ -232,7 +259,7 @@
         
         <div class="showcase-grid">
           <div 
-            v-for="(role, idx) in gameStore.demonBluffs" 
+            v-for="(role, idx) in (uiStore.activeBluffTab === 'lunatic' ? gameStore.lunaticBluffs : gameStore.demonBluffs)" 
             :key="idx"
             class="showcase-item"
           >
@@ -389,16 +416,24 @@ const selectedPlayer = computed(() =>
   gameStore.players.find(p => p.id === uiStore.selectedPlayerId)
 )
 
-// --- 拖拽平移邏輯 (Panning Logic) ---
+// --- 拖拽平移與雙指縮放邏輯 (Panning & Pinch-to-Zoom Logic) ---
 const isDragging = ref(false)
+const isPinching = ref(false)
 const startPos = { x: 0, y: 0 }
 const startTranslate = { x: 0, y: 0 }
+const startPinchDist = ref(0)
+const startScale = ref(1)
+
+function getDistance(touches: TouchList) {
+  const dx = touches[0].clientX - touches[1].clientX
+  const dy = touches[0].clientY - touches[1].clientY
+  return Math.sqrt(dx * dx + dy * dy)
+}
 
 function handleMouseDown(e: MouseEvent | TouchEvent) {
   if (uiStore.isArrangingPlayers) return // 在排列模式下，禁止拖曳背景
 
   // 核心修正：如果「任何」面板正在開啟中，禁止拖拽背景
-  // 判斷：activePanel(設定/劇本)、reminderPicker(提示)、rolePicker(選角色)、selectedPlayer(底部控制台)
   if (
     uiStore.activePanel !== 'none' || 
     uiStore.reminderPickerPlayerId !== null || 
@@ -413,17 +448,27 @@ function handleMouseDown(e: MouseEvent | TouchEvent) {
       (e.target as HTMLElement).closest('button') || 
       (e.target as HTMLElement).closest('.bluffs-drawer') ||
       (e.target as HTMLElement).closest('.panel-overlay-mask') ||
-      (e.target as HTMLElement).closest('.overlay') || // ReminderPicker 的外層
+      (e.target as HTMLElement).closest('.overlay') || 
       (e.target as HTMLElement).closest('.control-sheet')) return
 
-  isDragging.value = true
-  const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-  const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
-  
-  startPos.x = clientX
-  startPos.y = clientY
-  startTranslate.x = uiStore.grimoireTranslateX
-  startTranslate.y = uiStore.grimoireTranslateY
+  if ('touches' in e && e.touches.length === 2) {
+    // 雙指縮放開始
+    isPinching.value = true
+    isDragging.value = false
+    startPinchDist.value = getDistance(e.touches)
+    startScale.value = uiStore.grimoireScale
+  } else {
+    // 單指拖拽開始
+    isDragging.value = true
+    isPinching.value = false
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+    
+    startPos.x = clientX
+    startPos.y = clientY
+    startTranslate.x = uiStore.grimoireTranslateX
+    startTranslate.y = uiStore.grimoireTranslateY
+  }
 
   window.addEventListener('mousemove', handleMouseMove)
   window.addEventListener('mouseup', handleMouseUp)
@@ -432,6 +477,17 @@ function handleMouseDown(e: MouseEvent | TouchEvent) {
 }
 
 function handleMouseMove(e: MouseEvent | TouchEvent) {
+  if (isPinching.value && 'touches' in e && e.touches.length === 2) {
+    // 執行雙指縮放
+    const currentDist = getDistance(e.touches)
+    const ratio = currentDist / startPinchDist.value
+    // 限制縮放範圍在 0.5 到 3 之間
+    const newScale = Math.min(Math.max(startScale.value * ratio, 0.5), 3)
+    uiStore.grimoireScale = newScale
+    if (e.cancelable) e.preventDefault()
+    return
+  }
+
   if (!isDragging.value) return
   
   const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
@@ -447,6 +503,7 @@ function handleMouseMove(e: MouseEvent | TouchEvent) {
 
 function handleMouseUp() {
   isDragging.value = false
+  isPinching.value = false
   window.removeEventListener('mousemove', handleMouseMove)
   window.removeEventListener('mouseup', handleMouseUp)
   window.removeEventListener('touchmove', handleMouseMove)
@@ -1120,7 +1177,7 @@ function starStyle(i: number) {
 
 .bluffs-toggle-tab {
   width: 32px;
-  height: 96px;
+  height: 60px; /* 縮小一點，給其它分頁留空間 */
   background: linear-gradient(to right, rgba(42, 27, 21, 0.95), rgba(62, 39, 35, 0.95));
   border: 1px solid rgba(210, 180, 140, 0.3);
   border-right: none;
@@ -1129,10 +1186,38 @@ function starStyle(i: number) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
   color: #d2b48c;
   transition: all 0.3s ease;
+  order: 4; /* 最下方 */
+}
+
+.bluffs-tab-btn {
+  width: 32px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid rgba(210, 180, 140, 0.2);
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  transition: all 0.3s ease;
+  background: linear-gradient(to right, rgba(30, 20, 15, 0.95), rgba(42, 27, 21, 0.95));
+  color: rgba(210, 180, 140, 0.5);
+}
+
+.lunatic-tab {
+  order: 1; /* 最上方 */
+}
+.lunatic-tab.active {
+  background: linear-gradient(to right, #4c1d95, #2e1065);
+  color: #c084fc;
+  width: 36px;
+  margin-left: -4px;
+  border-color: #a855f7;
+  box-shadow: -4px 0 15px rgba(168, 85, 247, 0.3);
 }
 
 .bluffs-showcase-btn {
@@ -1148,11 +1233,31 @@ function starStyle(i: number) {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  order: 2; /* 中間 */
+}
+
+.demon-tab {
+  order: 3; /* 下方 */
+}
+.demon-tab.active {
+  background: linear-gradient(to right, #7f1d1d, #450a0a);
+  color: #f87171;
+  width: 36px;
+  margin-left: -4px;
+  border-color: #ef4444;
+  box-shadow: -4px 0 15px rgba(239, 68, 68, 0.3);
 }
 
 .bluffs-showcase-btn:hover {
   background: #d4c8b0;
-  width: 32px;
+}
+
+.bluffs-drawer.tab-lunatic .bluffs-box-fixed {
+  border-color: rgba(168, 85, 247, 0.4);
+}
+.bluffs-drawer.tab-lunatic .bluffs-title {
+  color: #c084fc;
+  border-bottom-color: rgba(168, 85, 247, 0.2);
 }
 
 .tab-icon { font-size: 18px; font-weight: 800; }
