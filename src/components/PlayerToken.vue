@@ -13,6 +13,13 @@
     ]"
     @contextmenu.prevent="openContextMenu"
     @click="handleClick"
+    @mousedown="onPointerDown"
+    @touchstart="onPointerDown"
+    @mouseup="onPointerUp"
+    @touchend="onPointerUp"
+    @touchcancel="onPointerUp"
+    @touchmove="onPointerMove"
+    @mouseleave="onPointerUp"
   >
     <!-- 背景光暈 -->
     <div v-if="renderedPart === 'all' || renderedPart === 'body'" class="token-glow" :class="uiStore.isRolesHidden ? 'hidden-role' : player.role?.role_type.toLowerCase()" />
@@ -135,14 +142,56 @@ const roleEmoji = computed(() => {
   return map[props.player.role.role_type] || '❓'
 })
 
-function handleClick() {
+function handleClick(e: Event) {
+  if (hasTriggeredLongPress || uiStore.isArrangingPlayers) {
+    e.preventDefault()
+    e.stopPropagation()
+    return
+  }
   // 手機端單擊改為直接選中
   uiStore.selectPlayer(props.player.id)
 }
 
-function openContextMenu() {
+function openContextMenu(e: Event) {
+  if (hasTriggeredLongPress || uiStore.isArrangingPlayers) {
+    e.preventDefault()
+    e.stopPropagation()
+    return
+  }
   // 為了桌面端兼容性，雖然現在主推 Bottom Sheet
   uiStore.selectPlayer(props.player.id)
+}
+
+let longPressTimer: any = null
+let hasTriggeredLongPress = false
+
+function onPointerDown(e: Event) {
+  if (uiStore.isArrangingPlayers) return
+  hasTriggeredLongPress = false
+  longPressTimer = setTimeout(() => {
+    hasTriggeredLongPress = true
+    uiStore.isArrangingPlayers = true
+    if ('vibrate' in navigator) navigator.vibrate(50)
+  }, 400) // 縮短時間至400ms，確保在系統的contextmenu(通常500ms)之前觸發
+}
+
+function onPointerMove() {
+  // 如果手指滑動了，取消長按判定
+  if (longPressTimer) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
+}
+
+function onPointerUp() {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
+  // hasTriggeredLongPress 留到 click 或 contextmenu 判斷完再重置
+  setTimeout(() => {
+    hasTriggeredLongPress = false
+  }, 100)
 }
 
 /**

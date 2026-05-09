@@ -4,6 +4,7 @@
     :class="{ 
       'is-night': gameStore.isNight, 
       'is-dragging': isDragging,
+      'is-arranging': uiStore.isArrangingPlayers,
       'panel-open': uiStore.activePanel !== 'none' || uiStore.reminderPickerPlayerId !== null || uiStore.isRolePickerOpen
     }"
     @mousedown="handleMouseDown"
@@ -11,6 +12,17 @@
   >
     <StatusBar />
     <TimerWidget />
+
+    <!-- 排列模式覆蓋層 -->
+    <transition name="fade">
+      <div v-if="uiStore.isArrangingPlayers" class="arrange-mode-overlay">
+        <div class="arrange-header">
+          <span class="arrange-title">排列座位模式</span>
+          <button class="arrange-done-btn" @click="uiStore.isArrangingPlayers = false">完成</button>
+        </div>
+        <div class="arrange-hint">拖曳玩家頭像以交換座位</div>
+      </div>
+    </transition>
 
     <!-- 背景層 -->
     <div class="scene-bg">
@@ -52,7 +64,10 @@
         v-for="(player, index) in players" 
         :key="player.id"
         class="token-wrapper"
-        :style="getPlayerPosStyle(index)"
+        :class="{ 'is-dragging-token': dragState.index === index, 'is-jiggling': uiStore.isArrangingPlayers && dragState.index !== index }"
+        :style="getTokenStyle(index)"
+        @mousedown="onTokenMouseDown($event, player, index)"
+        @touchstart="onTokenMouseDown($event, player, index)"
       >
         <PlayerToken 
           :player="player" 
@@ -282,7 +297,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, reactive } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
@@ -380,6 +395,8 @@ const startPos = { x: 0, y: 0 }
 const startTranslate = { x: 0, y: 0 }
 
 function handleMouseDown(e: MouseEvent | TouchEvent) {
+  if (uiStore.isArrangingPlayers) return // 在排列模式下，禁止拖曳背景
+
   // 核心修正：如果「任何」面板正在開啟中，禁止拖拽背景
   // 判斷：activePanel(設定/劇本)、reminderPicker(提示)、rolePicker(選角色)、selectedPlayer(底部控制台)
   if (
@@ -434,6 +451,124 @@ function handleMouseUp() {
   window.removeEventListener('mouseup', handleMouseUp)
   window.removeEventListener('touchmove', handleMouseMove)
   window.removeEventListener('touchend', handleMouseUp)
+}
+
+// --- 排列座位拖曳邏輯 (Arrange Mode Drag & Drop) ---
+const dragState = reactive({
+  isDragging: false,
+  playerId: '',
+  index: -1,
+  xPercent: 0,
+  yPercent: 0
+})
+
+function getTokenStyle(index: number) {
+  if (dragState.isDragging && dragState.index === index) {
+    const n = players.value.length
+    const baseSize = n > 14 ? 68 : n > 11 ? 80 : n > 8 ? 92 : 105
+    return {
+      position: 'absolute',
+      left: `${dragState.xPercent}%`,
+      top: `${dragState.yPercent}%`,
+      transform: 'translate(-50%, -50%) scale(1.15)',
+      width: `${baseSize}px`,
+      height: `${baseSize}px`,
+      zIndex: 100,
+      transition: 'none' // 拖曳時無動畫，即時跟隨
+    } as const
+  }
+  return getPlayerPosStyle(index)
+}
+
+function onTokenMouseDown(e: MouseEvent | TouchEvent, player: any, index: number) {
+  if (!uiStore.isArrangingPlayers) return
+  e.preventDefault()
+  e.stopPropagation()
+
+  dragState.isDragging = true
+  dragState.playerId = player.id
+  dragState.index = index
+
+  updateDragPos(e)
+
+  window.addEventListener('mousemove', onTokenMouseMove)
+  window.addEventListener('touchmove', onTokenMouseMove, { passive: false })
+  window.addEventListener('mouseup', onTokenMouseUp)
+  window.addEventListener('touchend', onTokenMouseUp)
+}
+
+function updateDragPos(e: MouseEvent | TouchEvent) {
+  const container = document.querySelector('.tokens-fixed-area')
+  if (!container) return
+  const rect = container.getBoundingClientRect()
+  const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+  const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+  
+  dragState.xPercent = ((clientX - rect.left) / rect.width) * 100
+  dragState.yPercent = ((clientY - rect.top) / rect.height) * 100
+}
+
+function onTokenMouseMove(e: MouseEvent | TouchEvent) {
+  if (!dragState.isDragging) return
+  e.preventDefault()
+  updateDragPos(e)
+  checkDragSwap()
+}
+
+function checkDragSwap() {
+  const n = players.value.length
+  let closestIndex = -1
+  let minDist = Infinity
+
+  for (let i = 0; i < n; i++) {
+    if (i === dragState.index) continue
+    
+    const angle = getEquidistantAngle(i, n)
+    const { a, b, nFactor, yCenter } = LAYOUT_CONFIG.value
+    const cosT = Math.cos(angle)
+    const sinT = Math.sin(angle)
+    const targetX = 50 + a * Math.sign(cosT) * Math.pow(Math.abs(cosT), 2 / nFactor)
+    const targetY = yCenter + b * Math.sign(sinT) * Math.pow(Math.abs(sinT), 2 / nFactor)
+
+    const dx = dragState.xPercent - targetX
+    const dy = dragState.yPercent - targetY
+    const dist = Math.sqrt(dx * dx + dy * dy)
+
+    if (dist < minDist) {
+      minDist = dist
+      closestIndex = i
+    }
+  }
+
+  // 觸發交換的距離閾值 (百分比)
+  if (closestIndex !== -1 && minDist < 10) {
+    swapPlayersLocally(dragState.index, closestIndex)
+    dragState.index = closestIndex
+    if ('vibrate' in navigator) (navigator as any).vibrate(15)
+  }
+}
+
+function swapPlayersLocally(idx1: number, idx2: number) {
+  if (gameStore.state) {
+    const arr = [...gameStore.state.players]
+    const temp = arr[idx1]
+    arr[idx1] = arr[idx2]
+    arr[idx2] = temp
+    gameStore.state.players = arr
+  }
+}
+
+function onTokenMouseUp() {
+  if (dragState.isDragging) {
+    dragState.isDragging = false
+    dragState.index = -1
+    dragState.playerId = ''
+    gameStore.reorderPlayers(players.value.map(p => p.id))
+  }
+  window.removeEventListener('mousemove', onTokenMouseMove)
+  window.removeEventListener('touchmove', onTokenMouseMove)
+  window.removeEventListener('mouseup', onTokenMouseUp)
+  window.removeEventListener('touchend', onTokenMouseUp)
 }
 
 
@@ -795,6 +930,78 @@ function starStyle(i: number) {
 
 .center-logo-box:active {
   transform: translate(-50%, -50%) scale(0.92);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   排列座位模式 (Arrange Mode)
+   ───────────────────────────────────────────────────────────────────────── */
+.arrange-mode-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding-top: env(safe-area-inset-top, 20px);
+  z-index: 1000;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.arrange-header {
+  pointer-events: auto;
+  background: rgba(20, 20, 20, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 8px 24px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  margin-top: 16px;
+}
+
+.arrange-title {
+  color: var(--color-gold);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.arrange-done-btn {
+  background: var(--color-gold);
+  color: #000;
+  border: none;
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.arrange-hint {
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
+/* Jiggle Animation */
+@keyframes jiggle {
+  0% { transform: translate(-50%, -50%) rotate(-2deg); }
+  50% { transform: translate(-50%, -50%) rotate(2deg); }
+  100% { transform: translate(-50%, -50%) rotate(-2deg); }
+}
+
+.is-jiggling {
+  animation: jiggle 0.3s ease-in-out infinite;
+}
+
+.is-dragging-token {
+  opacity: 0.9;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
 }
 
 .center-logo-inner {

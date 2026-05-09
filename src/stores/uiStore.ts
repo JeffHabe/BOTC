@@ -197,6 +197,12 @@ export const useUIStore = defineStore('ui', () => {
     isRolesHidden.value = !isRolesHidden.value
   }
 
+  // --- 排列模式 (Arrange Mode) ---
+  const isArrangingPlayers = ref(false)
+  function toggleArrangingPlayers() {
+    isArrangingPlayers.value = !isArrangingPlayers.value
+  }
+
   // --- 倒數計時器 (Timer) ---
   const timerRemaining = ref(0) // 剩餘秒數
   const timerTotal = ref(0) // 預設 0 分鐘
@@ -324,6 +330,8 @@ export const useUIStore = defineStore('ui', () => {
     activePoolPresetId, activePoolPresetName, excludedPoolIds,
     // 隱私模式
     isRolesHidden, toggleRolesHidden,
+    // 排列模式
+    isArrangingPlayers, toggleArrangingPlayers,
     // 計時器
     timerRemaining, timerTotal, isTimerRunning, isTimerExpanded, timerTargetTimestamp,
     startTimer, pauseTimer, resetTimer, addTimerSeconds, calibrateTimer,

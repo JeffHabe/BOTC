@@ -36,7 +36,7 @@
       <!-- 右側：存活狀態 (保留核心數據) -->
       <div class="stat-group stats-alive">
         <span class="stat-item threshold" v-if="gameStore.phase === 'Day'" title="門檻">
-          <span class="stat-icon">⚖️</span>
+          <span class="stat-icon">🙋</span>
           <span class="stat-num">{{ gameStore.threshold }}</span>
         </span>
         <span class="stat-item alive" title="存活人數">
