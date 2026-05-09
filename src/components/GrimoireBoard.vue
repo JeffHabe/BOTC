@@ -37,7 +37,7 @@
 
     <!-- 空場提示 -->
     <div v-if="players.length === 0" class="empty-hint">
-      <div class="empty-icon">🏰</div>
+      
       <h3 class="empty-title">魔典尚未開啟</h3>
       <p class="empty-sub">點擊左下角的新增按鈕，開始邀請玩家進入小鎮...</p>
     </div>
@@ -54,7 +54,10 @@
       <div class="center-logo-box" @click="uiStore.openPanel('role-assignment')">
         <div class="center-logo-inner">
           <img v-if="gameStore.script?.logo" :src="gameStore.script.logo" class="center-logo-img" />
-          <span v-else class="center-logo-icon">📖</span>
+          <!-- <span v-else class="center-logo-icon">📖</span> -->
+            <div class="empty-icon">
+          <img src="/app-icon.png" class="empty-logo" />
+        </div>
         </div>
         <div class="center-script-name">{{ uiStore.activePoolPresetName || gameStore.script?.name || '選擇劇本' }}</div>
       </div>
@@ -1389,7 +1392,7 @@ function starStyle(i: number) {
    ───────────────────────────────────────────────────────────────────────── */
 .empty-hint {
   position: absolute;
-  top: 45%;
+  top: 30%;
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
@@ -1398,10 +1401,17 @@ function starStyle(i: number) {
 }
 
 .empty-icon {
-  font-size: 64px;
   margin-bottom: 24px;
-  opacity: 0.2;
-  filter: grayscale(1) sepia(1) contrast(1.5);
+  display: flex;
+  justify-content: center;
+}
+
+.empty-logo {
+  width: 120px;
+  height: 120px;
+  opacity: 1; /* 提高可見度 */
+  filter: sepia(0.2) contrast(1.3) brightness(0.9); /* 移除灰階，保留微弱懷舊感並加強對比 */
+  object-fit: contain;
 }
 
 .empty-title {

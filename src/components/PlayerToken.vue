@@ -85,13 +85,15 @@
           class="rem-label-container"
           :style="getReminderStyle(rIdx)"
         >
-          <span class="rem-text-label">{{ rem.text }}</span>
+          <span class="rem-text-label">
+            {{ (rem.source_role && rem.source_role !== '劇本' && rem.source_role !== '自定義') ? `${rem.source_role}: ${rem.text}` : rem.text }}
+          </span>
         </div>
 
         <!-- 新增/編輯提示標記的加號按鈕 -->
         <div 
           class="add-reminder-btn"
-          :style="getReminderStyle(player.reminders.length > 0 ? player.reminders.length + 0.3 : 0)"
+          :style="getReminderStyle(player.reminders.length > 0 ? player.reminders.length + 0.6 : 0)"
           @click.stop="uiStore.openReminderPicker(player.id)"
           title="新增/編輯提示標記"
         >
@@ -548,7 +550,7 @@ function getReminderIcon(text: string) {
   position: absolute;
   bottom: 23px; /* 調整至圓圈下方（因為定位點在中心） */
   /* 因為 30px 圓圈半徑是 15px，文字在下方 offset 約 8px = 23px */
-  transform: translateY(38px); 
+  transform: translateY(35px); /* 從 38px 調窄至 35px */
 }
 
 /* --- 佈局樣式控制 --- */

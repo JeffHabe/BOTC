@@ -19,7 +19,7 @@
               :class="{ 'is-editing': editingId === r.id, 'is-old': r.round < gameStore.round }"
               @click="startEdit(r)"
             >
-              {{ r.text }}
+              {{ (r.source_role && r.source_role !== '劇本' && r.source_role !== '自定義') ? `${r.source_role}: ${r.text}` : r.text }}
               <span v-if="r.round < gameStore.round" class="old-tag">過往</span>
             </button>
           </div>
