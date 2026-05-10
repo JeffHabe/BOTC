@@ -69,6 +69,31 @@ export const useGameStore = defineStore('game', () => {
       .sort((a, b) => (a.night_order_other ?? 999) - (b.night_order_other ?? 999))
   })
 
+  // 場上角色的相對順序計算
+  const relativeNightOrder = computed(() => {
+    const inPlayRoles = players.value
+      .map(p => p.role)
+      .filter((r): r is CharacterDef => r !== null)
+
+    // 取得不重複的角色清單（避免雙胞胎等特殊情況重複計算）
+    const uniqueRoles = Array.from(new Map(inPlayRoles.map(r => [r.id, r])).values())
+
+    // 計算首夜相對順序
+    const firstOrder = uniqueRoles
+      .filter(r => r.night_order_first != null)
+      .sort((a, b) => (a.night_order_first ?? 0) - (b.night_order_first ?? 0))
+    
+    // 計算其他夜晚相對順序
+    const otherOrder = uniqueRoles
+      .filter(r => r.night_order_other != null)
+      .sort((a, b) => (a.night_order_other ?? 0) - (b.night_order_other ?? 0))
+
+    return {
+      first: Object.fromEntries(firstOrder.map((r, i) => [r.id, i + 1])),
+      other: Object.fromEntries(otherOrder.map((r, i) => [r.id, i + 1]))
+    }
+  })
+
   // 內部輔助函數
   async function callCommand<T = GameState>(cmd: string, args?: Record<string, unknown>): Promise<T | null> {
     loading.value = true
@@ -101,7 +126,20 @@ export const useGameStore = defineStore('game', () => {
     })
   }
 
-  // 遊戲與初始化
+  function updateScriptName(newName: string) {
+    if (state.value && state.value.script) {
+      const oldName = state.value.script.name
+      state.value.script.name = newName
+      addLog('note', `劇本更名：${oldName} -> ${newName}`)
+      saveState()
+    }
+  }
+
+  async function saveState() {
+    if (state.value) {
+      await callCommand('save_game_state', { state: state.value })
+    }
+  }
   async function loadState() {
     const gs = await callCommand<GameState>('get_game_state')
     await syncState(gs)
@@ -385,7 +423,7 @@ export const useGameStore = defineStore('game', () => {
     killPlayer, revivePlayer, toggleAlive, toggleGhostVote, toggleCanNominate, useGhostVote,
     advancePhase, revertPhase, setPhase,
     nominate, editNomination, vote, execute, undoExecution,
-    exportState, importState, importCustomScript,
-    logs, addLog
+    exportState, importState, importCustomScript, updateScriptName,
+    logs, addLog, relativeNightOrder
   }
 })

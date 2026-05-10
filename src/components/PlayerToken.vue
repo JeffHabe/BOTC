@@ -58,6 +58,14 @@
         <span class="ribbon-text">亡</span>
       </div>
 
+      <!-- 夜晚順序標誌 (雅典寶石風格 - 移至緞帶後方確保不被遮擋) -->
+      <div v-if="player.role && gameStore.relativeNightOrder.first[player.role.id] && !uiStore.isRolesHidden" class="night-order-badge first-night" title="首夜順序">
+        {{ gameStore.relativeNightOrder.first[player.role.id] }}
+      </div>
+      <div v-if="player.role && gameStore.relativeNightOrder.other[player.role.id] && !uiStore.isRolesHidden" class="night-order-badge other-night" title="其他夜晚順序">
+        {{ gameStore.relativeNightOrder.other[player.role.id] }}
+      </div>
+
       <!-- 提示標記容器 (分層渲染以確保文字置頂) -->
       <div class="reminders-classic-container" v-if="!uiStore.isRolesHidden">
         <!-- 第一層：所有的圓圈圖示 -->
@@ -113,6 +121,7 @@
 import { computed } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
+import { useGameStore } from '../stores/gameStore'
 import type { Player } from '../types'
 
 const props = withDefaults(defineProps<{
@@ -129,6 +138,7 @@ const props = withDefaults(defineProps<{
 
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
+const gameStore = useGameStore()
 
 const namePositionClass = computed(() => {
   if (props.angle === undefined) return 'pos-bottom'
@@ -483,7 +493,7 @@ function getReminderIcon(text: string) {
   height: 30px;
   background: url('/reminder1.png') no-repeat center center;
   background-size: cover;
-  color: #2a1b15;
+  color: var(--color-gold-muted);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -519,10 +529,12 @@ function getReminderIcon(text: string) {
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
 }
 
 .rem-text-label {
+  font-family: 'ChineseFont', 'NewsFont', sans-serif !important;
   background: rgba(20, 20, 25, 0.95);
   color: #fff;
   padding: 1px 5px;
@@ -645,5 +657,40 @@ function getReminderIcon(text: string) {
 
 .add-reminder-btn:active {
   transform: translate(-50%, -50%) scale(0.95) !important;
+}
+
+/* --- 夜晚順序標誌 (雅典風格) --- */
+.night-order-badge {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  z-index: 10;
+  transform: translateY(-50%);
+  font-family: 'Cinzel', serif;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+}
+
+.first-night {
+  top: 28%; /* 移至左上方 */
+  left: -1px;
+  background: radial-gradient(circle at 30% 30%, #4a89c4, #1a3a5a);
+  border-color: rgba(192, 160, 74, 0.3); /* 微弱金邊 */
+}
+
+.other-night {
+  top: 72%; /* 移至右下方 */
+  right: -1px;
+  background: radial-gradient(circle at 30% 30%, #c43232, #4d1212);
+  border-color: rgba(192, 160, 74, 0.3); /* 微弱金邊 */
 }
 </style>

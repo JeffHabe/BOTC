@@ -45,6 +45,7 @@
                 <div class="preset-actions">
                   <button v-if="activePresetId" class="btn-icon" @click="updatePreset" title="儲存變更">💾</button>
                   <button class="btn-icon" @click="showSaveModal = true" title="另存新檔">📁</button>
+                  <button v-if="activePresetId" class="btn-icon" @click="renamePreset" title="編輯名稱">✏️</button>
                   <button v-if="activePresetId" class="btn-icon" @click="exportPreset(activePresetId)" title="匯出預設 (複製)">📤</button>
                   <button class="btn-icon" @click="showImportModal = true" title="匯入預設">📥</button>
                   <button v-if="activePresetId" class="btn-icon text-danger" @click="deletePreset(activePresetId)" title="刪除預設">🗑️</button>
@@ -182,6 +183,20 @@
             >
               下一步 →
             </button>
+          </div>
+
+          <!-- 配置變動警告 -->
+          <div v-if="setupWarnings.length > 0" class="setup-warning-banner animate-pulse-subtle">
+            <div class="warning-header">
+              <span class="warning-icon">⚠️</span>
+              <strong>配置變動警告：</strong>
+            </div>
+            <div class="warning-list">
+              <div v-for="w in setupWarnings" :key="w.id" class="warning-item">
+                角色 <strong>【{{ w.name }}】</strong> 具有變更配置的能力：<span class="ability-tag">{{ w.match }}</span>
+              </div>
+            </div>
+            <div class="warning-footer">請確認「步驟 2」中的人數配比已手動調整。</div>
           </div>
 
           <div class="search-bar-assignment">
@@ -598,6 +613,21 @@ const counts = reactive<Record<string, number>>({
 
 const selectedRoleIds = ref<string[]>([])
 const selectedBluffIds = ref<string[]>([])
+
+// --- 新增：檢測配置變動角色 ---
+const setupWarnings = computed(() => {
+  if (!gameStore.script) return []
+  const keywords = ['[+1外來者]', '[+1爪牙]', '[+0~1外來者]', '[+2外來者]', '[-1外來者]', '[-2外來者]']
+  
+  return selectedRoleIds.value.map(id => {
+    const char = gameStore.script?.characters.find(c => c.id === id)
+    if (!char) return null
+    const match = keywords.find(k => char.ability.includes(k))
+    if (match) return { id: char.id, name: char.name, match }
+    return null
+  }).filter((w): w is { id: string; name: string; match: string } => w !== null)
+})
+
 const searchQuery = ref('') // 新增搜尋關鍵字
 
 // 長按顯示詳情邏輯
@@ -711,6 +741,18 @@ function deletePreset(id: string) {
   if (activePresetId.value === id) {
     activePresetId.value = ''
     uiStore.activePoolPresetName = ''
+  }
+}
+
+function renamePreset() {
+  if (!activePresetId.value) return
+  const preset = poolPresets.value.find(p => p.id === activePresetId.value)
+  if (!preset) return
+  const newName = window.prompt('請輸入新的預設名稱：', preset.name)
+  if (newName !== null && newName.trim() !== '') {
+    preset.name = newName.trim()
+    localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
+    uiStore.activePoolPresetName = preset.name
   }
 }
 
@@ -1513,10 +1555,10 @@ function getRoleTypeEmoji(type: string) {
 }
 
 .instruction {
-  font-size: 14px;
+  font-size: 8px;
   color: #fff;
-  margin-bottom: 16px;
-  text-align: center;
+  margin-bottom: 5px;
+  text-align: right;
 }
 
 .selection-status-bar {
@@ -1580,6 +1622,69 @@ function getRoleTypeEmoji(type: string) {
 .type-pill.interactive:active {
   transform: scale(0.95);
   background: rgba(255,255,255,0.1);
+}
+
+.pool-quick-actions button:active {
+  transform: scale(0.98);
+  background: var(--color-bg-elevated);
+}
+
+/* 配置變動警告樣式 */
+.setup-warning-banner {
+  background: rgba(122, 26, 26, 0.2);
+  border: 1px solid var(--color-red-bright);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #fff;
+}
+.warning-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  color: var(--color-red-bright);
+}
+.warning-icon {
+  font-size: 16px;
+}
+.warning-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.warning-item {
+  padding-left: 22px;
+  position: relative;
+}
+.warning-item::before {
+  content: '•';
+  position: absolute;
+  left: 8px;
+  color: var(--color-red-bright);
+}
+.ability-tag {
+  background: var(--color-red);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: bold;
+}
+.warning-footer {
+  font-size: 11px;
+  opacity: 0.8;
+  font-style: italic;
+  text-align: right;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.01); }
+}
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s infinite ease-in-out;
 }
 
 /* Collapsible Section */
@@ -1671,7 +1776,7 @@ function getRoleTypeEmoji(type: string) {
 .pool-quick-actions {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 .pool-quick-actions button {
   flex: 1;

@@ -2,8 +2,29 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
 
+/* 自定義英文字型 */
+@font-face {
+  font-family: 'NewsFont';
+  src: url('/fonts/news.ttf');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 自定義中文字型 */
+@font-face {
+  font-family: 'ChineseFont';
+  src: url('/fonts/genkai.ttf');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+
 /* ─── CSS 設計令牌 ───────────────────────────────────────────── */
 :root {
+
+
   /* 主色調 (古典風格：深邃木質與皮革感) */
   --color-bg-deep: #0b0c10;
   --color-bg-dark: #1a1d23;
@@ -19,7 +40,7 @@
   /* 金色系 (古典風格：古銅金與暗金) */
   --color-gold-bright: #e5b54f;
   --color-gold: #b38b3d;
-  --color-gold-muted: #8c6d30;
+  --color-gold-muted: #a07d35;
   --color-gold-dark: #4a3a1a;
 
   /* 血紅系 (古典風格：深奧紅) */
@@ -65,7 +86,7 @@
   --radius-small: 4px;
 
   /* 字型 */
-  --font-title: 'Cinzel', serif;
+  --font-title: 'Cinzel', 'Noto Sans TC', serif;
   --font-body: 'Noto Sans TC', sans-serif;
 
   /* 間距 */
@@ -99,6 +120,8 @@ body {
   color: var(--color-text-primary);
   font-family: var(--font-body);
   font-size: 16px;
+  /* 哥德體稍微加一點字距會更好看 */
+  letter-spacing: 0.02em;
   line-height: 1.5;
   -webkit-tap-highlight-color: transparent;
   user-select: none;

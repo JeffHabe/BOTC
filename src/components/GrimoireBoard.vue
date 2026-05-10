@@ -27,10 +27,8 @@
     <!-- 背景層 -->
     <div class="scene-bg" :style="bgStyle">
       <div class="bg-gradient" />
-      <div v-if="gameStore.isNight" class="moon" :class="{ 'moon-night': gameStore.isNight }" />
-      <div class="stars-container" v-if="gameStore.isNight">
-        <div v-for="i in 40" :key="i" class="star" :style="starStyle(i)" />
-      </div>
+      <div class="bg-gradient" />
+      <div class="fog" />
       <div class="fog" />
       <div class="fog fog-2" />
     </div>
@@ -38,8 +36,10 @@
     <!-- 空場提示 -->
     <div v-if="players.length === 0" class="empty-hint">
       
-      <h3 class="empty-title">魔典尚未開啟</h3>
-      <p class="empty-sub">點擊左下角的新增按鈕，開始邀請玩家進入小鎮...</p>
+      <h3 class="empty-title">魔典尚未開啓</h3>
+      <p class="empty-sub">點撃左下角+按鈕，</p>
+      <p class="empty-sub">開始邀請玩家進入小鎮...</p>
+
     </div>
 
     <!-- 玩家令片容器 (矩形環狀佈局) -->
@@ -838,19 +838,7 @@ const activePanelComponent = computed(() => {
   }
 })
 
-function starStyle(i: number) {
-  const x = ((i * 7919) % 100)
-  const y = ((i * 3571) % 70)
-  const size = ((i * 1237) % 3) + 1
-  const delay = ((i * 0.1) % 2)
-  return {
-    left: `${x}%`,
-    top: `${y}%`,
-    width: `${size}px`,
-    height: `${size}px`,
-    animationDelay: `${delay}s`,
-  }
-}
+
 </script>
 
 <style scoped>
@@ -870,14 +858,16 @@ function starStyle(i: number) {
   inset: 0;
   z-index: 0;
   overflow: hidden;
-  /* 白天模式：亮色羊皮紙 */
-  background: radial-gradient(circle at 50% 40%, #f4e4bc 0%, #d2b48c 60%, #8d6e63 120%);
+  /* 白天模式：自定義背景圖片 */
+  background: url('/bg_day.png') no-repeat center center;
+  background-size: cover;
   transition: all 0.8s ease;
 }
 
 .grimoire-board.is-night .scene-bg {
-  /* 夜晚模式：深色/陳舊羊皮紙 */
-  background: radial-gradient(circle at 50% 40%, #8d6e63 0%, #4e342e 60%, #2a1b15 120%);
+  /* 夜晚模式：自定義背景圖片 */
+  background: url('/bg_night.png') no-repeat center center;
+  background-size: cover;
 }
 
 .scene-bg::after {
@@ -907,13 +897,7 @@ function starStyle(i: number) {
   opacity: 0.8;
 }
 
-.star {
-  position: absolute;
-  border-radius: 50%;
-  background: white;
-  animation: pulse 2s ease-in-out infinite;
-  z-index: 1;
-}
+/* 移除星星樣式 */
 
 .showcase-inner-content {
   width: 76%;
@@ -965,10 +949,7 @@ function starStyle(i: number) {
   z-index: 2;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.2); }
-}
+/* 移除星星動畫 */
 
 /* ─────────────────────────────────────────────────────────────────────────
    主要令片佈局區域 
@@ -1111,11 +1092,11 @@ function starStyle(i: number) {
 }
 
 .center-script-name {
-  font-family: var(--font-title);
+  font-family: 'ChineseFont', 'NewsFont', 'Cinzel', serif !important;
   font-size: 20px;
   font-weight: 800;
-  color: #2a1b15; /* 深色墨水感 */
-  letter-spacing: 2px;
+  color: #cbcbcb; /* 深色墨水感 */
+  letter-spacing: 4px; /* 增加字間距讓霹靂體更清楚 */
   text-shadow: 0 1px 1px rgba(255,255,255,0.3);
 }
 
@@ -1438,16 +1419,17 @@ function starStyle(i: number) {
 }
 
 .empty-title {
-  font-family: var(--font-title);
+  font-family: 'ChineseFont', 'NewsFont', 'Cinzel', serif !important;
   font-size: 26px;
-  color: #3e2723;
+  color: #ffffff;
   margin-bottom: 8px;
   letter-spacing: 4px;
 }
 
 .empty-sub {
+  font-family: 'ChineseFont', 'NewsFont', 'Cinzel', serif !important;
   font-size: 15px;
-  color: #5d4037;
+  color: #ffffff;
   opacity: 0.8;
   max-width: 280px;
   margin: 0 auto;
