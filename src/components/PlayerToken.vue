@@ -53,17 +53,17 @@
       </div>
 
       <!-- 死亡緞帶 (絲綢風格 繁體/簡體) -->
-      <div v-if="!player.is_alive" class="death-ribbon">
-        <span class="ribbon-text">死</span>
-        <span class="ribbon-text">亡</span>
+      <div v-if="!player.is_alive" class="death-ribbon" :class="deathTypeClass">
+        <span class="ribbon-text">{{ deathLabel[0] }}</span>
+        <span class="ribbon-text">{{ deathLabel[1] }}</span>
       </div>
 
-      <!-- 夜晚順序標誌 (雅典寶石風格 - 移至緞帶後方確保不被遮擋) -->
+      <!-- 夜晚順序標誌 (祖母綠切割寶石) -->
       <div v-if="player.role && gameStore.relativeNightOrder.first[player.role.id] && !uiStore.isRolesHidden" class="night-order-badge first-night" title="首夜順序">
-        {{ gameStore.relativeNightOrder.first[player.role.id] }}
+        <span class="badge-number">{{ gameStore.relativeNightOrder.first[player.role.id] }}</span>
       </div>
       <div v-if="player.role && gameStore.relativeNightOrder.other[player.role.id] && !uiStore.isRolesHidden" class="night-order-badge other-night" title="其他夜晚順序">
-        {{ gameStore.relativeNightOrder.other[player.role.id] }}
+        <span class="badge-number">{{ gameStore.relativeNightOrder.other[player.role.id] }}</span>
       </div>
 
       <!-- 提示標記容器 (分層渲染以確保文字置頂) -->
@@ -94,14 +94,14 @@
           :style="getReminderStyle(rIdx)"
         >
           <span class="rem-text-label">
-            {{ (rem.source_role && rem.source_role !== '劇本' && rem.source_role !== '自定義') ? `${rem.source_role}: ${rem.text}` : rem.text }}
+            {{ rem.text }}
           </span>
         </div>
 
         <!-- 新增/編輯提示標記的加號按鈕 -->
         <div 
           class="add-reminder-btn"
-          :style="getReminderStyle(player.reminders.length > 0 ? player.reminders.length + 0.6 : 0)"
+          :style="getReminderStyle(player.reminders.length, true)"
           @click.stop="uiStore.openReminderPicker(player.id)"
           title="新增/編輯提示標記"
         >
@@ -224,20 +224,27 @@ function onPointerUp() {
  * 動態計算提示標記的位置樣式
  * 解決了 CSS 不支援 取模(%) 與 floor() 的限制，且相容性更高。
  */
-function getReminderStyle(rIdx: number) {
+function getReminderStyle(rIdx: number, isPlus = false) {
   const layout = uiStore.reminderLayout
   const angle = props.angle || 0 // 弧度
   const isRight = props.isOnRightSide
 
   // 1. 內圈向心模式 (Inner - Single Radial Column)
   if (layout === 'inner') {
-    // 單排垂直向心：沿著真實向心向量排列
     const baseDist = 75 
-    const gap = 30
-    const distV = baseDist + rIdx * gap
+    const gap = 50     // 提示圖示之間的大間距 (方便看清文字)
+    const plusGap = 35  // 加號與上一個圖示的小間距 (緊貼感)
 
-    // 這裡的 angle 已經是從中心指向玩家的真實幾何角度
-    // 往中心移動就是減去向量
+    // 計算實際物理距離
+    let distV = baseDist + rIdx * gap
+    
+    // 如果是加號，且前面已經有提示圖示，則使用較小的 plusGap
+    if (isPlus && rIdx > 0) {
+      distV = baseDist + (rIdx - 1) * gap + plusGap
+    } else if (isPlus && rIdx === 0) {
+      distV = baseDist
+    }
+
     const top = 50 - (distV * Math.sin(angle) * 0.75)
     const left = 50 - (distV * Math.cos(angle) * 0.75)
     
@@ -248,8 +255,7 @@ function getReminderStyle(rIdx: number) {
       height: '30px',
       fontSize: '9px',
       position: 'absolute',
-      transform: 'translate(-50%, -50%)',
-      /* 移除行內 zIndex，改由 CSS 控制 */
+      transform: 'translate(-50%, -50%)'
     }
   }
 
@@ -286,7 +292,8 @@ function getReminderStyle(rIdx: number) {
 function getReminderIcon(text: string) {
   if (text.includes('中毒')) return '⚗️'
   if (text.includes('醉酒')) return '🍺'
-  if (text.includes('處決')) return '🪦'
+  if (text.includes('處決')) return '⚖️'
+  if (text.includes('被殺')) return '🔪'
   if (text.includes('選中')) return '🎯'
   if (text.includes('刀') || text.includes('殺')) return '🔪'
   if (text.includes('守衛') || text.includes('保護')) return '🛡️'
@@ -296,6 +303,18 @@ function getReminderIcon(text: string) {
   if (text.includes('偵測') || text.includes('查')) return '🔍'
   return text.charAt(0)
 }
+
+const deathLabel = computed(() => {
+  if (props.player.reminders.some(r => r.text === '處決')) return '處決'
+  if (props.player.reminders.some(r => r.text === '被殺')) return '被殺'
+  return '死亡'
+})
+
+const deathTypeClass = computed(() => {
+  if (props.player.reminders.some(r => r.text === '處決')) return 'type-execution'
+  if (props.player.reminders.some(r => r.text === '被殺')) return 'type-killed'
+  return ''
+})
 </script>
 
 <style scoped>
@@ -468,6 +487,28 @@ function getReminderIcon(text: string) {
   z-index: 5;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.death-ribbon.type-execution {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(139, 26, 26, 0.95) 10%, 
+    rgba(224, 32, 32, 0.6) 25%, 
+    rgba(224, 32, 32, 0.6) 75%, 
+    rgba(139, 26, 26, 0.95) 90%, 
+    transparent 100%
+  );
+}
+
+.death-ribbon.type-killed {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(74, 10, 10, 0.95) 10%, 
+    rgba(100, 20, 20, 0.6) 25%, 
+    rgba(100, 20, 20, 0.6) 75%, 
+    rgba(74, 10, 10, 0.95) 90%, 
+    transparent 100%
+  );
 }
 
 .ribbon-text {
@@ -659,38 +700,94 @@ function getReminderIcon(text: string) {
   transform: translate(-50%, -50%) scale(0.95) !important;
 }
 
-/* --- 夜晚順序標誌 (雅典風格) --- */
+/* --- 夜晚順序標誌 (圓形刻面寶石風格) --- */
 .night-order-badge {
   position: absolute;
-  top: 50%;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   color: #fff;
   z-index: 10;
   transform: translateY(-50%);
+  border-radius: 50%;
   font-family: 'Cinzel', serif;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-  border: 1px solid rgba(255, 255, 255, 0.2);
   pointer-events: none;
+  box-shadow: 
+    0 0px 5px rgba(0,0,0,0.5),
+    inset 0 0 4px rgba(255,255,255,0.2);
+  border: 0.5px solid rgba(255, 255, 255, 0.3);
+  overflow: hidden;
 }
 
+.badge-number {
+  position: relative;
+  z-index: 1; /* 低於高光層 */
+  text-shadow: 0 1px 5px rgba(0,0,0,0.8);
+  opacity: 0.85;
+  filter: drop-shadow(0 0 3px rgba(255,255,255,0.0));
+}
+
+/* 建立 8 個刻面 (Facets) */
 .first-night {
-  top: 28%; /* 移至左上方 */
-  left: -1px;
-  background: radial-gradient(circle at 30% 30%, #4a89c4, #1a3a5a);
-  border-color: rgba(192, 160, 74, 0.3); /* 微弱金邊 */
+  top: 28%;
+  left: -2px;
+  background: conic-gradient(
+    from 22.5deg,
+    #2a5a8a 0deg 45deg,
+    #3d7ab7 45deg 90deg,
+    #2a5a8a 90deg 135deg,
+    #1a3a5a 135deg 180deg,
+    #2a5a8a 180deg 225deg,
+    #3d7ab7 225deg 270deg,
+    #2a5a8a 270deg 315deg,
+    #1a3a5a 315deg 360deg
+  );
 }
 
 .other-night {
-  top: 72%; /* 移至右下方 */
-  right: -1px;
-  background: radial-gradient(circle at 30% 30%, #c43232, #4d1212);
-  border-color: rgba(192, 160, 74, 0.3); /* 微弱金邊 */
+  top: 72%;
+  right: -2px;
+  background: conic-gradient(
+    from 22.5deg,
+    #8a1a1a 0deg 45deg,
+    #b32a2a 45deg 90deg,
+    #8a1a1a 90deg 135deg,
+    #5a0a0a 135deg 180deg,
+    #8a1a1a 180deg 225deg,
+    #b32a2a 225deg 270deg,
+    #8a1a1a 270deg 315deg,
+    #5a0a0a 315deg 360deg
+  );
+}
+
+/* 中心台面 (Table) - 模仿樣板中的內部八角形 */
+.night-order-badge::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  background: inherit;
+  filter: brightness(1.25) contrast(1.1);
+  clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+  z-index: -1; /* 設為負值確保在文字下方 */
+  border: 0.5px solid rgba(255,255,255,0.15);
+}
+
+/* 頂部高光與反光感 (Reflective Gloss) */
+.night-order-badge::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(135deg, 
+    rgba(255,255,255,0.6) 0%, 
+    rgba(255,255,255,0) 50%, 
+    rgba(255,255,255,0) 60%, 
+    rgba(255,255,255,0.2) 100%);
+  pointer-events: none;
+  z-index: 3; /* 高於 .badge-number (1) */
+  opacity: 0.9;
 }
 </style>

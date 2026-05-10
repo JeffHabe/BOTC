@@ -36,7 +36,72 @@
     </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <!-- 初始啟動畫面：在 Vue 掛載前顯示，防止閃白或空白 -->
+      <div id="initial-loader" style="
+        position: fixed;
+        inset: 0;
+        background-color: #000000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      ">
+        <img src="/app-icon.png" style="
+          width: 100px;
+          height: 100px;
+          border-radius: 22px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+          margin-bottom: 24px;
+          animation: pulse 2s infinite ease-in-out;
+        " alt="Logo" />
+        <div style="
+          color: #e5b54f;
+          font-family: 'Cinzel', serif;
+          font-size: 14px;
+          letter-spacing: 4px;
+          text-indent: 4px;
+          opacity: 0.8;
+        ">
+          LOADING GRIMOIRE
+        </div>
+
+        <!-- 進度條容器 -->
+        <div style="
+          width: 140px;
+          height: 2px;
+          background: #000000;
+          border: 0.5px solid rgba(229, 181, 79, 0.1);
+          border-radius: 1px;
+          margin-top: 20px;
+          position: relative;
+          overflow: hidden;
+        ">
+          <!-- 移動的進度條 -->
+          <div style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 40%;
+            background: #e5b54f;
+            box-shadow: 0 0 8px #e5b54f;
+            animation: progress-slide 2s infinite ease-in-out;
+          "></div>
+        </div>
+      </div>
+      <style>
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.9; }
+        }
+        @keyframes progress-slide {
+          0% { left: -40%; }
+          100% { left: 100%; }
+        }
+      </style>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

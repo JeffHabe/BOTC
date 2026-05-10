@@ -34,39 +34,35 @@
             {{ player.role.ability }}
           </div>
 
-          <!-- 頂部重點操作：提示標記 -->
-          <button class="action-btn reminder-btn-hero" @click="handleReminderPicker">
-            <div class="reminder-hero-header">
-              <span class="icon">🔖</span>
-              <span class="label">提示標記 (Reminders)</span>
-            </div>
-            
-            <template v-if="!uiStore.isRolesHidden">
-              <div v-if="player.reminders && player.reminders.length > 0" class="reminder-tags">
-                <span v-for="rem in player.reminders" :key="rem.id" class="rem-tag">
-                  {{ (rem.source_role !== '劇本' && rem.source_role !== '自定義') ? `${rem.source_role}: ` : '' }}{{ rem.text }}
-                </span>
-              </div>
-              <div v-else class="reminder-empty-hint">
-                點擊以檢視或新增
-              </div>
+          <!-- 核心操作 2x2 網格 -->
+          <div class="action-grid">
+            <template v-if="player.is_alive">
+              <button class="action-btn death-btn" @click="handleKill('execution')">
+                <span class="icon">⚖️</span>
+                <span class="label">處決死亡</span>
+              </button>
+              <button class="action-btn death-btn" @click="handleKill('killed')">
+                <span class="icon">🔪</span>
+                <span class="label">被殺死亡</span>
+              </button>
             </template>
             <template v-else>
-              <div class="reminder-empty-hint">
-                標記已隱藏
-              </div>
+              <button class="action-btn revive-btn" @click="handleRevive">
+                <span class="icon">❤️</span>
+                <span class="label">恢復存活</span>
+              </button>
+              <button class="action-btn type-toggle-btn" @click="handleToggleDeathType">
+                <span class="icon">{{ isExecution ? '🔪' : '⚖️' }}</span>
+                <span class="label">{{ isExecution ? '改為被殺' : '改為處決' }}</span>
+              </button>
             </template>
-          </button>
 
-          <!-- 主操作按鈕組 (大按鈕) -->
-          <div class="action-grid">
-            <button 
-              class="action-btn death-btn" 
-              :class="{ 'is-dead': !player.is_alive }"
-              @click="handleToggleAlive"
-            >
-              <span class="icon">{{ player.is_alive ? '💀' : '❤️' }}</span>
-              <span class="label">{{ player.is_alive ? '標記死亡' : '恢復存活' }}</span>
+            <button class="action-btn reminder-btn" @click="handleReminderPicker">
+              <span class="icon">🔖</span>
+              <span class="label">提示標記</span>
+              <span v-if="!uiStore.isRolesHidden && player.reminders.length > 0" class="rem-count-badge">
+                {{ player.reminders.length }}
+              </span>
             </button>
 
             <button class="action-btn role-btn" @click="handleRolePicker">
@@ -157,8 +153,43 @@ const player = computed(() => {
   return gameStore.players.find(p => p.id === uiStore.selectedPlayerId)
 })
 
-async function handleToggleAlive() {
-  if (player.value) await gameStore.toggleAlive(player.value.id)
+const isExecution = computed(() => player.value?.reminders.some(r => r.text === '處決'))
+
+async function handleKill(type: 'execution' | 'killed') {
+  if (player.value) {
+    await gameStore.killPlayer(player.value.id)
+    const text = type === 'execution' ? '處決' : '被殺'
+    // 檢查是否已存在同名標記，避免重複
+    if (!player.value.reminders.some(r => r.text === '處決' || r.text === '被殺')) {
+      await gameStore.addReminder(player.value.id, text, '系統')
+    }
+  }
+}
+
+async function handleToggleDeathType() {
+  if (!player.value) return
+  const current = isExecution.value ? '處決' : '被殺'
+  const next = isExecution.value ? '被殺' : '處決'
+  
+  // 移除舊的
+  const oldRem = player.value.reminders.find(r => r.text === current)
+  if (oldRem) {
+    await gameStore.removeReminder(player.value.id, oldRem.id)
+  }
+  
+  // 加入新的
+  await gameStore.addReminder(player.value.id, next, '系統')
+}
+
+async function handleRevive() {
+  if (player.value) {
+    await gameStore.revivePlayer(player.value.id)
+    // 移除處決或被殺的特殊標記
+    const toRemove = player.value.reminders.filter(r => r.text === '處決' || r.text === '被殺')
+    for (const r of toRemove) {
+      await gameStore.removeReminder(player.value.id, r.id)
+    }
+  }
 }
 
 function handleRolePicker() {
@@ -353,13 +384,16 @@ function handleNominateHim() {
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 16px;
-  padding: 16px;
+  padding: 14px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
   transition: all 0.2s;
   color: white;
+  position: relative;
+  min-height: 80px;
 }
 
 .action-btn:active {
@@ -367,67 +401,58 @@ function handleNominateHim() {
   transform: scale(0.96);
 }
 
-.action-btn .icon { font-size: 24px; }
+.action-btn .icon { font-size: 22px; }
 .action-btn .label {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #ccc;
 }
 
-.death-btn.is-dead {
-  background: rgba(139, 26, 26, 0.2);
-  border-color: rgba(139, 26, 26, 0.4);
-}
-.death-btn.is-dead .label { color: #e87070; }
-
-.reminder-btn-hero {
-  width: 100%;
-  margin-bottom: 12px;
-  background: rgba(201, 168, 76, 0.1);
-  border: 1px solid rgba(201, 168, 76, 0.3);
-  padding: 12px 16px;
-  flex-direction: column !important; /* 垂直排列以容納標籤 */
-  align-items: stretch !important;
-  gap: 8px !important;
-  border-radius: 18px;
+.death-btn:active {
+  background: rgba(139, 26, 26, 0.3);
 }
 
-.reminder-hero-header {
+.revive-btn {
+  background: rgba(46, 125, 50, 0.1);
+  border-color: rgba(46, 125, 50, 0.3);
+}
+.revive-btn .label { color: #81c784; }
+
+.type-toggle-btn {
+  background: rgba(201, 168, 76, 0.05);
+  border-color: rgba(201, 168, 76, 0.2);
+}
+.type-toggle-btn .label { color: var(--color-gold-muted); }
+
+.reminder-btn {
+  background: rgba(201, 168, 76, 0.08);
+  border-color: rgba(201, 168, 76, 0.2);
+}
+.reminder-btn .label { color: var(--color-gold); }
+
+.rem-count-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--color-gold);
+  color: #000;
+  font-size: 10px;
+  font-weight: 900;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  padding: 0 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
-.reminder-btn-hero .label {
-  color: var(--color-gold);
-  font-size: 16px;
+.role-btn {
+  background: rgba(138, 92, 199, 0.05);
+  border-color: rgba(138, 92, 199, 0.2);
 }
-
-.reminder-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: center;
-  margin-top: 4px;
-}
-
-.rem-tag {
-  background: rgba(201, 168, 76, 0.2);
-  border: 1px solid rgba(201, 168, 76, 0.5);
-  color: #fff;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 13px;
-  line-height: 1.2;
-}
-
-.reminder-empty-hint {
-  font-size: 12px;
-  color: rgba(201, 168, 76, 0.6);
-  text-align: center;
-  margin-top: 2px;
-}
+.role-btn .label { color: #a78bfa; }
 
 .action-grid.mini .action-btn {
   padding: 10px;
