@@ -61,22 +61,22 @@
 
         <!-- 資料管理 -->
         <div class="section-title">資料管理</div>
+        <div class="settings-grid">
+          <button class="grid-item" @click="exportGame">
+            <span class="grid-icon">📤</span>
+            <span class="grid-label">匯出遊戲</span>
+          </button>
+          
+          <button class="grid-item" @click="importGame">
+            <span class="grid-icon">📥</span>
+            <span class="grid-label">匯入遊戲</span>
+          </button>
 
-        <button class="settings-item" @click="exportGame">
-          <span class="settings-icon">📤</span>
-          <div class="settings-info">
-            <div class="settings-label">匯出遊戲狀態</div>
-            <div class="settings-sub">將當前遊戲進度儲存為 JSON</div>
-          </div>
-        </button>
-        
-        <button class="settings-item" @click="importGame">
-          <span class="settings-icon">📥</span>
-          <div class="settings-info">
-            <div class="settings-label">匯入遊戲狀態</div>
-            <div class="settings-sub">從 JSON 檔案還原對局進度</div>
-          </div>
-        </button>
+          <button class="grid-item" @click="uiStore.openPanel('role-assignment')">
+            <span class="grid-icon">📜</span>
+            <span class="grid-label">匯入劇本</span>
+          </button>
+        </div>
 
         <div class="divider" />
 
@@ -150,22 +150,17 @@
 
         <!-- 危險區域 -->
         <div class="section-title danger-section">危險區域</div>
+        <div class="settings-grid">
+          <button class="grid-item warning" @click="resetStates">
+            <span class="grid-icon">🔄</span>
+            <span class="grid-label">重置狀態</span>
+          </button>
 
-        <button class="settings-item settings-item-warning" @click="resetStates">
-          <span class="settings-icon">🔄</span>
-          <div class="settings-info">
-            <div class="settings-label">重置狀態 (保留玩家)</div>
-            <div class="settings-sub">清空所有角色、死亡狀態與階段環境</div>
-          </div>
-        </button>
-
-        <button class="settings-item settings-item-danger" @click="resetGame">
-          <span class="settings-icon">🗑️</span>
-          <div class="settings-info">
-            <div class="settings-label">重置遊戲</div>
-            <div class="settings-sub">清除所有玩家數據並重新開始</div>
-          </div>
-        </button>
+          <button class="grid-item danger" @click="resetGame">
+            <span class="grid-icon">🗑️</span>
+            <span class="grid-label">重置遊戲</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -255,9 +250,9 @@ async function processImage(dataUrl: string): Promise<string> {
 }
 
 const shapes = [
-  { id: 'circle', label: '經典正圓', icon: '⚪' },
-  { id: 'oval', label: '優雅橢圓', icon: '🥚' },
-  { id: 'rect', label: '工整矩形', icon: '🔲' },
+  { id: 'circle', label: '經典正圓', icon: '⏺️' },
+  { id: 'oval', label: '優雅橢圓', icon: '0️⃣' },
+  { id: 'rect', label: '工整矩形', icon: '⏹️' },
 ]
 
 function openNightOrder() {
@@ -608,6 +603,22 @@ function resetGame() {
   font-weight: 600;
   color: var(--color-text-primary);
   text-align: center;
+}
+
+.grid-item.warning {
+  background: rgba(224, 160, 32, 0.1);
+  border-color: rgba(224, 160, 32, 0.3);
+}
+.grid-item.warning .grid-label {
+  color: #e8a040;
+}
+
+.grid-item.danger {
+  background: rgba(224, 32, 32, 0.1);
+  border-color: rgba(224, 32, 32, 0.3);
+}
+.grid-item.danger .grid-label {
+  color: var(--color-red-bright);
 }
 
 /* 自定義背景樣式 */

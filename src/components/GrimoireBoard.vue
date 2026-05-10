@@ -657,8 +657,8 @@ function onTokenMouseUp() {
 
 
 const currentShapeIcon = computed(() => {
-  const map = { circle: '⚪', oval: '🥚', rect: '🔲' }
-  return map[uiStore.grimoireShape as keyof typeof map] || '⚪'
+  const map = { circle: '⏺️', oval: '0️⃣', rect: '⏹️' }
+  return map[uiStore.grimoireShape as keyof typeof map] || '⏺️'
 })
 
 const currentShapeLabel = computed(() => {

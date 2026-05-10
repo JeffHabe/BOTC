@@ -7,17 +7,21 @@
     <meta name="theme-color" content="#060b12" />
     <meta name="description" content="染鐘樓謎團官方魔典輔助應用 — 說書人工具" />
     <title>染鐘樓謎團魔典</title>
+
+    <!-- 預載入關鍵字型，減少啟動閃爍 -->
+    <link rel="preload" href="/fonts/genkai.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="/fonts/news.ttf" as="font" type="font/ttf" crossorigin>
     <style>
       /* 自定義字型載入 */
       @font-face {
         font-family: 'NewsFont';
         src: url('/fonts/news.ttf') format('truetype');
-        font-display: swap;
+        font-display: block; /* 優先隱藏直到載入，避免閃爍 */
       }
       @font-face {
         font-family: 'ChineseFont';
         src: url('/fonts/genkai.ttf') format('truetype');
-        font-display: swap;
+        font-display: block; /* 優先隱藏直到載入，避免閃爍 */
       }
 
       /* 防止雙擊縮放 */
