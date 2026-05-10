@@ -25,7 +25,7 @@
     </transition>
 
     <!-- 背景層 -->
-    <div class="scene-bg">
+    <div class="scene-bg" :style="bgStyle">
       <div class="bg-gradient" />
       <div v-if="gameStore.isNight" class="moon" :class="{ 'moon-night': gameStore.isNight }" />
       <div class="stars-container" v-if="gameStore.isNight">
@@ -414,6 +414,29 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 
+const bgStyle = computed(() => {
+  if (gameStore.isNight) {
+    return uiStore.customNightBackground 
+      ? { 
+          backgroundImage: `url(${uiStore.customNightBackground})`, 
+          backgroundSize: 'cover', 
+          backgroundPosition: 'center',
+          backgroundColor: '#000'
+        }
+      : {}
+  } else {
+    return uiStore.customDayBackground 
+      ? { 
+          backgroundImage: `url(${uiStore.customDayBackground})`, 
+          backgroundSize: 'cover', 
+          backgroundPosition: 'center',
+          backgroundColor: '#f4e4bc'
+        }
+      : {}
+  }
+})
+
+// --- 點擊與拖曳狀態 ---
 const players = computed(() => gameStore.players)
 const selectedPlayer = computed(() => 
   gameStore.players.find(p => p.id === uiStore.selectedPlayerId)

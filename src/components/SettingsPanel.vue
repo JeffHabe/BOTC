@@ -10,96 +10,52 @@
       <div class="settings-content">
         <!-- 遊戲控制 -->
         <div class="section-title">遊戲控制</div>
+        <div class="settings-grid">
+          <button v-if="gameStore.phase === 'Setup'" class="grid-item" @click="openAssignment">
+            <span class="grid-icon">🎭</span>
+            <span class="grid-label">選取劇本</span>
+          </button>
 
-         <!-- 選取劇本 -->
-        <button v-if="gameStore.phase === 'Setup'" class="settings-item" @click="openAssignment">
-          <span class="settings-icon">🎭</span>
-          <div class="settings-info">
-            <div class="settings-label">選取劇本</div>
-            <div class="settings-sub">根據人數配置自動發派角色</div>
-          </div>
-          <span class="settings-arrow">›</span>
-        </button>
+          <button class="grid-item" @click="openVoting">
+            <span class="grid-icon">🗳️</span>
+            <span class="grid-label">投票面板</span>
+          </button>
+          
+          <button class="grid-item" @click="openFabled">
+            <span class="grid-icon">🦄</span>
+            <span class="grid-label">傳說角色</span>
+          </button>
 
-        <!-- 投票面板 -->
-        <button class="settings-item" @click="openVoting">
-          <span class="settings-icon">🗳️</span>
-          <div class="settings-info">
-            <div class="settings-label">投票面板</div>
-            <div class="settings-sub">管理今日投票與處決流程</div>
-          </div>
-          <span class="settings-arrow">›</span>
-        </button>
-        
-        <!-- 傳說角色設定 -->
-        <button class="settings-item" @click="openFabled">
-          <span class="settings-icon">🦄</span>
-          <div class="settings-info">
-            <div class="settings-label">傳說角色設定</div>
-            <div class="settings-sub">啟用或停用全域的傳說角色</div>
-          </div>
-          <span class="settings-arrow">›</span>
-        </button>
+          <button class="grid-item" @click="openNightOrder">
+            <span class="grid-icon">🌙</span>
+            <span class="grid-label">夜晚順序</span>
+          </button>
 
-        <!-- 夜晚順序 -->
-        <button class="settings-item" @click="openNightOrder">
-          <span class="settings-icon">🌙</span>
-          <div class="settings-info">
-            <div class="settings-label">夜晚順序</div>
-            <div class="settings-sub">查看首夜與其他夜晚行動順序</div>
-          </div>
-          <span class="settings-arrow">›</span>
-        </button>
+          <button class="grid-item" @click="openGameLog">
+            <span class="grid-icon">📋</span>
+            <span class="grid-label">對局記錄</span>
+          </button>
 
-        <!-- 對局記錄 -->
-        <button class="settings-item" @click="openGameLog">
-          <span class="settings-icon">📋</span>
-          <div class="settings-info">
-            <div class="settings-label">對局記錄回顧</div>
-            <div class="settings-sub">查看與匯出說書人操作日誌</div>
-          </div>
-          <span class="settings-arrow">›</span>
-        </button>
+          <button class="grid-item" @click="openCharSheet">
+            <span class="grid-icon">📜</span>
+            <span class="grid-label">角色清單</span>
+          </button>
 
-        <!-- 角色清單 -->
-        <button class="settings-item" @click="openCharSheet">
-          <span class="settings-icon">📜</span>
-          <div class="settings-info">
-            <div class="settings-label">角色清單</div>
-            <div class="settings-sub">查看當前劇本的角色說明</div>
-          </div>
-          <span class="settings-arrow">›</span>
-        </button>
+          <button class="grid-item" @click="openPlayerOrder">
+            <span class="grid-icon">🪑</span>
+            <span class="grid-label">座位編排</span>
+          </button>
+      
+          <button class="grid-item" @click="openCharacterEditor">
+            <span class="grid-icon">📝</span>
+            <span class="grid-label">自訂庫</span>
+          </button>
 
-        <!-- 座位編排 -->
-        <button class="settings-item" @click="openPlayerOrder">
-          <span class="settings-icon">🪑</span>
-          <div class="settings-info">
-            <div class="settings-label">座位編排</div>
-            <div class="settings-sub">手動調整玩家順位與座位</div>
-          </div>
-          <span class="settings-arrow">›</span>
-        </button>
-    
-        <!-- 自定義角色庫 -->
-        <button class="settings-item" @click="openCharacterEditor">
-          <span class="settings-icon">📝</span>
-          <div class="settings-info">
-            <div class="settings-label">自定義角色庫</div>
-            <div class="settings-sub">管理本地角色自訂資料庫</div>
-          </div>
-          <span class="settings-arrow">›</span>
-        </button>
-
-        <!-- 階段推進 -->
-        <button class="settings-item" @click="advance">
-          <span class="settings-icon">⌛</span>
-          <div class="settings-info">
-            <div class="settings-label">階段推進</div>
-            <div class="settings-sub">當前：{{ phaseLabel }} → 下一階段：{{ nextPhaseLabel }}</div>
-          </div>
-          <span class="settings-arrow">›</span>
-        </button>
+          <button class="grid-item primary" @click="advance">
+            <span class="grid-icon">⌛</span>
+            <span class="grid-label">階段推進</span>
+          </button>
+        </div>
 
         <div class="divider" />
 
@@ -111,6 +67,14 @@
           <div class="settings-info">
             <div class="settings-label">匯出遊戲狀態</div>
             <div class="settings-sub">將當前遊戲進度儲存為 JSON</div>
+          </div>
+        </button>
+        
+        <button class="settings-item" @click="importGame">
+          <span class="settings-icon">📥</span>
+          <div class="settings-info">
+            <div class="settings-label">匯入遊戲狀態</div>
+            <div class="settings-sub">從 JSON 檔案還原對局進度</div>
           </div>
         </button>
 
@@ -135,6 +99,34 @@
 
         <div class="divider" />
         -->
+
+        <!-- 自定義背景 -->
+        <div class="section-title">自定義佈景</div>
+        <div class="background-settings-grid">
+          <div class="bg-setting-item">
+            <div class="bg-preview" :style="uiStore.customDayBackground ? { backgroundImage: `url(${uiStore.customDayBackground})` } : {}">
+              <div v-if="!uiStore.customDayBackground" class="bg-placeholder">預設白天</div>
+              <div class="bg-overlay">
+                <button class="bg-btn" @click="triggerFile('day')">匯入圖檔</button>
+                <button v-if="uiStore.customDayBackground" class="bg-btn reset" @click="uiStore.setDayBackground(null)">重置</button>
+              </div>
+            </div>
+            <div class="bg-name">白天背景</div>
+          </div>
+          <div class="bg-setting-item">
+            <div class="bg-preview" :style="uiStore.customNightBackground ? { backgroundImage: `url(${uiStore.customNightBackground})` } : {}">
+              <div v-if="!uiStore.customNightBackground" class="bg-placeholder night">預設夜晚</div>
+              <div class="bg-overlay">
+                <button class="bg-btn" @click="triggerFile('night')">匯入圖檔</button>
+                <button v-if="uiStore.customNightBackground" class="bg-btn reset" @click="uiStore.setNightBackground(null)">重置</button>
+              </div>
+            </div>
+            <div class="bg-name">夜晚背景</div>
+          </div>
+        </div>
+        <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" />
+
+        <div class="divider" />
 
         <!-- 魔典排列圖形 (已移至頂部工具列) -->
         
@@ -180,36 +172,93 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
-import { PHASE_LABEL, type GamePhase } from '../types'
-import { save } from '@tauri-apps/plugin-dialog'
-import { writeTextFile } from '@tauri-apps/plugin-fs'
+import { save, open } from '@tauri-apps/plugin-dialog'
+import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
 
+const fileInput = ref<HTMLInputElement | null>(null)
+const uploadTarget = ref<'day' | 'night'>('day')
 
+function triggerFile(target: 'day' | 'night') {
+  uploadTarget.value = target
+  fileInput.value?.click()
+}
+
+function handleFileChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = async (event) => {
+    const rawSrc = event.target?.result as string
+    try {
+      const optimizedSrc = await processImage(rawSrc)
+      if (uploadTarget.value === 'day') uiStore.setDayBackground(optimizedSrc)
+      else uiStore.setNightBackground(optimizedSrc)
+    } catch (err) {
+      console.error('圖片優化失敗:', err)
+      // 如果優化失敗，則退回到原始圖片
+      if (uploadTarget.value === 'day') uiStore.setDayBackground(rawSrc)
+      else uiStore.setNightBackground(rawSrc)
+    }
+  }
+  reader.readAsDataURL(file)
+
+  if (fileInput.value) fileInput.value.value = ''
+}
+
+/**
+ * 圖片優化處理：縮放並壓縮
+ */
+async function processImage(dataUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      let width = img.width
+      let height = img.height
+      const MAX_SIZE = 2000 // 最大邊長
+
+      // 計算縮放比例
+      if (width > height) {
+        if (width > MAX_SIZE) {
+          height *= MAX_SIZE / width
+          width = MAX_SIZE
+        }
+      } else {
+        if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height
+          height = MAX_SIZE
+        }
+      }
+
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return reject('無法獲取 Canvas Context')
+
+      // 繪製並優化
+      ctx.drawImage(img, 0, 0, width, height)
+      
+      // 輸出為 JPEG, 品質設為 0.8 (檔案大小與清晰度的平衡點)
+      const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.8)
+      resolve(optimizedDataUrl)
+    }
+    img.onerror = reject
+    img.src = dataUrl
+  })
+}
 
 const shapes = [
   { id: 'circle', label: '經典正圓', icon: '⚪' },
   { id: 'oval', label: '優雅橢圓', icon: '🥚' },
   { id: 'rect', label: '工整矩形', icon: '🔲' },
 ]
-
-const phaseLabel = computed(() => PHASE_LABEL[gameStore.phase])
-
-const nextPhase: Record<GamePhase, GamePhase> = {
-  Setup: 'FirstNight',
-  FirstNight: 'Day',
-  Day: 'Night',
-  Night: 'Day',
-}
-
-const nextPhaseLabel = computed(() =>
-  PHASE_LABEL[nextPhase[gameStore.phase]]
-)
 
 function openNightOrder() {
   uiStore.openPanel('night-order')
@@ -248,11 +297,51 @@ async function advance() {
   uiStore.closePanel()
 }
 
+async function importGame() {
+  try {
+    // 嘗試使用 Tauri 原生對話框
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    })
+
+    if (selected) {
+      const content = await readTextFile(selected as string)
+      await gameStore.importState(content)
+      alert('遊戲狀態已成功還原')
+      uiStore.closePanel()
+    }
+  } catch (e) {
+    //  fallback: 使用瀏覽器文件選擇器
+    console.warn('Tauri open failed, falling back to browser input', e)
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    input.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0]
+      if (file) {
+        const reader = new FileReader()
+        reader.onload = async (e) => {
+          const content = e.target?.result as string
+          await gameStore.importState(content)
+          alert('遊戲狀態已成功還原')
+          uiStore.closePanel()
+        }
+        reader.readAsText(file)
+      }
+    }
+    input.click()
+  }
+}
+
 async function exportGame() {
   const json = await gameStore.exportState()
   if (!json) return
 
-  const fileName = `botc-game-${Date.now()}.json`
+  const now = new Date()
+  const dateStr = now.toISOString().slice(0, 10)
+  const timeStr = now.getHours().toString().padStart(2, '0') + now.getMinutes().toString().padStart(2, '0')
+  const fileName = `botc-game-${dateStr}-${timeStr}.json`
 
   try {
     // 嘗試使用 Tauri 原生對話框 (適用於 Android/Desktop)
@@ -471,5 +560,126 @@ function resetGame() {
   font-size: 12px;
   color: var(--color-gold);
   font-weight: bold;
+}
+
+/* 格子佈局樣式 */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 8px 16px;
+}
+
+.grid-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.grid-item:active {
+  background: rgba(201, 168, 76, 0.1);
+  border-color: var(--color-gold-muted);
+  transform: scale(0.95);
+}
+
+.grid-item.primary {
+  background: rgba(201, 168, 76, 0.1);
+  border-color: rgba(201, 168, 76, 0.3);
+}
+
+.grid-item.primary .grid-label {
+  color: var(--color-gold);
+}
+
+.grid-icon {
+  font-size: 24px;
+}
+
+.grid-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+/* 自定義背景樣式 */
+.background-settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 8px 16px;
+}
+
+.bg-setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bg-preview {
+  aspect-ratio: 16/9;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bg-placeholder {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+.bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.bg-preview:hover .bg-overlay, .bg-preview:active .bg-overlay {
+  opacity: 1;
+}
+
+.bg-btn {
+  background: var(--color-gold-dark);
+  color: #fff;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.bg-btn.reset {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.bg-name {
+  font-size: 11px;
+  text-align: center;
+  color: var(--color-text-muted);
 }
 </style>

@@ -229,6 +229,22 @@ export const useUIStore = defineStore('ui', () => {
   // --- 縮放控制 (Zoom Control) ---
   const grimoireScale = ref(Number(localStorage.getItem('botc-grimoire-scale')) || 1.0)
 
+  // --- 自定義背景圖 ---
+  const customDayBackground = ref<string | null>(localStorage.getItem('botc-custom-day-bg'))
+  const customNightBackground = ref<string | null>(localStorage.getItem('botc-custom-night-bg'))
+
+  function setDayBackground(src: string | null) {
+    customDayBackground.value = src
+    if (src) localStorage.setItem('botc-custom-day-bg', src)
+    else localStorage.removeItem('botc-custom-day-bg')
+  }
+
+  function setNightBackground(src: string | null) {
+    customNightBackground.value = src
+    if (src) localStorage.setItem('botc-custom-night-bg', src)
+    else localStorage.removeItem('botc-custom-night-bg')
+  }
+
   function setGrimoireScale(scale: number) {
     const clamped = Math.min(Math.max(scale, 0.5), 2.0)
     grimoireScale.value = clamped
@@ -352,6 +368,8 @@ export const useUIStore = defineStore('ui', () => {
     startTimer, pauseTimer, resetTimer, addTimerSeconds, calibrateTimer,
     // 縮放與平移控制
     grimoireScale, setGrimoireScale, zoomIn, zoomOut, resetZoom,
-    grimoireTranslateX, grimoireTranslateY, setGrimoireTranslate, resetPan
+    grimoireTranslateX, grimoireTranslateY, setGrimoireTranslate, resetPan,
+    // 背景圖片
+    customDayBackground, customNightBackground, setDayBackground, setNightBackground
   }
 })

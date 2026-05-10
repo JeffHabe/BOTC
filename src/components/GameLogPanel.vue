@@ -101,7 +101,10 @@ async function exportGame() {
     return
   }
 
-  const fileName = `botc-log-${new Date().toISOString().slice(0, 10)}.json`
+  const now = new Date()
+  const dateStr = now.toISOString().slice(0, 10)
+  const timeStr = now.getHours().toString().padStart(2, '0') + now.getMinutes().toString().padStart(2, '0')
+  const fileName = `botc-log-${dateStr}-${timeStr}.json`
 
   try {
     // 嘗試使用 Tauri 原生對話框
