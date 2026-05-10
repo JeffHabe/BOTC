@@ -26,8 +26,17 @@
         <button class="nav-btn" @click="gameStore.revertPhase()" title="退回上個階段">◀</button>
         <div class="phase-display" @click="uiStore.togglePanel('settings')" title="開啟設定">
           <div class="phase-badge" :class="`phase-${gameStore.phase.toLowerCase()}`">
-            <span class="phase-text">{{ phaseLabel }}</span>
-            <span v-if="gameStore.round > 0" class="round-text">Day {{ gameStore.round }}</span>
+            <template v-if="gameStore.phase === 'FirstNight'">
+              <span class="phase-text">首夜</span>
+            </template>
+            <template v-else-if="gameStore.phase === 'Setup'">
+              <span class="phase-text">準備</span>
+            </template>
+            <template v-else>
+              <span class="phase-text">第 {{ gameStore.round }} 天</span>
+            </template>
+            <span v-if="gameStore.phase === 'Day' && gameStore.round > 0" class="round-text">白天</span>
+            <span v-if="gameStore.phase === 'Night' && gameStore.round > 0" class="round-text">夜晚</span>
           </div>
         </div>
         <button class="nav-btn" @click="gameStore.advancePhase()" title="推進下個階段">▶</button>
@@ -52,12 +61,8 @@
 import { computed } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
-import { PHASE_LABEL } from '../types'
-
 const gameStore = useGameStore()
 const uiStore = useUIStore()
-
-const phaseLabel = computed(() => PHASE_LABEL[gameStore.phase])
 
 const townCount = computed(() =>
   gameStore.players.filter(p => p.role?.role_type === 'Townsfolk').length

@@ -377,7 +377,8 @@ pub fn advance_phase(state: State<AppState>) -> GameState {
         }
         GamePhase::FirstNight => GamePhase::Day,
         GamePhase::Day => {
-            // 不再清除提名紀錄，以便保留歷史紀錄
+            // 在進入夜晚時增加輪次
+            gs.round += 1;
             for p in gs.players.iter_mut() {
                 p.is_nominated = false;
                 if p.is_alive {
@@ -387,7 +388,7 @@ pub fn advance_phase(state: State<AppState>) -> GameState {
             GamePhase::Night
         }
         GamePhase::Night => {
-            gs.round += 1;
+            // 進入白天時不再增加輪次
             GamePhase::Day
         }
     };
@@ -408,11 +409,15 @@ pub fn revert_phase(state: State<AppState>) -> GameState {
             if gs.round <= 1 {
                 GamePhase::FirstNight
             } else {
-                gs.round -= 1;
+                // 如果是 Day 2，退回應該是 Night 2，所以 round 不變
                 GamePhase::Night
             }
         }
-        GamePhase::Night => GamePhase::Day,
+        GamePhase::Night => {
+            // 從 Night 2 退回應該是 Day 1，所以 round 減 1
+            gs.round -= 1;
+            GamePhase::Day
+        }
     };
     gs.touch();
     gs.clone()
