@@ -4,17 +4,27 @@
       <div class="panel-header">
         <span class="panel-icon">📝</span>
         <h2 class="panel-title">夜晚溝通白板</h2>
-        <button class="close-btn" @click="uiStore.closePanel()">✕</button>
+        <div class="header-actions">
+          <button 
+            class="config-toggle-btn" 
+            @click="isControlsExpanded = !isControlsExpanded"
+            :title="isControlsExpanded ? '收起設定' : '開啟設定'"
+          >
+            {{ isControlsExpanded ? '🔼' : '⚙️' }}
+          </button>
+          <button class="close-btn" @click="uiStore.closePanel()">✕</button>
+        </div>
       </div>
 
       <div class="whiteboard-content">
-        <div class="whiteboard-desc">
+        <div class="whiteboard-desc" v-if="isControlsExpanded">
           在下方輸入資訊後，可將手機展示給玩家查看。
         </div>
 
         <!-- 字體與顏色控制項 -->
-        <div class="whiteboard-controls">
-          <div class="control-group">
+        <div class="whiteboard-controls-wrapper" :class="{ expanded: isControlsExpanded }">
+          <div class="whiteboard-controls" v-if="isControlsExpanded">
+            <div class="control-group">
             <span class="control-label">字體大小</span>
             <div class="size-control">
               <button 
@@ -63,10 +73,12 @@
               </div>
             </div>
           </div>
+          </div>
         </div>
         
         <textarea 
           class="whiteboard-input" 
+          :class="{ 'full-height': !isControlsExpanded }"
           placeholder="在此輸入要展示給玩家看的資訊...&#10;(例如：你的占卜結果為【是】)"
           v-model="gameStore.nightNotes"
           @input="gameStore.setNightNotes(gameStore.nightNotes)"
@@ -103,6 +115,7 @@ import ColorPicker from './ColorPicker.vue'
 const gameStore = useGameStore()
 const uiStore = useUIStore()
 
+const isControlsExpanded = ref(false)
 const showColorPicker = ref(false)
 
 const handleSizeInput = (e: Event) => {
@@ -386,9 +399,45 @@ const copyToClipboard = async () => {
   animation: fadeIn 0.2s ease-out forwards;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.config-toggle-btn {
+  background: rgba(201, 168, 76, 0.1);
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  color: var(--color-gold);
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.config-toggle-btn:active {
+  background: rgba(201, 168, 76, 0.3);
+}
+
+.whiteboard-controls-wrapper {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s;
+  margin-bottom: 0;
+}
+
+.whiteboard-controls-wrapper.expanded {
+  max-height: 200px; /* 足夠容納內容的高度 */
+  margin-bottom: 16px;
+}
+
 .whiteboard-input {
   width: 100%;
-  height: 400px;
+  height: 320px;
   background: #000000;
   border: 1.5px solid rgba(201, 168, 76, 0.25);
   border-radius: 12px;
@@ -401,6 +450,10 @@ const copyToClipboard = async () => {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: inset 0 4px 12px rgba(0,0,0,0.6);
   line-height: 1.6;
+}
+
+.whiteboard-input.full-height {
+  height: 500px;
 }
 
 .whiteboard-input:focus {
