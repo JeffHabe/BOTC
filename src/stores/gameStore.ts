@@ -22,6 +22,8 @@ export const useGameStore = defineStore('game', () => {
   const error = ref<string | null>(null)
   const logs = ref<GameLogEntry[]>([])
   const nightNotes = ref(localStorage.getItem('botc-night-notes') || '')
+  const nightNotesFontSize = ref(Number(localStorage.getItem('botc-night-notes-font-size')) || 24)
+  const nightNotesColor = ref(localStorage.getItem('botc-night-notes-color') || '#e5b54f')
 
   // 計算屬性
   const players = computed(() => state.value?.players ?? [])
@@ -415,6 +417,16 @@ export const useGameStore = defineStore('game', () => {
     localStorage.setItem('botc-night-notes', val)
   }
 
+  function setNightNotesFontSize(size: number) {
+    nightNotesFontSize.value = size
+    localStorage.setItem('botc-night-notes-font-size', size.toString())
+  }
+
+  function setNightNotesColor(color: string) {
+    nightNotesColor.value = color
+    localStorage.setItem('botc-night-notes-color', color)
+  }
+
   return {
     state, loading, error,
     players, script, phase, round, demonBluffs, lunaticBluffs, nominations,
@@ -431,6 +443,8 @@ export const useGameStore = defineStore('game', () => {
     nominate, editNomination, vote, execute, undoExecution,
     exportState, importState, importCustomScript, updateScriptName,
     logs, addLog, relativeNightOrder,
-    nightNotes, setNightNotes
+    nightNotes, setNightNotes,
+    nightNotesFontSize, setNightNotesFontSize,
+    nightNotesColor, setNightNotesColor
   }
 })
