@@ -99,7 +99,7 @@ const uiStore = useUIStore()
 
 .whiteboard-input {
   width: 100%;
-  height: 260px;
+  height: 500px;
   background: #000000;
   border: 1.5px solid rgba(201, 168, 76, 0.25);
   border-radius: 12px;

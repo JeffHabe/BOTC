@@ -180,31 +180,31 @@
         <span class="icon">🌙</span>
       </button>
 
-      <button class="menu-btn" @click="uiStore.openPanel('whiteboard')" title="夜晚溝通白板">
-        <span class="icon">📝</span>
-      </button>
-
-      <button 
-        class="privacy-btn" 
-        :class="{ 'is-active': uiStore.isRolesHidden }"
-        @click="uiStore.toggleRolesHidden()"
-        :title="uiStore.isRolesHidden ? '顯示角色' : '隱藏角色'"
-      >
-        <div class="privacy-icon-wrapper">
-          <span class="icon">👁️</span>
-          <span v-if="uiStore.isRolesHidden" class="ban-icon">🚫</span>
-        </div>
-      </button>
       
-            <!-- 魔典排列圖形切換 (移至側邊欄) -->
-            <button 
-              class="side-action-btn" 
-              @click="uiStore.cycleGrimoireShape" 
-              :title="`魔典圖形: ${currentShapeLabel}`"
-            >
-              <span class="icon">{{ currentShapeIcon }}</span>
-            </button>
-
+      <button 
+      class="privacy-btn" 
+      :class="{ 'is-active': uiStore.isRolesHidden }"
+      @click="uiStore.toggleRolesHidden()"
+      :title="uiStore.isRolesHidden ? '顯示角色' : '隱藏角色'"
+      >
+      <div class="privacy-icon-wrapper">
+        <span class="icon">👁️</span>
+        <span v-if="uiStore.isRolesHidden" class="ban-icon">🚫</span>
+      </div>
+    </button>
+    
+    <!-- 魔典排列圖形切換 (移至側邊欄) -->
+    <button 
+      class="side-action-btn" 
+      @click="uiStore.cycleGrimoireShape" 
+      :title="`魔典圖形: ${currentShapeLabel}`"
+    >
+    <span class="icon">{{ currentShapeIcon }}</span>
+    </button>
+    
+    <button class="menu-btn" @click="uiStore.openPanel('whiteboard')" title="夜晚溝通白板">
+      <span class="icon">📝</span>
+    </button>
       <!-- 佈局切換按鈕 (移至隱私按鈕下方) -->
       <!-- <button 
         class="side-action-btn layout-toggle-side" 
@@ -340,9 +340,10 @@ import { useScriptStore } from '../stores/scriptStore'
 import PlayerToken from './PlayerToken.vue'
 import StatusBar from './StatusBar.vue'
 import TimerWidget from './TimerWidget.vue'
+import SettingsPanel from './SettingsPanel.vue'
 
 // 懶加載大型面板組件，減少初始負擔
-const SettingsPanel = defineAsyncComponent(() => import('./SettingsPanel.vue'))
+// const SettingsPanel = defineAsyncComponent(() => import('./SettingsPanel.vue'))
 const VotingPanel = defineAsyncComponent(() => import('./VotingPanel.vue'))
 const NightOrder = defineAsyncComponent(() => import('./NightOrder.vue'))
 const CharacterSheet = defineAsyncComponent(() => import('./CharacterSheet.vue'))

@@ -182,7 +182,7 @@ const demonCount = computed(() =>
 }
 
 .stat-item .label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   margin-right: 1px;
 }
@@ -195,7 +195,7 @@ const demonCount = computed(() =>
 .stat-num {
   font-weight: 700;
   font-family: 'Inter', system-ui, sans-serif;
-  font-size: 14px;
+  font-size: 11px;
 }
 
 

@@ -40,10 +40,16 @@
               <button class="action-btn death-btn" @click="handleKill('execution')">
                 <span class="icon">⚖️</span>
                 <span class="label">處決死亡</span>
+                <span v-if="isProtected" class="warning-badge" title="注意：該玩家目前有保護標記">⚠️被保護</span>
               </button>
-              <button class="action-btn death-btn" @click="handleKill('killed')">
+              <button 
+                class="action-btn death-btn" 
+                :class="{ 'has-warning': isProtected }"
+                @click="handleKill('killed')"
+              >
                 <span class="icon">🔪</span>
                 <span class="label">被殺死亡</span>
+                <span v-if="isProtected" class="warning-badge" title="注意：該玩家目前有保護標記">⚠️被保護</span>
               </button>
             </template>
             <template v-else>
@@ -153,7 +159,53 @@ const player = computed(() => {
   return gameStore.players.find(p => p.id === uiStore.selectedPlayerId)
 })
 
-const isExecution = computed(() => player.value?.reminders.some(r => r.text === '處決'))
+const isExecution = computed(() => {
+  return player.value?.reminders.some(r => r.text === '處決') || false
+})
+
+// 偵測玩家是否處於保護狀態 (僅偵測當晚/當輪設定的標記，且發動者必須狀態正常)
+const isProtected = computed(() => {
+  if (!player.value) return false
+  const protectKeywords = ['保護', '守護', '防護', 'safe', 'protected', '不吃刀','不會死亡']
+  const abnormalKeywords = ['中毒', '醉酒', 'poisoned', 'drunk']
+
+  // 1. 被動能力檢查：檢查玩家自己的角色能力描述
+  if (player.value.role?.ability.includes('你不會死亡')) {
+    // 檢查自己是否中毒或醉酒
+    const isSelfAbnormal = player.value.reminders.some(rem => 
+      abnormalKeywords.some(kw => rem.text.toLowerCase().includes(kw))
+    )
+    // 如果沒有異常狀態，則被動保護生效
+    if (!isSelfAbnormal) return true
+  }
+
+  // 2. 外部標記檢查：偵測提示標記 (僅偵測當晚/當輪設定的標記，且發動者必須狀態正常)
+  return player.value.reminders.some(rem => {
+    // 基本檢查：輪次是否正確且包含關鍵字
+    const isCurrentRound = rem.round === gameStore.round
+    const isProtectText = protectKeywords.some(kw => rem.text.toLowerCase().includes(kw))
+    
+    if (!isCurrentRound || !isProtectText) return false
+
+    // 來源檢查：如果來源是系統設定，則直接生效
+    if (rem.source_role === '系統' || rem.source_role === 'System') return true
+
+    // 發動者狀態檢查
+    const sourcePlayer = gameStore.players.find(p => 
+      p.role && (p.role.id === rem.source_role || p.role.name === rem.source_role)
+    )
+    if (sourcePlayer) {
+      // 檢查該發動者是否中毒或醉酒
+      const isSourceAbnormal = sourcePlayer.reminders.some(sRem => 
+        abnormalKeywords.some(kw => sRem.text.toLowerCase().includes(kw))
+      )
+      // 如果發動者異常，則保護無效
+      if (isSourceAbnormal) return false
+    }
+
+    return true
+  })
+})
 
 async function handleKill(type: 'execution' | 'killed') {
   if (player.value) {
@@ -446,6 +498,29 @@ function handleNominateHim() {
   justify-content: center;
   padding: 0 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* 保護警告樣式 */
+.warning-badge {
+  position: absolute;
+  top: 1px;
+  left: 5px;
+  font-size: 14px;
+  filter: drop-shadow(0 0 5px rgba(255, 200, 0, 0.5));
+  animation: pulse-warning 1.5s infinite ease-in-out;
+  z-index: 5;
+}
+
+.has-warning {
+  border-color: rgba(255, 166, 0, 0.5) !important;
+  background: rgba(255, 166, 0, 0.1) !important;
+  box-shadow: 0 0 15px rgba(255, 166, 0, 0.1);
+}
+
+@keyframes pulse-warning {
+  0% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.7; }
 }
 
 .role-btn {
