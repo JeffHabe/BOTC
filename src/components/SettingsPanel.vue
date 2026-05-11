@@ -63,18 +63,23 @@
         <div class="section-title">資料管理</div>
         <div class="settings-grid">
           <button class="grid-item" @click="exportGame">
-            <span class="grid-icon">📤</span>
+            <span class="grid-icon">📋📤</span>
             <span class="grid-label">匯出遊戲</span>
           </button>
           
           <button class="grid-item" @click="importGame">
-            <span class="grid-icon">📥</span>
+            <span class="grid-icon">📋📥</span>
             <span class="grid-label">匯入遊戲</span>
           </button>
 
           <button class="grid-item" @click="uiStore.openPanel('role-assignment')">
-            <span class="grid-icon">📜</span>
+            <span class="grid-icon">📜🔽</span>
             <span class="grid-label">匯入劇本</span>
+          </button>
+
+          <button class="grid-item" @click="exportAllScripts">
+            <span class="grid-icon">📜🔼</span>
+            <span class="grid-label">匯出劇本</span>
           </button>
         </div>
 
@@ -170,11 +175,13 @@
 import { ref } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
+import { useScriptStore } from '../stores/scriptStore'
 import { save, open } from '@tauri-apps/plugin-dialog'
 import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
+const scriptStore = useScriptStore()
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const uploadTarget = ref<'day' | 'night'>('day')
@@ -351,6 +358,36 @@ async function exportGame() {
     }
   } catch (e) {
     // 如果不在 Tauri 環境或發生錯誤，退回到網頁下載方式
+    console.warn('Tauri export failed, falling back to browser download', e)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+}
+
+async function exportAllScripts() {
+  const json = await scriptStore.exportAllScripts()
+  if (!json) return
+
+  const now = new Date()
+  const dateStr = now.toISOString().slice(0, 10)
+  const fileName = `botc-scripts-${dateStr}.json`
+
+  try {
+    const filePath = await save({
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+      defaultPath: fileName
+    })
+
+    if (filePath) {
+      await writeTextFile(filePath, json)
+      alert('所有劇本已成功匯出至：' + filePath)
+    }
+  } catch (e) {
     console.warn('Tauri export failed, falling back to browser download', e)
     const blob = new Blob([json], { type: 'application/json' })
     const url = URL.createObjectURL(blob)

@@ -16,6 +16,7 @@ export type Panel =
   | 'role-assignment'
   | 'game-log'
   | 'fabled-selector'
+  | 'whiteboard'
 
 export type ReminderLayout = 'arc' | 'grid' | 'stack' | 'inner'
 export type GrimoireShape = 'circle' | 'oval' | 'rect'

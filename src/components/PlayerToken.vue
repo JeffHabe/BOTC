@@ -59,10 +59,12 @@
       </div>
 
       <!-- 夜晚順序標誌 (祖母綠切割寶石) -->
-      <div v-if="player.role && gameStore.relativeNightOrder.first[player.role.id] && !uiStore.isRolesHidden" class="night-order-badge first-night" title="首夜順序">
+      <!-- 只有在準備或首夜階段才顯示首夜順序 -->
+      <div v-if="player.role && gameStore.relativeNightOrder.first[player.role.id] && !uiStore.isRolesHidden && (gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup')" class="night-order-badge first-night" title="首夜順序">
         <span class="badge-number">{{ gameStore.relativeNightOrder.first[player.role.id] }}</span>
       </div>
-      <div v-if="player.role && gameStore.relativeNightOrder.other[player.role.id] && !uiStore.isRolesHidden" class="night-order-badge other-night" title="其他夜晚順序">
+      <!-- 在白天或其他夜晚階段則顯示其他夜晚順序 -->
+      <div v-if="player.role && gameStore.relativeNightOrder.other[player.role.id] && !uiStore.isRolesHidden && (gameStore.phase !== 'FirstNight' && gameStore.phase !== 'Setup')" class="night-order-badge other-night" title="其他夜晚順序">
         <span class="badge-number">{{ gameStore.relativeNightOrder.other[player.role.id] }}</span>
       </div>
 
@@ -440,12 +442,14 @@ const deathTypeClass = computed(() => {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: contrast(1.1) brightness(0.9) drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  /* 簡化濾鏡，移除耗能的 drop-shadow */
+  filter: contrast(1.05) brightness(0.95);
 }
 
 .role-emoji, .role-placeholder {
-  font-size: 52px; /* 從 44px 提升到 52px */
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  font-size: 52px;
+  /* 使用 text-shadow 代替 filter: drop-shadow，效能更好 */
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
 .role-name-inner {

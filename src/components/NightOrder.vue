@@ -7,14 +7,16 @@
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
 
-      <!-- 標籤切換 -->
+      <!-- 標籤切換 (根據階段自動隱藏無關標籤) -->
       <div class="tab-bar">
         <button
+          v-if="gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup'"
           class="tab-btn"
           :class="{ 'tab-active': activeTab === 'first' }"
           @click="activeTab = 'first'"
         >首個夜晚</button>
         <button
+          v-if="gameStore.phase !== 'FirstNight' && gameStore.phase !== 'Setup'"
           class="tab-btn"
           :class="{ 'tab-active': activeTab === 'other' }"
           @click="activeTab = 'other'"
@@ -88,7 +90,9 @@ import { ROLE_TYPE_LABEL } from '../types'
 const gameStore = useGameStore()
 const uiStore = useUIStore()
 
-const activeTab = ref<'first' | 'other'>('first')
+const activeTab = ref<'first' | 'other'>(
+  (gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup') ? 'first' : 'other'
+)
 
 /**
  * 系統預設流程 (首夜專用)

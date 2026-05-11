@@ -154,6 +154,16 @@ export const useScriptStore = defineStore('script', () => {
     await gameStore.importCustomScript(jsonStr)
   }
 
+  async function exportAllScripts() {
+    // 準備要匯出的資料：包含大全和所有自定義劇本
+    const data = {
+      version: '1.0',
+      timestamp: Date.now(),
+      scripts: allScripts.value
+    }
+    return JSON.stringify(data, null, 2)
+  }
+
   return {
     searchQuery,
     filterType,
@@ -168,5 +178,6 @@ export const useScriptStore = defineStore('script', () => {
     resetToDefault,
     selectScript,
     importFromJson,
+    exportAllScripts,
   }
 })

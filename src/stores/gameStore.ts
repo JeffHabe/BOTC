@@ -21,6 +21,7 @@ export const useGameStore = defineStore('game', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
   const logs = ref<GameLogEntry[]>([])
+  const nightNotes = ref(localStorage.getItem('botc-night-notes') || '')
 
   // 計算屬性
   const players = computed(() => state.value?.players ?? [])
@@ -409,6 +410,11 @@ export const useGameStore = defineStore('game', () => {
     await syncState(gs)
   }
 
+  function setNightNotes(val: string) {
+    nightNotes.value = val
+    localStorage.setItem('botc-night-notes', val)
+  }
+
   return {
     state, loading, error,
     players, script, phase, round, demonBluffs, lunaticBluffs, nominations,
@@ -424,6 +430,7 @@ export const useGameStore = defineStore('game', () => {
     advancePhase, revertPhase, setPhase,
     nominate, editNomination, vote, execute, undoExecution,
     exportState, importState, importCustomScript, updateScriptName,
-    logs, addLog, relativeNightOrder
+    logs, addLog, relativeNightOrder,
+    nightNotes, setNightNotes
   }
 })

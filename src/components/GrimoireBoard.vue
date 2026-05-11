@@ -68,7 +68,7 @@
         :key="player.id"
         class="token-wrapper"
         :class="{ 'is-dragging-token': dragState.index === index, 'is-jiggling': uiStore.isArrangingPlayers && dragState.index !== index }"
-        :style="getTokenStyle(index)"
+        :style="allTokenStyles[index]"
         @mousedown="onTokenMouseDown($event, player, index)"
         @touchstart="onTokenMouseDown($event, player, index)"
       >
@@ -178,6 +178,10 @@
 
       <button class="menu-btn" @click="uiStore.openPanel('night-order')" title="夜晚順序">
         <span class="icon">🌙</span>
+      </button>
+
+      <button class="menu-btn" @click="uiStore.openPanel('whiteboard')" title="夜晚溝通白板">
+        <span class="icon">📝</span>
       </button>
 
       <button 
@@ -327,23 +331,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, reactive } from 'vue'
+import { computed, onMounted, onUnmounted, ref, reactive, defineAsyncComponent } from 'vue'
+import type { CSSProperties } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
 
 import PlayerToken from './PlayerToken.vue'
-import SettingsPanel from './SettingsPanel.vue'
-import VotingPanel from './VotingPanel.vue'
-import NightOrder from './NightOrder.vue'
-import CharacterSheet from './CharacterSheet.vue'
-import CharacterEditorPanel from './CharacterEditorPanel.vue'
-import PlayerOrderPanel from './PlayerOrderPanel.vue'
-import RoleAssignmentPanel from './RoleAssignmentPanel.vue'
-import GameLogPanel from './GameLogPanel.vue'
-import FabledSelectorPanel from './FabledSelectorPanel.vue'
 import StatusBar from './StatusBar.vue'
 import TimerWidget from './TimerWidget.vue'
+
+// 懶加載大型面板組件，減少初始負擔
+const SettingsPanel = defineAsyncComponent(() => import('./SettingsPanel.vue'))
+const VotingPanel = defineAsyncComponent(() => import('./VotingPanel.vue'))
+const NightOrder = defineAsyncComponent(() => import('./NightOrder.vue'))
+const CharacterSheet = defineAsyncComponent(() => import('./CharacterSheet.vue'))
+const CharacterEditorPanel = defineAsyncComponent(() => import('./CharacterEditorPanel.vue'))
+const PlayerOrderPanel = defineAsyncComponent(() => import('./PlayerOrderPanel.vue'))
+const RoleAssignmentPanel = defineAsyncComponent(() => import('./RoleAssignmentPanel.vue'))
+const GameLogPanel = defineAsyncComponent(() => import('./GameLogPanel.vue'))
+const FabledSelectorPanel = defineAsyncComponent(() => import('./FabledSelectorPanel.vue'))
+const Whiteboard = defineAsyncComponent(() => import('./Whiteboard.vue'))
 
 import AddPlayerDialog from './AddPlayerDialog.vue'
 import RenameDialog from './RenameDialog.vue'
@@ -545,23 +553,27 @@ const dragState = reactive({
   yPercent: 0
 })
 
-function getTokenStyle(index: number) {
-  if (dragState.isDragging && dragState.index === index) {
-    const n = players.value.length
-    const baseSize = n > 14 ? 68 : n > 11 ? 80 : n > 8 ? 92 : 105
-    return {
-      position: 'absolute',
-      left: `${dragState.xPercent}%`,
-      top: `${dragState.yPercent}%`,
-      transform: 'translate(-50%, -50%) scale(1.15)',
-      width: `${baseSize}px`,
-      height: `${baseSize}px`,
-      zIndex: 100,
-      transition: 'none' // 拖曳時無動畫，即時跟隨
-    } as const
-  }
-  return getPlayerPosStyle(index)
-}
+// --- 效能優化：預先計算所有令片位置，避免平移/縮放時重複執行幾何運算 ---
+const allTokenStyles = computed(() => {
+  return players.value.map((_, index): CSSProperties => {
+    // 如果正在拖曳排列，該令片的樣式由 dragState 決定（這部分仍需動態）
+    if (dragState.isDragging && dragState.index === index) {
+      const n = players.value.length
+      const baseSize = n > 14 ? 68 : n > 11 ? 80 : n > 8 ? 92 : 105
+      return {
+        position: 'absolute',
+        left: `${dragState.xPercent}%`,
+        top: `${dragState.yPercent}%`,
+        transform: 'translate(-50%, -50%) scale(1.15)',
+        width: `${baseSize}px`,
+        height: `${baseSize}px`,
+        zIndex: 100,
+        transition: 'none'
+      }
+    }
+    return getPlayerPosStyle(index)
+  })
+})
 
 function onTokenMouseDown(e: MouseEvent | TouchEvent, player: any, index: number) {
   if (!uiStore.isArrangingPlayers) return
@@ -777,7 +789,7 @@ function getIsRightSide(index: number) {
   return Math.cos(angle) > 0.1
 }
 
-function getPlayerPosStyle(index: number) {
+function getPlayerPosStyle(index: number): CSSProperties {
   const n = players.value.length
   if (n === 0) return {}
 
@@ -804,7 +816,7 @@ function getPlayerPosStyle(index: number) {
     width: `${baseSize}px`,
     height: `${baseSize}px`,
     transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)'
-  } as const
+  }
 }
 
 function getBluffIcon(role: any) {
@@ -834,6 +846,7 @@ const activePanelComponent = computed(() => {
     case 'role-assignment': return RoleAssignmentPanel
     case 'game-log': return GameLogPanel
     case 'fabled-selector': return FabledSelectorPanel
+    case 'whiteboard': return Whiteboard
     default: return null
   }
 })

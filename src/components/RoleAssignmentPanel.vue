@@ -288,6 +288,50 @@
           </div>
         </div>
 
+        <!-- 步驟 3.55: 瘋子認知選擇 (惡魔) -->
+        <div v-else-if="step === 'lunatic'" class="step-drunk">
+          <div class="action-footer top-actions compact">
+            <button class="btn-ghost btn-xs" @click="hasDrunk ? (step = 'drunk') : (step = 'select')">← 返回</button>
+            <div class="step-hint">請為瘋子選擇一個認知惡魔</div>
+            <button class="btn-primary btn-xs" :disabled="!lunaticFakeRoleId" @click="selectLunaticFake(lunaticFakeRoleId!)">
+              下一步 →
+            </button>
+          </div>
+          
+          <div class="search-bar-assignment">
+            <span class="search-icon">🔍</span>
+            <input 
+              v-model="searchQuery" 
+              placeholder="搜尋惡魔角色..." 
+              class="search-input-assignment" 
+              @keyup.enter="($event.target as HTMLInputElement).blur()"
+            />
+          </div>
+
+          <div class="role-grid-container">
+            <div v-if="availableLunaticFakes.length === 0" class="empty-pool-hint">
+              無可用惡魔角色
+            </div>
+            <div class="role-group">
+              <div class="group-header" style="color: var(--color-demon)">可選惡魔角色</div>
+              <div class="role-grid">
+                <div v-for="role in availableLunaticFakes" 
+                     :key="role.id" 
+                     :id="'role-item-' + role.id"
+                     class="role-card"
+                     :class="{ 'is-selected': lunaticFakeRoleId === role.id }"
+                     @click="selectLunaticFake(role.id)">
+                  <div class="role-card-icon">
+                    <img v-if="role.image" :src="role.image" class="r-img" />
+                    <span v-else class="r-emoji">😈</span>
+                  </div>
+                  <div class="role-card-name">{{ role.name }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 步驟 3.6: 提線木偶認知選擇 -->
         <div v-else-if="step === 'marionette'" class="step-drunk">
           <div class="action-footer top-actions compact">
@@ -525,7 +569,7 @@ const gameStore = useGameStore()
 const scriptStore = useScriptStore()
 
 // 狀態管理
-type Step = 'pool' | 'config' | 'select' | 'drunk' | 'marionette' | 'bluff' | 'preview' | 'draw'
+type Step = 'pool' | 'config' | 'select' | 'drunk' | 'lunatic' | 'marionette' | 'bluff' | 'preview' | 'draw'
 const step = ref<Step>('pool')
 const totalPlayers = computed(() => gameStore.players.length)
 
@@ -553,6 +597,7 @@ const isPresetExpanded = ref(false)
 
 // 抽獎與酒鬼邏輯
 const drunkFakeRoleId = ref<string | null>(null)
+const lunaticFakeRoleId = ref<string | null>(null)
 const marionetteFakeRoleId = ref<string | null>(null)
 const drawingResults = reactive<Record<string, string>>({}) // player_id -> role_id
 const isSpinning = ref(false)
@@ -575,6 +620,7 @@ const fullPoolCharacters = computed(() => {
 const drawnPlayerIds = computed(() => Object.keys(drawingResults))
 
 const hasDrunk = computed(() => selectedRoleIds.value.includes('drunk'))
+const hasLunatic = computed(() => selectedRoleIds.value.includes('lunatic'))
 const hasMarionette = computed(() => selectedRoleIds.value.includes('marionette'))
 
 const lotteryPool = computed(() => {
@@ -588,6 +634,14 @@ const lotteryPool = computed(() => {
     const drunkIdx = ids.indexOf('drunk')
     if (drunkIdx > -1) {
       ids.splice(drunkIdx, 1, drunkFakeRoleId.value)
+    }
+  }
+
+  // 如果有瘋子，將「瘋子」替換為「認知角色」
+  if (hasLunatic.value && lunaticFakeRoleId.value) {
+    const lunaticIdx = ids.indexOf('lunatic')
+    if (lunaticIdx > -1) {
+      ids.splice(lunaticIdx, 1, lunaticFakeRoleId.value)
     }
   }
 
@@ -679,6 +733,7 @@ const panelTitle = computed(() => {
     config: '2. 設定人數配比',
     select: '3. 挑選玩家角色',
     drunk: '3.5 酒鬼偽裝',
+    lunatic: '3.55 瘋子偽裝',
     marionette: '3.6 木偶偽裝',
     bluff: '4. 挑選惡魔虛張',
     preview: '5. 最終預覽',
@@ -687,7 +742,7 @@ const panelTitle = computed(() => {
   return titles[step.value]
 })
 const currentStepNum = computed(() => {
-  const map: Record<Step, number> = { pool: 1, config: 2, select: 3, drunk: 3, marionette: 3, bluff: 4, preview: 5, draw: 6 }
+  const map: Record<Step, number> = { pool: 1, config: 2, select: 3, drunk: 3, lunatic: 3, marionette: 3, bluff: 4, preview: 5, draw: 6 }
   return map[step.value]
 })
 
@@ -963,6 +1018,10 @@ function handleSearchEnter() {
     if (availableDrunkFakes.value.length > 0) {
       targetId = availableDrunkFakes.value[0].id
     }
+  } else if (step.value === 'lunatic') {
+    if (availableLunaticFakes.value.length > 0) {
+      targetId = availableLunaticFakes.value[0].id
+    }
   } else if (step.value === 'marionette') {
     if (availableMarionetteFakes.value.length > 0) {
       targetId = availableMarionetteFakes.value[0].id
@@ -999,6 +1058,8 @@ function handleSelectNext() {
   searchQuery.value = '' // 切換步驟時清除搜尋內容，避免看不到角色
   if (hasDrunk.value) {
     step.value = 'drunk'
+  } else if (hasLunatic.value) {
+    step.value = 'lunatic'
   } else if (hasMarionette.value) {
     step.value = 'marionette'
   } else {
@@ -1025,6 +1086,30 @@ const availableDrunkFakes = computed(() => {
 
 function selectDrunkFake(id: string) {
   drunkFakeRoleId.value = id
+  if (hasLunatic.value) {
+    step.value = 'lunatic'
+  } else if (hasMarionette.value) {
+    step.value = 'marionette'
+  } else {
+    step.value = 'bluff'
+  }
+}
+
+const availableLunaticFakes = computed(() => {
+  if (!gameStore.script) return []
+  const query = searchQuery.value.toLowerCase()
+  const excluded = new Set(excludedPoolIds.value)
+  
+  return gameStore.script.characters.filter(c => {
+    // 瘋子認知惡魔可以是劇本內任何惡魔角色
+    const isDemon = c.role_type === 'Demon' && !excluded.has(c.id)
+    const matchesQuery = !query || c.name.toLowerCase().includes(query)
+    return isDemon && matchesQuery
+  })
+})
+
+function selectLunaticFake(id: string) {
+  lunaticFakeRoleId.value = id
   if (hasMarionette.value) {
     step.value = 'marionette'
   } else {
@@ -1211,6 +1296,11 @@ async function finishLottery() {
     // 酒鬼邏輯：如果抽中認知角色，則該玩家實際是酒鬼
     if (hasDrunk.value && roleId === drunkFakeRoleId.value) {
       roleId = 'drunk'
+    }
+    
+    // 瘋子邏輯：如果抽中認知角色，則該玩家實際是瘋子
+    if (hasLunatic.value && roleId === lunaticFakeRoleId.value) {
+      roleId = 'lunatic'
     }
     
     // 提線木偶邏輯：如果抽中認知角色，則該玩家實際是提線木偶
@@ -1426,8 +1516,8 @@ async function confirmAssignment() {
       const fakeRole = getCharacterById(drunkFakeRoleId.value)
       return { player_id: a.player_id, role: fakeRole || a.role }
     }
-    if (a.role?.id === 'marionette' && marionetteFakeRoleId.value) {
-      const fakeRole = getCharacterById(marionetteFakeRoleId.value)
+    if (a.role?.id === 'lunatic' && lunaticFakeRoleId.value) {
+      const fakeRole = getCharacterById(lunaticFakeRoleId.value)
       return { player_id: a.player_id, role: fakeRole || a.role }
     }
     return a
@@ -1445,6 +1535,20 @@ async function confirmAssignment() {
     if (drunkEntry) {
       setTimeout(async () => {
         await gameStore.addReminder(drunkEntry.player_id, reminderText, sourceName)
+      }, 500)
+    }
+  }
+
+  // 自動添加瘋子提示詞
+  if (hasLunatic.value && lunaticFakeRoleId.value) {
+    const lunaticEntry = previewAssignments.value.find(a => a.role?.id === 'lunatic')
+    const lunaticChar = getCharacterById('lunatic')
+    const reminderText = lunaticChar?.reminders?.[0] || '是瘋子'
+    const sourceName = lunaticChar?.name || '瘋子'
+    
+    if (lunaticEntry) {
+      setTimeout(async () => {
+        await gameStore.addReminder(lunaticEntry.player_id, reminderText, sourceName)
       }, 500)
     }
   }
