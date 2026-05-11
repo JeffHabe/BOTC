@@ -24,11 +24,16 @@ export type GrimoireShape = 'circle' | 'oval' | 'rect'
 export const useUIStore = defineStore('ui', () => {
   // --- 面板控制 ---
   const activePanel = ref<Panel>('none')
+  // 記錄夜晚行動順序的捲動位置
+  const nightOrderScrollPos = ref(0)
 
   function openPanel(panel: Panel) { activePanel.value = panel }
   function closePanel() { activePanel.value = 'none' }
   function togglePanel(panel: Panel) {
     activePanel.value = activePanel.value === panel ? 'none' : panel
+  }
+  function setNightOrderScroll(pos: number) {
+    nightOrderScrollPos.value = pos
   }
 
   // --- 提示標記佈局方案 ---
@@ -371,6 +376,8 @@ export const useUIStore = defineStore('ui', () => {
     grimoireScale, setGrimoireScale, zoomIn, zoomOut, resetZoom,
     grimoireTranslateX, grimoireTranslateY, setGrimoireTranslate, resetPan,
     // 背景圖片
-    customDayBackground, customNightBackground, setDayBackground, setNightBackground
+    customDayBackground, customNightBackground, setDayBackground, setNightBackground,
+    // 夜晚捲動位置
+    nightOrderScrollPos, setNightOrderScroll
   }
 })

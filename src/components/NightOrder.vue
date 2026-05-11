@@ -24,7 +24,7 @@
       </div>
 
       <!-- 順序列表 -->
-      <div class="order-list">
+      <div class="order-list" ref="listRef" @scroll="handleScroll">
         <div class="order-empty" v-if="currentOrder.length === 0">
           <span>此劇本無夜晚行動角色</span>
         </div>
@@ -81,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, nextTick } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
 import type { RoleType } from '../types'
@@ -90,9 +90,26 @@ import { ROLE_TYPE_LABEL } from '../types'
 const gameStore = useGameStore()
 const uiStore = useUIStore()
 
+const listRef = ref<HTMLElement | null>(null)
+
 const activeTab = ref<'first' | 'other'>(
   (gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup') ? 'first' : 'other'
 )
+
+// 恢復捲動位置
+onMounted(async () => {
+  if (listRef.value && uiStore.nightOrderScrollPos > 0) {
+    // 使用 nextTick 確保列表已經渲染完成
+    await nextTick()
+    listRef.value.scrollTop = uiStore.nightOrderScrollPos
+  }
+})
+
+// 紀錄捲動位置
+function handleScroll(e: Event) {
+  const target = e.target as HTMLElement
+  uiStore.setNightOrderScroll(target.scrollTop)
+}
 
 /**
  * 系統預設流程 (首夜專用)
