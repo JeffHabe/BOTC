@@ -78,6 +78,35 @@
           </div>
         </div>
         
+        <!-- 提示卡區域 -->
+        <div class="hint-cards-section">
+          <div class="hint-cards-header">
+            <span class="hint-title">💡 提示卡</span>
+            <button 
+              class="edit-mode-btn" 
+              :class="{ active: isEditMode }"
+              @click="isEditMode = !isEditMode"
+            >
+              {{ isEditMode ? '完成編輯' : '✎ 編輯' }}
+            </button>
+          </div>
+          <div class="hint-cards-scroll">
+            <button 
+              v-for="(template, index) in gameStore.hintTemplates" 
+              :key="index"
+              class="hint-chip"
+              :class="{ 'shake': isEditMode }"
+              @click="handleTemplateClick(template)"
+            >
+              {{ template }}
+              <span v-if="isEditMode" class="delete-badge" @click.stop="gameStore.removeHintTemplate(index)">✕</span>
+            </button>
+            <button class="add-hint-btn" @click="addNewTemplate">
+              ➕ 新增
+            </button>
+          </div>
+        </div>
+
         <textarea 
           class="whiteboard-input" 
           placeholder="在此輸入要展示給玩家看的資訊...&#10;(例如：你的占卜結果為【是】)"
@@ -118,6 +147,28 @@ const uiStore = useUIStore()
 
 const isControlsExpanded = ref(false)
 const showColorPicker = ref(false)
+const isEditMode = ref(false)
+
+const handleTemplateClick = (template: string) => {
+  if (isEditMode.value) {
+    // 編輯模式下，不將文字加到白板
+    return
+  }
+  
+  // 附加到現有文字
+  let currentNotes = gameStore.nightNotes
+  if (currentNotes && !currentNotes.endsWith('\n')) {
+    currentNotes += '\n'
+  }
+  gameStore.setNightNotes(currentNotes + template)
+}
+
+const addNewTemplate = () => {
+  const newTemplate = window.prompt('請輸入新的提示卡內容：')
+  if (newTemplate && newTemplate.trim()) {
+    gameStore.addHintTemplate(newTemplate.trim())
+  }
+}
 
 const handleSizeInput = (e: Event) => {
   const input = e.target as HTMLInputElement
@@ -228,11 +279,11 @@ const copyToClipboard = async () => {
 }
 
 .whiteboard-content {
-  padding: 12px 16px 16px; /* 縮小邊距 */
+  padding: 10px 18px 8px; /* 縮小邊距 */
   display: flex;
   flex: 1; /* 填充面板剩餘高度 */
   flex-direction: column;
-  gap: 12px;
+  gap: 2px;
   overflow: hidden;
 }
 
@@ -458,8 +509,127 @@ const copyToClipboard = async () => {
 
 .whiteboard-controls-wrapper.expanded {
   max-height: 500px; /* 增加高度以容納色板彈窗 */
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   overflow: visible;
+}
+
+/* 提示卡樣式 */
+.hint-cards-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* 收窄標題與卡片的距離 */
+  margin-bottom: 8px;
+}
+
+.hint-cards-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hint-title {
+  font-size: 13px;
+  color: var(--color-gold);
+  font-weight: 600;
+}
+
+.edit-mode-btn {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  background: none;
+  border: 1px solid transparent;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.edit-mode-btn.active {
+  color: #ff9999;
+  background: rgba(139, 26, 26, 0.1);
+  border-color: rgba(139, 26, 26, 0.2);
+}
+
+.hint-cards-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-top: 8px; /* 避免叉叉被上方裁切 */
+  padding-bottom: 8px;
+  margin-top: -4px; /* 抵銷 padding 造成的視覺位移 */
+  /* 隱藏捲軸 */
+  scrollbar-width: none;
+}
+
+.hint-cards-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.hint-chip {
+  position: relative;
+  flex-shrink: 0;
+  padding: 6px 12px;
+  background: rgba(201, 168, 76, 0.1);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 16px;
+  color: var(--color-gold-bright);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s;
+  cursor: pointer;
+  user-select: none;
+}
+
+.hint-chip:active {
+  transform: scale(0.95);
+  background: rgba(201, 168, 76, 0.2);
+}
+
+.add-hint-btn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(201, 168, 76, 0.3);
+  border-radius: 16px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.add-hint-btn:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.delete-badge {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  background: #d32f2f;
+  color: white;
+  border-radius: 50%;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ff9999;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  z-index: 2;
+}
+
+@keyframes shake {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-2deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(2deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.hint-chip.shake {
+  animation: shake 0.3s ease-in-out infinite;
+  border-color: rgba(139, 26, 26, 0.4);
 }
 
 .whiteboard-input {

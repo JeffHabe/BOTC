@@ -24,6 +24,14 @@ export const useGameStore = defineStore('game', () => {
   const nightNotes = ref(localStorage.getItem('botc-night-notes') || '')
   const nightNotesFontSize = ref(Number(localStorage.getItem('botc-night-notes-font-size')) || 24)
   const nightNotesColor = ref(localStorage.getItem('botc-night-notes-color') || '#e5b54f')
+  
+  const defaultHintTemplates = [
+    '該角色能力對你生效...',
+    '這些角色不在場...',
+    '你是...'
+  ]
+  const savedHintTemplates = localStorage.getItem('botc-hint-templates')
+  const hintTemplates = ref<string[]>(savedHintTemplates ? JSON.parse(savedHintTemplates) : [...defaultHintTemplates])
 
   // 計算屬性
   const players = computed(() => state.value?.players ?? [])
@@ -427,6 +435,21 @@ export const useGameStore = defineStore('game', () => {
     localStorage.setItem('botc-night-notes-color', color)
   }
 
+  function addHintTemplate(text: string) {
+    hintTemplates.value.push(text)
+    localStorage.setItem('botc-hint-templates', JSON.stringify(hintTemplates.value))
+  }
+
+  function removeHintTemplate(index: number) {
+    hintTemplates.value.splice(index, 1)
+    localStorage.setItem('botc-hint-templates', JSON.stringify(hintTemplates.value))
+  }
+
+  function resetHintTemplates() {
+    hintTemplates.value = [...defaultHintTemplates]
+    localStorage.setItem('botc-hint-templates', JSON.stringify(hintTemplates.value))
+  }
+
   return {
     state, loading, error,
     players, script, phase, round, demonBluffs, lunaticBluffs, nominations,
@@ -445,6 +468,7 @@ export const useGameStore = defineStore('game', () => {
     logs, addLog, relativeNightOrder,
     nightNotes, setNightNotes,
     nightNotesFontSize, setNightNotesFontSize,
-    nightNotesColor, setNightNotesColor
+    nightNotesColor, setNightNotesColor,
+    hintTemplates, addHintTemplate, removeHintTemplate, resetHintTemplates
   }
 })
