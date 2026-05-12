@@ -3,7 +3,7 @@
     <div class="whiteboard-panel panel animate-slide-up">
       <div class="panel-header">
         <span class="panel-icon">📝</span>
-        <h2 class="panel-title">夜晚溝通白板</h2>
+        <h2 class="panel-title">說書人資訊</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
 

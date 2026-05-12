@@ -100,7 +100,7 @@ const characters = computed(() => {
 
 const filterOptions: { label: string, value: RoleType | 'All' }[] = [
   { label: '全部', value: 'All' },
-  { label: '村民', value: 'Townsfolk' },
+  { label: '鎮民', value: 'Townsfolk' },
   { label: '外來者', value: 'Outsider' },
   { label: '爪牙', value: 'Minion' },
   { label: '惡魔', value: 'Demon' },

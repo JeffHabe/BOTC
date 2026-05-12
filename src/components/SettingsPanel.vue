@@ -378,8 +378,10 @@ async function importScripts() {
 
     if (selected) {
       const content = await readTextFile(selected as string)
-      await scriptStore.importFromJson(content)
-      alert('劇本資料已成功匯入')
+      const success = await scriptStore.importFromJson(content)
+      if (success) {
+        alert('劇本資料已成功匯入')
+      }
     }
   } catch (e) {
     console.warn('Tauri open failed, falling back to browser input', e)
@@ -392,8 +394,10 @@ async function importScripts() {
         const reader = new FileReader()
         reader.onload = async (e) => {
           const content = e.target?.result as string
-          await scriptStore.importFromJson(content)
-          alert('劇本資料已成功匯入')
+          const success = await scriptStore.importFromJson(content)
+          if (success) {
+            alert('劇本資料已成功匯入')
+          }
         }
         reader.readAsText(file)
       }

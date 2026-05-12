@@ -2,7 +2,7 @@
   <div class="demon-bluffs">
     <div class="bluffs-header">
       <span class="header-icon">👿</span>
-      <span class="header-title">惡魔虛張</span>
+      <span class="header-title">惡魔偽裝</span>
     </div>
     
     <div class="bluffs-row">

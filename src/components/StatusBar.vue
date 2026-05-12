@@ -4,7 +4,7 @@
       <!-- 左側：角色類型計數 (統計配置) -->
       <div class="stat-group stats-config" :class="{ 'is-hidden': uiStore.isRolesHidden }">
         <span class="stat-item townsfolk">
-          <span class="label">民</span>
+          <span class="label">鎮</span>
           <span class="stat-num">{{ townCount }}</span>
         </span>
         <span class="stat-item outsider">
@@ -26,17 +26,14 @@
         <button class="nav-btn" @click="gameStore.revertPhase()" title="退回上個階段">◀</button>
         <div class="phase-display" @click="uiStore.togglePanel('settings')" title="開啟設定">
           <div class="phase-badge" :class="`phase-${gameStore.phase.toLowerCase()}`">
-            <template v-if="gameStore.phase === 'FirstNight'">
+            <template v-if="gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup'">
               <span class="phase-text">首夜</span>
             </template>
-            <template v-else-if="gameStore.phase === 'Setup'">
-              <span class="phase-text">準備</span>
-            </template>
             <template v-else>
-              <span class="phase-text">第 {{ gameStore.round }} 天</span>
+              <span class="phase-text">第 {{ gameStore.round }} </span>
+              <span v-if="gameStore.phase === 'Day' && gameStore.round > 0" class="round-text">天</span>
+              <span v-if="gameStore.phase === 'Night' && gameStore.round > 0" class="round-text">夜</span>
             </template>
-            <span v-if="gameStore.phase === 'Day' && gameStore.round > 0" class="round-text">白天</span>
-            <span v-if="gameStore.phase === 'Night' && gameStore.round > 0" class="round-text">夜晚</span>
           </div>
         </div>
         <button class="nav-btn" @click="gameStore.advancePhase()" title="推進下個階段">▶</button>

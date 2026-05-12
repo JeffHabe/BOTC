@@ -22,7 +22,7 @@
           </div>
 
           <div class="collapsible-header" @click="isPresetExpanded = !isPresetExpanded">
-            <span class="header-text">📋 角色池配置 & 預設</span>
+            <span class="header-text">📋 劇本 配置</span>
             <span class="header-toggle">{{ isPresetExpanded ? '收起 ▲' : '展開 ▼' }}</span>
           </div>
 
@@ -33,22 +33,28 @@
             </div>
 
             <div class="preset-manager">
-              <div class="preset-label">角色池預設：</div>
+              <div class="preset-label">劇本：</div>
               <div class="preset-controls">
-                <select v-model="activePresetId" class="preset-select" @change="e => {
-                  const p = currentScriptPresets.find(p => p.id === (e.target as HTMLSelectElement).value);
-                  if (p) applyPreset(p);
-                }">
-                  <option value="">-- 選擇預設 --</option>
-                  <option v-for="p in currentScriptPresets" :key="p.id" :value="p.id">{{ p.name }}</option>
+                <select v-model="selectedCombinedId" class="preset-select">
+                  <optgroup label="標準劇本">
+                    <option v-for="s in scriptStore.allScripts" :key="'script::'+s.id" :value="'script::'+s.id">
+                      {{ s.name }}
+                    </option>
+                  </optgroup>
+                  <optgroup v-if="poolPresets.length > 0" label="暫存配置(基於全角色池)">
+                    <option v-for="p in poolPresets" :key="'preset::'+p.id" :value="'preset::'+p.id">
+                      {{ p.name }}
+                    </option>
+                  </optgroup>
                 </select>
                 <div class="preset-actions">
                   <button v-if="activePresetId" class="btn-icon" @click="updatePreset" title="儲存變更">💾</button>
                   <button class="btn-icon" @click="showSaveModal = true" title="另存新檔">📁</button>
-                  <button v-if="activePresetId" class="btn-icon" @click="renamePreset" title="編輯名稱">✏️</button>
+                  <button class="btn-icon" @click="renameScriptOrPreset" title="編輯名稱">✏️</button>
+                  <button v-if="activePresetId" class="btn-icon" @click="convertPresetToScript(activePresetId)" title="轉換為獨立劇本">📜</button>
                   <button v-if="activePresetId" class="btn-icon" @click="exportPreset(activePresetId)" title="匯出預設 (複製)">📤</button>
                   <button class="btn-icon" @click="showImportModal = true" title="匯入預設">📥</button>
-                  <button v-if="activePresetId" class="btn-icon text-danger" @click="deletePreset(activePresetId)" title="刪除預設">🗑️</button>
+                  <button v-if="selectedCombinedId" class="btn-icon text-danger" @click="deleteScriptOrPreset" title="刪除">🗑️</button>
                 </div>
               </div>
             </div>
@@ -376,7 +382,7 @@
           </div>
         </div>
 
-        <!-- 步驟 3: 挑選惡魔虛張 -->
+        <!-- 步驟 3: 挑選惡魔偽裝 -->
         <div v-else-if="step === 'bluff'" class="step-bluff">
           <div class="action-footer top-actions compact">
             <button class="btn-ghost btn-xs" @click="step = 'select'">← 選角色</button>
@@ -394,7 +400,7 @@
             <span class="search-icon">🔍</span>
             <input 
               v-model="searchQuery" 
-              placeholder="搜尋虛張角色..." 
+              placeholder="搜尋偽裝角色..." 
               class="search-input-assignment" 
               @keyup.enter="handleSearchEnter"
             />
@@ -403,7 +409,7 @@
 
           <div class="selection-status-bar sticky-tabs">
             <div class="type-pill" :class="{ 'is-done': selectedBluffIds.length === 3 }">
-              惡魔虛張角色 {{ selectedBluffIds.length }}/3
+              惡魔偽裝角色 {{ selectedBluffIds.length }}/3
             </div>
             <div class="step-hint">（剩餘 {{ 3 - selectedBluffIds.length }} 個空位）</div>
           </div>
@@ -412,7 +418,7 @@
             <div class="role-group">
               <div class="group-header" style="color: var(--color-townsfolk)">可選偽裝角色</div>
               <div class="role-grid">
-                <!-- 只顯示未被選為玩家角色的村民 -->
+                <!-- 只顯示未被選為玩家角色的鎮民 -->
                 <div v-for="role in availableBluffPool" 
                      :key="role.id" 
                      :id="'role-item-' + role.id"
@@ -451,11 +457,11 @@
               <span v-else class="p-role none">未分配</span>
             </div>
 
-            <div class="divider"><span>惡魔虛張</span></div>
+            <div class="divider"><span>惡魔偽裝</span></div>
             <div class="bluff-list">
               <div v-for="(b, i) in previewBluffs" :key="i" class="bluff-item">
                 <span v-if="b" class="b-role">{{ b.name }}</span>
-                <span v-else class="b-role none">無虛張</span>
+                <span v-else class="b-role none">無偽裝</span>
               </div>
             </div>
           </div>
@@ -582,6 +588,40 @@ const activePresetId = computed({
   get: () => uiStore.activePoolPresetId,
   set: (val) => uiStore.activePoolPresetId = val
 })
+
+const selectedCombinedId = computed({
+  get() {
+    if (activePresetId.value) return `preset::${activePresetId.value}`
+    if (gameStore.script) return `script::${gameStore.script.id}`
+    return ''
+  },
+  set(val: string) {
+    if (!val) return;
+    const [type, id] = val.split('::')
+    
+    if (type === 'preset') {
+      const preset = poolPresets.value.find(p => p.id === id)
+      if (preset) {
+        // 切換到該 preset 的基礎劇本
+        const baseScript = scriptStore.allScripts.find(s => s.id === preset.script_id)
+        if (baseScript && gameStore.script?.id !== baseScript.id) {
+          scriptStore.selectScript(baseScript)
+        }
+        applyPreset(preset)
+        activePresetId.value = id
+      }
+    } else if (type === 'script') {
+      const script = scriptStore.allScripts.find(s => s.id === id)
+      if (script) {
+        scriptStore.selectScript(script)
+        // 清除 preset 狀態
+        activePresetId.value = ''
+        uiStore.activePoolPresetName = ''
+        excludedPoolIds.value = [] // 載入新劇本時預設不排除任何角色
+      }
+    }
+  }
+})
 interface PoolPreset {
   id: string
   name: string
@@ -701,7 +741,7 @@ function handlePressEnd() {
 
 // 基礎映射
 const roleTypes = [
-  { key: 'Townsfolk', label: '村民', color: ROLE_TYPE_COLOR.Townsfolk },
+  { key: 'Townsfolk', label: '鎮民', color: ROLE_TYPE_COLOR.Townsfolk },
   { key: 'Outsider', label: '外來者', color: ROLE_TYPE_COLOR.Outsider },
   { key: 'Minion', label: '爪牙', color: ROLE_TYPE_COLOR.Minion },
   { key: 'Demon', label: '惡魔', color: ROLE_TYPE_COLOR.Demon },
@@ -735,7 +775,7 @@ const panelTitle = computed(() => {
     drunk: '3.5 酒鬼偽裝',
     lunatic: '3.55 瘋子偽裝',
     marionette: '3.6 木偶偽裝',
-    bluff: '4. 挑選惡魔虛張',
+    bluff: '4. 挑選惡魔偽裝',
     preview: '5. 最終預覽',
     draw: '6. 輪盤抽獎'
   }
@@ -799,15 +839,58 @@ function deletePreset(id: string) {
   }
 }
 
-function renamePreset() {
-  if (!activePresetId.value) return
-  const preset = poolPresets.value.find(p => p.id === activePresetId.value)
-  if (!preset) return
-  const newName = window.prompt('請輸入新的預設名稱：', preset.name)
-  if (newName !== null && newName.trim() !== '') {
-    preset.name = newName.trim()
-    localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
-    uiStore.activePoolPresetName = preset.name
+async function renameScriptOrPreset() {
+  if (!selectedCombinedId.value) return
+
+  const [type, id] = selectedCombinedId.value.split('::')
+  if (type === 'preset') {
+    const preset = poolPresets.value.find(p => p.id === id)
+    if (!preset) return
+    const newName = window.prompt('請輸入新的劇本名稱：', preset.name)
+    if (newName !== null && newName.trim() !== '') {
+      preset.name = newName.trim()
+      localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
+      uiStore.activePoolPresetName = preset.name
+    }
+  } else if (type === 'script') {
+    const s = scriptStore.allScripts.find(x => x.id === id)
+    if (!s) return
+    const newName = window.prompt('請輸入新的劇本名稱：', s.name)
+    if (newName !== null && newName.trim() !== '') {
+      const success = await scriptStore.renameScript(id, newName.trim())
+      if (success) {
+        alert('✅ 劇本名稱已更新！')
+      }
+    }
+  }
+}
+
+async function deleteScriptOrPreset() {
+  if (!selectedCombinedId.value) return
+
+  const [type, id] = selectedCombinedId.value.split('::')
+  if (type === 'preset') {
+    if (window.confirm('確定要刪除這個角色池配置嗎？')) {
+      deletePreset(id)
+    }
+  } else if (type === 'script') {
+    if (id === 'all_character') {
+      alert('無法刪除全角色大全！')
+      return
+    }
+    const customScript = scriptStore.customScripts.find(x => x.id === id)
+    if (!customScript) {
+      alert('這是官方內建劇本，無法刪除喔！')
+      return
+    }
+    if (window.confirm(`確定要刪除自訂劇本「${customScript.name}」嗎？這個操作無法復原。`)) {
+      const success = await scriptStore.deleteCustomScript(id)
+      if (success) {
+        alert('✅ 劇本已刪除！')
+        // if currently open, maybe reset selection or close
+        selectedCombinedId.value = `script::all_character`
+      }
+    }
   }
 }
 
@@ -830,6 +913,44 @@ function exportPreset(id: string) {
     })
   } catch (e) {
     alert('❌ 匯出失敗')
+  }
+}
+
+async function convertPresetToScript(presetId: string) {
+  const preset = poolPresets.value.find(p => p.id === presetId)
+  if (!preset) return
+  
+  // 找出該 preset 基礎劇本的所有角色
+  let baseChars = []
+  if (preset.script_id === 'all_character') {
+    baseChars = scriptStore.masterScript.characters
+  } else {
+    const s = scriptStore.allScripts.find(x => x.id === preset.script_id)
+    if (s) {
+      baseChars = s.characters
+    } else {
+      baseChars = scriptStore.masterScript.characters
+    }
+  }
+  
+  // 過濾掉被排除的角色
+  const activeChars = baseChars.filter(c => !preset.excluded_ids.includes(c.id))
+  
+  // 建立官方格式的 JSON 陣列
+  const jsonArray = [
+    { id: '_meta', name: preset.name },
+    ...activeChars.map(c => ({ id: c.id }))
+  ]
+  
+  try {
+    const success = await scriptStore.importFromJson(JSON.stringify(jsonArray), true)
+    if (success) {
+      alert(`✅ 已成功將預設【${preset.name}】轉換為獨立劇本並載入！`)
+      deletePreset(presetId)
+      uiStore.closePanel()
+    }
+  } catch (e) {
+    alert('轉換失敗：' + e)
   }
 }
 
@@ -927,7 +1048,7 @@ const availableBluffPool = computed(() => {
   const excluded = new Set(excludedPoolIds.value)
   const query = searchQuery.value.trim().toLowerCase()
   
-  // 虛張從「在池子內」且「未被指派給玩家」的村民與外來者中選擇
+  // 偽裝從「在池子內」且「未被指派給玩家」的鎮民與外來者中選擇
   return gameStore.script.characters.filter(c => {
     const isGoodType = c.role_type === 'Townsfolk' || c.role_type === 'Outsider'
     const isNotUsed = !usedIds.has(c.id) && !excluded.has(c.id) && c.id !== drunkFakeRoleId.value
@@ -2068,7 +2189,7 @@ function getRoleTypeEmoji(type: string) {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
+  font-size: 8px;
 }
 
 .counts-editor { display: flex; flex-direction: column; gap: 16px; margin-bottom: 30px; }

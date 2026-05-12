@@ -85,7 +85,7 @@
 - **remindersGlobal**: 全局提示标记，无论该角色是否分配给玩家，这些标记始终可用。
 - **setup**: 该标记是否影响设置（橙色叶子图标），例如“酒鬼”或“男爵”。
 - **name**: 该角色的显示名称。
-- **team**: 角色所属阵营，必须是以下之一：`townsfolk`（村民）、`outsider`（外来者）、`minion`（爪牙）、`demon`（恶魔）、`traveler`或`traveller`（旅行者）、 `fabled`（传奇角色）、`loric`（奇遇角色）。<br>
+- **team**: 角色所属阵营，必须是以下之一：`townsfolk`（鎮民）、`outsider`（外来者）、`minion`（爪牙）、`demon`（恶魔）、`traveler`或`traveller`（旅行者）、 `fabled`（传奇角色）、`loric`（奇遇角色）。<br>
   _注意_：如果你创建了一个自定义的“传奇角色”（Fabled）或“奇遇角色”(Loric)，它将在加载自定义剧本时自动添加到游戏中。
 - **ability**: 该角色的显示能力文本。
 - **jinxes**: 自定义角色与其他角色的相克，会在角色技能表中出现，每个id代表跟一个角色的相克。具体如下：

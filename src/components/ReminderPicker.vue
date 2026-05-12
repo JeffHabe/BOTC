@@ -180,10 +180,14 @@ async function handleAction() {
 
 async function handleDelete() {
   if (!player.value || !editingId.value) return
-  if (confirm('確認要刪除這個提示標記嗎？')) {
-    await gameStore.removeReminder(player.value.id, editingId.value)
-    cancelEdit()
-  }
+  await gameStore.removeReminder(player.value.id, editingId.value)
+  cancelEdit()
+  // ---- 直接刪除，不跳出確認,保留原本的跳出確認的程式碼 ------------------------------------
+  // if (confirm('確認要刪除這個提示標記嗎？')) {
+  //   await gameStore.removeReminder(player.value.id, editingId.value)
+  //   cancelEdit()
+  // }
+  // ------------------------------------------------------------------------------------------
 }
 
 async function quickAdd(text: string, source: string = '劇本') {

@@ -129,6 +129,51 @@ export const useScriptStore = defineStore('script', () => {
     }
   }
 
+  async function renameScript(id: string, newName: string) {
+    if (id === 'all_character') {
+      masterScript.value.name = newName
+      const metaIndex = rawCharacterList.value.findIndex((r: any) => r.id === '_meta')
+      if (metaIndex >= 0) {
+        rawCharacterList.value[metaIndex].name = newName
+      } else {
+        rawCharacterList.value.unshift({ id: '_meta', name: newName })
+      }
+      await saveCharacters([...rawCharacterList.value])
+      if (gameStore.script?.id === 'all_character') {
+        gameStore.script.name = newName
+        await gameStore.setScript({ ...gameStore.script })
+      }
+      return true
+    }
+
+    const script = customScripts.value.find(s => s.id === id)
+    if (script) {
+      script.name = newName
+      await saveCustomScripts()
+      if (gameStore.script && gameStore.script.id === id) {
+        // Trigger reactivity for game store
+        gameStore.script.name = newName
+        await gameStore.setScript({ ...gameStore.script })
+      }
+      return true
+    }
+    return false
+  }
+
+  async function deleteCustomScript(id: string) {
+    if (id === 'all_character') return false
+    const idx = customScripts.value.findIndex(s => s.id === id)
+    if (idx !== -1) {
+      customScripts.value.splice(idx, 1)
+      await saveCustomScripts()
+      if (gameStore.script?.id === id) {
+        await selectScript(masterScript.value)
+      }
+      return true
+    }
+    return false
+  }
+
   async function saveCharacters(newRawList: any[]) {
     try {
       await writeTextFile('all_character.json', JSON.stringify(newRawList, null, 2), { baseDir: BaseDirectory.AppData })
@@ -163,7 +208,7 @@ export const useScriptStore = defineStore('script', () => {
     await gameStore.setScript(script)
   }
 
-  async function importFromJson(jsonStr: string) {
+  async function importFromJson(jsonStr: string, skipPrompt: boolean = false) {
     try {
       const data = JSON.parse(jsonStr)
       
@@ -201,9 +246,36 @@ export const useScriptStore = defineStore('script', () => {
       
       // 情況 B：這是官方格式的「單一劇本 JSON」(通常是個陣列)
       if (Array.isArray(data)) {
-        // 使用我們的 parseRawArray 進行解析
+        // 官方 JSON 通常只包含 { "id": "角色ID" }，我們需要從全庫(rawCharacterList)中把完整資料補齊
+        const enrichedData = data.map((item: any) => {
+          let id = typeof item === 'string' ? item : item.id
+          if (!id) return item
+          
+          if (id === '_meta') return item
+
+          // 如果只有 ID，沒有名稱或技能，就去全庫尋找
+          if (typeof item === 'string' || (!item.name && !item.ability)) {
+            const found = rawCharacterList.value.find(c => c.id === id)
+            if (found) {
+              return typeof item === 'string' ? found : { ...found, ...item }
+            }
+          }
+          return item
+        })
+
         const scriptId = 'custom_' + Date.now()
-        const newScript = parseRawArray(data, scriptId, '未具名劇本')
+        // 嘗試從 _meta 取得名稱，若無則預設
+        const meta = enrichedData.find((item: any) => item.id === '_meta')
+        const defaultName = meta && meta.name ? meta.name : '未具名劇本'
+        
+        let scriptName = defaultName
+        if (!skipPrompt) {
+          const userInput = window.prompt('請為這個劇本命名：', defaultName)
+          if (userInput === null) return false // 使用者取消
+          scriptName = userInput.trim() || defaultName
+        }
+        
+        const newScript = parseRawArray(enrichedData, scriptId, scriptName)
         
         // 加入自定義清單
         customScripts.value.push(newScript)
@@ -258,5 +330,7 @@ export const useScriptStore = defineStore('script', () => {
     selectScript,
     importFromJson,
     exportAllScripts,
+    renameScript,
+    deleteCustomScript,
   }
 })

@@ -205,12 +205,12 @@ pub struct GameState {
     pub players: Vec<Player>,
     pub phase: GamePhase,
     pub round: u32,                              // 當前輪次（Day 1, Night 1, ...）
-    pub demon_bluffs: Vec<Option<CharacterDef>>, // 惡魔虛張角色（最多3）
+    pub demon_bluffs: Vec<Option<CharacterDef>>, // 惡魔偽裝角色（最多3）
     #[serde(default)]
     pub lunatic_bluffs: Vec<Option<CharacterDef>>, // 瘋子偽裝角色（最多3）
     pub nominations: Vec<Nomination>,            // 本輪提名記錄
     #[serde(default)]
-    pub active_fabled: Vec<String>,              // 當前啟用的傳說角色 ID
+    pub active_fabled: Vec<String>, // 當前啟用的傳說角色 ID
     pub created_at: String,
     pub updated_at: String,
 }

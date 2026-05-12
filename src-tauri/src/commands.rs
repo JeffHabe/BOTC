@@ -1,10 +1,11 @@
-use std::sync::Mutex;
-use tauri::State;
 #[warn(unused_imports)]
 // use uuid::Uuid;
-
-use crate::models::{CharacterDef, GamePhase, GameState, Nomination, Player, ReminderToken, RoleType, Script};
+use crate::models::{
+    CharacterDef, GamePhase, GameState, Nomination, Player, ReminderToken, RoleType, Script,
+};
 use serde_json::Value;
+use std::sync::Mutex;
+use tauri::State;
 
 pub struct AppState(pub Mutex<GameState>);
 
@@ -33,7 +34,7 @@ pub fn reset_players_state(state: State<AppState>) -> GameState {
     gs.nominations.clear();
     gs.demon_bluffs = vec![None, None, None];
     gs.lunatic_bluffs = vec![None, None, None];
-    
+
     for p in gs.players.iter_mut() {
         p.role = None;
         p.is_alive = true;
@@ -42,7 +43,7 @@ pub fn reset_players_state(state: State<AppState>) -> GameState {
         p.is_nominated = false;
         p.can_nominate = true;
     }
-    
+
     gs.touch();
     gs.clone()
 }
@@ -91,7 +92,7 @@ pub fn set_player_count(count: u32, state: State<AppState>) -> Result<GameState,
     if count > 20 {
         return Err("最多支援 20 名玩家".into());
     }
-    
+
     let current_count = gs.players.len();
     if count > current_count as u32 {
         let to_add = count - current_count as u32;
@@ -100,7 +101,7 @@ pub fn set_player_count(count: u32, state: State<AppState>) -> Result<GameState,
             gs.players.push(Player::new("空白", seat));
         }
     }
-    
+
     gs.touch();
     Ok(gs.clone())
 }
@@ -120,7 +121,11 @@ pub fn remove_player(player_id: String, state: State<AppState>) -> Result<GameSt
 
 /// 重命名玩家
 #[tauri::command]
-pub fn rename_player(player_id: String, new_name: String, state: State<AppState>) -> Result<GameState, String> {
+pub fn rename_player(
+    player_id: String,
+    new_name: String,
+    state: State<AppState>,
+) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
     if let Some(p) = gs.players.iter_mut().find(|p| p.id == player_id) {
         p.name = new_name;
@@ -133,7 +138,11 @@ pub fn rename_player(player_id: String, new_name: String, state: State<AppState>
 
 /// 交換兩個玩家的座位
 #[tauri::command]
-pub fn swap_seats(player_id_a: String, player_id_b: String, state: State<AppState>) -> Result<GameState, String> {
+pub fn swap_seats(
+    player_id_a: String,
+    player_id_b: String,
+    state: State<AppState>,
+) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
     let pos_a = gs.players.iter().position(|p| p.id == player_id_a);
     let pos_b = gs.players.iter().position(|p| p.id == player_id_b);
@@ -153,10 +162,13 @@ pub fn swap_seats(player_id_a: String, player_id_b: String, state: State<AppStat
 
 /// 重新編排所有玩家順序
 #[tauri::command]
-pub fn reorder_players(player_ids: Vec<String>, state: State<AppState>) -> Result<GameState, String> {
+pub fn reorder_players(
+    player_ids: Vec<String>,
+    state: State<AppState>,
+) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
     let mut new_players = Vec::with_capacity(gs.players.len());
-    
+
     // 將順序列表中的玩家按順序取出
     for id in player_ids {
         if let Some(pos) = gs.players.iter().position(|p| p.id == id) {
@@ -164,28 +176,31 @@ pub fn reorder_players(player_ids: Vec<String>, state: State<AppState>) -> Resul
             new_players.push(p);
         }
     }
-    
+
     // 如果有沒在列表中的玩家，補回末端
     for p in gs.players.drain(..) {
         new_players.push(p);
     }
-    
+
     // 重新編定座位號碼
     for (i, p) in new_players.iter_mut().enumerate() {
         p.seat = (i + 1) as u32;
     }
-    
+
     gs.players = new_players;
     gs.touch();
     Ok(gs.clone())
 }
 
-
 // ─── 角色指令 ────────────────────────────────────────────────
 
 /// 指派角色給玩家
 #[tauri::command]
-pub fn assign_role(player_id: String, role: Option<CharacterDef>, state: State<AppState>) -> Result<GameState, String> {
+pub fn assign_role(
+    player_id: String,
+    role: Option<CharacterDef>,
+    state: State<AppState>,
+) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
     if let Some(p) = gs.players.iter_mut().find(|p| p.id == player_id) {
         p.role = role;
@@ -196,12 +211,16 @@ pub fn assign_role(player_id: String, role: Option<CharacterDef>, state: State<A
     }
 }
 
-/// 設定惡魔虛張角色
+/// 設定惡魔偽裝角色
 #[tauri::command]
-pub fn set_demon_bluff(index: usize, role: Option<CharacterDef>, state: State<AppState>) -> Result<GameState, String> {
+pub fn set_demon_bluff(
+    index: usize,
+    role: Option<CharacterDef>,
+    state: State<AppState>,
+) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
     if index >= 3 {
-        return Err("虛張索引必須為 0, 1, 或 2".into());
+        return Err("偽裝索引必須為 0, 1, 或 2".into());
     }
     gs.demon_bluffs[index] = role;
     gs.touch();
@@ -210,10 +229,14 @@ pub fn set_demon_bluff(index: usize, role: Option<CharacterDef>, state: State<Ap
 
 /// 設定瘋子偽裝角色
 #[tauri::command]
-pub fn set_lunatic_bluff(index: usize, role: Option<CharacterDef>, state: State<AppState>) -> Result<GameState, String> {
+pub fn set_lunatic_bluff(
+    index: usize,
+    role: Option<CharacterDef>,
+    state: State<AppState>,
+) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
     if index >= 3 {
-        return Err("虛張索引必須為 0, 1, 或 2".into());
+        return Err("偽裝索引必須為 0, 1, 或 2".into());
     }
     gs.lunatic_bluffs[index] = role;
     gs.touch();
@@ -231,21 +254,21 @@ pub struct RoleAssignment {
 pub fn bulk_assign_roles(
     assignments: Vec<RoleAssignment>,
     bluffs: Vec<Option<CharacterDef>>,
-    state: State<AppState>
+    state: State<AppState>,
 ) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
-    
+
     for a in assignments {
         if let Some(p) = gs.players.iter_mut().find(|p| p.id == a.player_id) {
             p.role = a.role;
         }
     }
-    
-    // 如果傳入的虛張列表不為空，才更新（保留彈性）
+
+    // 如果傳入的偽裝列表不為空，才更新（保留彈性）
     if !bluffs.is_empty() {
         gs.demon_bluffs = bluffs;
     }
-    
+
     gs.touch();
     Ok(gs.clone())
 }
@@ -254,11 +277,17 @@ pub fn bulk_assign_roles(
 
 /// 新增提醒令牌到玩家
 #[tauri::command]
-pub fn add_reminder(player_id: String, text: String, source_role: String, state: State<AppState>) -> Result<GameState, String> {
+pub fn add_reminder(
+    player_id: String,
+    text: String,
+    source_role: String,
+    state: State<AppState>,
+) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
     let current_round = gs.round;
     if let Some(p) = gs.players.iter_mut().find(|p| p.id == player_id) {
-        p.reminders.push(ReminderToken::new(&text, &source_role, current_round));
+        p.reminders
+            .push(ReminderToken::new(&text, &source_role, current_round));
         gs.touch();
         Ok(gs.clone())
     } else {
@@ -268,7 +297,12 @@ pub fn add_reminder(player_id: String, text: String, source_role: String, state:
 
 /// 修改提醒令牌文字
 #[tauri::command]
-pub fn update_reminder(player_id: String, reminder_id: String, new_text: String, state: State<AppState>) -> Result<GameState, String> {
+pub fn update_reminder(
+    player_id: String,
+    reminder_id: String,
+    new_text: String,
+    state: State<AppState>,
+) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
     if let Some(p) = gs.players.iter_mut().find(|p| p.id == player_id) {
         if let Some(r) = p.reminders.iter_mut().find(|r| r.id == reminder_id) {
@@ -285,7 +319,11 @@ pub fn update_reminder(player_id: String, reminder_id: String, new_text: String,
 
 /// 移除提醒令牌
 #[tauri::command]
-pub fn remove_reminder(player_id: String, reminder_id: String, state: State<AppState>) -> Result<GameState, String> {
+pub fn remove_reminder(
+    player_id: String,
+    reminder_id: String,
+    state: State<AppState>,
+) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
     if let Some(p) = gs.players.iter_mut().find(|p| p.id == player_id) {
         p.reminders.retain(|r| r.id != reminder_id);
@@ -436,17 +474,28 @@ pub fn set_phase(phase: GamePhase, state: State<AppState>) -> GameState {
 
 /// 發起提名
 #[tauri::command]
-pub fn nominate(nominator_id: String, nominee_id: String, state: State<AppState>) -> Result<GameState, String> {
+pub fn nominate(
+    nominator_id: String,
+    nominee_id: String,
+    state: State<AppState>,
+) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
 
     // 檢查本日是否已經有玩家被行刑
     let current_round = gs.round;
-    if gs.nominations.iter().any(|n| n.round == current_round && n.executed) {
+    if gs
+        .nominations
+        .iter()
+        .any(|n| n.round == current_round && n.executed)
+    {
         return Err("今日已有玩家被行刑，無法再進行提名".into());
     }
 
     // 確認提名者可以提名
-    let nominator = gs.players.iter().find(|p| p.id == nominator_id)
+    let nominator = gs
+        .players
+        .iter()
+        .find(|p| p.id == nominator_id)
         .ok_or("找不到提名者")?;
     if !nominator.is_alive {
         return Err("死亡玩家無法發起提名".into());
@@ -456,7 +505,10 @@ pub fn nominate(nominator_id: String, nominee_id: String, state: State<AppState>
     }
 
     // 確認被提名者尚未被提名
-    let nominee = gs.players.iter().find(|p| p.id == nominee_id)
+    let nominee = gs
+        .players
+        .iter()
+        .find(|p| p.id == nominee_id)
         .ok_or("找不到被提名者")?;
     if nominee.is_nominated {
         return Err("該玩家今日已被提名過".into());
@@ -488,21 +540,24 @@ pub fn nominate(nominator_id: String, nominee_id: String, state: State<AppState>
 /// 修改提名
 #[tauri::command]
 pub fn edit_nomination(
-    nomination_index: usize, 
-    new_nominator_id: String, 
-    new_nominee_id: String, 
-    state: State<AppState>
+    nomination_index: usize,
+    new_nominator_id: String,
+    new_nominee_id: String,
+    state: State<AppState>,
 ) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
 
     let current_round = gs.round;
-    
+
     // 取得舊的提名者與被提名者 ID，並檢查是否合法
     let old_nominator_id;
     let old_nominee_id;
 
     {
-        let nom = gs.nominations.get(nomination_index).ok_or("找不到指定提名")?;
+        let nom = gs
+            .nominations
+            .get(nomination_index)
+            .ok_or("找不到指定提名")?;
         if nom.executed {
             return Err("已執行的提名無法修改".into());
         }
@@ -528,22 +583,27 @@ pub fn edit_nomination(
     // 1. 驗證提名者
     if let Some(nominator) = gs.players.iter().find(|p| p.id == new_nominator_id) {
         if !nominator.is_alive {
-            valid = false; err_msg = "死亡玩家無法發起提名";
+            valid = false;
+            err_msg = "死亡玩家無法發起提名";
         } else if !nominator.can_nominate {
-            valid = false; err_msg = "該提名者今日已發起過提名";
+            valid = false;
+            err_msg = "該提名者今日已發起過提名";
         }
     } else {
-        valid = false; err_msg = "找不到提名者";
+        valid = false;
+        err_msg = "找不到提名者";
     }
 
     // 2. 驗證被提名者
     if valid {
         if let Some(nominee) = gs.players.iter().find(|p| p.id == new_nominee_id) {
             if nominee.is_nominated {
-                valid = false; err_msg = "該被提名者今日已被提名過";
+                valid = false;
+                err_msg = "該被提名者今日已被提名過";
             }
         } else {
-            valid = false; err_msg = "找不到被提名者";
+            valid = false;
+            err_msg = "找不到被提名者";
         }
     }
 
@@ -577,11 +637,17 @@ pub fn edit_nomination(
 
 /// 記錄投票
 #[tauri::command]
-pub fn vote(nomination_index: usize, voter_id: String, state: State<AppState>) -> Result<GameState, String> {
+pub fn vote(
+    nomination_index: usize,
+    voter_id: String,
+    state: State<AppState>,
+) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
-    
+
     // 獲取投票者當前狀態
-    let (is_alive, has_ghost_vote) = gs.players.iter()
+    let (is_alive, has_ghost_vote) = gs
+        .players
+        .iter()
         .find(|p| p.id == voter_id)
         .map(|p| (p.is_alive, p.has_ghost_vote))
         .unwrap_or((true, false));
@@ -589,7 +655,7 @@ pub fn vote(nomination_index: usize, voter_id: String, state: State<AppState>) -
     if let Some(nom) = gs.nominations.get_mut(nomination_index) {
         if nom.votes_for.contains(&voter_id) {
             nom.votes_for.retain(|id| id != &voter_id); // 取消投票
-            
+
             // 如果是死亡玩家取消投票，恢復其鬼魂投票權
             if !is_alive {
                 if let Some(p) = gs.players.iter_mut().find(|p| p.id == voter_id) {
@@ -625,13 +691,20 @@ pub fn execute(nomination_index: usize, state: State<AppState>) -> Result<GameSt
 
     // 檢查本日是否已經有玩家被行刑
     let current_round = gs.round;
-    if gs.nominations.iter().any(|n| n.round == current_round && n.executed) {
+    if gs
+        .nominations
+        .iter()
+        .any(|n| n.round == current_round && n.executed)
+    {
         return Err("今日已有玩家被行刑，無法再次行刑".into());
     }
 
     // 獲取目標提名的票數
     let (target_votes, target_threshold) = {
-        let nom = gs.nominations.get(nomination_index).ok_or("找不到指定提名")?;
+        let nom = gs
+            .nominations
+            .get(nomination_index)
+            .ok_or("找不到指定提名")?;
         (nom.votes_for.len(), nom.threshold)
     };
 
@@ -642,7 +715,7 @@ pub fn execute(nomination_index: usize, state: State<AppState>) -> Result<GameSt
     // 檢查是否為當前最高票且不平手
     let mut max_votes = 0;
     let mut tie_detected = false;
-    
+
     for nom in gs.nominations.iter().filter(|n| n.round == current_round) {
         let v_count = nom.votes_for.len();
         if v_count > max_votes {
@@ -675,7 +748,10 @@ pub fn execute(nomination_index: usize, state: State<AppState>) -> Result<GameSt
 
 /// 撤銷/反悔行刑
 #[tauri::command]
-pub fn undo_execution(nomination_index: usize, state: State<AppState>) -> Result<GameState, String> {
+pub fn undo_execution(
+    nomination_index: usize,
+    state: State<AppState>,
+) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
     let current_round = gs.round;
     if let Some(nom) = gs.nominations.get_mut(nomination_index) {
@@ -690,13 +766,13 @@ pub fn undo_execution(nomination_index: usize, state: State<AppState>) -> Result
 
         nom.executed = false;
         let nominee_id = nom.nominee_id.clone();
-        
+
         // 恢復玩家存活狀態與投票權
         if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominee_id) {
             p.is_alive = true;
             p.has_ghost_vote = true;
         }
-        
+
         gs.touch();
         Ok(gs.clone())
     } else {
@@ -726,20 +802,24 @@ pub fn import_game_state(json_str: String, state: State<AppState>) -> Result<Gam
 #[tauri::command]
 pub fn import_custom_script(json_str: String, state: State<AppState>) -> Result<GameState, String> {
     let mut script = Script::empty();
-    
+
     // 試著以官方完整 Script 模型解析
     if let Ok(s) = serde_json::from_str::<Script>(&json_str) {
         script = s;
     } else {
         // 如果失敗，試著以社群常見的陣列格式解析
-        let values: Vec<Value> = serde_json::from_str(&json_str)
-            .map_err(|e| format!("腳本格式解析失敗: {}", e))?;
-            
+        let values: Vec<Value> =
+            serde_json::from_str(&json_str).map_err(|e| format!("腳本格式解析失敗: {}", e))?;
+
         let mut characters = Vec::new();
-        
+
         for val in values {
-            let id = val.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
-            
+            let id = val
+                .get("id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+
             // 解析 _meta 元數據
             if id == "_meta" {
                 if let Some(name) = val.get("name").and_then(|v| v.as_str()) {
@@ -753,17 +833,38 @@ pub fn import_custom_script(json_str: String, state: State<AppState>) -> Result<
                 }
                 continue;
             }
-            
+
             // 略過沒有 ID 的無效資料
-            if id.is_empty() { continue; }
-            
+            if id.is_empty() {
+                continue;
+            }
+
             // 解析角色資料
-            let name = val.get("name").and_then(|v| v.as_str()).unwrap_or("未知").to_string();
-            let name_en = val.get("name_en").and_then(|v| v.as_str()).unwrap_or(&id).to_string();
-            let ability = val.get("ability").and_then(|v| v.as_str()).unwrap_or("").to_string();
-            let flavor = val.get("flavor").and_then(|v| v.as_str()).map(|s| s.to_string());
-            let team_str = val.get("team").or_else(|| val.get("role_type")).and_then(|v| v.as_str()).unwrap_or("townsfolk");
-            
+            let name = val
+                .get("name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("未知")
+                .to_string();
+            let name_en = val
+                .get("name_en")
+                .and_then(|v| v.as_str())
+                .unwrap_or(&id)
+                .to_string();
+            let ability = val
+                .get("ability")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let flavor = val
+                .get("flavor")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+            let team_str = val
+                .get("team")
+                .or_else(|| val.get("role_type"))
+                .and_then(|v| v.as_str())
+                .unwrap_or("townsfolk");
+
             let role_type = match team_str.to_lowercase().as_str() {
                 "townsfolk" => RoleType::Townsfolk,
                 "outsider" => RoleType::Outsider,
@@ -773,12 +874,21 @@ pub fn import_custom_script(json_str: String, state: State<AppState>) -> Result<
                 "fabled" => RoleType::Fabled,
                 _ => RoleType::Townsfolk,
             };
-            
-            let night_order_first = val.get("firstNight").and_then(|v| v.as_f64()).filter(|&n| n > 0.0);
-            let night_order_other = val.get("otherNight").and_then(|v| v.as_f64()).filter(|&n| n > 0.0);
-            let image = val.get("image").and_then(|v| v.as_str()).map(|s| s.to_string());
+
+            let night_order_first = val
+                .get("firstNight")
+                .and_then(|v| v.as_f64())
+                .filter(|&n| n > 0.0);
+            let night_order_other = val
+                .get("otherNight")
+                .and_then(|v| v.as_f64())
+                .filter(|&n| n > 0.0);
+            let image = val
+                .get("image")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
             let setup = val.get("setup").and_then(|v| v.as_bool()).unwrap_or(false);
-            
+
             let mut reminders = Vec::new();
             if let Some(rems) = val.get("reminders").and_then(|v| v.as_array()) {
                 for r in rems {
@@ -787,10 +897,16 @@ pub fn import_custom_script(json_str: String, state: State<AppState>) -> Result<
                     }
                 }
             }
-            
-            let first_night_reminder = val.get("firstNightReminder").and_then(|v| v.as_str()).map(|s| s.to_string());
-            let other_night_reminder = val.get("otherNightReminder").and_then(|v| v.as_str()).map(|s| s.to_string());
-            
+
+            let first_night_reminder = val
+                .get("firstNightReminder")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+            let other_night_reminder = val
+                .get("otherNightReminder")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+
             let mut conflicts = Vec::new();
             if let Some(confs) = val.get("conflicts").and_then(|v| v.as_array()) {
                 for c in confs {
@@ -799,7 +915,7 @@ pub fn import_custom_script(json_str: String, state: State<AppState>) -> Result<
                     }
                 }
             }
-            
+
             characters.push(CharacterDef {
                 id,
                 name,

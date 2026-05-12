@@ -126,7 +126,7 @@ const SYSTEM_ACTIONS: any[] = [
     id: 'sys_demon_info',
     name: '惡魔信息',
     role_type: 'Demon',
-    first_night_reminder: '惡魔得知爪牙是誰，並獲得三個不在場的角色作為偽裝（虛張聲勢）。',
+    first_night_reminder: '惡魔得知爪牙是誰，並獲得三個不在場的角色作為偽裝（偽裝聲勢）。',
     is_system: true
   }
 ]

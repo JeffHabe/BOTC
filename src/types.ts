@@ -3,7 +3,7 @@
 export type RoleType = 'Townsfolk' | 'Outsider' | 'Minion' | 'Demon' | 'Traveler' | 'Fabled' | 'Loric'
 
 export const ROLE_TYPE_LABEL: Record<RoleType, string> = {
-  Townsfolk: '村民',
+  Townsfolk: '鎮民',
   Outsider: '外來者',
   Minion: '爪牙',
   Demon: '惡魔',

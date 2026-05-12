@@ -1,7 +1,7 @@
 [
   {
     "id": "_meta",
-    "name": "自定義劇本",
+    "name": "全角色",
     "author": "",
     "use_title_image": false,
     "use_second_page_title_image": false,
@@ -159,7 +159,8 @@
     "firstNightReminder": "（在進入首個夜晚時立即通知賞金獵人轉變的那個鎮民他的陣營發生了變化）喚醒賞金獵人，對他指向一名邪惡玩家。",
     "otherNightReminder": "如果賞金獵人之前得知的玩家死亡，喚醒賞金獵人，對他指向一名新的邪惡玩家。",
     "reminders": [
-      "得知"
+      "得知",
+      "邪惡"
     ],
     "conflicts": []
   },
@@ -479,7 +480,8 @@
     "otherNight": 30,
     "otherNightReminder": "喚醒半獸人，讓他選擇一名玩家。如果該玩家是善良玩家，該玩家死亡，且當晚不會有其他玩家死亡。",
     "reminders": [
-      "死亡"
+      "死亡",
+      "失足"
     ],
     "conflicts": []
   },
@@ -854,7 +856,7 @@
     "firstNightReminder": "如果罌粟種植者在場，跳過今晚的爪牙信息和惡魔信息環節。",
     "otherNightReminder": "如果罌粟種植者死於白天，插入執行爪牙信息和惡魔信息（不包含惡魔偽裝）流程。如果罌粟種植者死於夜晚，則在當前玩家行動結束後立即執行相關流程。",
     "reminders": [
-      "喚醒邪惡"
+      "喚醒惡魔和爪牙"
     ],
     "conflicts": []
   },

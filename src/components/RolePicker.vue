@@ -106,7 +106,7 @@ const title = computed(() => {
     return `為 ${uiStore.rolePickerPlayer.name} 選擇角色`
   }
   if (uiStore.rolePickerDemonBluffIndex !== null) {
-    return `設定惡魔虛張角色 #${uiStore.rolePickerDemonBluffIndex + 1}`
+    return `設定惡魔偽裝角色 #${uiStore.rolePickerDemonBluffIndex + 1}`
   }
   if (uiStore.rolePickerLunaticBluffIndex !== null) {
     return `設定瘋子偽裝角色 #${uiStore.rolePickerLunaticBluffIndex + 1}`
@@ -145,7 +145,7 @@ const displayedCharacters = computed(() => {
 
 const filterOptions: { label: string, value: RoleType | 'All' }[] = [
   { label: '全部', value: 'All' },
-  { label: '村民', value: 'Townsfolk' },
+  { label: '鎮民', value: 'Townsfolk' },
   { label: '外來者', value: 'Outsider' },
   { label: '爪牙', value: 'Minion' },
   { label: '惡魔', value: 'Demon' },
@@ -172,7 +172,7 @@ function isSelected(char: CharacterDef) {
   return false
 }
 
-// 判斷角色是否已被分配 (場上玩家或其它虛張聲勢)
+// 判斷角色是否已被分配 (場上玩家或其它偽裝聲勢)
 const inPlayRoleIds = computed(() => 
   new Set(gameStore.players.map(p => p.role?.id).filter(Boolean))
 )
@@ -185,11 +185,11 @@ const bluffRoleIds = computed(() =>
 )
 
 function isOccupied(char: CharacterDef) {
-  // 對於目前正在選取的對象（玩家或虛張位），不算佔用
-  // 但如果被「其它」玩家或「其它」虛張位佔用，則算佔用
+  // 對於目前正在選取的對象（玩家或偽裝位），不算佔用
+  // 但如果被「其它」玩家或「其它」偽裝位佔用，則算佔用
   
   if (uiStore.rolePickerPlayer) {
-    // 正在為玩家選角色：看其它玩家 + 所有虛張
+    // 正在為玩家選角色：看其它玩家 + 所有偽裝
     const otherPlayers = gameStore.players
       .filter(p => p.id !== uiStore.rolePickerPlayer?.id)
       .map(p => p.role?.id)
@@ -197,7 +197,7 @@ function isOccupied(char: CharacterDef) {
   }
   
   if (uiStore.rolePickerDemonBluffIndex !== null) {
-    // 正在選惡魔虛張：看所有玩家 + 其它惡魔虛張位 + 所有瘋子偽裝
+    // 正在選惡魔偽裝：看所有玩家 + 其它惡魔偽裝位 + 所有瘋子偽裝
     const otherBluffs = gameStore.demonBluffs
       .filter((_, idx) => idx !== uiStore.rolePickerDemonBluffIndex)
       .map(b => b?.id)
@@ -206,7 +206,7 @@ function isOccupied(char: CharacterDef) {
   }
 
   if (uiStore.rolePickerLunaticBluffIndex !== null) {
-    // 正在選瘋子偽裝：看所有玩家 + 所有惡魔虛張 + 其它瘋子偽裝位
+    // 正在選瘋子偽裝：看所有玩家 + 所有惡魔偽裝 + 其它瘋子偽裝位
     const otherLunaticBluffs = gameStore.lunaticBluffs
       .filter((_, idx) => idx !== uiStore.rolePickerLunaticBluffIndex)
       .map(b => b?.id)

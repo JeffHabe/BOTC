@@ -94,7 +94,7 @@
       </div>
     </div>
 
-    <!-- 虛張聲勢 (Demon Bluffs) - 右下角垂直托盤設計 (可收納) -->
+    <!-- 偽裝聲勢 (Demon Bluffs) - 右下角垂直托盤設計 (可收納) -->
     <div class="bluffs-drawer" :class="{ 'is-expanded': uiStore.isBluffsExpanded, 'tab-lunatic': uiStore.activeBluffTab === 'lunatic' }">
       <!-- 功能標籤組 -->
       <div class="bluffs-tabs">
@@ -120,7 +120,7 @@
           class="bluffs-tab-btn demon-tab" 
           :class="{ active: uiStore.activeBluffTab === 'demon' }"
           @click="uiStore.activeBluffTab = 'demon'"
-          title="惡魔虛張"
+          title="惡魔偽裝"
         >
           <span class="icon">👹</span>
         </button>
@@ -1162,7 +1162,7 @@ const activePanelComponent = computed(() => {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   右下角：虛張聲勢可收納托盤 (Collapsible Bluffs Drawer) 
+   右下角：惡魔偽裝可收納托盤 (Collapsible Bluffs Drawer) 
    ───────────────────────────────────────────────────────────────────────── */
 .bluffs-drawer {
   position: fixed;
