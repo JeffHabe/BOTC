@@ -132,9 +132,9 @@ const demonCount = computed(() =>
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 2px;
   z-index: 2;
-  padding: 0 4px;
+  padding: 0 2px;
 }
 
 .phase-display {

@@ -141,8 +141,8 @@
             v-for="(role, idx) in (uiStore.activeBluffTab === 'lunatic' ? gameStore.lunaticBluffs : gameStore.demonBluffs)" 
             :key="idx"
             class="bluff-slot-vertical"
-            :class="{ 'is-locked': gameStore.phase !== 'Setup' }"
-            @click="gameStore.phase === 'Setup' && (uiStore.activeBluffTab === 'lunatic' ? uiStore.openRolePickerForLunaticBluff(idx) : uiStore.openRolePickerForBluff(idx))"
+            :class="{ 'is-locked': gameStore.phase !== 'FirstNight' }"
+            @click="gameStore.phase === 'FirstNight' && (uiStore.activeBluffTab === 'lunatic' ? uiStore.openRolePickerForLunaticBluff(idx) : uiStore.openRolePickerForBluff(idx))"
           >
             <!-- 角色令片內部設計 -->
             <div v-if="role" class="bluff-token-classic">
@@ -339,18 +339,20 @@ import PlayerToken from './PlayerToken.vue'
 import StatusBar from './StatusBar.vue'
 import TimerWidget from './TimerWidget.vue'
 import SettingsPanel from './SettingsPanel.vue'
-
+import VotingPanel from './VotingPanel.vue'
+import RoleAssignmentPanel from './RoleAssignmentPanel.vue'
+import Whiteboard from './Whiteboard.vue'
 // 懶加載大型面板組件，減少初始負擔
 // const SettingsPanel = defineAsyncComponent(() => import('./SettingsPanel.vue'))
-const VotingPanel = defineAsyncComponent(() => import('./VotingPanel.vue'))
+// const VotingPanel = defineAsyncComponent(() => import('./VotingPanel.vue'))
+// const RoleAssignmentPanel = defineAsyncComponent(() => import('./RoleAssignmentPanel.vue'))
+// const Whiteboard = defineAsyncComponent(() => import('./Whiteboard.vue'))
 const NightOrder = defineAsyncComponent(() => import('./NightOrder.vue'))
 const CharacterSheet = defineAsyncComponent(() => import('./CharacterSheet.vue'))
 const CharacterEditorPanel = defineAsyncComponent(() => import('./CharacterEditorPanel.vue'))
 const PlayerOrderPanel = defineAsyncComponent(() => import('./PlayerOrderPanel.vue'))
-const RoleAssignmentPanel = defineAsyncComponent(() => import('./RoleAssignmentPanel.vue'))
 const GameLogPanel = defineAsyncComponent(() => import('./GameLogPanel.vue'))
 const FabledSelectorPanel = defineAsyncComponent(() => import('./FabledSelectorPanel.vue'))
-const Whiteboard = defineAsyncComponent(() => import('./Whiteboard.vue'))
 
 import AddPlayerDialog from './AddPlayerDialog.vue'
 import RenameDialog from './RenameDialog.vue'

@@ -22,7 +22,10 @@
           </div>
 
           <div class="collapsible-header" @click="isPresetExpanded = !isPresetExpanded">
-            <span class="header-text">📋 劇本 配置</span>
+            <span class="header-text">
+              📋 劇本 配置 :
+              <span class="current-script-name">{{ currentScriptName }}</span>
+            </span>
             <span class="header-toggle">{{ isPresetExpanded ? '收起 ▲' : '展開 ▼' }}</span>
           </div>
 
@@ -41,7 +44,7 @@
                       {{ s.name }}
                     </option>
                   </optgroup>
-                  <optgroup v-if="poolPresets.length > 0" label="暫存配置(基於全角色池)">
+                  <optgroup v-if="poolPresets.length > 0" label="自訂劇本 (暫存配置)">
                     <option v-for="p in poolPresets" :key="'preset::'+p.id" :value="'preset::'+p.id">
                       {{ p.name }}
                     </option>
@@ -63,10 +66,11 @@
           <!-- 匯入預設模態框 -->
           <div v-if="showImportModal" class="mini-modal">
             <div class="modal-content">
-              <h4>匯入角色池配置</h4>
-              <textarea v-model="importString" placeholder="請貼上匯出代碼..." class="import-textarea"></textarea>
+              <h4>匯入劇本</h4>
+              <textarea v-model="importString" placeholder="請貼上劇本匯出代碼..." class="import-textarea"></textarea>
               <div class="modal-btns">
                 <button @click="showImportModal = false">取消</button>
+                <button class="secondary" @click="handleImportOfficialJson">官方 JSON</button>
                 <button class="primary" @click="handleImport">確認匯入</button>
               </div>
             </div>
@@ -84,13 +88,11 @@
             </div>
           </div>
 
-          <div class="pool-quick-actions">
+          <div class="pool-quick-actions" v-if="canEditPoolQuickly">
             <button class="btn-ghost btn-xs" @click="includeAllRoles">✅ 全選角色</button>
             <button class="btn-ghost btn-xs" @click="excludeAllRoles">🚫 清空池子</button>
           </div>
 
-          <div class="instruction">點擊角色可從本局池子中排除（變暗代表不使用）</div>
-          
           <div class="search-bar-assignment">
             <span class="search-icon">🔍</span>
             <input 
@@ -109,7 +111,7 @@
               {{ type.label }} (池: {{ poolTypeCount(type.key) }}/{{ scriptTypeTotal(type.key) }})
             </div>
           </div>
-
+          <div class="instruction">點擊角色可從本局池子中排除（變暗代表不使用）</div>
           <div class="role-grid-container">
             <div v-for="group in fullGroupedCharacters" :key="group.type" :id="'group-' + group.type" class="role-group">
               <div class="group-header" :style="{ color: group.color }">
@@ -134,7 +136,7 @@
 
         <!-- 步驟 2: 配置人數配比 -->
         <div v-else-if="step === 'config'" class="step-config">
-          <div class="info-banner">
+          <div class="header-text">
             <span class="info-icon">👥</span>
             <span>當前玩家人數: <strong>{{ totalPlayers }}</strong></span>
           </div>
@@ -468,7 +470,7 @@
 
           <div class="preview-actions">
             <button class="btn-ghost" @click="generatePlan">🎲 重新洗牌</button>
-            <button class="btn-secondary" @click="startLottery">🎡 輪盤抽獎模式</button>
+            <button class="btn-secondary" @click="startLottery">🔮 輪盤抽獎</button>
             <button class="btn-primary" @click="confirmAssignment">✅ 直接指派</button>
           </div>
         </div>
@@ -511,7 +513,10 @@
               <div class="ready-header">準備抽取角色</div>
               <div class="ready-player-name">{{ spinningPlayerName }}</div>
               <div class="ready-hint">請按下按鈕開始隨機篩選您的命運</div>
-              <button class="btn-primary start-draw-btn" @click="startActualDraw">開始抽獎</button>
+              <div class="ready-actions">
+                <button class="btn-primary start-draw-btn" @click="startActualDraw">開始抽獎</button>
+                <button class="btn-ghost cancel-draw-btn" @click="cancelReadyModal">返回上一頁</button>
+              </div>
             </div>
 
             <!-- 全角色閃爍選擇器 -->
@@ -634,6 +639,18 @@ const showSaveModal = ref(false)
 const showImportModal = ref(false)
 const importString = ref('')
 const isPresetExpanded = ref(false)
+
+const currentScriptName = computed(() => {
+  if (activePresetId.value) {
+    const preset = poolPresets.value.find(p => p.id === activePresetId.value)
+    if (preset) return preset.name
+  }
+  return gameStore.script?.name || '未選擇劇本'
+})
+
+const canEditPoolQuickly = computed(() => {
+  return !!activePresetId.value
+})
 
 // 抽獎與酒鬼邏輯
 const drunkFakeRoleId = ref<string | null>(null)
@@ -803,16 +820,31 @@ function loadPresets() {
 
 function savePreset() {
   if (!presetNameInput.value.trim() || !gameStore.script) return
+  
+  const masterScript = scriptStore.allScripts.find(s => s.id === 'all_character') || scriptStore.masterScript
+  const allMasterIds = masterScript ? masterScript.characters.map(c => c.id) : []
+  
+  const currentIncludedIds = new Set(
+    gameStore.script.characters
+      .map(c => c.id)
+      .filter(id => !excludedPoolIds.value.includes(id))
+  )
+  
+  const newExcludedIds = allMasterIds.filter(id => !currentIncludedIds.has(id))
+
   const newPreset: PoolPreset = {
     id: Date.now().toString(),
     name: presetNameInput.value.trim(),
-    script_id: gameStore.script.id,
-    excluded_ids: [...excludedPoolIds.value]
+    script_id: 'all_character',
+    excluded_ids: newExcludedIds
   }
+  
   poolPresets.value.push(newPreset)
   localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
   presetNameInput.value = ''
   showSaveModal.value = false
+  
+  selectedCombinedId.value = `preset::${newPreset.id}`
 }
 
 function updatePreset() {
@@ -982,6 +1014,25 @@ function handleImport() {
   } catch (e) {
     console.error(e)
     alert('❌ 匯入失敗，請確認代碼是否完整且正確。')
+  }
+}
+
+async function handleImportOfficialJson() {
+  if (!importString.value.trim()) return
+  try {
+    const success = await scriptStore.importFromJson(importString.value.trim())
+    if (success) {
+      alert('✅ 官方劇本已成功匯入與載入！')
+      importString.value = ''
+      showImportModal.value = false
+      // 自動切換下拉選單到新匯入的劇本
+      const lastScript = scriptStore.customScripts[scriptStore.customScripts.length - 1]
+      if (lastScript) {
+        selectedCombinedId.value = `script::${lastScript.id}`
+      }
+    }
+  } catch (e) {
+    alert('❌ 匯入官方 JSON 失敗：請確保格式為官方標準陣列格式')
   }
 }
 
@@ -1271,6 +1322,11 @@ const spinningPlayerName = computed(() => {
 function openWheel(playerId: string) {
   spinningPlayerId.value = playerId
   showReadyModal.value = true
+}
+
+function cancelReadyModal() {
+  showReadyModal.value = false
+  spinningPlayerId.value = null
 }
 
 // 驗證某個抽獎狀態是否能保證提線木偶與惡魔相鄰
@@ -1777,9 +1833,9 @@ function getRoleTypeEmoji(type: string) {
 }
 
 .instruction {
-  font-size: 8px;
+  font-size: 10px;
   color: #fff;
-  margin-bottom: 5px;
+  margin-bottom: 2px;
   text-align: right;
 }
 
@@ -1830,8 +1886,8 @@ function getRoleTypeEmoji(type: string) {
   top: -20px;
   z-index: 30;
   background: #1a1b23;
-  margin: 0 -20px 20px;
-  padding: 10px 20px;
+  margin: 0 -20px 4px;
+  padding: 6px 20px 8px;
   border-radius: 0;
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
@@ -1917,7 +1973,7 @@ function getRoleTypeEmoji(type: string) {
   padding: 10px 14px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -1926,6 +1982,16 @@ function getRoleTypeEmoji(type: string) {
   font-size: 13px;
   font-weight: 700;
   color: var(--color-gold-muted);
+}
+
+.current-script-name {
+  margin-left: 12px;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--color-text-primary);
+  font-weight: normal;
 }
 
 .header-toggle {
@@ -2052,11 +2118,12 @@ function getRoleTypeEmoji(type: string) {
 .modal-btns { display: flex; gap: 10px; }
 .modal-btns button { flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 13px; }
 .modal-btns button.primary { background: var(--color-gold); color: black; font-weight: bold; }
+.modal-btns button.secondary { background: #2b5c8f; color: white; font-weight: bold; }
 
 /* 搜尋框樣式 */
 .search-bar-assignment {
   position: relative;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 .search-icon {
@@ -2509,7 +2576,13 @@ function getRoleTypeEmoji(type: string) {
 .ready-header { font-size: 14px; color: var(--color-text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px; }
 .ready-player-name { font-size: 28px; font-weight: bold; color: white; margin-bottom: 20px; }
 .ready-hint { font-size: 14px; color: #888; margin-bottom: 32px; line-height: 1.5; }
+.ready-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 .start-draw-btn { width: 100%; padding: 16px; font-size: 18px; letter-spacing: 1px; }
+.cancel-draw-btn { width: 100%; padding: 12px; font-size: 14px; color: #888; }
 
 .animate-spin { animation: spin 0.15s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -2520,6 +2593,27 @@ function getRoleTypeEmoji(type: string) {
 .step-drunk { padding: 10px; }
 .step-hint { font-size: 13px; color: var(--color-gold-muted); flex: 1; text-align: center; }
 
-.preview-actions { display: flex; gap: 10px; }
-.preview-actions button { flex: 1; }
+.preview-actions { 
+  display: grid; 
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 12px; 
+  margin-top: 24px;
+}
+.preview-actions button { 
+  width: 100%; 
+  padding: 12px 8px;
+  font-size: 14px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.preview-actions button:nth-child(3) {
+  grid-column: span 2;
+  padding: 14px;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
 </style>

@@ -11,7 +11,7 @@
         <!-- 遊戲控制 -->
         <div class="section-title">遊戲控制</div>
         <div class="settings-grid">
-          <button v-if="gameStore.phase === 'Setup'" class="grid-item" @click="openAssignment">
+          <button v-if="gameStore.phase === 'FirstNight'" class="grid-item" @click="openAssignment">
             <span class="grid-icon">🎭</span>
             <span class="grid-label">選取劇本</span>
           </button>
@@ -50,18 +50,19 @@
             <span class="grid-icon">📝</span>
             <span class="grid-label">自訂庫</span>
           </button>
-
+          <!-- 階段推進功能目前暫時移除 -->
+          <!-- 
           <button class="grid-item primary" @click="advance">
             <span class="grid-icon">⌛</span>
             <span class="grid-label">階段推進</span>
-          </button>
+          </button> -->
         </div>
 
         <div class="divider" />
 
         <!-- 資料管理 -->
         <div class="section-title">資料管理</div>
-        <div class="settings-grid">
+        <div class="settings-grid cols-2">
           <button class="grid-item" @click="exportGame">
             <span class="grid-icon">📋📤</span>
             <span class="grid-label">匯出遊戲</span>
@@ -292,11 +293,6 @@ function openCharacterEditor() {
 
 function openFabled() {
   uiStore.openPanel('fabled-selector')
-}
-
-async function advance() {
-  await gameStore.advancePhase()
-  uiStore.closePanel()
 }
 
 async function importGame() {
@@ -637,6 +633,10 @@ function resetGame() {
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   padding: 8px 16px;
+}
+
+.settings-grid.cols-2 {
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .grid-item {

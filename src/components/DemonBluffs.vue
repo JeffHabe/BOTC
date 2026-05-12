@@ -10,8 +10,8 @@
         v-for="(bluff, index) in gameStore.demonBluffs" 
         :key="index"
         class="bluff-slot"
-        :class="{ 'is-locked': gameStore.phase !== 'Setup' }"
-        @click="gameStore.phase === 'Setup' && uiStore.openRolePickerForBluff(index)"
+        :class="{ 'is-locked': gameStore.phase !== 'FirstNight' }"
+        @click="gameStore.phase === 'FirstNight' && uiStore.openRolePickerForBluff(index)"
       >
         <div v-if="bluff" class="bluff-token">
           <img v-if="bluff.image" :src="bluff.image" :alt="bluff.name" class="bluff-img" />
@@ -19,8 +19,8 @@
           <div class="bluff-name">{{ bluff.name }}</div>
         </div>
         <div v-else class="bluff-empty">
-          <span class="empty-plus">{{ gameStore.phase === 'Setup' ? '+' : '🔒' }}</span>
-          <div class="empty-text">{{ gameStore.phase === 'Setup' ? '設置' : '已鎖定' }}</div>
+          <span class="empty-plus">{{ gameStore.phase === 'FirstNight' ? '+' : '🔒' }}</span>
+          <div class="empty-text">{{ gameStore.phase === 'FirstNight' ? '設置' : '已鎖定' }}</div>
         </div>
       </div>
     </div>
