@@ -30,9 +30,11 @@
               <span class="phase-text">首夜</span>
             </template>
             <template v-else>
-              <span class="phase-text">第 {{ gameStore.round }} </span>
-              <span v-if="gameStore.phase === 'Day' && gameStore.round > 0" class="round-text">天</span>
-              <span v-if="gameStore.phase === 'Night' && gameStore.round > 0" class="round-text">夜</span>
+              <span class="phase-text">
+                第 {{ gameStore.round }}
+                <template v-if="gameStore.phase === 'Day' && gameStore.round > 0">天</template>
+                <template v-if="gameStore.phase === 'Night' && gameStore.round > 0">夜</template>
+              </span>
             </template>
           </div>
         </div>
@@ -203,7 +205,8 @@ const demonCount = computed(() =>
   padding: 4px 16px;
   border-radius: 20px;
   display: flex;
-  flex-direction: column; /* 改為垂直疊放 */
+  flex-direction: row; /* 恢復水平排列 */
+  gap: 4px;
   align-items: center;
   justify-content: center;
   line-height: 1.2;
@@ -217,12 +220,6 @@ const demonCount = computed(() =>
 
 .phase-day .phase-text { color: #f1c40f; }
 .phase-night .phase-text { color: #a9cce3; }
-
-.round-text {
-  font-size: 10px; /* 稍微縮小輪次字體 */
-  opacity: 0.5;
-  margin-top: -2px;
-}
 
 .stat-icon {
   font-size: 14px;

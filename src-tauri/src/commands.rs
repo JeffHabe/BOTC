@@ -29,8 +29,8 @@ pub fn new_game(state: State<AppState>) -> GameState {
 #[tauri::command]
 pub fn reset_players_state(state: State<AppState>) -> GameState {
     let mut gs = state.0.lock().unwrap();
-    gs.phase = GamePhase::Setup;
-    gs.round = 0;
+    gs.phase = GamePhase::FirstNight;
+    gs.round = 1;
     gs.nominations.clear();
     gs.demon_bluffs = vec![None, None, None];
     gs.lunatic_bluffs = vec![None, None, None];
@@ -438,10 +438,9 @@ pub fn advance_phase(state: State<AppState>) -> GameState {
 pub fn revert_phase(state: State<AppState>) -> GameState {
     let mut gs = state.0.lock().unwrap();
     gs.phase = match gs.phase {
-        GamePhase::Setup => GamePhase::Setup,
-        GamePhase::FirstNight => {
-            gs.round = 0;
-            GamePhase::Setup
+        GamePhase::Setup | GamePhase::FirstNight => {
+            gs.round = 1;
+            GamePhase::FirstNight
         }
         GamePhase::Day => {
             if gs.round <= 1 {
