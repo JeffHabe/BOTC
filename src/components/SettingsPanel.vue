@@ -72,7 +72,7 @@
             <span class="grid-label">匯入遊戲</span>
           </button>
 
-          <button class="grid-item" @click="uiStore.openPanel('role-assignment')">
+          <button class="grid-item" @click="importScripts">
             <span class="grid-icon">📜🔽</span>
             <span class="grid-label">匯入劇本</span>
           </button>
@@ -366,6 +366,39 @@ async function exportGame() {
     a.download = fileName
     a.click()
     URL.revokeObjectURL(url)
+  }
+}
+
+async function importScripts() {
+  try {
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    })
+
+    if (selected) {
+      const content = await readTextFile(selected as string)
+      await scriptStore.importFromJson(content)
+      alert('劇本資料已成功匯入')
+    }
+  } catch (e) {
+    console.warn('Tauri open failed, falling back to browser input', e)
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    input.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0]
+      if (file) {
+        const reader = new FileReader()
+        reader.onload = async (e) => {
+          const content = e.target?.result as string
+          await scriptStore.importFromJson(content)
+          alert('劇本資料已成功匯入')
+        }
+        reader.readAsText(file)
+      }
+    }
+    input.click()
   }
 }
 

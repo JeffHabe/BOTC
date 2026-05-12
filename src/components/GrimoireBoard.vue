@@ -171,59 +171,57 @@
       <span class="icon">➕</span>
     </button>
 
-    <div class="side-action-group">
-      <button class="menu-btn" @click="uiStore.openPanel('settings')" title="設置">
-        <span class="icon">⚙️</span>
-      </button>
-
-      <button class="menu-btn" @click="uiStore.openPanel('night-order')" title="夜晚順序">
-        <span class="icon">🌙</span>
-      </button>
-
-      
+    <div class="side-action-group" :class="{ 'is-expanded': uiStore.isSideToolbarExpanded }">
+      <!-- 主開關按鈕 -->
       <button 
-      class="privacy-btn" 
-      :class="{ 'is-active': uiStore.isRolesHidden }"
-      @click="uiStore.toggleRolesHidden()"
-      :title="uiStore.isRolesHidden ? '顯示角色' : '隱藏角色'"
+        class="menu-toggle-btn" 
+        @click="uiStore.isSideToolbarExpanded = !uiStore.isSideToolbarExpanded"
+        :title="uiStore.isSideToolbarExpanded ? '收起選單' : '功能選單'"
       >
-      <div class="privacy-icon-wrapper">
-        <span class="icon">👁️</span>
-        <span v-if="uiStore.isRolesHidden" class="ban-icon">🚫</span>
-      </div>
-    </button>
-    
-    <!-- 魔典排列圖形切換 (移至側邊欄) -->
-    <button 
-      class="side-action-btn" 
-      @click="uiStore.cycleGrimoireShape" 
-      :title="`魔典圖形: ${currentShapeLabel}`"
-    >
-    <span class="icon">{{ currentShapeIcon }}</span>
-    </button>
-    
-    <button class="menu-btn" @click="uiStore.openPanel('whiteboard')" title="夜晚溝通白板">
-      <span class="icon">📝</span>
-    </button>
-      <!-- 佈局切換按鈕 (移至隱私按鈕下方) -->
-      <!-- <button 
-        class="side-action-btn layout-toggle-side" 
-        @click="uiStore.cycleReminderLayout()" 
-        :title="`佈局: ${layoutLabel}`"
-      >
-        <span class="icon">{{ layoutIcon }}</span>
-      </button> -->
+        <span class="icon">{{ uiStore.isSideToolbarExpanded ? '✕' : '⚙️' }}</span>
+      </button>
 
-      <!-- 玩家排序按鈕 -->
-      <!-- <button 
-        class="side-action-btn" 
-        @click="uiStore.openPanel('player-order')" 
-        title="玩家排序"
-      >
-        <span class="icon">🔃</span>
-      </button> -->
-    </div> 
-    
+      <!-- 被收藏的功能項 -->
+      <transition-group name="side-stagger">
+        <template v-if="uiStore.isSideToolbarExpanded">
+          <button key="settings" class="menu-btn" @click="uiStore.openPanel('settings')" title="設置">
+            <span class="icon">🛠️</span>
+          </button>
+
+          <button key="night-order" class="menu-btn" @click="uiStore.openPanel('night-order')" title="夜晚順序">
+            <span class="icon">🌙</span>
+          </button>
+
+          <button 
+            key="privacy"
+            class="privacy-btn" 
+            :class="{ 'is-active': uiStore.isRolesHidden }"
+            @click="uiStore.toggleRolesHidden()"
+            :title="uiStore.isRolesHidden ? '顯示角色' : '隱藏角色'"
+          >
+            <div class="privacy-icon-wrapper">
+              <span class="icon">👁️</span>
+              <span v-if="uiStore.isRolesHidden" class="ban-icon">🚫</span>
+            </div>
+          </button>
+          
+          <button 
+            key="shape"
+            class="side-action-btn" 
+            @click="uiStore.cycleGrimoireShape" 
+            :title="`魔典圖形: ${currentShapeLabel}`"
+          >
+            <span class="icon">{{ currentShapeIcon }}</span>
+          </button>
+          
+          <button key="whiteboard" class="menu-btn" @click="uiStore.openPanel('whiteboard')" title="夜晚溝通白板">
+            <span class="icon">📝</span>
+          </button>
+        </template>
+      </transition-group>
+    </div>
+
+
     <!-- 縮放按鈕 (底部中央水平排列) -->
     <div class="zoom-controls-bottom">
       <button class="side-action-btn" @click="uiStore.zoomOut()" title="縮小">
@@ -1477,7 +1475,16 @@ const activePanelComponent = computed(() => {
   flex-direction: column;
   gap: 10px;
   z-index: 900;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.side-action-group.is-expanded {
+  background: rgba(42, 27, 21, 0.4);
+  backdrop-filter: blur(10px);
+  padding: 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(141, 110, 99, 0.2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 
 /* 當有面板開啟時，隱藏右上角的功能按鈕，避免干擾 */
@@ -1527,7 +1534,7 @@ const activePanelComponent = computed(() => {
   cursor: pointer;
 }
 /*Menu Button 的 圖標設定區域*/
-.menu-btn, .privacy-btn, .side-action-group .side-action-btn {
+.menu-btn, .privacy-btn, .side-action-group .side-action-btn, .menu-toggle-btn {
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -1542,7 +1549,29 @@ const activePanelComponent = computed(() => {
   cursor: pointer;
 }
 
-.menu-btn .icon, .privacy-btn .icon, .side-action-group .side-action-btn .icon {
+.menu-toggle-btn {
+  background: rgba(201, 168, 76, 0.1);
+  border-color: rgba(201, 168, 76, 0.4);
+  color: var(--color-gold);
+  z-index: 10;
+}
+
+.menu-toggle-btn:hover {
+  background: rgba(201, 168, 76, 0.2);
+  transform: scale(1.1);
+}
+
+/* 側邊工具列進入動畫 */
+.side-stagger-enter-active, .side-stagger-leave-active {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.side-stagger-enter-from, .side-stagger-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.5);
+}
+
+.menu-btn .icon, .privacy-btn .icon, .side-action-group .side-action-btn .icon, .menu-toggle-btn .icon {
   font-size: 10px;
 }
 

@@ -224,7 +224,10 @@ export const useUIStore = defineStore('ui', () => {
     isArrangingPlayers.value = !isArrangingPlayers.value
   }
 
-  // --- 倒數計時器 (Timer) ---
+  // --- 側邊工具列 (Side Toolbar) ---
+  const isSideToolbarExpanded = ref(false)
+
+  // --- 計時器 (Timer) ---
   const timerRemaining = ref(0) // 剩餘秒數
   const timerTotal = ref(0) // 預設 0 分鐘
   const isTimerRunning = ref(false)
@@ -377,6 +380,8 @@ export const useUIStore = defineStore('ui', () => {
     grimoireTranslateX, grimoireTranslateY, setGrimoireTranslate, resetPan,
     // 背景圖片
     customDayBackground, customNightBackground, setDayBackground, setNightBackground,
+    // 側邊工具列
+    isSideToolbarExpanded,
     // 夜晚捲動位置
     nightOrderScrollPos, setNightOrderScroll
   }

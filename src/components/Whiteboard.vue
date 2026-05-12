@@ -4,21 +4,23 @@
       <div class="panel-header">
         <span class="panel-icon">📝</span>
         <h2 class="panel-title">夜晚溝通白板</h2>
-        <div class="header-actions">
-          <button 
-            class="config-toggle-btn" 
-            @click="isControlsExpanded = !isControlsExpanded"
-            :title="isControlsExpanded ? '收起設定' : '開啟設定'"
-          >
-            {{ isControlsExpanded ? '🔼' : '⚙️' }}
-          </button>
-          <button class="close-btn" @click="uiStore.closePanel()">✕</button>
-        </div>
+        <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
 
       <div class="whiteboard-content">
-        <div class="whiteboard-desc" v-if="isControlsExpanded">
-          在下方輸入資訊後，可將手機展示給玩家查看。
+        <div class="content-toolbar">
+          <div class="whiteboard-desc">
+            在下方輸入資訊後，可將手機展示給玩家查看。
+          </div>
+          <button 
+            class="config-toggle-btn" 
+            :class="{ active: isControlsExpanded }"
+            @click="isControlsExpanded = !isControlsExpanded"
+            :title="isControlsExpanded ? '收起設定' : '字體與顏色設定'"
+          >
+            <span class="icon">{{ isControlsExpanded ? '🔼' : '⚙️' }}</span>
+            <span class="label">{{ isControlsExpanded ? '收起設定' : '設定' }}</span>
+          </button>
         </div>
 
         <!-- 字體與顏色控制項 -->
@@ -78,7 +80,6 @@
         
         <textarea 
           class="whiteboard-input" 
-          :class="{ 'full-height': !isControlsExpanded }"
           placeholder="在此輸入要展示給玩家看的資訊...&#10;(例如：你的占卜結果為【是】)"
           v-model="gameStore.nightNotes"
           @input="gameStore.setNightNotes(gameStore.nightNotes)"
@@ -198,6 +199,7 @@ const copyToClipboard = async () => {
   display: flex;
   flex-direction: column;
   overflow: visible;
+  height: 80vh; /* 固定面板總高度，確保收放時高度一致 */
   box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
 }
 
@@ -226,10 +228,12 @@ const copyToClipboard = async () => {
 }
 
 .whiteboard-content {
-  padding: 20px;
+  padding: 12px 16px 16px; /* 縮小邊距 */
   display: flex;
+  flex: 1; /* 填充面板剩餘高度 */
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  overflow: hidden;
 }
 
 .whiteboard-desc {
@@ -399,28 +403,50 @@ const copyToClipboard = async () => {
   animation: fadeIn 0.2s ease-out forwards;
 }
 
-.header-actions {
+.content-toolbar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 12px;
+  margin-bottom: 8px;
+}
+
+.whiteboard-desc {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  flex: 1;
 }
 
 .config-toggle-btn {
-  background: rgba(201, 168, 76, 0.1);
-  border: 1px solid rgba(201, 168, 76, 0.2);
-  color: var(--color-gold);
-  border-radius: 4px;
-  width: 32px;
-  height: 32px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(201, 168, 76, 0.08);
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  color: var(--color-gold);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.config-toggle-btn .icon {
   font-size: 14px;
-  transition: all 0.2s;
 }
 
 .config-toggle-btn:active {
-  background: rgba(201, 168, 76, 0.3);
+  background: rgba(201, 168, 76, 0.2);
+  transform: scale(0.95);
+}
+
+.config-toggle-btn.active {
+  background: var(--color-gold-muted);
+  color: var(--color-bg-deep);
+  border-color: var(--color-gold);
 }
 
 .whiteboard-controls-wrapper {
@@ -431,13 +457,14 @@ const copyToClipboard = async () => {
 }
 
 .whiteboard-controls-wrapper.expanded {
-  max-height: 200px; /* 足夠容納內容的高度 */
+  max-height: 500px; /* 增加高度以容納色板彈窗 */
   margin-bottom: 16px;
+  overflow: visible;
 }
 
 .whiteboard-input {
   width: 100%;
-  height: 320px;
+  flex: 1; /* 自動填滿剩餘空間 */
   background: #000000;
   border: 1.5px solid rgba(201, 168, 76, 0.25);
   border-radius: 12px;
@@ -450,10 +477,6 @@ const copyToClipboard = async () => {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: inset 0 4px 12px rgba(0,0,0,0.6);
   line-height: 1.6;
-}
-
-.whiteboard-input.full-height {
-  height: 500px;
 }
 
 .whiteboard-input:focus {

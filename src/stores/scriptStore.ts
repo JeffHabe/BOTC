@@ -93,25 +93,39 @@ export const useScriptStore = defineStore('script', () => {
 
   async function loadCharacters() {
     try {
+      // 1. 載入核心角色大全
       const dbExists = await exists('all_character.json', { baseDir: BaseDirectory.AppData })
       if (!dbExists) {
-        // 第一期：把包裝內的靜態檔案自動寫入使用者的 AppData
         await mkdir('', { baseDir: BaseDirectory.AppData, recursive: true })
         await writeTextFile('all_character.json', JSON.stringify(allCharacterRaw, null, 2), { baseDir: BaseDirectory.AppData })
         rawCharacterList.value = [...allCharacterRaw]
       } else {
         const content = await readTextFile('all_character.json', { baseDir: BaseDirectory.AppData })
-        const parsed = JSON.parse(content)
-        rawCharacterList.value = parsed
+        rawCharacterList.value = JSON.parse(content)
       }
       masterScript.value = parseRawArray(rawCharacterList.value, 'all_character', '全角色大全')
 
-      // 如果尚未裝載其他劇本，且遊戲中選擇的是大全，則同步至 gameStore
+      // 2. 載入自定義劇本清單
+      const scriptsExists = await exists('custom_scripts.json', { baseDir: BaseDirectory.AppData })
+      if (scriptsExists) {
+        const content = await readTextFile('custom_scripts.json', { baseDir: BaseDirectory.AppData })
+        customScripts.value = JSON.parse(content)
+      }
+
+      // 如果尚未裝載其他劇本，預設選擇大全
       if (!gameStore.script || gameStore.script.id === 'all_character') {
          await gameStore.setScript(masterScript.value)
       }
     } catch (e) {
-      console.error('Failed to load custom all_character.json, falling back to default', e)
+      console.error('載入資料失敗:', e)
+    }
+  }
+
+  async function saveCustomScripts() {
+    try {
+      await writeTextFile('custom_scripts.json', JSON.stringify(customScripts.value, null, 2), { baseDir: BaseDirectory.AppData })
+    } catch (e) {
+      console.warn('儲存自定義劇本失敗:', e)
     }
   }
 
@@ -119,13 +133,12 @@ export const useScriptStore = defineStore('script', () => {
     try {
       await writeTextFile('all_character.json', JSON.stringify(newRawList, null, 2), { baseDir: BaseDirectory.AppData })
     } catch (e) {
-      console.warn('Failed to save characters to filesystem (maybe running in browser), saving to memory only', e)
+      console.warn('Failed to save characters to filesystem', e)
     }
     
     rawCharacterList.value = newRawList
     masterScript.value = parseRawArray(rawCharacterList.value, 'all_character', '全角色大全')
     
-    // 更新場上已載入的劇本
     if (gameStore.script && gameStore.script.id === 'all_character') {
       await gameStore.setScript(masterScript.value)
     }
@@ -151,7 +164,41 @@ export const useScriptStore = defineStore('script', () => {
   }
 
   async function importFromJson(jsonStr: string) {
-    await gameStore.importCustomScript(jsonStr)
+    try {
+      const data = JSON.parse(jsonStr)
+      
+      // 情況 A：這是我們自己格式的「劇本包」(包含多個劇本)
+      if (data && data.scripts && Array.isArray(data.scripts)) {
+        // 過濾掉大全，將匯入的劇本合併進自定義清單
+        const incoming = data.scripts.filter((s: any) => s.id !== 'all_character')
+        
+        // 簡單去重：如果 ID 相同則覆蓋
+        const existingMap = new Map(customScripts.value.map(s => [s.id, s]))
+        incoming.forEach((s: any) => existingMap.set(s.id, s))
+        customScripts.value = Array.from(existingMap.values())
+        
+        await saveCustomScripts()
+        return true
+      }
+      
+      // 情況 B：這是官方格式的「單一劇本 JSON」(通常是個陣列)
+      if (Array.isArray(data)) {
+        // 使用我們的 parseRawArray 進行解析
+        const scriptId = 'custom_' + Date.now()
+        const newScript = parseRawArray(data, scriptId, '未具名劇本')
+        
+        // 加入自定義清單
+        customScripts.value.push(newScript)
+        await selectScript(newScript)
+        await saveCustomScripts()
+        return true
+      }
+      
+      return false
+    } catch (e) {
+      console.error('匯入劇本失敗:', e)
+      throw e
+    }
   }
 
   async function exportAllScripts() {
