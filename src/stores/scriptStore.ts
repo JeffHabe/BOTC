@@ -178,6 +178,24 @@ export const useScriptStore = defineStore('script', () => {
         customScripts.value = Array.from(existingMap.values())
         
         await saveCustomScripts()
+
+        // 如果匯入包包含自定義角色庫，進行合併
+        if (data.rawCharacters && Array.isArray(data.rawCharacters)) {
+          const currentRaw = [...rawCharacterList.value]
+          const rawMap = new Map(currentRaw.map(c => [c.id, c]))
+          data.rawCharacters.forEach((c: any) => rawMap.set(c.id, c))
+          await saveCharacters(Array.from(rawMap.values()))
+        }
+
+        // 如果匯入包包含自訂角色池配置(Pool Presets)，進行合併
+        if (data.poolPresets && Array.isArray(data.poolPresets)) {
+          const currentPresetsRaw = localStorage.getItem('botc-pool-presets')
+          const currentPresets = currentPresetsRaw ? JSON.parse(currentPresetsRaw) : []
+          const presetMap = new Map(currentPresets.map((p: any) => [p.id, p]))
+          data.poolPresets.forEach((p: any) => presetMap.set(p.id, p))
+          localStorage.setItem('botc-pool-presets', JSON.stringify(Array.from(presetMap.values())))
+        }
+
         return true
       }
       
@@ -202,11 +220,25 @@ export const useScriptStore = defineStore('script', () => {
   }
 
   async function exportAllScripts() {
+    // 確保當前正在使用的劇本也被收錄進去 (如果是透過舊版方法載入且尚未在清單中的話)
+    if (gameStore.script && gameStore.script.id !== 'all_character') {
+      const exists = customScripts.value.some(s => s.id === gameStore.script!.id)
+      if (!exists) {
+        customScripts.value.push(gameStore.script)
+        await saveCustomScripts()
+      }
+    }
+
+    const poolPresetsRaw = localStorage.getItem('botc-pool-presets')
+    const poolPresets = poolPresetsRaw ? JSON.parse(poolPresetsRaw) : []
+
     // 準備要匯出的資料：包含大全和所有自定義劇本
     const data = {
-      version: '1.0',
+      version: '1.1', // 升級版本號以標記支援更多資料
       timestamp: Date.now(),
-      scripts: allScripts.value
+      scripts: allScripts.value,
+      rawCharacters: rawCharacterList.value,
+      poolPresets: poolPresets
     }
     return JSON.stringify(data, null, 2)
   }
