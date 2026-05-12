@@ -985,10 +985,7 @@ function handleImport() {
   }
 }
 
-const currentScriptPresets = computed(() => {
-  if (!gameStore.script) return []
-  return poolPresets.value.filter(p => p.script_id === gameStore.script!.id)
-})
+
 
 const fullGroupedCharacters = computed(() => {
   if (!gameStore.script) return []
