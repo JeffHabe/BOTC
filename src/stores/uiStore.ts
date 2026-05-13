@@ -374,7 +374,7 @@ export const useUIStore = defineStore('ui', () => {
   })
 
   // 監聽 popstate (使用者觸發手機邊緣向內滑動返回或瀏覽器上一頁)
-  window.addEventListener('popstate', (e) => {
+  window.addEventListener('popstate', () => {
     if (isProgrammaticBack) {
       // 若是程式碼自動清理 stack 觸發的 popstate，不做任何處理
       isProgrammaticBack = false

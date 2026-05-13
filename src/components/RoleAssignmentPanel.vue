@@ -68,6 +68,8 @@
             <div class="modal-content">
               <h4>匯入劇本</h4>
               <textarea v-model="importString" placeholder="請貼上劇本匯出代碼..." class="import-textarea"></textarea>
+              <!-- 隱藏的本機 JSON 檔案選擇器 -->
+              <input type="file" accept=".json" ref="officialJsonInput" style="display: none" @change="onOfficialJsonFileSelected" />
               <div class="modal-btns">
                 <button @click="showImportModal = false">取消</button>
                 <button class="secondary" @click="handleImportOfficialJson">官方 JSON</button>
@@ -666,6 +668,7 @@ const presetNameInput = ref('')
 const showSaveModal = ref(false)
 const showImportModal = ref(false)
 const importString = ref('')
+const officialJsonInput = ref<HTMLInputElement | null>(null)
 const isPresetExpanded = ref(false)
 
 const currentScriptName = computed(() => {
@@ -1045,23 +1048,39 @@ function handleImport() {
   }
 }
 
-async function handleImportOfficialJson() {
-  if (!importString.value.trim()) return
-  try {
-    const success = await scriptStore.importFromJson(importString.value.trim())
-    if (success) {
-      alert('✅ 官方劇本已成功匯入與載入！')
-      importString.value = ''
-      showImportModal.value = false
-      // 自動切換下拉選單到新匯入的劇本
-      const lastScript = scriptStore.customScripts[scriptStore.customScripts.length - 1]
-      if (lastScript) {
-        selectedCombinedId.value = `script::${lastScript.id}`
+function handleImportOfficialJson() {
+  // 觸發隱藏的 file input 選擇本機 JSON 檔案
+  officialJsonInput.value?.click()
+}
+
+async function onOfficialJsonFileSelected(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = async (event) => {
+    const content = event.target?.result as string
+    try {
+      const success = await scriptStore.importFromJson(content)
+      if (success) {
+        alert('✅ 官方劇本檔案已成功匯入與載入！')
+        importString.value = ''
+        showImportModal.value = false
+        // 自動切換下拉選單到新匯入的劇本
+        const lastScript = scriptStore.customScripts[scriptStore.customScripts.length - 1]
+        if (lastScript) {
+          selectedCombinedId.value = `script::${lastScript.id}`
+        }
+      } else {
+        alert('❌ 匯入失敗：檔案內容無法解析為有效劇本格式')
       }
+    } catch (err) {
+      alert('❌ 匯入官方 JSON 失敗：請確保檔案格式為官方標準陣列格式')
     }
-  } catch (e) {
-    alert('❌ 匯入官方 JSON 失敗：請確保格式為官方標準陣列格式')
+    // 復原 input 值以利重複選取同名檔案
+    if (officialJsonInput.value) officialJsonInput.value.value = ''
   }
+  reader.readAsText(file)
 }
 
 
