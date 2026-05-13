@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 import { useScriptStore } from '../stores/scriptStore'
@@ -54,6 +54,25 @@ import CharacterDetailOverlay from './CharacterDetailOverlay.vue'
 const uiStore = useUIStore()
 const gameStore = useGameStore()
 const scriptStore = useScriptStore()
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    e.stopImmediatePropagation()
+    if (longPressChar.value) {
+      longPressChar.value = null
+    } else {
+      uiStore.closePanel()
+    }
+  }
+}
 
 // 從全庫中取得傳說與奇遇角色
 const fabledCharacters = computed(() => {

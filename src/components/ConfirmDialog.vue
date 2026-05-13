@@ -18,8 +18,24 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 const uiStore = useUIStore()
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    e.stopImmediatePropagation()
+    uiStore.closeConfirm()
+  }
+}
 
 function onConfirm() {
   uiStore.confirmDialog?.onConfirm()
@@ -48,6 +64,8 @@ function onConfirm() {
   max-width: 340px;
   text-align: center;
   box-shadow: var(--shadow-panel);
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .confirm-icon {

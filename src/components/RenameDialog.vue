@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 
@@ -33,7 +33,19 @@ const inputRef = ref<HTMLInputElement | null>(null)
 onMounted(() => {
   inputRef.value?.focus()
   inputRef.value?.setSelectionRange(0, newName.value.length)
+  window.addEventListener('keydown', handleKeydown)
 })
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    e.stopImmediatePropagation()
+    uiStore.closeRenameDialog()
+  }
+}
 
 async function confirm() {
   const player = uiStore.renameDialogPlayer
@@ -63,6 +75,8 @@ async function confirm() {
   width: 100%;
   max-width: 340px;
   box-shadow: var(--shadow-panel);
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .dialog-title {

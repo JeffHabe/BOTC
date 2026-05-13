@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
 import { useGameStore } from '../stores/gameStore'
@@ -99,7 +99,23 @@ const searchInput = ref<HTMLInputElement | null>(null)
 
 onMounted(() => {
   searchInput.value?.focus()
+  window.addEventListener('keydown', handleKeydown)
 })
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    e.stopImmediatePropagation()
+    if (longPressChar.value) {
+      longPressChar.value = null
+    } else {
+      uiStore.closeRolePicker()
+    }
+  }
+}
 
 const title = computed(() => {
   if (uiStore.rolePickerPlayer) {
@@ -244,7 +260,7 @@ async function selectRole(char: CharacterDef | null) {
 .role-picker-panel {
   width: 100%;
   max-width: 500px;
-  height: 80vh; /* 固定高度，防止因角色數量不同導致面板跳動 */
+  max-height: 85vh; /* 最高不超過螢幕 85vh */
   display: flex;
   flex-direction: column;
   background: #1a1b23;
@@ -258,6 +274,7 @@ async function selectRole(char: CharacterDef | null) {
   padding: 0 16px;
   min-height: 56px; /* 固定高度，防止標題文字換行時推擠下方內容 */
   border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
 }
 
 .panel-title {
@@ -277,6 +294,7 @@ async function selectRole(char: CharacterDef | null) {
 .picker-search {
   padding: 12px 16px;
   background: rgba(0,0,0,0.1);
+  flex-shrink: 0;
 }
 
 .search-input {

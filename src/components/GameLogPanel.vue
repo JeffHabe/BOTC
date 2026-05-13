@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 import { save } from '@tauri-apps/plugin-dialog'
@@ -53,6 +53,21 @@ import { writeTextFile } from '@tauri-apps/plugin-fs'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    e.stopImmediatePropagation()
+    uiStore.closePanel()
+  }
+}
 
 const noteContent = ref('')
 
@@ -152,7 +167,7 @@ async function exportGame() {
 .log-panel {
   width: 100%;
   max-width: 460px;
-  max-height: 90vh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   border-radius: 20px 20px 12px 12px;

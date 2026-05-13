@@ -567,7 +567,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, reactive, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 import { useScriptStore } from '../stores/scriptStore'
@@ -578,6 +578,34 @@ import CharacterDetailOverlay from './CharacterDetailOverlay.vue'
 const uiStore = useUIStore()
 const gameStore = useGameStore()
 const scriptStore = useScriptStore()
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    e.stopImmediatePropagation()
+    if (longPressChar.value) {
+      longPressChar.value = null
+    } else if (showResultModal.value) {
+      showResultModal.value = false
+    } else if (showReadyModal.value) {
+      showReadyModal.value = false
+      spinningPlayerId.value = null
+    } else if (showImportModal.value) {
+      showImportModal.value = false
+    } else if (showSaveModal.value) {
+      showSaveModal.value = false
+    } else {
+      uiStore.closePanel()
+    }
+  }
+}
 
 // 狀態管理
 type Step = 'pool' | 'config' | 'select' | 'drunk' | 'lunatic' | 'marionette' | 'bluff' | 'preview' | 'draw'
@@ -2098,6 +2126,8 @@ function getRoleTypeEmoji(type: string) {
   padding: 20px;
   width: 100%;
   max-width: 300px;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 .modal-content h4 { margin-top: 0; font-size: 14px; margin-bottom: 16px; color: var(--color-gold); }
 .modal-content input, .mini-modal textarea {
@@ -2509,6 +2539,8 @@ function getRoleTypeEmoji(type: string) {
   text-align: center;
   width: 85%;
   max-width: 340px;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .result-header { font-size: 14px; color: var(--color-text-muted); margin-bottom: 24px; text-transform: uppercase; letter-spacing: 2px; }
@@ -2571,6 +2603,8 @@ function getRoleTypeEmoji(type: string) {
   text-align: center;
   width: 85%;
   max-width: 340px;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .ready-header { font-size: 14px; color: var(--color-text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px; }

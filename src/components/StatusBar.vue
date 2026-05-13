@@ -97,25 +97,28 @@ const demonCount = computed(() =>
 .status-inner {
   height: 50px;
   margin-top: env(safe-area-inset-top, 0px);
-  padding: 0 12px;
-  display: flex;
+  padding: 0 6px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
-  position: relative;
 }
 
 .stat-group {
   display: flex;
   align-items: center;
-  gap: 8px;
-  z-index: 1; /* 位於中間按鈕下方 */
+  gap: 3px;
+  z-index: 1;
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .stats-config {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 3px;
+}
+
+.stats-alive {
+  justify-content: flex-end;
 }
 
 .stat-group.is-hidden {
@@ -125,10 +128,6 @@ const demonCount = computed(() =>
 }
 
 .phase-control {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -169,7 +168,7 @@ const demonCount = computed(() =>
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 1px;
   white-space: nowrap;
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }

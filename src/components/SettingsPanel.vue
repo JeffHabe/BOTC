@@ -173,7 +173,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 import { useScriptStore } from '../stores/scriptStore'
@@ -183,6 +183,21 @@ import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs'
 const uiStore = useUIStore()
 const gameStore = useGameStore()
 const scriptStore = useScriptStore()
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    e.stopImmediatePropagation()
+    uiStore.closePanel()
+  }
+}
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const uploadTarget = ref<'day' | 'night'>('day')
@@ -472,7 +487,7 @@ function resetGame() {
 .settings-panel {
   width: 100%;
   max-width: 440px;
-  max-height: 90vh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   border-radius: 20px 20px 12px 12px;

@@ -30,8 +30,7 @@
           </div>
 
           <!-- 角色能力描述 -->
-          <div v-if="player.role?.ability && !uiStore.isRolesHidden" class="player-ability-box">
-            {{ player.role.ability }}
+          <div v-if="player.role?.ability && !uiStore.isRolesHidden" class="player-ability-box" v-html="player.role.ability">
           </div>
 
           <!-- 核心操作 2x2 網格 -->
@@ -137,10 +136,15 @@
             </div>
           </div>
 
-          <!-- 危險操作 -->
-          <button class="remove-btn" @click="handleRemove">
-            🗑️ 移除此玩家
-          </button>
+          <!-- 底部操作列 -->
+          <div class="sheet-footer-actions">
+            <button class="remove-btn" @click="handleRemove">
+              🗑️ 移除此玩家
+            </button>
+            <button class="btn-ghost close-bottom-btn" @click="uiStore.selectPlayer(null)">
+              ✕ 返回主畫面
+            </button>
+          </div>
         </div>
       </div>
     </transition>
@@ -148,12 +152,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    uiStore.selectPlayer(null)
+  }
+}
 
 const player = computed(() => {
   return gameStore.players.find(p => p.id === uiStore.selectedPlayerId)
@@ -332,6 +350,9 @@ function handleNominateHim() {
   padding-bottom: env(safe-area-inset-bottom, 20px);
   box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
   z-index: 2001;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .sheet-handle {
@@ -341,10 +362,13 @@ function handleNominateHim() {
   border-radius: 2px;
   margin: 12px auto;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .sheet-content {
   padding: 0 20px 20px;
+  overflow-y: auto;
+  flex-grow: 1;
 }
 
 .player-header {
@@ -613,6 +637,21 @@ function handleNominateHim() {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
+}
+
+.sheet-footer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.close-bottom-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  color: #aaa;
+  border-color: rgba(255, 255, 255, 0.05);
 }
 
 .sheet-slide-enter-active, .sheet-slide-leave-active {

@@ -81,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, nextTick } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
 import type { RoleType } from '../types'
@@ -96,14 +96,26 @@ const activeTab = ref<'first' | 'other'>(
   (gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup') ? 'first' : 'other'
 )
 
-// 恢復捲動位置
+// 恢復捲動位置與註冊按鍵事件
 onMounted(async () => {
+  window.addEventListener('keydown', handleKeydown)
   if (listRef.value && uiStore.nightOrderScrollPos > 0) {
     // 使用 nextTick 確保列表已經渲染完成
     await nextTick()
     listRef.value.scrollTop = uiStore.nightOrderScrollPos
   }
 })
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    e.stopImmediatePropagation()
+    uiStore.closePanel()
+  }
+}
 
 // 紀錄捲動位置
 function handleScroll(e: Event) {
@@ -222,7 +234,7 @@ function cancelLongPress() {
 .night-order-panel {
   width: 100%;
   max-width: 440px;
-  max-height: 90vh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   border-radius: 20px 20px 12px 12px;

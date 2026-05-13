@@ -20,7 +20,7 @@
       <div class="detail-body">
         <div class="ability-section">
           <div class="section-label">角色能力</div>
-          <p class="detail-ability">{{ character.ability }}</p>
+          <p class="detail-ability" v-html="character.ability"></p>
         </div>
         
         <div v-if="character.conflicts && character.conflicts.length > 0" class="detail-conflicts">
@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 import type { CharacterDef } from '../types'
 import { ROLE_TYPE_LABEL } from '../types'
 import { useScriptStore } from '../stores/scriptStore'
@@ -52,6 +52,21 @@ const props = defineProps<{
 const emit = defineEmits(['close'])
 
 const scriptStore = useScriptStore()
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    e.stopImmediatePropagation()
+    emit('close')
+  }
+}
 
 const typeLabel = computed(() => {
   if (!props.character) return ''
@@ -94,6 +109,9 @@ function getCharacterName(id?: string) {
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .detail-header {
@@ -103,6 +121,7 @@ function getCharacterName(id?: string) {
   align-items: flex-start;
   position: relative;
   background: linear-gradient(to bottom right, rgba(255,255,255,0.1), transparent);
+  flex-shrink: 0;
 }
 
 .header-main {
@@ -174,6 +193,8 @@ function getCharacterName(id?: string) {
 
 .detail-body {
   padding: 20px;
+  overflow-y: auto;
+  flex-grow: 1;
 }
 
 .section-label {

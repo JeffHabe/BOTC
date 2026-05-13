@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 
@@ -53,6 +53,21 @@ const uiStore = useUIStore()
 const gameStore = useGameStore()
 const name = ref('')
 const totalCount = ref<number | null>(null)
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    e.stopImmediatePropagation()
+    uiStore.addPlayerDialogOpen = false
+  }
+}
 
 async function confirm() {
   if (!name.value.trim()) return
@@ -91,7 +106,8 @@ async function confirmBatch() {
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
   text-align: center;
   position: relative;
-  overflow: hidden;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .add-player-dialog::before {

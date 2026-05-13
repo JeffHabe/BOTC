@@ -116,13 +116,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 import type { ReminderToken } from '../types'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    e.stopImmediatePropagation()
+    uiStore.closeReminderPicker()
+  }
+}
 
 const player = computed(() => {
   const id = uiStore.reminderPickerPlayerId
@@ -223,6 +238,7 @@ async function quickAdd(text: string, source: string = '劇本') {
   box-shadow: var(--shadow-panel);
   display: flex;
   flex-direction: column;
+  max-height: 85vh;
 }
 
 .panel-header {
@@ -231,6 +247,7 @@ async function quickAdd(text: string, source: string = '劇本') {
   gap: 8px;
   padding: 16px;
   border-bottom: 1px solid rgba(201, 168, 76, 0.1);
+  flex-shrink: 0;
 }
 
 .panel-icon { font-size: 18px; }
@@ -251,8 +268,8 @@ async function quickAdd(text: string, source: string = '劇本') {
 
 .reminder-content {
   padding: 16px;
-  max-height: 70vh;
   overflow-y: auto;
+  flex-grow: 1;
 }
 
 .section { margin-bottom: 16px; }

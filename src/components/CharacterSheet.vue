@@ -80,13 +80,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
 import { ROLE_TYPE_LABEL, type RoleType } from '../types'
 
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    e.stopImmediatePropagation()
+    uiStore.closePanel()
+  }
+}
 
 const showAllRoles = ref(false)
 

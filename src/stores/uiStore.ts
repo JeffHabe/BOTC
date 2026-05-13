@@ -343,6 +343,81 @@ export const useUIStore = defineStore('ui', () => {
     }
   }
 
+  // --- 手機端邊緣滑動返回 (History API) 與全域 Esc 攔截 ---
+  const isAnyOverlayOpen = computed(() => {
+    return activePanel.value !== 'none' ||
+      addPlayerDialogOpen.value ||
+      renameDialogPlayer.value !== null ||
+      confirmDialog.value !== null ||
+      isRolePickerOpen.value ||
+      reminderPickerPlayerId.value !== null ||
+      isBluffsShowcase.value ||
+      isSingleRoleShowcase.value ||
+      isArrangingPlayers.value ||
+      selectedPlayerId.value !== null
+  })
+
+  let isHistoryPushed = false
+  let isProgrammaticBack = false
+
+  watch(isAnyOverlayOpen, (isOpen) => {
+    if (isOpen && !isHistoryPushed) {
+      // 當開啟任一彈出層且尚未寫入歷史紀錄時，推入一筆虛擬 state 攔截手機端邊緣滑動返回
+      window.history.pushState({ botcOverlay: true }, '')
+      isHistoryPushed = true
+    } else if (!isOpen && isHistoryPushed) {
+      // 當所有彈出層均已透過按鈕或程式碼手動關閉，需自動出棧剛才推入的 state
+      isHistoryPushed = false
+      isProgrammaticBack = true
+      window.history.back()
+    }
+  })
+
+  // 監聽 popstate (使用者觸發手機邊緣向內滑動返回或瀏覽器上一頁)
+  window.addEventListener('popstate', (e) => {
+    if (isProgrammaticBack) {
+      // 若是程式碼自動清理 stack 觸發的 popstate，不做任何處理
+      isProgrammaticBack = false
+      return
+    }
+
+    if (isHistoryPushed) {
+      isHistoryPushed = false
+      // 阻止預設行為並模擬發送實體 Escape 按鍵事件，交給對應開啟中元件的 handleKeydown 處理收合
+      window.dispatchEvent(new KeyboardEvent('keydown', { 
+        key: 'Escape', 
+        code: 'Escape', 
+        bubbles: true,
+        cancelable: true 
+      }))
+
+      // 由於 topmost 元件可能僅關閉了其內部的二級說明窗 (如 longPressChar) 或仍有下層彈窗處於開啟狀態，
+      // 延遲檢查若仍有彈出層處於開啟狀態，則再次寫入保護性 history state
+      setTimeout(() => {
+        if (isAnyOverlayOpen.value && !isHistoryPushed) {
+          window.history.pushState({ botcOverlay: true }, '')
+          isHistoryPushed = true
+        }
+      }, 60)
+    }
+  })
+
+  // 針對沒有專屬元件監聽 Escape 的特殊展示層，提供全域 Escape 支援
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+      if (isBluffsShowcase.value) {
+        e.stopImmediatePropagation()
+        isBluffsShowcase.value = false
+      } else if (isSingleRoleShowcase.value) {
+        e.stopImmediatePropagation()
+        isSingleRoleShowcase.value = false
+      } else if (isArrangingPlayers.value) {
+        e.stopImmediatePropagation()
+        isArrangingPlayers.value = false
+      }
+    }
+  })
+
   return {
     // 面板
     activePanel, openPanel, closePanel, togglePanel,

@@ -137,13 +137,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
 import ColorPicker from './ColorPicker.vue'
 
 const gameStore = useGameStore()
 const uiStore = useUIStore()
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    e.stopImmediatePropagation()
+    // 智慧退回：若展開了顏色挑選器或控制項，優先收起；否則關閉面板
+    if (showColorPicker.value) {
+      showColorPicker.value = false
+    } else if (isControlsExpanded.value) {
+      isControlsExpanded.value = false
+    } else {
+      uiStore.closePanel()
+    }
+  }
+}
 
 const isControlsExpanded = ref(false)
 const showColorPicker = ref(false)
