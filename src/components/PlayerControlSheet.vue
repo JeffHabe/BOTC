@@ -36,29 +36,16 @@
           <!-- 核心操作 2x2 網格 -->
           <div class="action-grid">
             <template v-if="player.is_alive">
-              <button class="action-btn death-btn" @click="handleKill('execution')">
-                <span class="icon">⚖️</span>
-                <span class="label">處決死亡</span>
-                <span v-if="isProtected" class="warning-badge" title="注意：該玩家目前有保護標記">⚠️被保護</span>
-              </button>
-              <button 
-                class="action-btn death-btn" 
-                :class="{ 'has-warning': isProtected }"
-                @click="handleKill('killed')"
-              >
-                <span class="icon">🔪</span>
-                <span class="label">被殺死亡</span>
+              <button class="action-btn death-btn" @click="handleKill">
+                <span class="icon">💀</span>
+                <span class="label">死亡</span>
                 <span v-if="isProtected" class="warning-badge" title="注意：該玩家目前有保護標記">⚠️被保護</span>
               </button>
             </template>
             <template v-else>
               <button class="action-btn revive-btn" @click="handleRevive">
                 <span class="icon">❤️</span>
-                <span class="label">恢復存活</span>
-              </button>
-              <button class="action-btn type-toggle-btn" @click="handleToggleDeathType">
-                <span class="icon">{{ isExecution ? '🔪' : '⚖️' }}</span>
-                <span class="label">{{ isExecution ? '改為被殺' : '改為處決' }}</span>
+                <span class="label">復活</span>
               </button>
             </template>
 
@@ -177,10 +164,6 @@ const player = computed(() => {
   return gameStore.players.find(p => p.id === uiStore.selectedPlayerId)
 })
 
-const isExecution = computed(() => {
-  return player.value?.reminders.some(r => r.text === '處決') || false
-})
-
 // 偵測玩家是否處於保護狀態 (僅偵測當晚/當輪設定的標記，且發動者必須狀態正常)
 const isProtected = computed(() => {
   if (!player.value) return false
@@ -225,30 +208,10 @@ const isProtected = computed(() => {
   })
 })
 
-async function handleKill(type: 'execution' | 'killed') {
+async function handleKill() {
   if (player.value) {
     await gameStore.killPlayer(player.value.id)
-    const text = type === 'execution' ? '處決' : '被殺'
-    // 檢查是否已存在同名標記，避免重複
-    if (!player.value.reminders.some(r => r.text === '處決' || r.text === '被殺')) {
-      await gameStore.addReminder(player.value.id, text, '系統')
-    }
   }
-}
-
-async function handleToggleDeathType() {
-  if (!player.value) return
-  const current = isExecution.value ? '處決' : '被殺'
-  const next = isExecution.value ? '被殺' : '處決'
-  
-  // 移除舊的
-  const oldRem = player.value.reminders.find(r => r.text === current)
-  if (oldRem) {
-    await gameStore.removeReminder(player.value.id, oldRem.id)
-  }
-  
-  // 加入新的
-  await gameStore.addReminder(player.value.id, next, '系統')
 }
 
 async function handleRevive() {

@@ -151,6 +151,47 @@
           </button>
         </div>
        
+        <div class="section-title">魔典縮放 (Inverted Zoom)</div>
+        <div class="zoom-slider-box">
+          <input 
+            type="range" 
+            min="0.5" 
+            max="2.0" 
+            step="0.05" 
+            :value="uiStore.grimoireScale"
+            @input="e => uiStore.setGrimoireScale(parseFloat((e.target as HTMLInputElement).value))"
+            class="settings-slider"
+          />
+          <div class="slider-labels">
+            <span>調整玩家令片顯示大小</span>
+            <span class="scale-val">{{ Math.round(uiStore.grimoireScale * 100) }}%</span>
+          </div>
+        </div>
+
+        <div class="divider" />
+
+        <!-- 計時器設置 -->
+        <div class="section-title">計時器設置</div>
+        <div class="layout-selector-grid cols-2">
+          <button 
+            class="layout-option"
+            :class="{ active: uiStore.isTimerSoundEnabled }"
+            @click="uiStore.setTimerSoundEnabled(!uiStore.isTimerSoundEnabled)"
+          >
+            <span class="opt-icon">🔔</span>
+            <span class="opt-label">到點鐘聲</span>
+            <div v-if="uiStore.isTimerSoundEnabled" class="active-check">✓</div>
+          </button>
+          <button 
+            class="layout-option"
+            :class="{ active: uiStore.isTimerNotificationEnabled }"
+            @click="uiStore.setTimerNotificationEnabled(!uiStore.isTimerNotificationEnabled)"
+          >
+            <span class="opt-icon">🖥️</span>
+            <span class="opt-label">桌面通知</span>
+            <div v-if="uiStore.isTimerNotificationEnabled" class="active-check">✓</div>
+          </button>
+        </div>
 
         <div class="divider" />
 
@@ -781,5 +822,45 @@ function resetGame() {
   font-size: 11px;
   text-align: center;
   color: var(--color-text-muted);
+}
+
+.zoom-slider-box {
+  background: rgba(0,0,0,0.2);
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+}
+
+.settings-slider {
+  width: 100%;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  outline: none;
+  appearance: none;
+  margin-bottom: 12px;
+}
+
+.settings-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--color-gold);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(201, 168, 76, 0.4);
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.scale-val {
+  color: var(--color-gold-bright);
+  font-weight: 800;
+  font-family: monospace;
 }
 </style>

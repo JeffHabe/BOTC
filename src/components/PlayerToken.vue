@@ -234,18 +234,10 @@ function getReminderStyle(rIdx: number, isPlus = false) {
   // 1. 內圈向心模式 (Inner - Single Radial Column)
   if (layout === 'inner') {
     const baseDist = 75 
-    const gap = 50     // 提示圖示之間的大間距 (方便看清文字)
-    const plusGap = 35  // 加號與上一個圖示的小間距 (緊貼感)
-
-    // 計算實際物理距離
-    let distV = baseDist + rIdx * gap
+    const gap = 52     // 縱向間距
     
-    // 如果是加號，且前面已經有提示圖示，則使用較小的 plusGap
-    if (isPlus && rIdx > 0) {
-      distV = baseDist + (rIdx - 1) * gap + plusGap
-    } else if (isPlus && rIdx === 0) {
-      distV = baseDist
-    }
+    // 計算實際物理距離
+    const distV = baseDist + rIdx * gap
 
     const top = 50 - (distV * Math.sin(angle) * 0.75)
     const left = 50 - (distV * Math.cos(angle) * 0.75)
@@ -253,9 +245,9 @@ function getReminderStyle(rIdx: number, isPlus = false) {
     return {
       top: `${top}%`,
       left: `${left}%`,
-      width: '30px',
-      height: '30px',
-      fontSize: '9px',
+      width: `${30 * uiStore.grimoireScale}px`,
+      height: `${30 * uiStore.grimoireScale}px`,
+      fontSize: `${9 * uiStore.grimoireScale}px`,
       position: 'absolute',
       transform: 'translate(-50%, -50%)'
     }
@@ -263,14 +255,19 @@ function getReminderStyle(rIdx: number, isPlus = false) {
 
   // 2. 經典弧形 (Arc)
   if (layout === 'arc') {
-    const deg = (rIdx * 55 - 10) * (Math.PI / 180) /* 增加角度 45 -> 55 */
-    let l = 50 + 68 * Math.cos(deg)
-    const t = 50 + 68 * Math.sin(deg)
-    if (isRight) l = 50 - 68 * Math.cos(deg)
+    const radius = 68 // 恢復為固定半徑
+    const deg = (rIdx * 55 - 10) * (Math.PI / 180)
+    
+    let l = 50 + radius * Math.cos(deg)
+    const t = 50 + radius * Math.sin(deg)
+    if (isRight) l = 50 - radius * Math.cos(deg)
     
     return {
       top: `${t}%`,
       left: `${l}%`,
+      width: `${30 * uiStore.grimoireScale}px`,
+      height: `${30 * uiStore.grimoireScale}px`,
+      fontSize: `${9 * uiStore.grimoireScale}px`,
       position: 'absolute',
       transform: 'translate(-50%, -50%)'
     }
@@ -279,9 +276,13 @@ function getReminderStyle(rIdx: number, isPlus = false) {
   // 3. 側面堆疊 (Stack)
   if (layout === 'stack') {
     const side = isRight ? 'right' : 'left'
+    
     return {
-      top: `${rIdx * 38 + 10}px`,
-      [side]: '125%', /* 增加側邊距離 110% -> 125% */
+      top: `${rIdx * 52 + 10}px`, // 保持較大間距以容納文字
+      [side]: '125%',
+      width: `${24 * uiStore.grimoireScale}px`,
+      height: `${24 * uiStore.grimoireScale}px`,
+      fontSize: `${8 * uiStore.grimoireScale}px`,
       position: 'absolute'
     }
   }
@@ -534,8 +535,9 @@ const deathTypeClass = computed(() => {
   pointer-events: auto;
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 30px; /* 縮小基礎尺寸 36 -> 30 */
+  width: 30px;
   height: 30px;
+  /* width and height are handled by dynamic styles in getReminderStyle */
   background: url('/reminder1.png') no-repeat center center;
   background-size: cover;
   color: var(--color-gold-muted);
@@ -605,9 +607,8 @@ const deathTypeClass = computed(() => {
 
 .rem-label-container .rem-text-label {
   position: absolute;
-  bottom: 23px; /* 調整至圓圈下方（因為定位點在中心） */
-  /* 因為 30px 圓圈半徑是 15px，文字在下方 offset 約 8px = 23px */
-  transform: translateY(35px); /* 從 38px 調窄至 35px */
+  bottom: 23px; 
+  transform: translateY(33px); /* 稍微上移 2px (35->33)，增加緊湊感 */
 }
 
 /* --- 佈局樣式控制 --- */
@@ -624,6 +625,7 @@ const deathTypeClass = computed(() => {
   justify-content: flex-end;
   align-content: flex-end;
   padding: 4px;
+  width: 70px; /* 限制寬度：20px*3 + 間距，強制每 3 個換行 */
 }
 .layout-grid .rem-dot-classic {
   position: static;

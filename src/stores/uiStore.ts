@@ -2,6 +2,9 @@
 import { defineStore } from 'pinia'
 import { ref, watch, computed } from 'vue'
 import type { Player } from '../types'
+import { playClocktowerBell } from '../utils/audio'
+import { sendDesktopNotification } from '../utils/notification'
+import { invoke } from '@tauri-apps/api/core'
 
 export type Panel =
   | 'none'
@@ -45,6 +48,13 @@ export const useUIStore = defineStore('ui', () => {
     (localStorage.getItem('botc-grimoire-shape') as GrimoireShape) || 'oval'
   )
 
+  const grimoireScale = ref(
+    parseFloat(localStorage.getItem('botc-grimoire-scale') || '1.0')
+  )
+
+  const viewScale = ref(1.0) // 雙指縮放使用的視角縮放
+  const zoomOrigin = ref('center 55%') // 縮放中心點
+
   function setReminderLayout(layout: ReminderLayout) {
     reminderLayout.value = layout
     localStorage.setItem('botc-reminder-layout', layout)
@@ -53,6 +63,27 @@ export const useUIStore = defineStore('ui', () => {
   function setGrimoireShape(shape: GrimoireShape) {
     grimoireShape.value = shape
     localStorage.setItem('botc-grimoire-shape', shape)
+  }
+
+  function setGrimoireScale(scale: number) {
+    grimoireScale.value = Math.min(Math.max(scale, 0.5), 2.5) // 限制範圍
+    localStorage.setItem('botc-grimoire-scale', grimoireScale.value.toString())
+  }
+
+  function zoomIn() { setGrimoireScale(grimoireScale.value + 0.1) }
+  function zoomOut() { setGrimoireScale(grimoireScale.value - 0.1) }
+  function resetZoom() { 
+    setGrimoireScale(1.0) 
+    viewScale.value = 1.0 // 重置視角
+    resetPan()
+  }
+
+  function setViewScale(scale: number) {
+    viewScale.value = Math.min(Math.max(scale, 0.5), 3.0)
+  }
+
+  function setZoomOrigin(origin: string) {
+    zoomOrigin.value = origin
   }
 
   function cycleGrimoireShape() {
@@ -235,8 +266,20 @@ export const useUIStore = defineStore('ui', () => {
   const timerTargetTimestamp = ref<number | null>(null) // 結束的時間戳記
   let timerInterval: number | null = null
 
+  const isTimerSoundEnabled = ref(localStorage.getItem('botc-timer-sound') !== 'false')
+  const isTimerNotificationEnabled = ref(localStorage.getItem('botc-timer-notification') !== 'false')
+
+  function setTimerSoundEnabled(enabled: boolean) {
+    isTimerSoundEnabled.value = enabled
+    localStorage.setItem('botc-timer-sound', String(enabled))
+  }
+
+  function setTimerNotificationEnabled(enabled: boolean) {
+    isTimerNotificationEnabled.value = enabled
+    localStorage.setItem('botc-timer-notification', String(enabled))
+  }
+
   // --- 縮放控制 (Zoom Control) ---
-  const grimoireScale = ref(Number(localStorage.getItem('botc-grimoire-scale')) || 1.0)
 
   // --- 自定義背景圖 ---
   const customDayBackground = ref<string | null>(localStorage.getItem('botc-custom-day-bg'))
@@ -254,18 +297,6 @@ export const useUIStore = defineStore('ui', () => {
     else localStorage.removeItem('botc-custom-night-bg')
   }
 
-  function setGrimoireScale(scale: number) {
-    const clamped = Math.min(Math.max(scale, 0.5), 2.0)
-    grimoireScale.value = clamped
-    localStorage.setItem('botc-grimoire-scale', String(clamped))
-  }
-
-  function zoomIn() { setGrimoireScale(grimoireScale.value + 0.1) }
-  function zoomOut() { setGrimoireScale(grimoireScale.value - 0.1) }
-  function resetZoom() {
-    setGrimoireScale(1.0)
-    resetPan()
-  }
 
   // --- 平移控制 (Pan Control) ---
   const grimoireTranslateX = ref(0)
@@ -286,6 +317,11 @@ export const useUIStore = defineStore('ui', () => {
     if (!isTimerRunning.value) {
       isTimerRunning.value = true
 
+      // 針對 Android 背景優化：在後端啟動計時通知
+      if (isTimerNotificationEnabled.value) {
+        invoke('start_background_timer', { seconds: timerRemaining.value })
+      }
+
       // 核心改進：記錄結束的時間點，防止鎖屏暫停
       timerTargetTimestamp.value = Date.now() + (timerRemaining.value * 1000)
 
@@ -299,6 +335,14 @@ export const useUIStore = defineStore('ui', () => {
           } else {
             timerRemaining.value = 0
             pauseTimer()
+            
+            // 觸發提醒
+            if (isTimerSoundEnabled.value) {
+              playClocktowerBell()
+            }
+            if (isTimerNotificationEnabled.value) {
+              sendDesktopNotification('計時結束', '時間到囉！鐘樓的鐘聲響起了。')
+            }
           }
         }
       }, 1000)
@@ -328,8 +372,20 @@ export const useUIStore = defineStore('ui', () => {
     if (isTimerRunning.value && timerTargetTimestamp.value) {
       const now = Date.now()
       const diff = Math.ceil((timerTargetTimestamp.value - now) / 1000)
-      timerRemaining.value = Math.max(0, diff)
-      if (diff <= 0) pauseTimer()
+      if (diff <= 0) {
+        timerRemaining.value = 0
+        pauseTimer()
+        
+        // 補發提醒 (如果是從背景恢復時發現已到點)
+        if (isTimerSoundEnabled.value) {
+          playClocktowerBell()
+        }
+        if (isTimerNotificationEnabled.value) {
+          sendDesktopNotification('計時結束', '時間到囉！鐘樓的鐘聲響起了。')
+        }
+      } else {
+        timerRemaining.value = diff
+      }
     }
   }
 
@@ -449,9 +505,12 @@ export const useUIStore = defineStore('ui', () => {
     isArrangingPlayers, toggleArrangingPlayers,
     // 計時器
     timerRemaining, timerTotal, isTimerRunning, isTimerExpanded, timerTargetTimestamp,
+    isTimerSoundEnabled, isTimerNotificationEnabled,
+    setTimerSoundEnabled, setTimerNotificationEnabled,
     startTimer, pauseTimer, resetTimer, addTimerSeconds, calibrateTimer,
     // 縮放與平移控制
     grimoireScale, setGrimoireScale, zoomIn, zoomOut, resetZoom,
+    viewScale, setViewScale, zoomOrigin, setZoomOrigin,
     grimoireTranslateX, grimoireTranslateY, setGrimoireTranslate, resetPan,
     // 背景圖片
     customDayBackground, customNightBackground, setDayBackground, setNightBackground,

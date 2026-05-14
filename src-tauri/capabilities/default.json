@@ -11,6 +11,7 @@
     "fs:allow-app-write",
     "fs:allow-app-read",
     "dialog:allow-open",
-    "dialog:allow-save"
+    "dialog:allow-save",
+    "notification:default"
   ]
 }

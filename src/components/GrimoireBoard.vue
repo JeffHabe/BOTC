@@ -46,8 +46,8 @@
     <div 
       class="tokens-fixed-area"
       :style="{ 
-        transform: `translate(${uiStore.grimoireTranslateX}px, ${uiStore.grimoireTranslateY}px) scale(${uiStore.grimoireScale})`,
-        transformOrigin: 'center 55%'
+        transform: `translate(${uiStore.grimoireTranslateX}px, ${uiStore.grimoireTranslateY}px) scale(${uiStore.viewScale})`,
+        transformOrigin: uiStore.zoomOrigin
       }"
     >
       <!-- 中央劇本標誌 -->
@@ -218,7 +218,7 @@
             <span class="icon">📝</span>
           </button>
         </template>
-      </transition-group>
+      </transition-group> 
     </div>
 
 
@@ -373,11 +373,38 @@ function updateWindowSize() {
 
 onMounted(() => {
   window.addEventListener('resize', updateWindowSize)
+  window.addEventListener('wheel', handleGlobalWheel, { passive: false })
+  updateWindowSize()
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateWindowSize)
+  window.removeEventListener('wheel', handleGlobalWheel)
 })
+
+function updateZoomOrigin(e: MouseEvent | TouchEvent) {
+  const container = document.querySelector('.grimoire-board')
+  if (!container) return
+  const rect = container.getBoundingClientRect()
+  const clientX = 'touches' in e ? (e.touches[0].clientX + (e.touches[1]?.clientX || e.touches[0].clientX)) / 2 : (e as MouseEvent).clientX
+  const clientY = 'touches' in e ? (e.touches[0].clientY + (e.touches[1]?.clientY || e.touches[0].clientY)) / 2 : (e as MouseEvent).clientY
+  
+  const x = ((clientX - rect.left) / rect.width) * 100
+  const y = ((clientY - rect.top) / rect.height) * 100
+  uiStore.setZoomOrigin(`${x}% ${y}%`)
+}
+
+function handleGlobalWheel(e: WheelEvent) {
+  if (e.ctrlKey) {
+    e.preventDefault()
+    // 只有在原始比例時，或者開始新的滾動序列時更新中心點，防止跳動
+    if (uiStore.viewScale === 1.0) {
+      updateZoomOrigin(e)
+    }
+    const delta = e.deltaY > 0 ? -0.12 : 0.12
+    uiStore.setViewScale(uiStore.viewScale + delta)
+  }
+}
 
 // --- 螢幕喚醒鎖 (Wake Lock) ---
 let wakeLock: any = null
@@ -487,11 +514,12 @@ function handleMouseDown(e: MouseEvent | TouchEvent) {
       (e.target as HTMLElement).closest('.control-sheet')) return
 
   if ('touches' in e && e.touches.length === 2) {
-    // 雙指縮放開始
+    // 雙指縮放開始：在此時鎖定中心點
     isPinching.value = true
     isDragging.value = false
+    updateZoomOrigin(e) 
     startPinchDist.value = getDistance(e.touches)
-    startScale.value = uiStore.grimoireScale
+    startScale.value = uiStore.viewScale
   } else {
     // 單指拖拽開始
     isDragging.value = true
@@ -501,8 +529,7 @@ function handleMouseDown(e: MouseEvent | TouchEvent) {
     
     startPos.x = clientX
     startPos.y = clientY
-    startTranslate.x = uiStore.grimoireTranslateX
-    startTranslate.y = uiStore.grimoireTranslateY
+    // 移除平移開始座標紀錄
   }
 
   window.addEventListener('mousemove', handleMouseMove)
@@ -516,9 +543,8 @@ function handleMouseMove(e: MouseEvent | TouchEvent) {
     // 執行雙指縮放
     const currentDist = getDistance(e.touches)
     const ratio = currentDist / startPinchDist.value
-    // 限制縮放範圍在 0.5 到 3 之間
-    const newScale = Math.min(Math.max(startScale.value * ratio, 0.5), 3)
-    uiStore.grimoireScale = newScale
+    const newScale = Math.min(Math.max(startScale.value * ratio, 0.5), 3.0)
+    uiStore.setViewScale(newScale)
     if (e.cancelable) e.preventDefault()
     return
   }
@@ -528,10 +554,7 @@ function handleMouseMove(e: MouseEvent | TouchEvent) {
   const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
   const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
   
-  const dx = clientX - startPos.x
-  const dy = clientY - startPos.y
-  
-  uiStore.setGrimoireTranslate(startTranslate.x + dx, startTranslate.y + dy)
+  // 已禁用平移位移 (uiStore.setGrimoireTranslate)
   
   if (e.cancelable) e.preventDefault()
 }
@@ -560,7 +583,8 @@ const allTokenStyles = computed(() => {
     // 如果正在拖曳排列，該令片的樣式由 dragState 決定（這部分仍需動態）
     if (dragState.isDragging && dragState.index === index) {
       const n = players.value.length
-      const baseSize = n > 14 ? 68 : n > 11 ? 80 : n > 8 ? 92 : 105
+      // 修正：Scale 越大，令片越大
+      const baseSize = (n > 14 ? 68 : n > 11 ? 80 : n > 8 ? 92 : 105) * uiStore.grimoireScale
       return {
         position: 'absolute',
         left: `${dragState.xPercent}%`,
@@ -686,27 +710,28 @@ const LAYOUT_CONFIG = computed(() => {
 
   switch (shape) {
     case 'circle':
-      // 核心邏輯：擴大半徑 (44%) 以增加周長，減少擁擠
+      // 圓心座標固定：移除縮放連動
       const baseA = 50
       return {
         a: baseA,
-        b: baseA * ratio, // 修正比例
+        b: baseA * ratio,
         nFactor: 2,
-        yCenter: 55, // 圓形模式下完全居中
+        yCenter: 55,
         samples: 600
       }
     case 'rect':
-      // 矩形模式優化：增加響應式高度，並稍微降低 nFactor 讓過渡更平滑
+      // 圓心座標固定：移除縮放連動
       const baseARect = 41
       return {
         a: baseARect,
-        b: Math.min(baseARect * ratio * 1.3, 38), // 隨比例增加高度，但設定上限防止太長
-        nFactor: 3.2, // 從 4.0 降到 3.2，讓角落不那麼死板
+        b: Math.min(baseARect * ratio * 1.3, 38), 
+        nFactor: 3.2, 
         yCenter: 50,
         samples: 800
       }
     case 'oval':
     default:
+      // 圓心座標固定：移除縮放連動
       return {
         a: 38,
         b: 30,
@@ -791,12 +816,13 @@ function getIsRightSide(index: number) {
 }
 
 function getPlayerPosStyle(index: number): CSSProperties {
+  // 根據人數與縮放比例動態計算令片大小
   const n = players.value.length
   if (n === 0) return {}
 
-  // 根據人數動態縮放令片
-  // 根據人數動態縮放令片 (針對多人模式進一步縮小以釋放空間)
-  const baseSize = n > 14 ? 68 : n > 11 ? 80 : n > 8 ? 92 : 105
+  const rawSize = n > 14 ? 68 : n > 11 ? 80 : n > 8 ? 92 : 105
+  // 修正：Scale 越大，令片越大
+  const baseSize = rawSize * uiStore.grimoireScale
   
   // 獲取等距角度
   const angle = getEquidistantAngle(index, n)

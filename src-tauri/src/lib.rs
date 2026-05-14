@@ -12,6 +12,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .manage(AppState(Mutex::new(GameState::default())))
         .invoke_handler(tauri::generate_handler![
             // 遊戲管理
@@ -58,6 +59,7 @@ pub fn run() {
             commands::import_custom_script,
             commands::save_game_state,
             commands::load_game_state,
+            commands::start_background_timer,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

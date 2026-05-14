@@ -5,7 +5,8 @@ use crate::models::{
 };
 use serde_json::Value;
 use std::sync::Mutex;
-use tauri::State;
+use tauri::{AppHandle, State};
+use tauri_plugin_notification::NotificationExt;
 
 pub struct AppState(pub Mutex<GameState>);
 
@@ -795,6 +796,19 @@ pub fn import_game_state(json_str: String, state: State<AppState>) -> Result<Gam
     let mut gs = state.0.lock().unwrap();
     *gs = new_state;
     Ok(gs.clone())
+}
+
+/// 啟動後端計時器通知 (針對 Android 背景優化)
+#[tauri::command]
+pub async fn start_background_timer(app: AppHandle, seconds: u64) {
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_secs(seconds));
+        let _ = app.notification()
+            .builder()
+            .title("計時結束")
+            .body("時間到囉！鐘樓的鐘聲響起了。")
+            .show();
+    });
 }
 
 /// 從 JSON 匯入自定義腳本
