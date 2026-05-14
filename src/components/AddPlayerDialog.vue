@@ -1,9 +1,11 @@
 <template>
   <div class="overlay" @click.self="uiStore.addPlayerDialogOpen = false">
     <div class="add-player-dialog animate-slide-up">
+      <button class="close-btn" @click="uiStore.addPlayerDialogOpen = false">✕</button>
       <h3 class="dialog-title">新增玩家</h3>
       <p class="dialog-sub">已有 {{ gameStore.players.length }} / 20 位玩家</p>
       <input
+        ref="nameInput"
         v-model="name"
         class="name-input"
         type="text"
@@ -12,9 +14,9 @@
         @keyup.enter="confirm"
         autofocus
       />
+      <p class="input-hint">按下 Enter 可連續新增</p>
       <div class="dialog-actions mb-4">
-        <button class="btn-ghost" @click="uiStore.addPlayerDialogOpen = false">取消</button>
-        <button class="btn-primary" @click="confirm" :disabled="!name.trim()">確認</button>
+        <button class="btn-primary" @click="confirm" :disabled="!name.trim()">確認新增</button>
       </div>
 
       <div class="divider"><span>或直接設定人數</span></div>
@@ -53,9 +55,12 @@ const uiStore = useUIStore()
 const gameStore = useGameStore()
 const name = ref('')
 const totalCount = ref<number | null>(null)
+const nameInput = ref<HTMLInputElement | null>(null)
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
+  // 延遲一點確保 DOM 渲染完成後聚焦
+  setTimeout(() => nameInput.value?.focus(), 100)
 })
 
 onBeforeUnmount(() => {
@@ -73,13 +78,14 @@ async function confirm() {
   if (!name.value.trim()) return
   await gameStore.addPlayer(name.value.trim())
   name.value = ''
-  uiStore.addPlayerDialogOpen = false
+  // 保持彈窗開啟，方便連續新增
+  nameInput.value?.focus()
 }
 
 async function confirmBatch() {
   if (!totalCount.value || totalCount.value <= gameStore.players.length) return
   await gameStore.setPlayerCount(totalCount.value)
-  uiStore.addPlayerDialogOpen = false
+  // 保持彈窗開啟，讓說書人確認結果
 }
 </script>
 
@@ -123,7 +129,27 @@ async function confirmBatch() {
   font-family: var(--font-title);
   font-size: 16px;
   color: var(--color-gold);
+  margin-top: 8px;
   margin-bottom: 4px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  z-index: 10;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: var(--color-gold);
 }
 
 .dialog-sub {
@@ -145,6 +171,14 @@ async function confirmBatch() {
   margin-bottom: 16px;
   text-align: center;
   transition: all 0.2s ease;
+}
+
+.input-hint {
+  font-size: 10px;
+  color: var(--color-gold-muted);
+  margin-top: -12px;
+  margin-bottom: 16px;
+  opacity: 0.8;
 }
 
 .name-input:focus { border-color: var(--color-gold); }

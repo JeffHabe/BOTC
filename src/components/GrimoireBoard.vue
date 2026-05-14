@@ -214,7 +214,7 @@
             <span class="icon">{{ currentShapeIcon }}</span>
           </button>
           
-          <button key="whiteboard" class="menu-btn" @click="uiStore.openPanel('whiteboard')" title="夜晚溝通白板">
+          <button key="whiteboard" class="menu-btn" @click="uiStore.openPanel('whiteboard')" title="說書人資訊">
             <span class="icon">📝</span>
           </button>
         </template>
@@ -248,7 +248,7 @@
     <AddPlayerDialog v-if="uiStore.addPlayerDialogOpen" />
     <RenameDialog v-if="uiStore.renameDialogPlayer" />
     <ConfirmDialog v-if="uiStore.confirmDialog" />
-    <RolePicker v-if="uiStore.rolePickerPlayer || uiStore.rolePickerDemonBluffIndex !== null" />
+    <RolePicker v-if="uiStore.isRolePickerOpen" />
     <ReminderPicker v-if="uiStore.reminderPickerPlayerId" />
 
     <!-- 底部操作面板 -->

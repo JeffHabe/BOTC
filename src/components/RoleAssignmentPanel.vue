@@ -366,10 +366,10 @@
             <div v-if="availableMarionetteFakes.length === 0" class="empty-pool-hint">
               無可用善良角色 (可能已全被選入玩家角色)
             </div>
-            <div class="role-group">
-              <div class="group-header" style="color: var(--color-townsfolk)">可選善良角色 (不在場)</div>
+            <div v-for="group in groupedMarionetteFakes" :key="group.key" class="role-group">
+              <div class="group-header" :style="{ color: group.color }">可選{{ group.label }}角色 (不在場)</div>
               <div class="role-grid">
-                <div v-for="role in availableMarionetteFakes" 
+                <div v-for="role in group.list" 
                      :key="role.id" 
                      :id="'role-item-' + role.id"
                      class="role-card"
@@ -419,11 +419,11 @@
           </div>
 
           <div class="role-grid-container">
-            <div class="role-group">
-              <div class="group-header" style="color: var(--color-townsfolk)">可選偽裝角色</div>
+            <div v-for="group in groupedBluffCharacters" :key="group.key" class="role-group">
+              <div class="group-header" :style="{ color: group.color }">可選{{ group.label }}角色</div>
               <div class="role-grid">
-                <!-- 只顯示未被選為玩家角色的鎮民 -->
-                <div v-for="role in availableBluffPool" 
+                <!-- 只顯示未被選為玩家角色的角色 -->
+                <div v-for="role in group.list" 
                      :key="role.id" 
                      :id="'role-item-' + role.id"
                      class="role-card"
@@ -435,7 +435,7 @@
                      @mouseup="handlePressEnd">
                   <div class="role-card-icon">
                     <img v-if="role.image" :src="role.image" class="r-img" />
-                    <span v-else class="r-emoji">👤</span>
+                    <span v-else class="r-emoji">{{ getRoleTypeEmoji(role.role_type) }}</span>
                   </div>
                   <div class="role-card-name">{{ role.name }}</div>
                 </div>
@@ -1150,6 +1150,32 @@ const availableBluffPool = computed(() => {
     const matchesQuery = !query || c.name.toLowerCase().includes(query)
     return isGoodType && isNotUsed && matchesQuery
   })
+})
+
+const groupedBluffCharacters = computed(() => {
+  const all = availableBluffPool.value
+  const types = [
+    { key: 'Townsfolk', label: '鎮民', color: 'var(--color-townsfolk)' },
+    { key: 'Outsider', label: '外來者', color: 'var(--color-outsider)' }
+  ]
+  
+  return types.map(t => ({
+    ...t,
+    list: all.filter(c => c.role_type === t.key)
+  })).filter(g => g.list.length > 0)
+})
+
+const groupedMarionetteFakes = computed(() => {
+  const all = availableMarionetteFakes.value
+  const types = [
+    { key: 'Townsfolk', label: '鎮民', color: 'var(--color-townsfolk)' },
+    { key: 'Outsider', label: '外來者', color: 'var(--color-outsider)' }
+  ]
+  
+  return types.map(t => ({
+    ...t,
+    list: all.filter(c => c.role_type === t.key)
+  })).filter(g => g.list.length > 0)
 })
 
 const validBluffIds = computed(() => {
