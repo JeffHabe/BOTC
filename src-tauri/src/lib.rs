@@ -56,6 +56,8 @@ pub fn run() {
             commands::export_game_state,
             commands::import_game_state,
             commands::import_custom_script,
+            commands::save_game_state,
+            commands::load_game_state,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

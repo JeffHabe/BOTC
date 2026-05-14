@@ -940,3 +940,46 @@ pub fn import_custom_script(json_str: String, state: State<AppState>) -> Result<
     gs.touch();
     Ok(gs.clone())
 }
+
+// ─── 自動持久化指令 ──────────────────────────────────────────────
+
+use std::fs;
+use std::path::PathBuf;
+use tauri::Manager;
+
+/// 取得存檔文件路徑
+fn get_save_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut path = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    if !path.exists() {
+        fs::create_dir_all(&path).map_err(|e| e.to_string())?;
+    }
+    path.push("savegame.json");
+    Ok(path)
+}
+
+/// 保存當前遊戲狀態到實體文件
+#[tauri::command]
+pub fn save_game_state(state: GameState, app: tauri::AppHandle) -> Result<(), String> {
+    let path = get_save_path(&app)?;
+    let json = serde_json::to_string_pretty(&state).map_err(|e| e.to_string())?;
+    fs::write(path, json).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// 從實體文件讀取並恢復遊戲狀態
+#[tauri::command]
+pub fn load_game_state(state: State<AppState>, app: tauri::AppHandle) -> Result<GameState, String> {
+    let path = get_save_path(&app)?;
+    if !path.exists() {
+        return Err("SAVENOTFOUND".into());
+    }
+    let json = fs::read_to_string(path).map_err(|e| e.to_string())?;
+    let loaded_state: GameState = serde_json::from_str(&json).map_err(|e| e.to_string())?;
+
+    // 同步到內存狀態
+    let mut gs = state.0.lock().unwrap();
+    *gs = loaded_state.clone();
+
+    Ok(loaded_state)
+}
+

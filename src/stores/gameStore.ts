@@ -1,6 +1,6 @@
 // 血染鐘樓助手 Pinia 遊戲狀態 Store
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import type { GameState, CharacterDef, Script, GamePhase } from '../types'
 import { aliveCount, deadCount, executionThreshold } from '../types'
@@ -122,7 +122,13 @@ export const useGameStore = defineStore('game', () => {
   }
 
   async function syncState(newState: GameState | null) {
-    if (newState) state.value = newState
+    if (newState) {
+      state.value = newState
+      // 如果後端返回的狀態包含日誌，則同步它
+      if ((newState as any).game_logs) {
+        logs.value = (newState as any).game_logs
+      }
+    }
   }
 
   function addLog(type: GameLogEntry['type'], content: string, details?: any) {
@@ -148,13 +154,36 @@ export const useGameStore = defineStore('game', () => {
 
   async function saveState() {
     if (state.value) {
-      await callCommand('save_game_state', { state: state.value })
+      // 確保日誌也被包含在存檔中
+      const fullState = { ...state.value, game_logs: logs.value }
+      await callCommand('save_game_state', { state: fullState })
     }
   }
+
   async function loadState() {
-    const gs = await callCommand<GameState>('get_game_state')
-    await syncState(gs)
+    try {
+      const gs = await callCommand<GameState>('load_game_state')
+      if (gs) {
+        await syncState(gs)
+      }
+    } catch (e) {
+      if (e !== 'SAVENOTFOUND') {
+        console.error('載入自動存檔失敗:', e)
+      }
+    }
   }
+
+  // 自動存檔邏輯 (Debounced)
+  let saveTimer: any = null
+  watch([state, logs], () => {
+    if (saveTimer) clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => {
+      saveState()
+    }, 1500) // 1.5 秒內無變動則存檔
+  }, { deep: true })
+
+  // 初始化時加載存檔
+  loadState()
 
   async function newGame() {
     const currentScript = script.value // 備份劇本

@@ -197,6 +197,19 @@ pub struct Nomination {
     pub round: u32, // 哪一輪 (Day N) 發起的
 }
 
+// ─── 遊戲日誌 ─────────────────────────────────────────────────
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GameLogEntry {
+    pub id: String,
+    pub timestamp: u64,
+    pub day: u32,
+    pub phase: GamePhase,
+    #[serde(rename = "type")]
+    pub log_type: String, // action, death, assignment, etc.
+    pub content: String,
+    pub details: Option<serde_json::Value>,
+}
+
 // ─── 主遊戲狀態 ───────────────────────────────────────────────
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameState {
@@ -211,6 +224,8 @@ pub struct GameState {
     pub nominations: Vec<Nomination>,            // 本輪提名記錄
     #[serde(default)]
     pub active_fabled: Vec<String>, // 當前啟用的傳說角色 ID
+    #[serde(default)]
+    pub game_logs: Vec<GameLogEntry>, // 遊戲日誌
     pub created_at: String,
     pub updated_at: String,
 }
@@ -227,6 +242,7 @@ impl Default for GameState {
             lunatic_bluffs: vec![None, None, None],
             nominations: Vec::new(),
             active_fabled: Vec::new(),
+            game_logs: Vec::new(),
             created_at: chrono::Utc::now().to_rfc3339(),
             updated_at: chrono::Utc::now().to_rfc3339(),
         }
