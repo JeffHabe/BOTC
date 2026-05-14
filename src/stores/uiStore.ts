@@ -2,8 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref, watch, computed } from 'vue'
 import type { Player } from '../types'
-import { playClocktowerBell } from '../utils/audio'
-import { sendDesktopNotification } from '../utils/notification'
+import { playClocktowerBell, unlockAudio } from '../utils/audio'
 import { invoke } from '@tauri-apps/api/core'
 
 export type Panel =
@@ -317,6 +316,9 @@ export const useUIStore = defineStore('ui', () => {
     if (!isTimerRunning.value) {
       isTimerRunning.value = true
 
+      // 用戶點擊「開始」時，立即解鎖音訊權限
+      unlockAudio()
+
       // 針對 Android 背景優化：在後端啟動計時通知
       if (isTimerNotificationEnabled.value) {
         invoke('start_background_timer', { seconds: timerRemaining.value })
@@ -333,15 +335,22 @@ export const useUIStore = defineStore('ui', () => {
           if (diff > 0) {
             timerRemaining.value = diff
           } else {
-            timerRemaining.value = 0
-            pauseTimer()
-            
-            // 觸發提醒
-            if (isTimerSoundEnabled.value) {
-              playClocktowerBell()
-            }
-            if (isTimerNotificationEnabled.value) {
-              sendDesktopNotification('計時結束', '時間到囉！鐘樓的鐘聲響起了。')
+            // 防止重音：使用全域 window 鎖定
+            if (!(window as any)._botc_bell_playing) {
+              (window as any)._botc_bell_playing = true;
+              
+              // 計時結束：自動執行重置
+              resetTimer()
+              
+              // 觸發提醒：鐘聲立刻響
+              if (isTimerSoundEnabled.value) {
+                playClocktowerBell()
+              }
+
+              // 移除重複的前端通知，交給後端 start_background_timer 處理即可
+
+              // 3 秒後解除全域鎖
+              setTimeout(() => { (window as any)._botc_bell_playing = false; }, 3000);
             }
           }
         }
@@ -373,15 +382,22 @@ export const useUIStore = defineStore('ui', () => {
       const now = Date.now()
       const diff = Math.ceil((timerTargetTimestamp.value - now) / 1000)
       if (diff <= 0) {
-        timerRemaining.value = 0
-        pauseTimer()
-        
-        // 補發提醒 (如果是從背景恢復時發現已到點)
-        if (isTimerSoundEnabled.value) {
-          playClocktowerBell()
-        }
-        if (isTimerNotificationEnabled.value) {
-          sendDesktopNotification('計時結束', '時間到囉！鐘樓的鐘聲響起了。')
+        // 防止重音：使用全域 window 鎖定
+        if (!(window as any)._botc_bell_playing) {
+          (window as any)._botc_bell_playing = true;
+
+          // 背景恢復時發現已到點：自動執行重置
+          resetTimer()
+          
+          // 補發提醒
+          if (isTimerSoundEnabled.value) {
+            playClocktowerBell()
+          }
+
+          // 移除重複的前端通知，交給後端處理
+
+          // 3 秒後解除全域鎖
+          setTimeout(() => { (window as any)._botc_bell_playing = false; }, 3000);
         }
       } else {
         timerRemaining.value = diff
@@ -390,8 +406,13 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   function addTimerSeconds(seconds: number) {
+    // 如果計時器已經歸零且未在執行，視為新的一輪，重置總量
+    if (timerRemaining.value === 0 && !isTimerRunning.value) {
+      timerTotal.value = 0
+    }
+    
     timerTotal.value = Math.max(0, timerTotal.value + seconds)
-    // 如果計時器未啟動或已歸零，則同步更新剩餘時間
+    // 如果計時器未啟動，則同步更新剩餘時間
     if (!isTimerRunning.value) {
       timerRemaining.value = timerTotal.value
     } else {

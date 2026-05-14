@@ -23,8 +23,10 @@
         </div>
 
         <div class="timer-adjust">
-          <button class="adjust-btn" @click="uiStore.addTimerSeconds(-60)">-1分</button>
-          <button class="adjust-btn" @click="uiStore.addTimerSeconds(60)">+1分</button>
+          <button class="adjust-btn" @click="uiStore.addTimerSeconds(-10)">-10秒</button>
+          <button class="adjust-btn" @click="uiStore.addTimerSeconds(+10)">+10秒</button>
+          <!-- <button class="adjust-btn" @click="uiStore.addTimerSeconds(-60)">-1分</button> -->
+          <!-- <button class="adjust-btn" @click="uiStore.addTimerSeconds(60)">+1分</button> -->
           <button class="adjust-btn" @click="uiStore.addTimerSeconds(300)">+5分</button>
         </div>
 

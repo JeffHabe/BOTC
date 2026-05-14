@@ -87,9 +87,9 @@
         <div class="divider" />
 
         <!-- 介面設置 (暫時隱藏，預設為內圈向心) -->
-        <!--
+        
         <div class="section-title">提示標記佈局 (Reminder Layout)</div>
-        <div class="layout-selector-grid cols-4">
+        <div class="layout-selector-grid cols-2">
           <button 
             v-for="mode in layouts" 
             :key="mode.id"
@@ -104,7 +104,7 @@
         </div>
 
         <div class="divider" />
-        -->
+       
 
         <!-- 自定義背景 -->
         <div class="section-title">自定義佈景</div>
@@ -317,6 +317,11 @@ const shapes = [
   { id: 'circle', label: '經典正圓', icon: '⏺️' },
   { id: 'oval', label: '優雅橢圓', icon: '0️⃣' },
   { id: 'rect', label: '工整矩形', icon: '⏹️' },
+]
+
+const layouts = [
+  { id: 'inner', label: '向心排列', icon: '🎯' },
+  { id: 'arc', label: '弧形展開', icon: '🌈' },
 ]
 
 function openNightOrder() {
@@ -693,6 +698,56 @@ function resetGame() {
 
 .settings-grid.cols-2 {
   grid-template-columns: repeat(2, 1fr);
+}
+
+.layout-selector-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.layout-selector-grid.cols-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.layout-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.layout-option.active {
+  background: rgba(201, 168, 76, 0.15);
+  border-color: var(--color-gold);
+}
+
+.layout-option .opt-icon {
+  font-size: 18px;
+}
+
+.layout-option .opt-label {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+}
+
+.layout-option.active .opt-label {
+  color: var(--color-gold);
+}
+
+.active-check {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 10px;
+  color: var(--color-gold);
 }
 
 .grid-item {

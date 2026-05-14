@@ -72,7 +72,7 @@
       <div class="reminders-classic-container" v-if="!uiStore.isRolesHidden">
         <!-- 第一層：所有的圓圈圖示 -->
         <div 
-          v-for="(rem, rIdx) in player.reminders" 
+          v-for="(rem, rIdx) in displayReminders" 
           :key="'circle-' + rem.id" 
           class="rem-dot-classic"
           :style="getReminderStyle(rIdx)"
@@ -88,9 +88,22 @@
           </div>
         </div>
 
+        <!-- 展開/收起按鈕 (圖示層) -->
+        <div 
+          v-if="player.reminders.length > 2"
+          key="expand-icon-btn"
+          class="rem-dot-classic expand-toggle-btn"
+          :style="getReminderStyle(isExpanded ? player.reminders.length : 0)"
+          @click.stop="toggleExpand"
+        >
+          <div class="rem-inner">
+            <span class="expand-icon">{{ isExpanded ? '▲' : '🕯️' }}</span>
+          </div>
+        </div>
+
         <!-- 第二層：所有的文字標籤 (置頂) -->
         <div 
-          v-for="(rem, rIdx) in player.reminders" 
+          v-for="(rem, rIdx) in displayReminders" 
           :key="'label-' + rem.id" 
           class="rem-label-container"
           :style="getReminderStyle(rIdx)"
@@ -100,10 +113,23 @@
           </span>
         </div>
 
+        <!-- 展開/收起按鈕 (文字層) -->
+        <div 
+          v-if="player.reminders.length > 2"
+          key="expand-label-btn"
+          class="rem-label-container"
+          :style="getReminderStyle(isExpanded ? player.reminders.length : 0)"
+        >
+          <span class="rem-text-label expand-label">
+            {{ isExpanded ? '收起' : `+${player.reminders.length}` }}
+          </span>
+        </div>
+
         <!-- 新增/編輯提示標記的加號按鈕 -->
         <div 
+          key="add-reminder-btn-global"
           class="add-reminder-btn"
-          :style="getReminderStyle(player.reminders.length, true)"
+          :style="getReminderStyle(isExpanded ? player.reminders.length + 1 : (player.reminders.length > 2 ? 1 : player.reminders.length), true)"
           @click.stop="uiStore.openReminderPicker(player.id)"
           title="新增/編輯提示標記"
         >
@@ -120,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
 import { useGameStore } from '../stores/gameStore'
@@ -142,15 +168,34 @@ const uiStore = useUIStore()
 const scriptStore = useScriptStore()
 const gameStore = useGameStore()
 
+// 標記展開/收納狀態
+const isExpanded = ref(false)
+
+// 方案三：根據人數自動縮放令片大小 (防止擁擠)
+const autoScaleFactor = computed(() => {
+  const count = gameStore.players.length
+  if (count <= 14) return 1.0
+  // 每多一人縮小約 4%，最低不小於 0.7
+  return Math.max(0.7, 1 - (count - 14) * 0.045)
+})
+
+// 當前顯示的標記
+const displayReminders = computed(() => {
+  // 如果處於展開狀態，顯示全部
+  if (isExpanded.value) return props.player.reminders
+  // 如果標記多於 2 個，收起狀態下一個都不顯示 (全部隱藏)
+  if (props.player.reminders.length > 2) return []
+  // 否則 (2 個及以下) 正常顯示
+  return props.player.reminders
+})
+
+function toggleExpand() {
+  isExpanded.value = !isExpanded.value
+}
+
 const namePositionClass = computed(() => {
-  if (props.angle === undefined) return 'pos-bottom'
-  const deg = (props.angle * 180) / Math.PI
-  // 正規化角度到 -180 ~ 180
-  let norm = deg
-  while (norm > 180) norm -= 360
-  while (norm < -180) norm += 360
-  // 上半部玩家：-165 ~ -15 度
-  return (norm < -15 && norm > -165) ? 'pos-top' : 'pos-bottom'
+  // 統一固定在上方
+  return 'pos-top'
 })
 
 /**
@@ -231,17 +276,41 @@ function getReminderStyle(rIdx: number, isPlus = false) {
   const angle = props.angle || 0 // 弧度
   const isRight = props.isOnRightSide
 
+  // --- 全局標記間距配置 ---
+  const unitHeight = 1 * uiStore.grimoireScale // 一個標記 (圖示+文字) 的總高度
+  const spacing = 30                      // 標記與標記之間的物理間隔 (px)
+  const tokenPxSize = 100 * uiStore.grimoireScale * (autoScaleFactor.value || 1)
+  const gap = ((unitHeight + spacing) / tokenPxSize) * 100
+  // -----------------------
+
   // 1. 內圈向心模式 (Inner - Single Radial Column)
   if (layout === 'inner') {
-    const baseDist = 75 
-    const gap = 52     // 縱向間距
-    
-    // 計算實際物理距離
-    const distV = baseDist + rIdx * gap
+    const deg = (props.angle * 180) / Math.PI
+    const isBottomHalf = deg > 40 && deg < 135 // 針對底部範圍
+    // 基礎起點：底部玩家推遠以避開名字，其餘 60%
+    const effectiveBaseDist = isBottomHalf ? 85 : 60
+    const spacing = 35
 
-    const top = 50 - (distV * Math.sin(angle) * 0.75)
-    const left = 50 - (distV * Math.cos(angle) * 0.75)
-    
+    let distV = effectiveBaseDist + rIdx * gap
+
+    // --- 針對加號按鈕的特別優化 ---
+  if (isPlus) {
+      // 如果只有加號且沒標記
+    if (props.player.reminders.length === 0) {
+        distV = isBottomHalf ? 70 : 60
+      } 
+      // 如果加號緊跟在「🕯️ 展開按鈕」後面 (收起狀態)
+      else if (!isExpanded.value && props.player.reminders.length > 2) {
+        // 縮小間距，讓加號靠近展開按鈕 (使用較小的 32px 基準)
+
+      const tightGap = ((0 + spacing) / tokenPxSize) * 100
+        distV = effectiveBaseDist + tightGap
+    }
+  }
+
+    const top = 50 - (distV * Math.sin(angle))
+    const left = 50 - (distV * Math.cos(angle))
+
     return {
       top: `${top}%`,
       left: `${left}%`,
@@ -253,43 +322,100 @@ function getReminderStyle(rIdx: number, isPlus = false) {
     }
   }
 
-  // 2. 經典弧形 (Arc)
+  // 2. 經典弧形 (Arc) - 對稱環繞模式
   if (layout === 'arc') {
-    const radius = 68 // 恢復為固定半徑
-    const deg = (rIdx * 55 - 10) * (Math.PI / 180)
+    const degBase = (props.angle * 180) / Math.PI
+    const isBottomHalf = degBase > 25 && degBase < 135
     
-    let l = 50 + radius * Math.cos(deg)
-    const t = 50 + radius * Math.sin(deg)
-    if (isRight) l = 50 - radius * Math.cos(deg)
+    // --- 弧形佈局配置區 ---
+    const arcRadius = isBottomHalf ? 60 : 60  // 標記環繞的半徑 (離令片中心的距離)
+    const arcSpread = 45                        // 標記之間的展開角度 (度)
+    // -----------------------
+    const spacing = 50
+
+    let radius = arcRadius
     
+    // 如果只有一個加號，同步其高度
+    if (isPlus && props.player.reminders.length === 0) {
+      radius = isBottomHalf ? 60 : 60
+  }
+
+    // --- 對稱扇形邏輯 ---
+    // 計算總共有多少個元素需要排列 (標記 + 功能按鈕)
+    // const totalItems = isExpanded.value 
+    //   ? props.player.reminders.length + (props.player.reminders.length > 2 ? 2 : 1) 
+    //   : (props.player.reminders.length > 2 ? 2 : props.player.reminders.length + 1)
+
+    const spreadAngle = arcSpread * (Math.PI / 180) 
+    // const centerIdx = (totalItems - 1) / 2
+    
+    // 先計算基礎角度 (扇形分佈)
+    let finalAngle =angle + (rIdx ) * spreadAngle
+    // --- 關鍵修改：加號固定在「外側肩膀」位置 (半徑加大到 110) ---
+    if (isPlus) {
+      // 1. 根據令片位置偏移角度 (朝向魔典中央垂直線)
+      // 左側玩家 (isRight=false) 向右偏 30 度，右側玩家 (isRight=true) 向左偏 30 度
+      // const shoulderOffset = (isRight ? 30 : -30) * (Math.PI / 180)
+      finalAngle =angle
+      // finalAngle = angle + shoulderOffset
+      const tightGap = ((0 + spacing) / tokenPxSize) * 100
+      radius = arcRadius + tightGap-25
+    }
+    const top = 50 - (radius * Math.sin(finalAngle)) 
+    const left = 50 - (radius * Math.cos(finalAngle))
     return {
-      top: `${t}%`,
-      left: `${l}%`,
+      top: `${top}%`,
+      left: `${left}%`,
       width: `${30 * uiStore.grimoireScale}px`,
       height: `${30 * uiStore.grimoireScale}px`,
       fontSize: `${9 * uiStore.grimoireScale}px`,
       position: 'absolute',
-      transform: 'translate(-50%, -50%)'
+      transform: 'translate(-50%, -50%)',
+      zIndex: 2000,
+      // --- 增加逐個展開動畫 ---
+      transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+      // 只要是展開狀態，所有元素 (包括蠟燭和加號) 都參與階梯式延遲
+      transitionDelay: isExpanded.value ? `${rIdx * 0.05}s` : '0s'
     }
   }
 
   // 3. 側面堆疊 (Stack)
   if (layout === 'stack') {
-    const side = isRight ? 'right' : 'left'
+    const degBase = (props.angle * 180) / Math.PI
+    const isBottomHalf = degBase > 40 && degBase < 135
+    const baseDist = isBottomHalf ? 80 : 60
     
+    const side = isRight ? 'right' : 'left'
+    const sideDist = (isPlus && props.player.reminders.length === 0) ? '105%' : '125%'
+    
+    // 讓起點也參考向心模式的基礎高度感
+    const topOffset = (baseDist / 100) * 40
     return {
-      top: `${rIdx * 52 + 10}px`, // 保持較大間距以容納文字
-      [side]: '125%',
-      width: `${24 * uiStore.grimoireScale}px`,
-      height: `${24 * uiStore.grimoireScale}px`,
-      fontSize: `${8 * uiStore.grimoireScale}px`,
-      position: 'absolute'
+      top: `${rIdx * 50 + topOffset}px`, 
+      [side]: sideDist,
+      width: `${28 * uiStore.grimoireScale}px`,
+      height: `${28 * uiStore.grimoireScale}px`,
+      fontSize: `${8.5 * uiStore.grimoireScale}px`,
+      position: 'absolute',
+      zIndex: 2000,
+      // --- 增加逐個展開動畫 ---
+      // transition: 'all 0.3s ease-out',
+      // transitionDelay: (isExpanded.value && !isPlus && rIdx > 0) ? `${rIdx * 0.05}s` : '0s'
     }
   }
 
   // 4. 網格模式 (Grid)
-  // Grid 模式比較特殊，我們可以用 CSS Flex 處理，這裡只需傳回索引
-  return { '--r-idx': rIdx } as any
+  const degBase = (props.angle * 180) / Math.PI
+  const isBottomHalf = degBase > 40 && degBase < 135
+  const baseDist = isBottomHalf ? 80 : 60
+  
+  return { 
+    '--r-idx': rIdx, 
+    zIndex: 2000,
+    '--base-dist': baseDist,
+    transition: 'all 0.3s ease-out',
+    transitionDelay: (isExpanded.value && !isPlus && rIdx > 0) ? `${rIdx * 0.05}s` : '0s'
+  } as any
 }
 
 function getReminderIcon(text: string) {
@@ -387,35 +513,37 @@ const deathTypeClass = computed(() => {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--color-label-bg);
+  background: rgba(10, 10, 15, 0.85); /* 加深背景 */
   color: #fff;
-  padding: 0px 4px;
-  border-radius: 4px;
-  font-size: 10px;
-  line-height: 1;
-  font-weight: 700;
+  padding: 1px 4px; /* 增加內距 */
+  border-radius: 12px; /* 更圓潤 */
+  font-size: 8px; /* 稍微變大 */
+  line-height: 1.2;
+  font-weight: 800;
   white-space: nowrap;
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.5);
-  z-index: 10;
-  max-width: 120%;
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+  z-index: 50; /* 提高層級，確保在標記之上 */
+  max-width: 140%;
   display: flex;
   align-items: center;
-  gap: 1px;
-  height: 14px;
-}
-
-.pos-bottom {
-  bottom: -18px;
+  gap: 2px;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
 }
 
 .pos-top {
-  top: -18px;
+  bottom: 100%; /* 從 115% 增加到 125%，進一步拉開空間 */
+}
+
+/* 移除 pos-bottom，統一由 .pos-top 覆蓋 */
+.pos-bottom {
+  bottom: 110%;
 }
 
 .seat-num {
   color: var(--color-gold-bright);
-  font-size: 10px;
+  font-size: 5px;
   opacity: 0.9;
 }
 
@@ -528,7 +656,7 @@ const deathTypeClass = computed(() => {
   position: absolute;
   inset: -8px; /* 擴張容器以覆蓋邊緣 */
   pointer-events: none;
-  z-index: 20;
+  z-index: 2000; /* 設定極高層級，嘗試跨越堆疊上下文 */
 }
 
 .rem-dot-classic {
@@ -694,6 +822,26 @@ const deathTypeClass = computed(() => {
   box-shadow: 0 2px 6px rgba(0,0,0,0.6);
   transition: all 0.2s ease;
   pointer-events: auto;
+}
+
+.expand-toggle-btn {
+  background: rgba(184, 134, 11, 0.4); /* 金金色系 */
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  box-shadow: 0 0 8px rgba(218, 165, 32, 0.3);
+}
+
+.expand-icon {
+  font-size: 10px;
+  font-weight: 900;
+  color: #ffd700;
+  text-shadow: 0 0 3px rgba(0,0,0,0.8);
+}
+
+.expand-label {
+  background: rgba(184, 134, 11, 0.95) !important;
+  color: #fff !important;
+  font-weight: 900 !important;
+  border: 0.5px solid rgba(255, 215, 0, 0.5) !important;
 }
 
 .add-reminder-btn:hover {

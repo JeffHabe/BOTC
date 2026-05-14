@@ -482,7 +482,7 @@ const selectedPlayer = computed(() =>
 const isDragging = ref(false)
 const isPinching = ref(false)
 const startPos = { x: 0, y: 0 }
-const startTranslate = { x: 0, y: 0 }
+// const startTranslate = { x: 0, y: 0 }
 const startPinchDist = ref(0)
 const startScale = ref(1)
 
@@ -551,8 +551,8 @@ function handleMouseMove(e: MouseEvent | TouchEvent) {
 
   if (!isDragging.value) return
   
-  const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-  const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+  // const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+  // const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
   
   // 已禁用平移位移 (uiStore.setGrimoireTranslate)
   
@@ -707,11 +707,15 @@ const currentShapeLabel = computed(() => {
 const LAYOUT_CONFIG = computed(() => {
   const shape = uiStore.grimoireShape
   const ratio = windowSize.value.width / windowSize.value.height
+  const count = players.value.length
+
+  // 當人數較多時，稍微擴大圓圈直徑 (layoutBoost)
+  const layoutBoost = count > 14 ? 6 : (count > 11 ? 3 : 0)
 
   switch (shape) {
     case 'circle':
-      // 圓心座標固定：移除縮放連動
-      const baseA = 50
+      // 縮小橫向半徑 (從 40 降至 36) 以避免左右截斷
+      const baseA = 36 + layoutBoost
       return {
         a: baseA,
         b: baseA * ratio,
@@ -720,21 +724,21 @@ const LAYOUT_CONFIG = computed(() => {
         samples: 600
       }
     case 'rect':
-      // 圓心座標固定：移除縮放連動
-      const baseARect = 41
+      // 縮小寬度 (從 34 降至 32)
+      const baseARect = 34 + layoutBoost
       return {
         a: baseARect,
-        b: Math.min(baseARect * ratio * 1.3, 38), 
+        b: Math.max(baseARect * ratio * 1, 25 + layoutBoost), 
         nFactor: 3.2, 
         yCenter: 50,
         samples: 800
       }
     case 'oval':
     default:
-      // 圓心座標固定：移除縮放連動
+      // 縮小寬度 (從 34 降至 32)
       return {
-        a: 38,
-        b: 30,
+        a: 36 + layoutBoost,
+        b: 24 + layoutBoost,
         nFactor: 2.0,
         yCenter: 55,
         samples: 600
@@ -820,8 +824,12 @@ function getPlayerPosStyle(index: number): CSSProperties {
   const n = players.value.length
   if (n === 0) return {}
 
-  const rawSize = n > 14 ? 68 : n > 11 ? 80 : n > 8 ? 92 : 105
-  // 修正：Scale 越大，令片越大
+  // 方案三：更激進的縮放邏輯 (人數越多，令片縮得越小以騰出空間)
+  let rawSize = 105
+  if (n > 14) rawSize = 65  // 15人以上大幅縮小
+  else if (n > 11) rawSize = 78
+  else if (n > 8) rawSize = 90
+  
   const baseSize = rawSize * uiStore.grimoireScale
   
   // 獲取等距角度
@@ -835,6 +843,10 @@ function getPlayerPosStyle(index: number): CSSProperties {
   const x = 50 + a * Math.sign(cosT) * Math.pow(Math.abs(cosT), 2 / nFactor)
   const y = yCenter + b * Math.sign(sinT) * Math.pow(Math.abs(sinT), 2 / nFactor)
 
+  // 動態層級：下方玩家 (Y較大) 浮在上方玩家之上
+  // 額外補強：有標記的玩家層級提升 (+1000)，確保標記不被鄰居令片擋住
+  const reminderBoost = (players.value[index]?.reminders?.length || 0) > 0 ? 1000 : 0
+
   return {
     position: 'absolute',
     left: `${x}%`,
@@ -842,6 +854,7 @@ function getPlayerPosStyle(index: number): CSSProperties {
     transform: 'translate(-50%, -50%)',
     width: `${baseSize}px`,
     height: `${baseSize}px`,
+    zIndex: Math.floor(y * 10) + reminderBoost,
     transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)'
   }
 }

@@ -1,8 +1,3 @@
-/**
- * 鐘樓鐘聲合成器 (Clocktower Bell Synthesizer)
- * 模擬「威斯敏斯特鐘聲 (Westminster Quarters)」旋律 + 深沉整點報時。
- */
-
 let audioCtx: AudioContext | null = null;
 
 function getAudioContext() {
@@ -13,90 +8,95 @@ function getAudioContext() {
 }
 
 /**
- * 播放單次鐘聲敲擊
- * @param ctx AudioContext
- * @param startTime 開始時間
- * @param fundamental 基頻
- * @param gainValue 音量
- * @param duration 持續時間 (衰減)
+ * 播放單次鐘聲敲擊 (合成音)
  */
 function playSingleStrike(ctx: AudioContext, startTime: number, fundamental: number, gainValue: number, duration: number) {
-  const now = startTime;
-  
-  // 鐘聲的泛音比例 (Partials) - 經典大鐘諧波
+  const scheduleTime = startTime + 0.05;
+
+  // 鐘聲的泛音比例 (Partials)
   const partials = [
-    { ratio: 0.5, gain: 0.5, decay: duration * 1.2 },  // Hum
-    { ratio: 1.0, gain: 0.8, decay: duration },       // Fundamental
-    { ratio: 1.2, gain: 0.4, decay: duration * 0.8 }, // Tierce (小三度)
-    { ratio: 1.5, gain: 0.3, decay: duration * 0.6 }, // Quint
-    { ratio: 2.0, gain: 0.2, decay: duration * 0.5 }, // Nominal
-    { ratio: 3.0, gain: 0.1, decay: duration * 0.4 },
+    { ratio: 0.5, gain: 0.5, decay: duration * 1.2 },
+    { ratio: 1.0, gain: 0.7, decay: duration },
+    { ratio: 2.0, gain: 0.2, decay: duration * 0.5 },
   ];
 
   const masterGain = ctx.createGain();
-  masterGain.connect(ctx.destination);
-  masterGain.gain.setValueAtTime(0, now);
-  masterGain.gain.linearRampToValueAtTime(gainValue, now + 0.01);
-  masterGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+  const filter = ctx.createBiquadFilter();
+  const limiter = ctx.createDynamicsCompressor();
 
-  // 1. 敲擊雜訊 (Strike)
-  const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate);
-  const noiseData = noiseBuffer.getChannelData(0);
-  for (let i = 0; i < noiseData.length; i++) noiseData[i] = Math.random() * 2 - 1;
-  const noise = ctx.createBufferSource();
-  noise.buffer = noiseBuffer;
-  const noiseFilter = ctx.createBiquadFilter();
-  noiseFilter.type = 'highpass';
-  noiseFilter.frequency.setValueAtTime(1200, now);
-  const noiseGain = ctx.createGain();
-  noiseGain.gain.setValueAtTime(gainValue * 0.3, now);
-  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-  noise.connect(noiseFilter);
-  noiseFilter.connect(noiseGain);
-  noiseGain.connect(masterGain);
-  noise.start(now);
+  filter.type = 'highpass';
+  filter.frequency.setValueAtTime(50, scheduleTime);
+  
+  limiter.threshold.setValueAtTime(-10, scheduleTime);
+  limiter.knee.setValueAtTime(30, scheduleTime);
+  limiter.ratio.setValueAtTime(12, scheduleTime);
 
-  // 2. 泛音
+  masterGain.connect(filter);
+  filter.connect(limiter);
+  limiter.connect(ctx.destination);
+  
+  masterGain.gain.setValueAtTime(0, scheduleTime);
+  masterGain.gain.setTargetAtTime(gainValue * 0.3, scheduleTime, 0.03);
+  masterGain.gain.setTargetAtTime(0, scheduleTime + 0.15, duration / 4);
+
   partials.forEach((p) => {
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(fundamental * p.ratio, now);
-    osc.detune.setValueAtTime(Math.random() * 6 - 3, now);
-    g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(p.gain * gainValue, now + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.001, now + p.decay);
+    osc.frequency.setValueAtTime(fundamental * p.ratio, scheduleTime);
+    
+    g.gain.setValueAtTime(0, scheduleTime);
+    g.gain.setTargetAtTime(p.gain, scheduleTime, 0.02);
+    g.gain.setTargetAtTime(0, scheduleTime + 0.1, p.decay / 4);
+    
     osc.connect(g);
     g.connect(masterGain);
-    osc.start(now);
-    osc.stop(now + p.decay + 0.5);
+    osc.start(scheduleTime);
+    osc.stop(scheduleTime + p.decay + 1);
   });
 }
 
 /**
- * 播放經典「威斯敏斯特鐘聲」序列
+ * 預先喚醒音訊 (必須在用戶互動事件中調用)
  */
-export function playClocktowerBell() {
+export async function unlockAudio() {
   const ctx = getAudioContext();
-  if (ctx.state === 'suspended') ctx.resume();
+  if (ctx.state === 'suspended') {
+    try {
+      await ctx.resume();
+      console.log('音訊上下文已成功啟動');
+      
+      // 試播一個極短的靜音波形來確認授權
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      g.gain.value = 0;
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.1);
+    } catch (e) {
+      console.warn('音訊解鎖失敗:', e);
+    }
+  }
+}
+
+/**
+ * 播放鐘聲序列 (連響 8 聲)
+ */
+export async function playClocktowerBell() {
+  const ctx = getAudioContext();
+  
+  if (ctx.state === 'suspended') {
+    await ctx.resume().catch(() => console.warn('自動播放被攔截，請確保已點擊開始計時'));
+  }
 
   const now = ctx.currentTime;
-  const tempo = 0.8; // 每拍時間
+  const bongCount = 8;     // 改為 8 聲
+  const bongInterval = 2.0; // 每 2 秒響一次
 
-  // 經典旋律: E4, C4, D4, G3
-  const melody = [
-    { freq: 329.63, time: 0 },         // E4
-    { freq: 261.63, time: tempo },     // C4
-    { freq: 293.66, time: tempo * 2 }, // D4
-    { freq: 196.00, time: tempo * 3 }, // G3
-  ];
-
-  // 播放旋律 (輕快敲擊)
-  melody.forEach((note) => {
-    playSingleStrike(ctx, now + note.time, note.freq, 0.4, 2.5);
-  });
-
-  // 最後一聲震撼靈魂的深沉「BONG~」 (E3)
-  const bigBongTime = now + (tempo * 4.5);
-  playSingleStrike(ctx, bigBongTime, 164.81, 0.9, 6.0);
+  for (let i = 0; i < bongCount; i++) {
+    const strikeTime = now + (i * bongInterval);
+    // 播放深沉的 BONG 聲
+    playSingleStrike(ctx, strikeTime, 164.81, 0.8, 8.0);
+  }
 }
