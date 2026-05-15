@@ -90,7 +90,7 @@
 
         <!-- 展開/收起按鈕 (圖示層) -->
         <div 
-          v-if="player.reminders.length > 2"
+          v-if="player.reminders.length > 4"
           key="expand-icon-btn"
           class="rem-dot-classic expand-toggle-btn"
           :style="getReminderStyle(isExpanded ? player.reminders.length : 0)"
@@ -115,7 +115,7 @@
 
         <!-- 展開/收起按鈕 (文字層) -->
         <div 
-          v-if="player.reminders.length > 2"
+          v-if="player.reminders.length > 4"
           key="expand-label-btn"
           class="rem-label-container"
           :style="getReminderStyle(isExpanded ? player.reminders.length : 0)"
@@ -129,7 +129,7 @@
         <div 
           key="add-reminder-btn-global"
           class="add-reminder-btn"
-          :style="getReminderStyle(isExpanded ? player.reminders.length + 1 : (player.reminders.length > 2 ? 1 : player.reminders.length), true)"
+          :style="getReminderStyle(isExpanded ? player.reminders.length + 1 : (player.reminders.length > 4 ? 1 : player.reminders.length), true)"
           @click.stop="uiStore.openReminderPicker(player.id)"
           title="新增/編輯提示標記"
         >
@@ -183,9 +183,9 @@ const autoScaleFactor = computed(() => {
 const displayReminders = computed(() => {
   // 如果處於展開狀態，顯示全部
   if (isExpanded.value) return props.player.reminders
-  // 如果標記多於 2 個，收起狀態下一個都不顯示 (全部隱藏)
-  if (props.player.reminders.length > 2) return []
-  // 否則 (2 個及以下) 正常顯示
+  // 如果標記多於 4 個，收起狀態下一個都不顯示 (全部隱藏)
+  if (props.player.reminders.length > 4) return []
+  // 否則 (4 個及以下) 正常顯示
   return props.player.reminders
 })
 
@@ -300,7 +300,7 @@ function getReminderStyle(rIdx: number, isPlus = false) {
         distV = isBottomHalf ? 70 : 60
       } 
       // 如果加號緊跟在「🕯️ 展開按鈕」後面 (收起狀態)
-      else if (!isExpanded.value && props.player.reminders.length > 2) {
+      else if (!isExpanded.value && props.player.reminders.length > 4) {
         // 縮小間距，讓加號靠近展開按鈕 (使用較小的 32px 基準)
 
       const tightGap = ((0 + spacing) / tokenPxSize) * 100
