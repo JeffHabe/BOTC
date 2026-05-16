@@ -49,16 +49,17 @@
         <svg v-if="player.role && !uiStore.isRolesHidden" viewBox="0 0 100 100" class="role-name-svg">
         <path 
           :id="'nameCurve-' + player.id" 
-          d="M 26 80 A 50 35 0 0 0 80 76"  
+          d="M 10 70 A 45 35 0 0 0 90 70"  
           fill="transparent" 
         />
         <text>
           <textPath 
             :href="'#nameCurve-' + player.id" 
-            startOffset="48%"
+            startOffset="52%"
             text-anchor="middle"
             dominant-baseline="middle"
             class="curved-name-text"
+            :style="{ fontSize: player.role.name.length > 4 ? (player.role.name.length > 5 ? '13px' : '15px') : '18px' }"
           >
             {{ player.role.name }}
           </textPath>
@@ -292,7 +293,8 @@ function getReminderStyle(rIdx: number, isPlus = false) {
 
   // --- 全局標記間距配置 ---
   const unitHeight = 1 * uiStore.grimoireScale // 一個標記 (圖示+文字) 的總高度
-  const spacing = 30                      // 標記與標記之間的物理間隔 (px)
+  //基礎間距 (spacing) 
+  const spacing = 30 * uiStore.grimoireScale                      // 標記與標記之間的物理間隔 (px)
   const tokenPxSize = 100 * uiStore.grimoireScale * (autoScaleFactor.value || 1)
   const gap = ((unitHeight + spacing) / tokenPxSize) * 100
   // -----------------------
@@ -303,7 +305,8 @@ function getReminderStyle(rIdx: number, isPlus = false) {
     const isBottomHalf = deg > 40 && deg < 135 // 針對底部範圍
     // 基礎起點：底部玩家推遠以避開名字，其餘 60%
     const effectiveBaseDist = isBottomHalf ? 85 : 60
-    const spacing = 35
+    //計算基礎間距 (spacing)
+    const spacing = 35 * uiStore.grimoireScale
 
     let distV = effectiveBaseDist + rIdx * gap
 
@@ -345,7 +348,8 @@ function getReminderStyle(rIdx: number, isPlus = false) {
     const arcRadius = isBottomHalf ? 60 : 60  // 標記環繞的半徑 (離令片中心的距離)
     const arcSpread = 45                        // 標記之間的展開角度 (度)
     // -----------------------
-    const spacing = 50
+    //堆疊模式 (stack) 的 Y 軸偏移
+    const spacing = 50 * uiStore.grimoireScale
 
     let radius = arcRadius
     
@@ -403,9 +407,9 @@ function getReminderStyle(rIdx: number, isPlus = false) {
     const sideDist = (isPlus && props.player.reminders.length === 0) ? '105%' : '125%'
     
     // 讓起點也參考向心模式的基礎高度感
-    const topOffset = (baseDist / 100) * 40
+    const topOffset = (baseDist / 100) * (40 * uiStore.grimoireScale)
     return {
-      top: `${rIdx * 50 + topOffset}px`, 
+      top: `${rIdx * (50 * uiStore.grimoireScale) + topOffset}px`, 
       [side]: sideDist,
       width: `${28 * uiStore.grimoireScale}px`,
       height: `${28 * uiStore.grimoireScale}px`,
@@ -763,8 +767,8 @@ const deathTypeClass = computed(() => {
 
 .rem-label-container .rem-text-label {
   position: absolute;
-  bottom: 27px; /* 隨圓圈加大而調高 (23->27) */
-  transform: translateY(33px); /* 稍微上移 2px (35->33)，增加緊湊感 */
+  top: 50%; /* 永遠以圖示的正中心為起點 */
+  transform: translateY(12px); /* 固定往下推 18px，調整此數字即可控制固定距離 */
 }
 
 /* --- 佈局樣式控制 --- */
@@ -846,7 +850,7 @@ const deathTypeClass = computed(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 25;
+  z-index: 100;
   box-shadow: 0 2px 6px rgba(0,0,0,0.6);
   transition: all 0.2s ease;
   pointer-events: auto;

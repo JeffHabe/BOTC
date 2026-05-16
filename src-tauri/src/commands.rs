@@ -481,15 +481,6 @@ pub fn nominate(
 ) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
 
-    // 檢查本日是否已經有玩家被行刑
-    let current_round = gs.round;
-    if gs
-        .nominations
-        .iter()
-        .any(|n| n.round == current_round && n.executed)
-    {
-        return Err("今日已有玩家被行刑，無法再進行提名".into());
-    }
 
     // 確認提名者可以提名
     let nominator = gs
@@ -688,16 +679,8 @@ pub fn vote(
 #[tauri::command]
 pub fn execute(nomination_index: usize, state: State<AppState>) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
-
-    // 檢查本日是否已經有玩家被行刑
     let current_round = gs.round;
-    if gs
-        .nominations
-        .iter()
-        .any(|n| n.round == current_round && n.executed)
-    {
-        return Err("今日已有玩家被行刑，無法再次行刑".into());
-    }
+
 
     // 獲取目標提名的票數
     let (target_votes, target_threshold) = {
@@ -930,6 +913,16 @@ pub fn import_custom_script(json_str: String, state: State<AppState>) -> Result<
                 }
             }
 
+            let reminders_global = val
+                .get("remindersGlobal")
+                .and_then(|v| v.as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                        .collect()
+                })
+                .unwrap_or_default();
+
             characters.push(CharacterDef {
                 id,
                 name,
@@ -940,6 +933,7 @@ pub fn import_custom_script(json_str: String, state: State<AppState>) -> Result<
                 night_order_first,
                 night_order_other,
                 reminders,
+                reminders_global,
                 setup,
                 image,
                 first_night_reminder,

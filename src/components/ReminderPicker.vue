@@ -84,9 +84,24 @@
             </div>
           </div>
 
+          <!-- B. 角色身份標記 (如：是哲學家、是瘋子) -->
+          <div v-if="allGlobalReminders.length > 0" class="section">
+            <div class="section-title">身份標記</div>
+            <div class="badges-container">
+              <button
+                v-for="remObj in allGlobalReminders"
+                :key="'global-'+remObj.text"
+                class="reminder-badge global-badge"
+                @click="quickAdd(remObj.text, remObj.source)"
+              >
+                {{ remObj.text }}
+              </button>
+            </div>
+          </div>
+
           <div class="divider" />
 
-          <!-- B. 場上角色標記 -->
+          <!-- C. 場上角色標記 -->
           <div v-if="inPlayGroups.length > 0" class="section">
             <div class="section-title">場上角色專屬標記 ({{ inPlayGroups.length }})</div>
             <div class="role-group-container">
@@ -119,10 +134,12 @@
 import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
+import { useScriptStore } from '../stores/scriptStore'
 import type { ReminderToken } from '../types'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
+const scriptStore = useScriptStore()
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
@@ -155,19 +172,52 @@ const commonReminders = ['中毒', '醉酒', '已被選中', '已被提名', '�
  */
 const inPlayGroups = computed(() => {
   const groups: { roleName: string; reminders: string[] }[] = []
+  // 僅取得目前正在場上玩家的角色 ID
   const roleIdsInPlay = new Set(gameStore.players.map(p => p.role?.id).filter(Boolean))
   
   if (!gameStore.script) return []
   
   for (const char of gameStore.script.characters) {
-    if (roleIdsInPlay.has(char.id) && char.reminders && char.reminders.length > 0) {
-      groups.push({
-        roleName: char.name,
-        reminders: char.reminders
-      })
+    // 僅當角色在場時顯示其分組
+    if (roleIdsInPlay.has(char.id)) {
+      const allReminders = Array.from(new Set([
+        ...(char.reminders || []),
+        ...(char.remindersGlobal || [])
+      ]))
+
+      if (allReminders.length > 0) {
+        groups.push({
+          roleName: char.name,
+          reminders: allReminders
+        })
+      }
     }
   }
   return groups
+})
+
+// 提取當前劇本中所有的全域身份標記 (如：是哲學家、是瘋子等)
+const allGlobalReminders = computed(() => {
+  const allMap = new Map<string, string>() // 標記文字 -> 來源角色名稱
+  
+  if (!gameStore.script || !gameStore.script.characters) return []
+  
+  // 取得當下劇本中包含的所有角色 ID
+  const currentScriptIds = new Set(gameStore.script.characters.map((c: any) => c.id))
+  
+  // 從 masterScript (全庫) 提取，因為只有它保證最新擁有 remindersGlobal 資料
+  scriptStore.masterScript.characters.forEach((char: any) => {
+    // 過濾：當下劇本有該角色，才把它的身份標記加進來
+    if (currentScriptIds.has(char.id) && char.remindersGlobal) {
+      char.remindersGlobal.forEach((r: string) => {
+        if (!allMap.has(r)) {
+          allMap.set(r, char.name)
+        }
+      })
+    }
+  })
+  
+  return Array.from(allMap.entries()).map(([text, source]) => ({ text, source }))
 })
 
 function startEdit(rem: ReminderToken) {
@@ -405,6 +455,12 @@ async function quickAdd(text: string, source: string = '劇本') {
 .common-badge {
   border-color: rgba(74, 155, 212, 0.4);
   background: rgba(74, 155, 212, 0.05);
+}
+
+.global-badge {
+  border-color: rgba(139, 179, 77, 0.6);
+  background: rgba(139, 179, 77, 0.1);
+  color: #8bb34d;
 }
 
 .other-badge {

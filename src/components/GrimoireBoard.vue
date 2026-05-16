@@ -878,7 +878,7 @@ function getCharacterIcon(id: string) {
 function showFabledTooltip(id: string) {
   const char = scriptStore.rawCharacterList.find(c => c.id === id)
   if (char) {
-    uiStore.showConfirm('傳說角色: ' + char.name, char.ability, () => {}, false)
+    uiStore.showConfirm('傳說與奇遇角色: ' + char.name, char.ability, () => {}, false)
   }
 }
 

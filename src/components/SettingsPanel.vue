@@ -23,7 +23,7 @@
           
           <button class="grid-item" @click="openFabled">
             <span class="grid-icon">🦄</span>
-            <span class="grid-label">傳說角色</span>
+            <span class="grid-label">傳說奇遇</span>
           </button>
 
           <button class="grid-item" @click="openNightOrder">

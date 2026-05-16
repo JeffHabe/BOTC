@@ -33,10 +33,10 @@
         </div>
         <button 
           class="btn-primary nominate-btn" 
-          :disabled="!nominatorId || !nomineeId || isExecutedToday"
+          :disabled="!nominatorId || !nomineeId"
           @click="doNominate"
         >
-          {{ isExecutedToday ? '今日已執行處決' : '確認提名' }}
+          確認提名
         </button>
       </div>
 
@@ -140,7 +140,7 @@
             <div class="nom-actions">
               <button 
                 class="btn-danger" 
-                :disabled="getExecutionStatus(index).disabled || isExecutedToday"
+                :disabled="getExecutionStatus(index).disabled"
                 @click.stop="doExecute(index)"
               >
                 {{ getExecutionStatus(index).label }}

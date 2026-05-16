@@ -66,6 +66,8 @@ pub struct CharacterDef {
     pub night_order_first: Option<f64>, // 首夜順序（None = 不行動，用f64兼容小數值如3.3）
     pub night_order_other: Option<f64>, // 其他夜順序
     pub reminders: Vec<String>,         // 提供的提醒令牌文字
+    #[serde(rename = "remindersGlobal", default)]
+    pub reminders_global: Vec<String>,
     pub setup: bool,                    // 是否在準備階段使用
     pub image: Option<String>,          // 圖片路徑或 URL
     pub first_night_reminder: Option<String>,

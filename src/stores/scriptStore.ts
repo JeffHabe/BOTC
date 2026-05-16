@@ -30,6 +30,7 @@ function parseRawArray(raw: any[], id: string, defaultName: string): Script {
       night_order_first: r.firstNight ? Math.floor(r.firstNight) : null,
       night_order_other: r.otherNight ? Math.floor(r.otherNight) : null,
       reminders: r.reminders || [],
+      remindersGlobal: r.remindersGlobal || [],
       setup: r.setup || false,
       image: r.image || null,
       first_night_reminder: r.firstNightReminder || null,

@@ -45,6 +45,7 @@ export interface CharacterDef {
   night_order_first?: number | null
   night_order_other?: number | null
   reminders: string[]
+  remindersGlobal?: string[]
   setup: boolean
   image?: string | null
   first_night_reminder?: string | null
