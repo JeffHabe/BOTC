@@ -104,7 +104,7 @@
           class="bluffs-tab-btn lunatic-tab" 
           :class="{ active: uiStore.activeBluffTab === 'lunatic' }"
           @click="uiStore.activeBluffTab = 'lunatic'"
-          title="瘋子偽裝"
+          title="瘋子認知"
         >
           <span class="icon">🌀</span>
         </button>
@@ -482,7 +482,7 @@ const selectedPlayer = computed(() =>
 const isDragging = ref(false)
 const isPinching = ref(false)
 const startPos = { x: 0, y: 0 }
-// const startTranslate = { x: 0, y: 0 }
+const startTranslate = { x: 0, y: 0 }
 const startPinchDist = ref(0)
 const startScale = ref(1)
 
@@ -529,7 +529,8 @@ function handleMouseDown(e: MouseEvent | TouchEvent) {
     
     startPos.x = clientX
     startPos.y = clientY
-    // 移除平移開始座標紀錄
+    startTranslate.x = uiStore.grimoireTranslateX
+    startTranslate.y = uiStore.grimoireTranslateY
   }
 
   window.addEventListener('mousemove', handleMouseMove)
@@ -551,10 +552,16 @@ function handleMouseMove(e: MouseEvent | TouchEvent) {
 
   if (!isDragging.value) return
   
-  // const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-  // const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+  const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+  const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
   
-  // 已禁用平移位移 (uiStore.setGrimoireTranslate)
+  const dx = clientX - startPos.x
+  const dy = clientY - startPos.y
+  
+  uiStore.setGrimoireTranslate(
+    startTranslate.x + dx,
+    startTranslate.y + dy
+  )
   
   if (e.cancelable) e.preventDefault()
 }

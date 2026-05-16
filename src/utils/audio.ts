@@ -56,6 +56,18 @@ function playSingleStrike(ctx: AudioContext, startTime: number, fundamental: num
   });
 }
 
+let audioBuffer: AudioBuffer | null = null;
+
+async function loadAudioFile(url: string) {
+  if (audioBuffer) return audioBuffer;
+  
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  const ctx = getAudioContext();
+  audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+  return audioBuffer;
+}
+
 /**
  * 預先喚醒音訊 (必須在用戶互動事件中調用)
  */
@@ -74,6 +86,9 @@ export async function unlockAudio() {
       g.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.1);
+
+      // 順便預加載音訊檔
+      loadAudioFile('/church-bell.wav').catch(() => {});
     } catch (e) {
       console.warn('音訊解鎖失敗:', e);
     }
@@ -81,7 +96,7 @@ export async function unlockAudio() {
 }
 
 /**
- * 播放鐘聲序列 (連響 8 聲)
+ * 播放鐘聲序列 (使用 WAV 音檔)
  */
 export async function playClocktowerBell() {
   const ctx = getAudioContext();
@@ -90,13 +105,28 @@ export async function playClocktowerBell() {
     await ctx.resume().catch(() => console.warn('自動播放被攔截，請確保已點擊開始計時'));
   }
 
-  const now = ctx.currentTime;
-  const bongCount = 8;     // 改為 8 聲
-  const bongInterval = 2.0; // 每 2 秒響一次
-
-  for (let i = 0; i < bongCount; i++) {
-    const strikeTime = now + (i * bongInterval);
-    // 播放深沉的 BONG 聲
-    playSingleStrike(ctx, strikeTime, 164.81, 0.8, 8.0);
+  try {
+    const buffer = await loadAudioFile('/church-bell.wav');
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    
+    const gainNode = ctx.createGain();
+    gainNode.gain.value = 1.0;
+    
+    source.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    source.start(0);
+  } catch (e) {
+    console.error('播放音訊檔失敗，切換回合成音回退方案:', e);
+    
+    // 回退方案：播放 8 次合成鐘聲
+    const now = ctx.currentTime;
+    const bongCount = 8;
+    const bongInterval = 2.0;
+    for (let i = 0; i < bongCount; i++) {
+      playSingleStrike(ctx, now + (i * bongInterval), 164.81, 0.8, 8.0);
+    }
   }
 }
+

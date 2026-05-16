@@ -5,6 +5,7 @@
         <span class="panel-icon">🎲</span>
         <h2 class="panel-title">{{ panelTitle }}</h2>
         <div class="step-indicator">Step {{ currentStepNum }} / 6</div>
+        <button class="btn-icon reset-all-btn" @click="handleResetSetup" title="重新開始">🔄</button>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
 
@@ -138,11 +139,21 @@
 
         <!-- 步驟 2: 配置人數配比 -->
         <div v-else-if="step === 'config'" class="step-config">
+          <div class="footer-btns" style="display:flex; gap:12px;">
+            <button class="btn-ghost" @click="step = 'pool'">← 角色池</button>
+            <button 
+              class="btn-primary start-btn" 
+              :disabled="totalConfigured !== totalPlayers || !isPoolLargeEnough"
+              @click="goToSelect"
+              style="flex:1;"
+            >
+              挑選玩家角色 →
+            </button>
+          </div>
           <div class="header-text">
             <span class="info-icon">👥</span>
             <span>當前玩家人數: <strong>{{ totalPlayers }}</strong></span>
           </div>
-
           <div class="section-title">決定角色配比</div>
           <div class="counts-editor">
             <div v-for="type in roleTypes" :key="type.key" class="count-row">
@@ -165,17 +176,7 @@
             <div class="total-status" :class="{ 'is-match': totalConfigured === totalPlayers }">
               總計配置: {{ totalConfigured }} / {{ totalPlayers }}
             </div>
-            <div class="footer-btns" style="display:flex; gap:12px;">
-              <button class="btn-ghost" @click="step = 'pool'">← 角色池</button>
-              <button 
-                class="btn-primary start-btn" 
-                :disabled="totalConfigured !== totalPlayers || !isPoolLargeEnough"
-                @click="goToSelect"
-                style="flex:1;"
-              >
-                挑選玩家角色 →
-              </button>
-            </div>
+          
           </div>
         </div>
 
@@ -611,8 +612,29 @@ function handleKeydown(e: KeyboardEvent) {
 
 // 狀態管理
 type Step = 'pool' | 'config' | 'select' | 'drunk' | 'lunatic' | 'marionette' | 'bluff' | 'preview' | 'draw'
-const step = ref<Step>('pool')
+
+// 從 UI Store 同步狀態
+const savedState = uiStore.setupWizardState as any
+const step = ref<Step>(savedState.step || 'pool')
 const totalPlayers = computed(() => gameStore.players.length)
+
+// 深度監聽所有變數並同步回 UI Store
+watch([step], () => syncToStore())
+
+function syncToStore() {
+  uiStore.setupWizardState = {
+    step: step.value,
+    counts: { ...counts },
+    selectedRoleIds: [...selectedRoleIds.value],
+    selectedBluffIds: [...selectedBluffIds.value],
+    drunkFakeRoleId: drunkFakeRoleId.value,
+    lunaticFakeRoleId: lunaticFakeRoleId.value,
+    marionetteFakeRoleId: marionetteFakeRoleId.value,
+    drawingResults: { ...drawingResults },
+    previewAssignments: [...previewAssignments.value],
+    previewBluffs: [...previewBluffs.value]
+  }
+}
 
 // 角色池狀態使用 UI Store 持久化
 const excludedPoolIds = computed({
@@ -684,16 +706,18 @@ const canEditPoolQuickly = computed(() => {
 })
 
 // 抽獎與酒鬼邏輯
-const drunkFakeRoleId = ref<string | null>(null)
-const lunaticFakeRoleId = ref<string | null>(null)
-const marionetteFakeRoleId = ref<string | null>(null)
-const drawingResults = reactive<Record<string, string>>({}) // player_id -> role_id
+const drunkFakeRoleId = ref<string | null>(savedState.drunkFakeRoleId)
+const lunaticFakeRoleId = ref<string | null>(savedState.lunaticFakeRoleId)
+const marionetteFakeRoleId = ref<string | null>(savedState.marionetteFakeRoleId)
+const drawingResults = reactive<Record<string, string>>({ ...savedState.drawingResults }) // player_id -> role_id
 const isSpinning = ref(false)
 const spinningPlayerId = ref<string | null>(null)
 const spinningResultId = ref<string | null>(null)
 const showResultModal = ref(false)
 const showReadyModal = ref(false)
 const activeFlickerId = ref<string | null>(null)
+
+watch([drunkFakeRoleId, lunaticFakeRoleId, marionetteFakeRoleId, drawingResults], () => syncToStore(), { deep: true })
 
 const fullPoolCharacters = computed(() => {
   if (!gameStore.script) return []
@@ -746,15 +770,16 @@ const lotteryPool = computed(() => {
   return ids.filter(id => !drawnRoleIds.includes(id))
 })
 
-const counts = reactive<Record<string, number>>({
-  Townsfolk: 0,
-  Outsider: 0,
-  Minion: 0,
-  Demon: 0
-})
+const counts = reactive<Record<string, number>>(
+  savedState.counts && Object.values(savedState.counts).some(v => (v as number) > 0)
+    ? { ...savedState.counts }
+    : { Townsfolk: 0, Outsider: 0, Minion: 0, Demon: 0 }
+)
 
-const selectedRoleIds = ref<string[]>([])
-const selectedBluffIds = ref<string[]>([])
+const selectedRoleIds = ref<string[]>([...(savedState.selectedRoleIds || [])])
+const selectedBluffIds = ref<string[]>([...(savedState.selectedBluffIds || [])])
+
+watch([counts, selectedRoleIds, selectedBluffIds], () => syncToStore(), { deep: true })
 
 // --- 新增：檢測配置變動角色 ---
 const setupWarnings = computed(() => {
@@ -796,6 +821,9 @@ const roleTypes = [
 ]
 
 onMounted(() => {
+  // 如果已經有暫存資料（人數配比總和大於 0），則不初始化
+  if (Object.values(counts).reduce((a, b) => a + b, 0) > 0) return
+
   const p = totalPlayers.value
   // 使用標準推薦人數
   if (p === 5) { counts.Townsfolk = 3; counts.Outsider = 0; counts.Minion = 1; counts.Demon = 1; }
@@ -820,8 +848,8 @@ const panelTitle = computed(() => {
     pool: '1. 篩選可用角色池',
     config: '2. 設定人數配比',
     select: '3. 挑選玩家角色',
-    drunk: '3.5 酒鬼偽裝',
-    lunatic: '3.55 瘋子偽裝',
+    drunk: '3.5 酒鬼認知',
+    lunatic: '3.55 瘋子認知',
     marionette: '3.6 木偶偽裝',
     bluff: '4. 挑選惡魔偽裝',
     preview: '5. 最終預覽',
@@ -1676,8 +1704,10 @@ function autoFillBluffs() {
   selectedBluffIds.value.push(...shuffled.slice(0, needed).map(c => c.id))
 }
 
-const previewAssignments = ref<{ player_id: string, role: CharacterDef | null }[]>([])
-const previewBluffs = ref<(CharacterDef | null)[]>([null, null, null])
+const previewAssignments = ref<{ player_id: string, role: CharacterDef | null }[]>([...(savedState.previewAssignments || [])])
+const previewBluffs = ref<(CharacterDef | null)[]>([...(savedState.previewBluffs || [null, null, null])])
+
+watch([previewAssignments, previewBluffs], () => syncToStore(), { deep: true })
 
 
 
@@ -1814,7 +1844,43 @@ async function confirmAssignment() {
     }
   }
 
+  uiStore.resetSetupWizard()
   uiStore.closePanel()
+}
+
+function handleResetSetup() {
+  if (window.confirm('確定要清除目前的指派進度並重新開始嗎？')) {
+    uiStore.resetSetupWizard()
+    // 重新載入初始狀態
+    const newState = uiStore.setupWizardState as any
+    step.value = newState.step
+    Object.assign(counts, newState.counts)
+    selectedRoleIds.value = [...newState.selectedRoleIds]
+    selectedBluffIds.value = [...newState.selectedBluffIds]
+    drunkFakeRoleId.value = newState.drunkFakeRoleId
+    lunaticFakeRoleId.value = newState.lunaticFakeRoleId
+    marionetteFakeRoleId.value = newState.marionetteFakeRoleId
+    for (const key in drawingResults) delete drawingResults[key]
+    Object.assign(drawingResults, newState.drawingResults)
+    previewAssignments.value = [...newState.previewAssignments]
+    previewBluffs.value = [...newState.previewBluffs]
+    
+    // 觸發 initial counts logic
+    const p = totalPlayers.value
+    if (p === 5) { counts.Townsfolk = 3; counts.Outsider = 0; counts.Minion = 1; counts.Demon = 1; }
+    else if (p === 6) { counts.Townsfolk = 3; counts.Outsider = 1; counts.Minion = 1; counts.Demon = 1; }
+    else if (p === 7) { counts.Townsfolk = 5; counts.Outsider = 0; counts.Minion = 1; counts.Demon = 1; }
+    else if (p === 8) { counts.Townsfolk = 5; counts.Outsider = 1; counts.Minion = 1; counts.Demon = 1; }
+    else if (p === 9) { counts.Townsfolk = 5; counts.Outsider = 2; counts.Minion = 1; counts.Demon = 1; }
+    else if (p === 10) { counts.Townsfolk = 7; counts.Outsider = 0; counts.Minion = 2; counts.Demon = 1; }
+    else if (p === 11) { counts.Townsfolk = 7; counts.Outsider = 1; counts.Minion = 2; counts.Demon = 1; }
+    else if (p === 12) { counts.Townsfolk = 7; counts.Outsider = 2; counts.Minion = 2; counts.Demon = 1; }
+    else if (p >= 13) { counts.Townsfolk = 9; counts.Outsider = 0 + (p-13); counts.Minion = 3; counts.Demon = 1; }
+    else {
+      counts.Townsfolk = Math.max(0, p - 3)
+      counts.Demon = 1; counts.Minion = 1; counts.Outsider = 1;
+    }
+  }
 }
 
 function scrollToGroup(typeKey: string) {
@@ -1878,6 +1944,28 @@ function getRoleTypeEmoji(type: string) {
 }
 
 .close-btn { background: none; border: none; font-size: 18px; color: var(--color-text-muted); padding: 4px; cursor: pointer; }
+
+.reset-all-btn {
+  width: 28px;
+  height: 28px;
+  min-height: 28px !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  margin-right: 4px;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+}
+
+.reset-all-btn:hover {
+  opacity: 1;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+}
 
 .assignment-content { 
   flex: 1; 

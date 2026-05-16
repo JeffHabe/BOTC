@@ -19,6 +19,10 @@
           <span class="label">惡</span>
           <span class="stat-num">{{ demonCount }}</span>
         </span>
+        <span v-if="travelerCount > 0" class="stat-item traveler">
+          <span class="label">旅</span>
+          <span class="stat-num">{{ travelerCount }}</span>
+        </span>
       </div>
 
       <!-- 中央：輪次與階段 -->
@@ -43,6 +47,10 @@
 
       <!-- 右側：存活狀態 (保留核心數據) -->
       <div class="stat-group stats-alive">
+        <span class="stat-item nominations" v-if="gameStore.phase === 'Day'" title="剩餘提名權">
+          <span class="stat-icon">🗣️</span>
+          <span class="stat-num">{{ nominationsRemaining }}</span>
+        </span>
         <span class="stat-item threshold" v-if="gameStore.phase === 'Day'" title="門檻">
           <span class="stat-icon">🙋</span>
           <span class="stat-num">{{ gameStore.threshold }}</span>
@@ -60,21 +68,31 @@
 import { computed } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
+import { getBaseSetup } from '../utils/setup'
+
 const gameStore = useGameStore()
 const uiStore = useUIStore()
 
-const townCount = computed(() =>
-  gameStore.players.filter(p => p.role?.role_type === 'Townsfolk').length
-)
-const outsiderCount = computed(() =>
-  gameStore.players.filter(p => p.role?.role_type === 'Outsider').length
-)
-const minionCount = computed(() =>
-  gameStore.players.filter(p => p.role?.role_type === 'Minion').length
-)
-const demonCount = computed(() =>
-  gameStore.players.filter(p => p.role?.role_type === 'Demon').length
-)
+// 獲取當前非旅行者的人數 (基礎配置依據)
+const nonTravelerCount = computed(() => {
+  return gameStore.players.filter(p => !p.role || p.role.role_type !== 'Traveler').length
+})
+
+// 取得標準配置
+const standardSetup = computed(() => getBaseSetup(nonTravelerCount.value))
+
+const townCount = computed(() => standardSetup.value.townsfolk)
+const outsiderCount = computed(() => standardSetup.value.outsider)
+const minionCount = computed(() => standardSetup.value.minion)
+const demonCount = computed(() => standardSetup.value.demon)
+
+const travelerCount = computed(() => {
+  return gameStore.players.filter(p => p.role?.role_type === 'Traveler').length
+})
+
+const nominationsRemaining = computed(() => {
+  return gameStore.players.filter(p => p.can_nominate).length
+})
 
 
 </script>
@@ -189,6 +207,8 @@ const demonCount = computed(() =>
 .stat-item.outsider  { color: #48c9b0; }
 .stat-item.minion    { color: #ec7063; }
 .stat-item.demon     { color: #f1948a; }
+.stat-item.traveler  { color: #b46baf; }
+.stat-item.nominations { color: #f39c12; }
 
 .stat-num {
   font-weight: 700;

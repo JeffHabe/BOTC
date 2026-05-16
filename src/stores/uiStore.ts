@@ -23,6 +23,19 @@ export type Panel =
 export type ReminderLayout = 'arc' | 'grid' | 'stack' | 'inner'
 export type GrimoireShape = 'circle' | 'oval' | 'rect'
 
+export interface SetupWizardState {
+  step: string
+  counts: Record<string, number>
+  selectedRoleIds: string[]
+  selectedBluffIds: string[]
+  drunkFakeRoleId: string | null
+  lunaticFakeRoleId: string | null
+  marionetteFakeRoleId: string | null
+  drawingResults: Record<string, string>
+  previewAssignments: any[]
+  previewBluffs: any[]
+}
+
 export const useUIStore = defineStore('ui', () => {
   // --- 面板控制 ---
   const activePanel = ref<Panel>('none')
@@ -450,6 +463,45 @@ export const useUIStore = defineStore('ui', () => {
     }
   })
 
+  // --- 設置嚮導 (RoleAssignmentPanel) 暫存 ---
+  const initialSetupState: SetupWizardState = {
+    step: 'pool',
+    counts: { Townsfolk: 0, Outsider: 0, Minion: 0, Demon: 0 },
+    selectedRoleIds: [],
+    selectedBluffIds: [],
+    drunkFakeRoleId: null,
+    lunaticFakeRoleId: null,
+    marionetteFakeRoleId: null,
+    drawingResults: {},
+    previewAssignments: [],
+    previewBluffs: [null, null, null]
+  }
+
+  const setupWizardState = ref<SetupWizardState>((() => {
+    const saved = localStorage.getItem('botc-setup-wizard-state')
+    if (saved) {
+      try {
+        return { ...initialSetupState, ...JSON.parse(saved) }
+      } catch (e) {
+        return { ...initialSetupState }
+      }
+    }
+    return { ...initialSetupState }
+  })())
+
+  watch(setupWizardState, (val) => {
+    localStorage.setItem('botc-setup-wizard-state', JSON.stringify(val))
+  }, { deep: true })
+
+  function resetSetupWizard() {
+    setupWizardState.value = { 
+      ...initialSetupState,
+      counts: { Townsfolk: 0, Outsider: 0, Minion: 0, Demon: 0 },
+      drawingResults: {},
+      previewBluffs: [null, null, null]
+    }
+  }
+
   // 監聽 popstate (使用者觸發手機邊緣向內滑動返回或瀏覽器上一頁)
   window.addEventListener('popstate', () => {
     if (isProgrammaticBack) {
@@ -538,6 +590,8 @@ export const useUIStore = defineStore('ui', () => {
     // 側邊工具列
     isSideToolbarExpanded,
     // 夜晚捲動位置
-    nightOrderScrollPos, setNightOrderScroll
+    nightOrderScrollPos, setNightOrderScroll,
+    // 設置嚮導暫存
+    setupWizardState, resetSetupWizard
   }
 })

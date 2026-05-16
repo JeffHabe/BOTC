@@ -29,14 +29,14 @@
       <!-- 玩家姓名與編號標籤 -->
       <div class="name-label-box" :class="namePositionClass">
         <span class="seat-num">{{ index + 1 }}.</span>
-        <span class="player-name-text">{{ player.name || '空白' }}</span>
+        <span class="player-name-text">{{ player.name || '' }}</span>
         <!-- 狀態圖示 (是否有投票權等) 移入姓名標籤中 -->
         <div class="status-indicators-inline">
           <span v-if="!player.is_alive && player.has_ghost_vote" class="ghost-vote" title="擁有靈魂投票權">👻</span>
           <span v-if="!player.can_nominate" class="nominate-lock" title="今日已不能提名">🚫</span>
         </div>
       </div>
-
+    
       <!-- 核心圓形令片內部 (圖示與角色名) -->
       <div class="token-inner-content">
         <!-- 角色圖示 -->
@@ -45,13 +45,27 @@
           <img v-if="player.role?.image && !uiStore.isRolesHidden" :src="player.role.image" :alt="player.role.name" class="role-img" />
           <span v-else-if="player.role && !uiStore.isRolesHidden" class="role-emoji">{{ roleEmoji }}</span>
         </div>
-        
-        <!-- 角色名稱 -->
-        <div v-if="player.role && !uiStore.isRolesHidden" class="role-name-inner">
-          {{ player.role.name }}
-        </div>
+        <!-- 角色名稱 (弧形顯示) -->
+        <svg v-if="player.role && !uiStore.isRolesHidden" viewBox="0 0 100 100" class="role-name-svg">
+        <path 
+          :id="'nameCurve-' + player.id" 
+          d="M 26 80 A 50 35 0 0 0 80 76"  
+          fill="transparent" 
+        />
+        <text>
+          <textPath 
+            :href="'#nameCurve-' + player.id" 
+            startOffset="48%"
+            text-anchor="middle"
+            dominant-baseline="middle"
+            class="curved-name-text"
+          >
+            {{ player.role.name }}
+          </textPath>
+        </text>
+      </svg>
       </div>
-
+      
       <!-- 死亡緞帶 (絲綢風格 繁體/簡體) -->
       <div v-if="!player.is_alive" class="death-ribbon" :class="deathTypeClass">
         <span class="ribbon-text">{{ deathLabel[0] }}</span>
@@ -97,7 +111,7 @@
           @click.stop="toggleExpand"
         >
           <div class="rem-inner">
-            <span class="expand-icon">{{ isExpanded ? '▲' : '🕯️' }}</span>
+            <span class="expand-icon">{{ isExpanded ? '🔒' : '🔓' }}</span>
           </div>
         </div>
 
@@ -564,12 +578,11 @@ const deathTypeClass = computed(() => {
   align-items: center;
   justify-content: center;
   min-height: 0;
-  margin-bottom: -4px;
 }
 
 .role-img {
-  width: 100%;
-  height: 100%;
+  width: 90%;
+  height: 90%;
   object-fit: contain;
   /* 簡化濾鏡，移除耗能的 drop-shadow */
   filter: contrast(1.05) brightness(0.95);
@@ -581,19 +594,34 @@ const deathTypeClass = computed(() => {
   text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
-.role-name-inner {
-  font-size: 10px; /* 稍微縮小字體以適應長名稱 */
+.role-name-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.curved-name-text {
+  font-size: 18px;        /* 稍微縮小一點點，21px 有時會導致路徑溢出 */
   font-weight: 900;
-  color: #1a1b23;
-  letter-spacing: 0.5px; /* 縮減間距 */
-  text-align: center;
-  white-space: nowrap;
-  font-family: var(--font-title), sans-serif;
-  text-shadow: 0 1px 2px rgba(255,255,255,0.8);
-  max-width: 90%; /* 限制寬度 */
-  overflow: hidden;
-  text-overflow: clip;
-  transform: scale(0.9);
+  fill: #1a1b23;
+  font-family: var(--font-title), 'ChineseFont', sans-serif;
+  
+  /* 關鍵修正：確保文字渲染優化，減少偏移 */
+  text-rendering: optimizeLegibility;
+  
+  /* 視覺效果 */
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 1px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  
+  /* 字距調整：如果還是偏左，可以稍微減少這個數值 */
+  letter-spacing: 4px; 
 }
 
 .death-ribbon {
@@ -663,8 +691,8 @@ const deathTypeClass = computed(() => {
   pointer-events: auto;
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   /* width and height are handled by dynamic styles in getReminderStyle */
   background: url('/reminder1.png') no-repeat center center;
   background-size: cover;
@@ -690,14 +718,14 @@ const deathTypeClass = computed(() => {
 }
 
 .rem-role-img {
-  width: 75%;
-  height: 75%;
+  width: 85%;
+  height: 85%;
   object-fit: contain;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
 }
 
 .rem-emoji-icon {
-  font-size: 14px; /* 縮小尺寸以免超出圓圈 */
+  font-size: 19px; /* 進一步加大以填充圓圈 */
   font-weight: 700;
   max-width: 90%;
   max-height: 90%;
@@ -712,9 +740,9 @@ const deathTypeClass = computed(() => {
   font-family: 'ChineseFont', 'NewsFont', sans-serif !important;
   background: rgba(20, 20, 25, 0.95);
   color: #fff;
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-size: 8.5px;
+  padding: 0px 4px;
+  border-radius: 3px;
+  font-size: 7.5px;
   white-space: nowrap;
   pointer-events: none;
   border: 0.5px solid rgba(255,255,255,0.15);
@@ -735,7 +763,7 @@ const deathTypeClass = computed(() => {
 
 .rem-label-container .rem-text-label {
   position: absolute;
-  bottom: 23px; 
+  bottom: 27px; /* 隨圓圈加大而調高 (23->27) */
   transform: translateY(33px); /* 稍微上移 2px (35->33)，增加緊湊感 */
 }
 
@@ -758,8 +786,8 @@ const deathTypeClass = computed(() => {
 .layout-grid .rem-dot-classic {
   position: static;
   transform: none;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   margin: 1px;
   font-size: 11px;
 }
@@ -767,8 +795,8 @@ const deathTypeClass = computed(() => {
 /* 側面堆疊 (Stack) - JS 已處理方位 */
 .layout-stack .rem-dot-classic {
   transform: none;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
 }
 
 /* 內圈向心 (Inner) - JS 已計算座標 */
@@ -808,8 +836,8 @@ const deathTypeClass = computed(() => {
 
 .add-reminder-btn {
   position: absolute;
-  width: 20px !important;
-  height: 20px !important;
+  width: 24px !important;
+  height: 24px !important;
   background: rgba(42, 42, 53, 0.9);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.3);

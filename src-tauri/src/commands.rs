@@ -99,7 +99,7 @@ pub fn set_player_count(count: u32, state: State<AppState>) -> Result<GameState,
         let to_add = count - current_count as u32;
         for i in 0..to_add {
             let seat = (current_count + i as usize + 1) as u32;
-            gs.players.push(Player::new("空白", seat));
+            gs.players.push(Player::new("空座位", seat));
         }
     }
 
@@ -803,7 +803,8 @@ pub fn import_game_state(json_str: String, state: State<AppState>) -> Result<Gam
 pub async fn start_background_timer(app: AppHandle, seconds: u64) {
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_secs(seconds));
-        let _ = app.notification()
+        let _ = app
+            .notification()
             .builder()
             .title("計時結束")
             .body("時間到囉！鐘樓的鐘聲響起了。")
@@ -996,4 +997,3 @@ pub fn load_game_state(state: State<AppState>, app: tauri::AppHandle) -> Result<
 
     Ok(loaded_state)
 }
-

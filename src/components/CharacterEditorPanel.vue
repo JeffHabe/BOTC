@@ -19,10 +19,13 @@
             + 新增角色
           </button>
           <button class="btn-ghost" @click="exportLibrary" title="匯出當前角色庫備份">
-             📤 匯出備份
+             📤 
+          </button>
+          <button class="btn-ghost" @click="importLibrary" title="從備份檔案匯入角色庫">
+             📥 
           </button>
           <button class="btn-ghost" @click="resetToDefault" title="恢復成官方預設全庫">
-             🔄 恢復預設
+             🔄 
           </button>
         </div>
 
@@ -41,8 +44,13 @@
               <div class="char-name">
                 <span :class="['type-dot', (char.team || char.role_type || '').toLowerCase()]"></span>
                 {{ char.name || '未知' }}
+                <span v-if="char.is_custom" class="custom-badge" title="這是自定義或已修改的角色">🛠️ 自定義</span>
               </div>
-              <div class="char-sub">{{ char.id }}</div>
+              <div class="char-sub">
+                {{ char.id }}
+                <span v-if="char.firstNight" class="night-order-info n-first">🌙1: {{ char.firstNight }}</span>
+                <span v-if="char.otherNight" class="night-order-info n-other">🌙+: {{ char.otherNight }}</span>
+              </div>
               <div v-if="char.conflicts && char.conflicts.length > 0" class="char-conflicts">
                 <div v-for="(rule, idx) in char.conflicts" :key="idx" class="conflict-badge">
                   <div class="conflict-badge-title">⚔️ vs {{ getCharacterName(rule.target || rule.charB) }}</div>
@@ -150,8 +158,8 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
-import { save } from '@tauri-apps/plugin-dialog'
-import { writeTextFile } from '@tauri-apps/plugin-fs'
+import { save, open } from '@tauri-apps/plugin-dialog'
+import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs'
 
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
@@ -263,7 +271,9 @@ async function saveCharacter() {
     firstNight: formData.value.firstNight ? Number(formData.value.firstNight) : undefined,
     otherNight: formData.value.otherNight ? Number(formData.value.otherNight) : undefined,
     // 過濾掉沒有選擇對象的無效規則，並確保空陣列也能正確覆蓋舊規則
-    conflicts: (formData.value.conflicts || []).filter((r: any) => r.target)
+    conflicts: (formData.value.conflicts || []).filter((r: any) => r.target),
+    // 標記為自定義/已修改
+    is_custom: true
   }
 
   if (editingId.value) {
@@ -356,6 +366,62 @@ async function exportLibrary() {
     a.download = fileName
     a.click()
     URL.revokeObjectURL(url)
+  }
+}
+async function importLibrary() {
+  try {
+    const filePath = await open({
+      multiple: false,
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    })
+
+    if (!filePath) return
+
+    const json = await readTextFile(filePath)
+    const importedList = JSON.parse(json)
+
+    if (!Array.isArray(importedList)) {
+      alert('匯入失敗：檔案格式不正確（必須是 JSON 陣列）')
+      return
+    }
+
+    if (confirm(`確定要匯入此備份嗎？若偵測到重複的「自定義角色」將會自動重新命名以保護現有資料。檔案內含 ${importedList.length} 個角色。`)) {
+      const currentList = [...scriptStore.rawCharacterList]
+      
+      importedList.forEach((newChar: any) => {
+        const existingIdx = currentList.findIndex(c => c.id === newChar.id)
+        const existing = existingIdx > -1 ? currentList[existingIdx] : null
+
+        if (existing && existing.is_custom) {
+          // 衝突處理：現有角色是自定義的，將新匯入的角色重新命名
+          let counter = 1
+          let newId = `${newChar.id}_${counter}`
+          while (currentList.some(c => c.id === newId)) {
+            counter++
+            newId = `${newChar.id}_${counter}`
+          }
+          
+          const renamedChar = {
+            ...newChar,
+            id: newId,
+            name: `${newChar.name}_${counter}`
+          }
+          currentList.push(renamedChar)
+        } else if (existing) {
+          // 覆蓋非自定義的角色（官方預設版）
+          currentList[existingIdx] = newChar
+        } else {
+          // 無衝突，直接新增
+          currentList.push(newChar)
+        }
+      })
+
+      await scriptStore.saveCharacters(currentList)
+      alert('✅ 角色庫已成功匯入（衝突角色已自動重新命名）！')
+    }
+  } catch (e) {
+    console.error('Import failed', e)
+    alert('❌ 匯入失敗：' + String(e))
   }
 }
 </script>
@@ -530,10 +596,46 @@ async function exportLibrary() {
 .type-dot.traveler { background-color: #8bb34d; }
 .type-dot.fabled { background-color: #e6c547; }
 
+.custom-badge {
+  font-size: 9px;
+  background: linear-gradient(135deg, #9c27b0, #673ab7);
+  color: white;
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin-left: 4px;
+  font-weight: normal;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
 .char-sub {
   font-size: 11px;
   color: var(--color-text-muted);
   margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.night-order-info {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.n-first {
+  background: rgba(74, 144, 226, 0.2);
+  border: 1px solid rgba(74, 144, 226, 0.3);
+  color: #82b1ff;
+}
+
+.n-other {
+  background: rgba(230, 126, 34, 0.2);
+  border: 1px solid rgba(230, 126, 34, 0.3);
+  color: #ffcc80;
 }
 
 .char-conflicts {
