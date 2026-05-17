@@ -136,9 +136,10 @@ const totalVotes = computed(() => {
 .status-inner {
   height: 50px;
   margin-top: env(safe-area-inset-top, 0px);
-  padding: 0 6px;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  padding: 0 10px;
+  position: relative; /* 啟用相對定位，作為中央按鈕幾何對齊的基準 */
+  display: flex;
+  justify-content: space-between;
   align-items: center;
 }
 
@@ -158,6 +159,7 @@ const totalVotes = computed(() => {
 
 .stats-alive {
   justify-content: flex-end;
+  gap: 2px; /* 緊密間距，大幅節省水平排版空間 */
 }
 
 .stat-group.is-hidden {
@@ -167,6 +169,10 @@ const totalVotes = computed(() => {
 }
 
 .phase-control {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%); /* 完美的幾何雙重置中，不受左右統計數據增減或隱藏影響，保證永遠在螢幕與前置相機正下方完美對齊 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -212,6 +218,11 @@ const totalVotes = computed(() => {
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
+/* 僅針對右側存活狀態統計項目的精緻微縮 */
+.stats-alive .stat-item {
+  gap: 0.5px;
+}
+
 .stat-item.is-hidden {
   visibility: hidden;
   opacity: 0;
@@ -235,6 +246,12 @@ const totalVotes = computed(() => {
   font-weight: 700;
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 11px;
+}
+
+/* 右側統計數值微縮 */
+.stats-alive .stat-num {
+  font-size: 10px;
+  font-weight: 800;
 }
 
 
@@ -273,6 +290,12 @@ const totalVotes = computed(() => {
   height: 24px;
   object-fit: contain;
   display: block;
+}
+
+/* 右側統計圖示精緻微縮，徹底釋放右箭頭點擊通道 */
+.stats-alive .stat-img {
+  width: 15px;
+  height: 15px;
 }
 
 /* 獨立微調各個狀態圖示 */

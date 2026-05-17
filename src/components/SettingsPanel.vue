@@ -154,6 +154,33 @@
           </button>
         </div>
 
+        <!-- 提示標記收納上限計數器 -->
+        <div class="section-title">提示標記收納上限</div>
+        <div class="threshold-slider-box">
+          <div class="threshold-counter">
+            <button 
+              class="counter-btn" 
+              type="button"
+              :disabled="uiStore.reminderCollapseThreshold <= 1"
+              @click="uiStore.setReminderCollapseThreshold(uiStore.reminderCollapseThreshold - 1)"
+            >
+              －
+            </button>
+            <span class="counter-value">{{ uiStore.reminderCollapseThreshold }}</span>
+            <button 
+              class="counter-btn" 
+              type="button"
+              :disabled="uiStore.reminderCollapseThreshold >= 8"
+              @click="uiStore.setReminderCollapseThreshold(uiStore.reminderCollapseThreshold + 1)"
+            >
+              ＋
+            </button>
+          </div>
+          <div class="slider-labels text-center">
+            <span class="threshold-tip">當玩家提示標記多於此數量時，自動摺疊為鎖頭</span>
+          </div>
+        </div>
+
         <div class="divider" />
        
 
@@ -1138,6 +1165,81 @@ function resetGame() {
 
 .grid-item:active .grid-double-icon .lorica-img {
   transform: scale(1.05) translate(3px, 0px) rotate(3deg);
+}
+
+/* 提示標記收納上限樣式 */
+.threshold-slider-box {
+  padding: 8px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.threshold-counter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 16px;
+  border-radius: 20px;
+  max-width: 180px;
+  margin: 0 auto;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.counter-btn {
+  background: rgba(201, 168, 76, 0.08);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  color: var(--color-gold-bright);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+}
+
+.counter-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  border-color: rgba(255,255,255,0.1);
+  color: var(--color-text-muted);
+}
+
+.counter-btn:not(:disabled):hover {
+  background: rgba(201, 168, 76, 0.22);
+  border-color: var(--color-gold-bright);
+  transform: scale(1.08);
+}
+
+.counter-btn:not(:disabled):active {
+  transform: scale(0.92);
+}
+
+.counter-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-gold-bright);
+  min-width: 16px;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(232, 160, 64, 0.3);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.threshold-tip {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  opacity: 0.85;
 }
 
 </style>

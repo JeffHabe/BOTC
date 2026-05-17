@@ -27,7 +27,7 @@
     <!-- 玩家令片主體 -->
     <div v-if="renderedPart === 'all' || renderedPart === 'body'" class="token-body classic">
       <!-- 玩家姓名與編號標籤 -->
-      <div class="name-label-box" :class="namePositionClass">
+      <div class="name-label-box" :class="[namePositionClass, { 'has-reminders': player.reminders.length > 0 }]">
         <span class="seat-num">{{ index + 1 }}.</span>
         <span class="player-name-text">{{ player.name || '' }}</span>
         <!-- 狀態圖示 (是否有投票權等) 移入姓名標籤中 -->
@@ -105,7 +105,7 @@
 
         <!-- 展開/收起按鈕 (圖示層) -->
         <div 
-          v-if="player.reminders.length > 4"
+          v-if="player.reminders.length > uiStore.reminderCollapseThreshold"
           key="expand-icon-btn"
           class="rem-dot-classic expand-toggle-btn"
           :style="getReminderStyle(isExpanded ? player.reminders.length : 0)"
@@ -130,7 +130,7 @@
 
         <!-- 展開/收起按鈕 (文字層) -->
         <div 
-          v-if="player.reminders.length > 4"
+          v-if="player.reminders.length > uiStore.reminderCollapseThreshold"
           key="expand-label-btn"
           class="rem-label-container"
           :style="getReminderStyle(isExpanded ? player.reminders.length : 0)"
@@ -144,7 +144,7 @@
         <div 
           key="add-reminder-btn-global"
           class="add-reminder-btn"
-          :style="getReminderStyle(isExpanded ? player.reminders.length + 1 : (player.reminders.length > 4 ? 1 : player.reminders.length), true)"
+          :style="getReminderStyle(isExpanded ? player.reminders.length + 1 : (player.reminders.length > uiStore.reminderCollapseThreshold ? 1 : player.reminders.length), true)"
           @click.stop="uiStore.openReminderPicker(player.id)"
           title="新增/編輯提示標記"
         >
@@ -198,9 +198,9 @@ const autoScaleFactor = computed(() => {
 const displayReminders = computed(() => {
   // 如果處於展開狀態，顯示全部
   if (isExpanded.value) return props.player.reminders
-  // 如果標記多於 4 個，收起狀態下一個都不顯示 (全部隱藏)
-  if (props.player.reminders.length > 4) return []
-  // 否則 (4 個及以下) 正常顯示
+  // 如果標記多於設定的收納上限，收起狀態下一個都不顯示 (全部隱藏)
+  if (props.player.reminders.length > uiStore.reminderCollapseThreshold) return []
+  // 否則正常顯示
   return props.player.reminders
 })
 
@@ -290,43 +290,67 @@ function getReminderStyle(rIdx: number, isPlus = false) {
   const layout = uiStore.reminderLayout
   const angle = props.angle || 0 // 弧度
   const isRight = props.isOnRightSide
+  const ratio = window.innerWidth / window.innerHeight
+
+  // 幾何徑向角度優化：計算從魔典中心指向玩家令片中心的實際物理角度，以保證標記在橢圓、矩形等模式下都能與中心點完美成一直線
+  const shape = uiStore.grimoireShape
+  const count = gameStore.players.length
+  const layoutBoost = count > 14 ? 6 : (count > 11 ? 3 : 0)
+
+  let dx = Math.cos(angle)
+  let dy = Math.sin(angle)
+
+  if (shape === 'oval') {
+    const ovalA = 36 + layoutBoost
+    const ovalB = 24 + layoutBoost
+    dx = ovalA * Math.cos(angle)
+    dy = ovalB * Math.sin(angle)
+  } else if (shape === 'circle') {
+    const baseA = 36 + layoutBoost
+    const baseB = baseA * ratio
+    dx = baseA * Math.cos(angle)
+    dy = baseB * Math.sin(angle)
+  } else if (shape === 'rect') {
+    const baseARect = 34 + layoutBoost
+    const baseBRect = Math.max(baseARect * ratio * 1, 25 + layoutBoost)
+    const nFactor = 3.2
+    const cosT = Math.cos(angle)
+    const sinT = Math.sin(angle)
+    dx = baseARect * Math.sign(cosT) * Math.pow(Math.abs(cosT), 2 / nFactor)
+    dy = baseBRect * Math.sign(sinT) * Math.pow(Math.abs(sinT), 2 / nFactor)
+  }
+
+  // 核心幾何物理修正：將水平分量 dx 乘以寬高比 ratio，以消除長方形螢幕拉伸對角度計算產生的物理扭曲，保證在任何解析度下連線均呈完美直線
+  const radialAngle = Math.atan2(dy, dx * ratio)
 
   // --- 全局標記間距配置 ---
-  const unitHeight = 1 * uiStore.grimoireScale // 一個標記 (圖示+文字) 的總高度
-  //基礎間距 (spacing) 
-  const spacing = 30 * uiStore.grimoireScale                      // 標記與標記之間的物理間隔 (px)
+  // 優化間距以容納小 token 圓圈本身 (直徑 30px) 與下方的文字標籤 (偏移 12px + 文字高度約 10px)，確保在任何角度下圖示與文字均不會重疊擠壓
+  const unitHeight = 35 * uiStore.grimoireScale // 1️⃣ 一個小令片本身所占用的實體高度 (px)
+  const spacing = 15 * uiStore.grimoireScale   // 2️⃣ 小令片與小令片之間的額外空白安全間隔 (px)
   const tokenPxSize = 100 * uiStore.grimoireScale * (autoScaleFactor.value || 1)
-  const gap = ((unitHeight + spacing) / tokenPxSize) * 100
+  const gap = ((unitHeight + spacing) / tokenPxSize) *90 // 3️⃣ 換算後的百分比軌道間距
   // -----------------------
 
   // 1. 內圈向心模式 (Inner - Single Radial Column)
   if (layout === 'inner') {
     const deg = (props.angle * 180) / Math.PI
     const isBottomHalf = deg > 40 && deg < 135 // 針對底部範圍
-    // 基礎起點：底部玩家推遠以避開名字，其餘 60%
-    const effectiveBaseDist = isBottomHalf ? 85 : 60
-    //計算基礎間距 (spacing)
-    const spacing = 35 * uiStore.grimoireScale
+    // 基礎起點幾何黃金比例：推遠起始半徑 (底部玩家 115%，其餘 95%)，與僅高出 5px 的名字標籤物理錯開，保證絕不重疊且富有呼吸感
+    const effectiveBaseDist = isBottomHalf ? 115 : 95
 
     let distV = effectiveBaseDist + rIdx * gap
 
     // --- 針對加號按鈕的特別優化 ---
-  if (isPlus) {
+    if (isPlus) {
       // 如果只有加號且沒標記
-    if (props.player.reminders.length === 0) {
+      if (props.player.reminders.length === 0) {
         distV = isBottomHalf ? 70 : 60
-      } 
-      // 如果加號緊跟在「🕯️ 展開按鈕」後面 (收起狀態)
-      else if (!isExpanded.value && props.player.reminders.length > 4) {
-        // 縮小間距，讓加號靠近展開按鈕 (使用較小的 32px 基準)
-
-      const tightGap = ((0 + spacing) / tokenPxSize) * 100
-        distV = effectiveBaseDist + tightGap
+      }
+      // 有標記或收起狀態下，加號按鈕自動採用與普通標記完全一致的標準安全間距 (gap)，徹底避免與展開鎖按鈕重疊
     }
-  }
 
-    const top = 50 - (distV * Math.sin(angle))
-    const left = 50 - (distV * Math.cos(angle))
+    const top = 50 - (distV * Math.sin(radialAngle))
+    const left = 50 - (distV * Math.cos(radialAngle))
 
     return {
       top: `${top}%`,
@@ -346,37 +370,26 @@ function getReminderStyle(rIdx: number, isPlus = false) {
     
     // --- 弧形佈局配置區 ---
     const arcRadius = isBottomHalf ? 60 : 60  // 標記環繞的半徑 (離令片中心的距離)
-    const arcSpread = 45                        // 標記之間的展開角度 (度)
+    const arcSpread = 48                        // 標記之間的展開角度 (度)
     // -----------------------
     //堆疊模式 (stack) 的 Y 軸偏移
-    const spacing = 50 * uiStore.grimoireScale
+    const stackSpacing = 50 * uiStore.grimoireScale
 
     let radius = arcRadius
     
     // 如果只有一個加號，同步其高度
     if (isPlus && props.player.reminders.length === 0) {
       radius = isBottomHalf ? 60 : 60
-  }
-
-    // --- 對稱扇形邏輯 ---
-    // 計算總共有多少個元素需要排列 (標記 + 功能按鈕)
-    // const totalItems = isExpanded.value 
-    //   ? props.player.reminders.length + (props.player.reminders.length > 2 ? 2 : 1) 
-    //   : (props.player.reminders.length > 2 ? 2 : props.player.reminders.length + 1)
+    }
 
     const spreadAngle = arcSpread * (Math.PI / 180) 
-    // const centerIdx = (totalItems - 1) / 2
     
     // 先計算基礎角度 (扇形分佈)
-    let finalAngle =angle + (rIdx ) * spreadAngle
+    let finalAngle = radialAngle + (rIdx) * spreadAngle
     // --- 關鍵修改：加號固定在「外側肩膀」位置 (半徑加大到 110) ---
     if (isPlus) {
-      // 1. 根據令片位置偏移角度 (朝向魔典中央垂直線)
-      // 左側玩家 (isRight=false) 向右偏 30 度，右側玩家 (isRight=true) 向左偏 30 度
-      // const shoulderOffset = (isRight ? 30 : -30) * (Math.PI / 180)
-      finalAngle =angle
-      // finalAngle = angle + shoulderOffset
-      const tightGap = ((0 + spacing) / tokenPxSize) * 100
+      finalAngle = radialAngle
+      const tightGap = ((0 + stackSpacing) / tokenPxSize) * 100
       radius = arcRadius + tightGap-25
     }
     const top = 50 - (radius * Math.sin(finalAngle)) 
@@ -551,12 +564,12 @@ const deathTypeClass = computed(() => {
 }
 
 .pos-top {
-  bottom: 100%; /* 從 115% 增加到 125%，進一步拉開空間 */
+  bottom: 105%; /* 名字與大令片物理距離精準固定在 5px 左右 (即 105% 軌道)，保持高度緊湊的頂級桌遊視覺美感 */
 }
 
 /* 移除 pos-bottom，統一由 .pos-top 覆蓋 */
 .pos-bottom {
-  bottom: 110%;
+  bottom: 105%;
 }
 
 .seat-num {

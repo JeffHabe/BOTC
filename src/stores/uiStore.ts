@@ -56,6 +56,11 @@ export const useUIStore = defineStore('ui', () => {
     (localStorage.getItem('botc-reminder-layout') as ReminderLayout) || 'inner'
   )
 
+  // 提示標記收納上限閥值 (預設為 4)
+  const reminderCollapseThreshold = ref(
+    parseInt(localStorage.getItem('botc-reminder-collapse-threshold') || '4')
+  )
+
   const grimoireShape = ref<GrimoireShape>(
     (localStorage.getItem('botc-grimoire-shape') as GrimoireShape) || 'oval'
   )
@@ -70,6 +75,11 @@ export const useUIStore = defineStore('ui', () => {
   function setReminderLayout(layout: ReminderLayout) {
     reminderLayout.value = layout
     localStorage.setItem('botc-reminder-layout', layout)
+  }
+
+  function setReminderCollapseThreshold(val: number) {
+    reminderCollapseThreshold.value = Math.max(1, Math.min(val, 8))
+    localStorage.setItem('botc-reminder-collapse-threshold', String(reminderCollapseThreshold.value))
   }
 
   function setGrimoireShape(shape: GrimoireShape) {
@@ -552,6 +562,7 @@ export const useUIStore = defineStore('ui', () => {
     activePanel, openPanel, closePanel, togglePanel,
     // 佈局
     reminderLayout, setReminderLayout, cycleReminderLayout,
+    reminderCollapseThreshold, setReminderCollapseThreshold,
     grimoireShape, setGrimoireShape, cycleGrimoireShape,
     isBluffsExpanded, isBluffsShowcase, isSingleRoleShowcase, activeBluffTab,
     // 右鍵菜單
