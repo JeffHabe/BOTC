@@ -33,6 +33,9 @@ export const useGameStore = defineStore('game', () => {
   const savedHintTemplates = localStorage.getItem('botc-hint-templates')
   const hintTemplates = ref<string[]>(savedHintTemplates ? JSON.parse(savedHintTemplates) : [...defaultHintTemplates])
 
+  // 曾經上場過的角色 ID 歷史紀錄 (用於提示標記面板)
+  const historicalRoleIds = ref<Set<string>>(new Set())
+
   // 計算屬性
   const players = computed(() => state.value?.players ?? [])
   const script = computed(() => state.value?.script ?? null)
@@ -123,6 +126,10 @@ export const useGameStore = defineStore('game', () => {
 
   async function syncState(newState: GameState | null) {
     if (newState) {
+      // 自動記錄所有曾上場過的角色 ID
+      newState.players.forEach(p => {
+        if (p.role) historicalRoleIds.value.add(p.role.id)
+      })
       state.value = newState
       // 如果後端返回的狀態包含日誌，則同步它
       if ((newState as any).game_logs) {
@@ -266,6 +273,7 @@ export const useGameStore = defineStore('game', () => {
     
     const gs = await callCommand<GameState>('assign_role', { playerId, role })
     if (gs) {
+      if (role) historicalRoleIds.value.add(role.id)
       await syncState(gs)
       addLog('assignment', `玩家 ${player?.name} 角色變更: ${oldRole} -> ${newRole}`)
     }
@@ -480,7 +488,7 @@ export const useGameStore = defineStore('game', () => {
   }
 
   return {
-    state, loading, error,
+    state, loading, error, historicalRoleIds,
     players, script, phase, round, demonBluffs, lunaticBluffs, nominations,
     alive, dead, threshold, isNight,
     townfolkCount, outsiderCount, minionCount, demonCount,

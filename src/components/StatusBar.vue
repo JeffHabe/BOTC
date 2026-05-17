@@ -48,15 +48,31 @@
       <!-- 右側：存活狀態 (保留核心數據) -->
       <div class="stat-group stats-alive">
         <span class="stat-item nominations" v-if="gameStore.phase === 'Day'" title="剩餘提名權">
-          <span class="stat-icon">🗣️</span>
+          <!-- <span class="stat-icon">🤚</span> -->
+          <span class="stat-icon">
+            <img src="/pic/nomination.png" alt="提名權" class="stat-img img-nomination" />
+          </span>
           <span class="stat-num">{{ nominationsRemaining }}</span>
         </span>
         <span class="stat-item threshold" v-if="gameStore.phase === 'Day'" title="門檻">
-          <span class="stat-icon">🙋</span>
+          <span class="stat-icon">
+            <img src="/pic/guillotine (1).png" alt="處決門檻" class="stat-img img-guillotine" />
+          </span>
+          <!-- <span class="stat-icon">⚔️</span> -->
           <span class="stat-num">{{ gameStore.threshold }}</span>
         </span>
+        <span class="stat-item votes" v-if="gameStore.phase === 'Day'" title="有效票數">
+          <!-- <span class="stat-icon">🗳️</span> -->
+          <span class="stat-icon">
+            <img src="/pic/vote-yes.png" alt="有效票數" class="stat-img img-vote-yes" />
+          </span>
+          <span class="stat-num">{{ totalVotes }}</span>
+        </span>
         <span class="stat-item alive" title="存活人數">
-          <span class="stat-icon">❤️</span>
+          <!-- <span class="stat-icon">❤️</span> -->
+          <span class="stat-icon">
+            <img src="/pic/heart.png" alt="有效票數" class="stat-img img-heart" />
+          </span>
           <span class="stat-num">{{ gameStore.alive }}</span>
         </span>
       </div>
@@ -92,6 +108,11 @@ const travelerCount = computed(() => {
 
 const nominationsRemaining = computed(() => {
   return gameStore.players.filter(p => p.can_nominate).length
+})
+
+// 計算總票數 (存活玩家 + 擁有靈魂投票權的死亡玩家)
+const totalVotes = computed(() => {
+  return gameStore.players.filter(p => p.is_alive || (!p.is_alive && p.has_ghost_vote)).length
 })
 
 
@@ -244,6 +265,34 @@ const nominationsRemaining = computed(() => {
   font-size: 14px;
   display: flex;
   align-items: center;
+  justify-content: center;
+}
+
+.stat-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: block;
+}
+
+/* 獨立微調各個狀態圖示 */
+.img-nomination {
+  /* 提名權圖示微調 */
+  transform: translate(0px, 0px);
+}
+
+.img-guillotine {
+  /* 斷頭台處決門檻圖示微調 */
+  transform: translate(0px, 0px);
+}
+
+.img-vote-yes {
+  /* 投票打勾圖示：因右側綠色勾勾突出，視覺重心偏左，微調向右偏移以達到視覺居中 */
+  transform: translate(0px, 0px);
+}
+.img-heart {
+  /* 投票打勾圖示：因右側綠色勾勾突出，視覺重心偏左，微調向右偏移以達到視覺居中 */
+  transform: translate(0px, 0px);
 }
 
 .layout-btn {

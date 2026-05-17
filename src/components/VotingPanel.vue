@@ -86,8 +86,8 @@
                   ✍️
                 </button>
               </div>
-              <div class="nom-score" :class="{ 'score-pass': nom.votes_for.length >= nom.threshold }">
-                {{ nom.votes_for.length }} / {{ nom.threshold }} 票
+              <div class="nom-score" :class="{ 'score-pass': nom.votes_for.length >= (nom.round === currentRound && !nom.executed ? gameStore.threshold : nom.threshold) }">
+                {{ nom.votes_for.length }} / {{ nom.round === currentRound && !nom.executed ? gameStore.threshold : nom.threshold }} 票
               </div>
             </template>
 
@@ -226,9 +226,7 @@ function toggleExpand(index: number) {
   }
 }
 
-const isExecutedToday = computed(() =>
-  gameStore.nominations.some(n => n.round === currentRound.value && n.executed)
-)
+
 
 const maxVotesInfo = computed(() => {
   let max = 0
@@ -251,7 +249,8 @@ const maxVotesInfo = computed(() => {
 function getExecutionStatus(nomIndex: number) {
   const nom = nominations.value[nomIndex]
   const votes = nom.votes_for.length
-  const thresholdReached = votes >= nom.threshold
+  const currentThreshold = nom.round === currentRound.value && !nom.executed ? gameStore.threshold : nom.threshold
+  const thresholdReached = votes >= currentThreshold
   
   const isMax = votes === maxVotesInfo.value.max
   const isTie = isMax && maxVotesInfo.value.count > 1

@@ -172,14 +172,19 @@ const commonReminders = ['中毒', '醉酒', '已被選中', '已被提名', '�
  */
 const inPlayGroups = computed(() => {
   const groups: { roleName: string; reminders: string[] }[] = []
-  // 僅取得目前正在場上玩家的角色 ID
-  const roleIdsInPlay = new Set(gameStore.players.map(p => p.role?.id).filter(Boolean))
+  // 取得目前所有曾經上場的角色 ID，加上如果有人身上有該角色留下的標記也算
+  const currentSources = new Set(gameStore.players.flatMap(p => p.reminders.map(r => r.source_role)))
+  
+  const roleIdsInPlay = new Set([
+    ...gameStore.historicalRoleIds,
+    ...gameStore.players.map(p => p.role?.id).filter(Boolean)
+  ])
   
   if (!gameStore.script) return []
   
   for (const char of gameStore.script.characters) {
-    // 僅當角色在場時顯示其分組
-    if (roleIdsInPlay.has(char.id)) {
+    // 只要角色曾經上場，或者他的標記目前還留在場上，就顯示他的提示標記群組
+    if (roleIdsInPlay.has(char.id) || currentSources.has(char.name)) {
       const allReminders = Array.from(new Set([
         ...(char.reminders || []),
         ...(char.remindersGlobal || [])
@@ -202,13 +207,19 @@ const allGlobalReminders = computed(() => {
   
   if (!gameStore.script || !gameStore.script.characters) return []
   
-  // 取得當下劇本中包含的所有角色 ID
-  const currentScriptIds = new Set(gameStore.script.characters.map((c: any) => c.id))
+  // 取得目前所有曾經上場的角色 ID (包含傳說角色)，加上如果有人身上有該角色留下的標記也算
+  const currentSources = new Set(gameStore.players.flatMap(p => p.reminders.map(r => r.source_role)))
+  
+  const roleIdsInPlay = new Set([
+    ...gameStore.historicalRoleIds,
+    ...gameStore.players.map(p => p.role?.id).filter(Boolean),
+    ...gameStore.activeFabled
+  ])
   
   // 從 masterScript (全庫) 提取，因為只有它保證最新擁有 remindersGlobal 資料
   scriptStore.masterScript.characters.forEach((char: any) => {
-    // 過濾：當下劇本有該角色，才把它的身份標記加進來
-    if (currentScriptIds.has(char.id) && char.remindersGlobal) {
+    // 過濾：只要角色曾經上場，或者他的標記留在場上，才把它的身份標記加進來
+    if ((roleIdsInPlay.has(char.id) || currentSources.has(char.name)) && char.remindersGlobal) {
       char.remindersGlobal.forEach((r: string) => {
         if (!allMap.has(r)) {
           allMap.set(r, char.name)

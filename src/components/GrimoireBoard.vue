@@ -21,6 +21,12 @@
           <button class="arrange-done-btn" @click="uiStore.isArrangingPlayers = false">完成</button>
         </div>
         <div class="arrange-hint">拖曳玩家頭像以交換座位</div>
+        
+        <!-- 垃圾桶區域 -->
+        <div class="arrange-trash-zone" :class="{ 'is-hovering': isHoveringTrash }" ref="trashZoneRef">
+          <span class="trash-icon">🗑️</span>
+          <span class="trash-text">拖曳至此刪除玩家</span>
+        </div>
       </div>
     </transition>
 
@@ -581,8 +587,13 @@ const dragState = reactive({
   playerId: '',
   index: -1,
   xPercent: 0,
-  yPercent: 0
+  yPercent: 0,
+  clientX: 0,
+  clientY: 0
 })
+
+const trashZoneRef = ref<HTMLElement | null>(null)
+const isHoveringTrash = ref(false)
 
 // --- 效能優化：預先計算所有令片位置，避免平移/縮放時重複執行幾何運算 ---
 const allTokenStyles = computed(() => {
@@ -631,6 +642,9 @@ function updateDragPos(e: MouseEvent | TouchEvent) {
   const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
   const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
   
+  dragState.clientX = clientX
+  dragState.clientY = clientY
+  
   dragState.xPercent = ((clientX - rect.left) / rect.width) * 100
   dragState.yPercent = ((clientY - rect.top) / rect.height) * 100
 }
@@ -643,6 +657,21 @@ function onTokenMouseMove(e: MouseEvent | TouchEvent) {
 }
 
 function checkDragSwap() {
+  // 檢查是否拖曳到垃圾桶上方
+  if (trashZoneRef.value) {
+    const rect = trashZoneRef.value.getBoundingClientRect()
+    // 加入一點緩衝區域，讓判定更寬容
+    if (
+      dragState.clientX >= rect.left - 20 && dragState.clientX <= rect.right + 20 &&
+      dragState.clientY >= rect.top - 20 && dragState.clientY <= rect.bottom + 20
+    ) {
+      isHoveringTrash.value = true
+      return // 在垃圾桶上方時，不觸發座位交換
+    } else {
+      isHoveringTrash.value = false
+    }
+  }
+
   const n = players.value.length
   let closestIndex = -1
   let minDist = Infinity
@@ -687,10 +716,20 @@ function swapPlayersLocally(idx1: number, idx2: number) {
 
 function onTokenMouseUp() {
   if (dragState.isDragging) {
+    if (isHoveringTrash.value) {
+      // 刪除玩家
+      const idToRemove = dragState.playerId
+      gameStore.removePlayer(idToRemove)
+      if ('vibrate' in navigator) (navigator as any).vibrate([50, 50, 50])
+    } else {
+      // 重排座位
+      gameStore.reorderPlayers(players.value.map(p => p.id))
+    }
+
     dragState.isDragging = false
     dragState.index = -1
     dragState.playerId = ''
-    gameStore.reorderPlayers(players.value.map(p => p.id))
+    isHoveringTrash.value = false
   }
   window.removeEventListener('mousemove', onTokenMouseMove)
   window.removeEventListener('touchmove', onTokenMouseMove)
@@ -919,14 +958,14 @@ const activePanelComponent = computed(() => {
   z-index: 0;
   overflow: hidden;
   /* 白天模式：自定義背景圖片 */
-  background: url('/bg_day.png') no-repeat center center;
+  background: url('/pic/bg_day.png') no-repeat center center;
   background-size: cover;
   transition: all 0.8s ease;
 }
 
 .grimoire-board.is-night .scene-bg {
   /* 夜晚模式：自定義背景圖片 */
-  background: url('/bg_night.png') no-repeat center center;
+  background: url('/pic/bg_night.png') no-repeat center center;
   background-size: cover;
 }
 
@@ -934,7 +973,7 @@ const activePanelComponent = computed(() => {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url('/p6.png');
+  background-image: url('/pic/p6.png');
   opacity: 0.3;
   mix-blend-mode: multiply;
   pointer-events: none;
@@ -1112,6 +1151,70 @@ const activePanelComponent = computed(() => {
   text-shadow: 0 1px 2px rgba(0,0,0,0.8);
 }
 
+/* 垃圾桶區域 */
+.arrange-trash-zone {
+  pointer-events: auto;
+  position: fixed;
+  bottom: calc(60px + env(safe-area-inset-bottom, 20px));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(220, 53, 69, 0.15);
+  border: 2px dashed rgba(220, 53, 69, 0.4);
+  color: #ffcdd2;
+  padding: 14px 28px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  backdrop-filter: blur(12px);
+  z-index: 1000;
+  user-select: none;
+}
+
+.trash-icon {
+  font-size: 20px;
+  transition: transform 0.2s ease;
+}
+
+.trash-text {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* 拖入時的強烈視覺回饋與動畫 */
+.arrange-trash-zone.is-hovering {
+  background: rgba(220, 53, 69, 0.45);
+  border: 2px solid rgba(255, 23, 68, 0.8);
+  color: #ffffff;
+  transform: translateX(-50%) scale(1.12);
+  box-shadow: 
+    0 10px 30px rgba(220, 53, 69, 0.6), 
+    0 0 15px rgba(255, 23, 68, 0.4) inset;
+  animation: trashPulse 0.8s infinite alternate;
+}
+
+.arrange-trash-zone.is-hovering .trash-icon {
+  animation: trashWiggle 0.4s infinite;
+}
+
+@keyframes trashPulse {
+  0% {
+    box-shadow: 0 10px 20px rgba(220, 53, 69, 0.4), 0 0 10px rgba(255, 23, 68, 0.2) inset;
+  }
+  100% {
+    box-shadow: 0 10px 35px rgba(220, 53, 69, 0.8), 0 0 25px rgba(255, 23, 68, 0.6) inset;
+  }
+}
+
+@keyframes trashWiggle {
+  0%, 100% { transform: scale(1.3) rotate(0deg); }
+  25% { transform: scale(1.3) rotate(-12deg); }
+  75% { transform: scale(1.3) rotate(12deg); }
+}
+
 /* Jiggle Animation */
 @keyframes jiggle {
   0% { transform: translate(-50%, -50%) rotate(-2deg); }
@@ -1214,7 +1317,7 @@ const activePanelComponent = computed(() => {
    ───────────────────────────────────────────────────────────────────────── */
 .bluffs-drawer {
   position: fixed;
-  bottom: 40px;
+  bottom: calc(45px + env(safe-area-inset-bottom, 16px));
   right: 0;
   z-index: 1000;
   display: flex;
@@ -1392,7 +1495,7 @@ const activePanelComponent = computed(() => {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: url('/token1.png') no-repeat center center;
+  background: url('/pic/token1.png') no-repeat center center;
   background-size: cover;
   box-shadow: 0 4px 12px rgba(0,0,0,0.6);
   display: flex;
@@ -1500,7 +1603,7 @@ const activePanelComponent = computed(() => {
    ───────────────────────────────────────────────────────────────────────── */
 .add-player-btn {
   position: fixed;
-  bottom: 65px;
+  bottom: calc(75px + env(safe-area-inset-bottom, 16px));
   left: 24px;
   width: 52px;
   height: 52px;
@@ -1544,7 +1647,7 @@ const activePanelComponent = computed(() => {
 
 .zoom-controls-bottom {
   position: fixed;
-  bottom: 25px; /* 貼近底部，最大限度留出魔典空間 */
+  bottom: calc(30px + env(safe-area-inset-bottom, 16px));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1753,7 +1856,7 @@ const activePanelComponent = computed(() => {
   width: 130px; /* 縮小尺寸以適應並排與垂直空間 */
   height: 130px;
   border-radius: 50%;
-  background: url('/token1.png') no-repeat center center;
+  background: url('/pic/token1.png') no-repeat center center;
   background-size: cover;
   box-shadow: 0 12px 24px rgba(0,0,0,0.8), 0 0 40px rgba(210, 180, 140, 0.1);
   display: flex;

@@ -94,8 +94,8 @@
           @click.stop="uiStore.openReminderPicker(player.id)"
         >
           <div class="rem-inner">
-            <img v-if="rem.text.includes('善良')" src="/good.png" class="rem-role-img" />
-            <img v-else-if="rem.text.includes('邪惡')" src="/evil.png" class="rem-role-img" />
+            <img v-if="rem.text.includes('善良')" src="/pic/good.png" class="rem-role-img" />
+            <img v-else-if="rem.text.includes('邪惡')" src="/pic/evil.png" class="rem-role-img" />
             <img v-else-if="getSourceChar(rem.source_role)?.image" 
                  :src="getSourceChar(rem.source_role)!.image!" 
                  class="rem-role-img" />
@@ -502,7 +502,7 @@ const deathTypeClass = computed(() => {
   position: relative;
   width: 100%;
   height: 100%;
-  background: url('/token1.png') no-repeat center center;
+  background: url('/pic/token1.png') no-repeat center center;
   background-size: cover;
   border-radius: 50%;
   box-shadow: 
@@ -698,7 +698,7 @@ const deathTypeClass = computed(() => {
   width: 36px;
   height: 36px;
   /* width and height are handled by dynamic styles in getReminderStyle */
-  background: url('/reminder1.png') no-repeat center center;
+  background: url('/pic/reminder1.png') no-repeat center center;
   background-size: cover;
   color: var(--color-gold-muted);
   border-radius: 50%;
@@ -722,14 +722,14 @@ const deathTypeClass = computed(() => {
 }
 
 .rem-role-img {
-  width: 85%;
-  height: 85%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
 }
 
 .rem-emoji-icon {
-  font-size: 19px; /* 進一步加大以填充圓圈 */
+  font-size: 10px; /* 進一步加大以填充圓圈 */
   font-weight: 700;
   max-width: 90%;
   max-height: 90%;

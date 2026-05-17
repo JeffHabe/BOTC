@@ -51,6 +51,7 @@
           <!-- 角色圖示 -->
           <div class="order-role-icon">
             <img v-if="char.image" :src="char.image" :alt="char.name" />
+            <img v-else-if="roleEmoji(char).startsWith('/') || roleEmoji(char).startsWith('http')" :src="roleEmoji(char)" :alt="char.name" />
             <span v-else class="order-role-emoji">{{ roleEmoji(char) }}</span>
           </div>
 
@@ -174,11 +175,16 @@ function getPlayerByRole(roleId: string) {
 }
 
 function roleEmoji(char: any) {
-  if (char.id === 'sys_minion_info') return '🔱'
-  if (char.id === 'sys_demon_info') return '😈'
+  if (char.id === 'sys_minion_info') return '/pic/Minions.png'
+  if (char.id === 'sys_demon_info') return '/pic/Demons.png'
   const map: Record<RoleType, string> = {
-    Townsfolk: '👤', Outsider: '👤', Minion: '🔱', Demon: '😈',
-    Traveler: '👤', Fabled: '👤', Loric: '👤'
+    Townsfolk: '/pic/Townsfolk.png',
+    Outsider: '/pic/Outsiders.png',
+    Minion: '/pic/Minions.png',
+    Demon: '/pic/Demons.png',
+    Traveler: '/pic/Travellers_new.png',
+    Fabled: '/pic/Fabled_new.png',
+    Loric: '/pic/Loric.png'
   }
   return map[char.role_type as RoleType] ?? '❓'
 }

@@ -2,7 +2,10 @@
   <div class="overlay" @click.self="uiStore.closePanel()">
     <div class="fabled-panel panel animate-slide-up">
       <div class="panel-header">
-        <span class="panel-icon">🎭</span>
+        <!-- <span class="panel-icon">🎭</span> -->
+        <span class="stat-icon">
+            <img src="/pic/mask.png" alt="有效票數" class="stat-img img-mask" />
+            </span>
         <h2 class="panel-title">傳說角色設定</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
@@ -144,6 +147,8 @@ function handlePressEnd() {
   font-size: 16px;
   color: var(--color-gold);
   flex: 1;
+  margin: 0;
+  line-height: 1.2;
 }
 
 .close-btn {
@@ -225,5 +230,23 @@ function handlePressEnd() {
   text-align: center;
   color: var(--color-text-muted);
   font-size: 14px;
+}
+
+.stat-icon {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.img-mask {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 </style>

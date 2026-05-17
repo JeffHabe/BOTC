@@ -682,13 +682,13 @@ pub fn execute(nomination_index: usize, state: State<AppState>) -> Result<GameSt
     let current_round = gs.round;
 
 
-    // 獲取目標提名的票數
+    // 獲取目標提名的票數和當前的動態處決門檻
     let (target_votes, target_threshold) = {
         let nom = gs
             .nominations
             .get(nomination_index)
             .ok_or("找不到指定提名")?;
-        (nom.votes_for.len(), nom.threshold)
+        (nom.votes_for.len(), gs.execution_threshold())
     };
 
     if target_votes < target_threshold as usize {
@@ -718,9 +718,15 @@ pub fn execute(nomination_index: usize, state: State<AppState>) -> Result<GameSt
 
     if let Some(nom) = gs.nominations.get_mut(nomination_index) {
         nom.executed = true;
+        // 鎖定執行時的最終門檻值
+        nom.threshold = target_threshold;
         let nominee_id = nom.nominee_id.clone();
         if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominee_id) {
-            p.is_alive = false;
+            // 只有當玩家原本是存活狀態時，被處決才會被標記死亡並掛上「處決」提醒
+            if p.is_alive {
+                p.is_alive = false;
+                p.reminders.push(ReminderToken::new("處決", "系統", current_round));
+            }
         }
         gs.touch();
         Ok(gs.clone())
@@ -752,8 +758,13 @@ pub fn undo_execution(
 
         // 恢復玩家存活狀態與投票權
         if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominee_id) {
-            p.is_alive = true;
-            p.has_ghost_vote = true;
+            // 只有當玩家身上存有「處決」標記時，才說明他是因本次處決而死亡的，此時才進行復活與還原
+            let died_from_execution = p.reminders.iter().any(|r| r.text == "處決");
+            if died_from_execution {
+                p.is_alive = true;
+                p.has_ghost_vote = true;
+                p.reminders.retain(|r| r.text != "處決");
+            }
         }
 
         gs.touch();

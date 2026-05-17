@@ -33,17 +33,17 @@
           <div v-if="player.role?.ability && !uiStore.isRolesHidden" class="player-ability-box" v-html="player.role.ability">
           </div>
 
-          <!-- 核心操作 2x2 網格 -->
+          <!-- 核心操作網格 (上方死亡滿版，下方並排) -->
           <div class="action-grid">
             <template v-if="player.is_alive">
-              <button class="action-btn death-btn" @click="handleKill">
+              <button class="action-btn death-btn full-width" @click="handleKill">
                 <span class="icon">💀</span>
                 <span class="label">死亡</span>
                 <span v-if="isProtected" class="warning-badge" title="注意：該玩家目前有保護標記">⚠️被保護</span>
               </button>
             </template>
             <template v-else>
-              <button class="action-btn revive-btn" @click="handleRevive">
+              <button class="action-btn revive-btn full-width" @click="handleRevive">
                 <span class="icon">❤️</span>
                 <span class="label">復活</span>
               </button>
@@ -417,6 +417,10 @@ function handleNominateHim() {
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-bottom: 24px;
+}
+
+.full-width {
+  grid-column: 1 / -1;
 }
 
 .action-btn {

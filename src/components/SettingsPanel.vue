@@ -8,11 +8,54 @@
       </div>
 
       <div class="settings-content">
+        <!-- 存活與票數統計 -->
+        <div class="section-title">存活與票數統計</div>
+        <div class="stats-cards-grid">
+          <div class="stat-card" title="剩餘提名權">
+            <!-- <span class="stat-card-icon">🙋</span> -->
+            <span class="stat-icon">
+            <img src="/pic/nomination.png" alt="提名權" class="stat-img img-nomination" />
+          </span>
+            <span class="stat-card-val">{{ nominationsRemaining }}</span>
+            <span class="stat-card-label">剩餘提名</span>
+          </div>
+          <div class="stat-card" title="處決門檻">
+            <!-- <span class="stat-card-icon">⚔️</span> -->
+            <span class="stat-icon">
+            <img src="/pic/guillotine (1).png" alt="處決門檻" class="stat-img img-guillotine" />
+            </span>
+            <span class="stat-card-val">{{ gameStore.threshold }}</span>
+            <span class="stat-card-label">處決門檻</span>
+          </div>
+          <div class="stat-card" title="有效票數">
+            <!-- <span class="stat-icon">🗳️</span> -->
+            <span class="stat-icon">
+            <img src="/pic/vote-yes.png" alt="有效票數" class="stat-img img-vote-yes" />
+            </span>
+            <span class="stat-card-val">{{ totalVotes }}</span>
+            <span class="stat-card-label">有效票數</span>
+          </div>
+          <div class="stat-card" title="存活人數">
+            <!-- <span class="stat-card-icon">❤️</span> -->
+            <span class="stat-icon">
+              <img src="/pic/heart.png" alt="有效票數" class="stat-img img-heart" />
+            </span>
+            <span class="stat-card-val">{{ gameStore.alive }}</span>
+            <span class="stat-card-label">存活人數</span>
+          </div>
+        </div>
+
+        <div class="divider" />
+
         <!-- 遊戲控制 -->
+
         <div class="section-title">遊戲控制</div>
         <div class="settings-grid">
           <button v-if="gameStore.phase === 'FirstNight'" class="grid-item" @click="openAssignment">
-            <span class="grid-icon">🎭</span>
+            <!-- <span class="grid-icon">🎭</span> -->
+            <span class="stat-icon">
+            <img src="/pic/theater.png" alt="劇本" class="stat-img img-theater" />
+            </span>
             <span class="grid-label">選取劇本</span>
           </button>
 
@@ -22,7 +65,10 @@
           </button>
           
           <button class="grid-item" @click="openFabled">
-            <span class="grid-icon">🦄</span>
+            <div class="grid-double-icon">
+              <img src="/pic/Fabled_new.png" alt="傳說" class="double-img fabled-img" />
+              <img src="/pic/Loric.png" alt="奇遇" class="double-img lorica-img" />
+            </div>
             <span class="grid-label">傳說奇遇</span>
           </button>
 
@@ -63,16 +109,16 @@
         <!-- 資料管理 -->
         <div class="section-title">資料管理</div>
         <div class="settings-grid cols-2">
+          
+          <button class="grid-item" @click="importGame">
+            <span class="grid-icon">📋🔽</span>
+            <span class="grid-label">匯入遊戲</span>
+          </button>
           <button class="grid-item" @click="exportGame">
-            <span class="grid-icon">📋📤</span>
+            <span class="grid-icon">📋🔼</span>
             <span class="grid-label">匯出遊戲</span>
           </button>
           
-          <button class="grid-item" @click="importGame">
-            <span class="grid-icon">📋📥</span>
-            <span class="grid-label">匯入遊戲</span>
-          </button>
-
           <button class="grid-item" @click="importScripts">
             <span class="grid-icon">📜🔽</span>
             <span class="grid-label">匯入劇本</span>
@@ -97,8 +143,13 @@
             :class="{ active: uiStore.reminderLayout === mode.id }"
             @click="uiStore.setReminderLayout(mode.id as any)"
           >
-            <span class="opt-icon">{{ mode.icon }}</span>
+            <span class="opt-icon">
+              <img v-if="mode.icon.startsWith('/')" :src="mode.icon" :alt="mode.label" class="opt-img" />
+              <template v-else>{{ mode.icon }}</template>
+            </span>
+   
             <span class="opt-label">{{ mode.label }}</span>
+    
             <div v-if="uiStore.reminderLayout === mode.id" class="active-check">✓</div>
           </button>
         </div>
@@ -214,7 +265,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 import { useScriptStore } from '../stores/scriptStore'
@@ -224,6 +275,14 @@ import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs'
 const uiStore = useUIStore()
 const gameStore = useGameStore()
 const scriptStore = useScriptStore()
+
+const nominationsRemaining = computed(() => {
+  return gameStore.players.filter(p => p.can_nominate).length
+})
+
+const totalVotes = computed(() => {
+  return gameStore.players.filter(p => p.is_alive || (!p.is_alive && p.has_ghost_vote)).length
+})
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
@@ -320,8 +379,8 @@ const shapes = [
 ]
 
 const layouts = [
-  { id: 'inner', label: '向心排列', icon: '🎯' },
-  { id: 'arc', label: '弧形展開', icon: '🌈' },
+  { id: 'inner', label: '向心排列', icon: '/pic/arrows-circle (1).png' },
+  { id: 'arc', label: '環繞排列', icon: '/pic/arrows-circle (2).png' },
 ]
 
 function openNightOrder() {
@@ -730,7 +789,19 @@ function resetGame() {
 }
 
 .layout-option .opt-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 18px;
+}
+
+.opt-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  display: block;
 }
 
 .layout-option .opt-label {
@@ -762,6 +833,15 @@ function resetGame() {
   border-radius: 12px;
   transition: all 0.2s;
   cursor: pointer;
+}
+
+/* 確保所有按鈕的圖示區域高度完全一致，從而讓下方的文字標題在同一條水平線上絕對對齊！ */
+.grid-item > *:first-child {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .grid-item:active {
@@ -918,4 +998,146 @@ function resetGame() {
   font-weight: 800;
   font-family: monospace;
 }
+
+/* 存活與票數統計面板樣式 */
+.stats-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 8px 16px 12px;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 10px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card:hover {
+  background: rgba(201, 168, 76, 0.05);
+  border-color: rgba(201, 168, 76, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 15px rgba(0, 0, 0, 0.25),
+    0 0 10px rgba(201, 168, 76, 0.1) inset;
+}
+
+.stat-card-icon {
+  font-size: 16px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.stat-card-val {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--color-gold-bright, #e5b54f);
+  text-shadow: 0 0 8px rgba(229, 181, 79, 0.25);
+  font-family: var(--font-title), serif;
+}
+
+.stat-card-label {
+  font-size: 9px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.stat-icon {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 確保圖片容器內部完美水平置中 */
+}
+
+.stat-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: block;
+}
+
+/* 獨立微調各個狀態圖示 */
+.img-nomination {
+  /* 提名權圖示微調 */
+  transform: translate(0px, 0px);
+}
+
+.img-guillotine {
+  /* 斷頭台處決門檻圖示微調 */
+  transform: translate(0px, 0px);
+}
+
+.img-vote-yes {
+  /* 投票打勾圖示：因右側綠色勾勾突出，視覺重心偏左，微調向右偏移以達到視覺居中 */
+  transform: translate(3px, 0px);
+}
+.img-heart {
+  /* 投票打勾圖示：因右側綠色勾勾突出，視覺重心偏左，微調向右偏移以達到視覺居中 */
+  transform: translate(0px, 0px);
+}
+.img-theater {
+  width: 42px;
+  height: 42px;
+  /* 確保圖片容器內部完美水平置中 */
+  transform: translate(3px, 0px);
+}
+
+
+/* 雙圖示卡片堆疊扇形展開效果 (傳說奇遇) */
+.grid-double-icon {
+  position: relative;
+  width: 54px;
+  height: 48px; /* 👈 高度同步調整為 48px，使所有圖示佔位一致 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.grid-double-icon .double-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  position: absolute;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 「傳說」圖示 (偏左下，底層) */
+.grid-double-icon .fabled-img {
+  left: -40px;
+  z-index: 1;
+  transform: scale(0.95) rotate(-10deg);
+}
+
+/* 「奇遇」圖示 (偏右上，頂層) */
+.grid-double-icon .lorica-img {
+  right: -40px;
+  z-index: 0;
+  transform: scale(1.1) rotate(6deg);
+}
+
+/* 當說書人懸停或點擊按鈕時，產生極具動態感的扇形散開特效 */
+.grid-item:hover .grid-double-icon .fabled-img {
+  transform: scale(1.0) translate(-6px, -1px) rotate(-18deg);
+}
+
+.grid-item:hover .grid-double-icon .lorica-img {
+  transform: scale(1.15) translate(6px, 1px) rotate(14deg);
+}
+
+.grid-item:active .grid-double-icon .fabled-img {
+  transform: scale(0.88) translate(-3px, 0px) rotate(-5deg);
+}
+
+.grid-item:active .grid-double-icon .lorica-img {
+  transform: scale(1.05) translate(3px, 0px) rotate(3deg);
+}
+
 </style>
