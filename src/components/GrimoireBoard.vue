@@ -190,11 +190,11 @@
       <!-- 被收藏的功能項 -->
       <transition-group name="side-stagger">
         <template v-if="uiStore.isSideToolbarExpanded">
-          <button key="settings" class="menu-btn" @click="uiStore.openPanel('settings')" title="設置">
+          <button key="settings" class="menu-btn" @click="uiStore.openPanel('settings'); uiStore.isSideToolbarExpanded = false" title="設置">
             <span class="icon">🛠️</span>
           </button>
 
-          <button key="night-order" class="menu-btn" @click="uiStore.openPanel('night-order')" title="夜晚順序">
+          <button key="night-order" class="menu-btn" @click="uiStore.openPanel('night-order'); uiStore.isSideToolbarExpanded = false" title="夜晚順序">
             <span class="icon">🌙</span>
           </button>
 
@@ -202,7 +202,7 @@
             key="privacy"
             class="privacy-btn" 
             :class="{ 'is-active': uiStore.isRolesHidden }"
-            @click="uiStore.toggleRolesHidden()"
+            @click="uiStore.toggleRolesHidden(); uiStore.isSideToolbarExpanded = false"
             :title="uiStore.isRolesHidden ? '顯示角色' : '隱藏角色'"
           >
             <div class="privacy-icon-wrapper">
@@ -214,13 +214,13 @@
           <button 
             key="shape"
             class="side-action-btn" 
-            @click="uiStore.cycleGrimoireShape" 
+            @click="uiStore.cycleGrimoireShape(); uiStore.isSideToolbarExpanded = false" 
             :title="`魔典圖形: ${currentShapeLabel}`"
           >
             <span class="icon">{{ currentShapeIcon }}</span>
           </button>
           
-          <button key="whiteboard" class="menu-btn" @click="uiStore.openPanel('whiteboard')" title="說書人資訊">
+          <button key="whiteboard" class="menu-btn" @click="uiStore.openPanel('whiteboard'); uiStore.isSideToolbarExpanded = false" title="說書人資訊">
             <span class="icon">📝</span>
           </button>
         </template>
@@ -1084,7 +1084,7 @@ const activePanelComponent = computed(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 0px; /* 將間距降至 0px，強制元素拉近 */
   cursor: pointer;
   z-index: 1; /* 降低層級，確保標誌作為背景，不遮擋令片與提示標記 */
   pointer-events: auto; /* 重中之重：確保穿透父層的 none */
@@ -1233,7 +1233,7 @@ const activePanelComponent = computed(() => {
 
 .center-logo-inner {
   width: 110px;
-  height: 110px;
+  height: 80px; /* 從 110px 縮小至 80px，大幅壓縮垂直佔位，把文字向上拉近 */
   background: transparent;
   border: none;
   display: flex;
@@ -1261,6 +1261,7 @@ const activePanelComponent = computed(() => {
   color: #cbcbcb; /* 深色墨水感 */
   letter-spacing: 4px; /* 增加字間距讓霹靂體更清楚 */
   text-shadow: 0 1px 1px rgba(255,255,255,0.3);
+  margin-top: -12px; /* 🚀 強勢將劇本文字向上提，徹底抵消圖片本身的任何留白，實現完美緊湊排版 */
 }
 
 /* 傳說角色展示區 */
@@ -1568,7 +1569,7 @@ const activePanelComponent = computed(() => {
 }
 
 .empty-icon {
-  margin-bottom: 24px;
+  margin-bottom: -25px; /* 🚀 使用強效負邊距，強制文字向上靠攏，徹底抵消 Logo 圖片自帶的透明底邊留白！ */
   display: flex;
   justify-content: center;
 }
@@ -1621,21 +1622,17 @@ const activePanelComponent = computed(() => {
 .side-action-group {
   position: fixed;
   top: calc(65px + env(safe-area-inset-top, 0px));
-  right: 16px;
+  right: 8px; /* 從 16px 縮小至 8px，配合常駐的 8px padding，使得按鈕離螢幕右邊緣依然保持精準 16px 經典排版 */
   display: flex;
   flex-direction: column;
   gap: 10px;
   z-index: 900;
+  padding: 8px; /* 🚀 常駐 padding！確保展開與收起狀態下，盒模型寬高完全一致，100% 阻絕往左下偏移的跳動 */
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .side-action-group.is-expanded {
-  background: rgba(42, 27, 21, 0.4);
-  backdrop-filter: blur(10px);
-  padding: 8px;
-  border-radius: 20px;
-  border: 1px solid rgba(141, 110, 99, 0.2);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  /* 🚀 隱形排版容器優化：此處不再動態變更 padding，確保原地垂直滑出，視覺極其穩健 */
 }
 
 /* 當有面板開啟時，隱藏右上角的功能按鈕，避免干擾 */
