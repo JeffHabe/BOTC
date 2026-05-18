@@ -35,6 +35,8 @@ export interface SetupWizardState {
   drawingResults: Record<string, string>
   previewAssignments: any[]
   previewBluffs: any[]
+  newbiePlayerIds: string[]
+  isNewbieProtectionEnabled: boolean
 }
 
 export const useUIStore = defineStore('ui', () => {
@@ -486,7 +488,9 @@ export const useUIStore = defineStore('ui', () => {
     marionetteFakeRoleId: null,
     drawingResults: {},
     previewAssignments: [],
-    previewBluffs: [null, null, null]
+    previewBluffs: [null, null, null],
+    newbiePlayerIds: [],
+    isNewbieProtectionEnabled: false
   }
 
   const setupWizardState = ref<SetupWizardState>((() => {

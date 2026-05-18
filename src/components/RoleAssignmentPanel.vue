@@ -520,6 +520,26 @@
             <button class="btn-secondary" @click="startLottery">🔮 輪盤抽獎</button>
             <button class="btn-primary" @click="confirmAssignment">✅ 直接指派</button>
           </div>
+          <!-- 新手保護模式總開關 -->
+          <div class="newbie-protection-card">
+            <div class="protection-header">
+              <div class="protection-title-area">
+                <span class="protection-emoji">🔰</span>
+                <div class="protection-text">
+                  <div class="protection-title">新手保護模式</div>
+                  <div class="protection-desc">啟用後，可手動標記場上的新手玩家。輪盤抽獎時，系統將優先為新手抽取善良角色（鎮民/外來者），降低拿邪惡牌的挫折感。</div>
+                </div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" v-model="isNewbieProtectionEnabled">
+                <span class="slider round"></span>
+              </label>
+            </div>
+            
+            <div v-if="isNewbieProtectionEnabled" class="protection-help animate-fade-in">
+              💡 說書人可以點擊下方玩家卡片下方的 <span>新手 🔰</span> 按鈕來進行標記
+            </div>
+          </div>
         </div>
 
         <!-- 步驟 5.1: 輪盤抽獎 -->
@@ -529,11 +549,15 @@
             <h3 class="preview-title">玩家抽取角色</h3>
           </div>
 
+
           <div class="draw-grid">
             <div v-for="(player, index) in gameStore.players" 
                  :key="player.id" 
                  class="draw-player-card"
-                 :class="{ 'is-drawn': drawnPlayerIds.includes(player.id) }"
+                 :class="{ 
+                   'is-drawn': drawnPlayerIds.includes(player.id),
+                   'is-newbie-card': isNewbieProtectionEnabled && newbiePlayerIds.includes(player.id)
+                 }"
                  @click="!drawnPlayerIds.includes(player.id) && openWheel(player.id)">
               <div class="player-avatar">
                 <span class="player-index-badge">{{ index + 1 }}</span>
@@ -541,10 +565,24 @@
                 <div v-if="drawnPlayerIds.includes(player.id)" class="drawn-check">✅</div>
               </div>
               <div class="player-info">
-                <div class="player-name">{{ player.name }}</div>
+                <div class="player-name">
+                  {{ player.name }}
+                  <!-- 只有在抽獎完成（按鈕隱藏）後，才在名字旁保留靜態新手徽章作為歷史記錄 -->
+                  <span v-if="isNewbieProtectionEnabled && newbiePlayerIds.includes(player.id) && drawnPlayerIds.includes(player.id)" class="newbie-badge">🔰 新手</span>
+                </div>
                 <div v-if="drawnPlayerIds.includes(player.id)" class="drawn-status">
                   已完成抽獎
                 </div>
+              </div>
+              
+              <!-- 標記新手按鈕 (單一精確指示器) -->
+              <div v-if="isNewbieProtectionEnabled && !drawnPlayerIds.includes(player.id)" class="newbie-toggle-area">
+                <button 
+                  class="btn-newbie-toggle" 
+                  :class="{ 'active': newbiePlayerIds.includes(player.id) }"
+                  @click.stop="toggleNewbie(player.id)">
+                  {{ newbiePlayerIds.includes(player.id) ? '🔰' : '🔰' }}
+                </button>
               </div>
             </div>
           </div>
@@ -677,7 +715,9 @@ function syncToStore() {
     marionetteFakeRoleId: marionetteFakeRoleId.value,
     drawingResults: { ...drawingResults },
     previewAssignments: [...previewAssignments.value],
-    previewBluffs: [...previewBluffs.value]
+    previewBluffs: [...previewBluffs.value],
+    newbiePlayerIds: [...newbiePlayerIds.value],
+    isNewbieProtectionEnabled: isNewbieProtectionEnabled.value
   }
 }
 
@@ -763,7 +803,28 @@ const showResultModal = ref(false)
 const showReadyModal = ref(false)
 const activeFlickerId = ref<string | null>(null)
 
-watch([drunkFakeRoleId, wudaozheFakeRoleId, lunaticFakeRoleId, marionetteFakeRoleId, drawingResults], () => syncToStore(), { deep: true })
+// 新手保護機制狀態
+const isNewbieProtectionEnabled = ref<boolean>(savedState.isNewbieProtectionEnabled || false)
+const newbiePlayerIds = ref<string[]>(savedState.newbiePlayerIds || [])
+
+function toggleNewbie(playerId: string) {
+  const idx = newbiePlayerIds.value.indexOf(playerId)
+  if (idx > -1) {
+    newbiePlayerIds.value.splice(idx, 1)
+  } else {
+    newbiePlayerIds.value.push(playerId)
+  }
+}
+
+watch([
+  drunkFakeRoleId, 
+  wudaozheFakeRoleId, 
+  lunaticFakeRoleId, 
+  marionetteFakeRoleId, 
+  drawingResults, 
+  isNewbieProtectionEnabled, 
+  newbiePlayerIds
+], () => syncToStore(), { deep: true })
 
 const fullPoolCharacters = computed(() => {
   if (!gameStore.script) return []
@@ -1600,7 +1661,19 @@ function startActualDraw() {
   })
 
   // 從合法池中隨機抽取（防呆：如果沒有合法選項，就 fallback 抽原本的池子）
-  const finalPool = validPool.length > 0 ? validPool : basePool
+  let finalPool = validPool.length > 0 ? validPool : basePool
+
+  // 新手保護機制：如果啟用總開關，且當前玩家被標記為新手
+  if (isNewbieProtectionEnabled.value && newbiePlayerIds.value.includes(curPlayerId)) {
+    const goodPool = finalPool.filter(roleId => {
+      const char = getCharacterById(roleId)
+      return char && (char.role_type === 'Townsfolk' || char.role_type === 'Outsider')
+    })
+    // 只有在池內確實還有善良角色的情況下才進行過濾，防止卡死
+    if (goodPool.length > 0) {
+      finalPool = goodPool
+    }
+  }
   const resultId = finalPool[Math.floor(Math.random() * finalPool.length)]
 
   const allChoices = fullPoolCharacters.value
@@ -1979,6 +2052,8 @@ function handleResetSetup() {
     wudaozheFakeRoleId.value = newState.wudaozheFakeRoleId
     lunaticFakeRoleId.value = newState.lunaticFakeRoleId
     marionetteFakeRoleId.value = newState.marionetteFakeRoleId
+    isNewbieProtectionEnabled.value = newState.isNewbieProtectionEnabled || false
+    newbiePlayerIds.value = [...(newState.newbiePlayerIds || [])]
     for (const key in drawingResults) delete drawingResults[key]
     Object.assign(drawingResults, newState.drawingResults)
     previewAssignments.value = [...newState.previewAssignments]
@@ -2901,5 +2976,181 @@ function getRoleTypeEmoji(type: string) {
   padding: 14px;
   font-size: 16px;
   letter-spacing: 1px;
+}
+/* 新手保護模式樣式 */
+.newbie-protection-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 16px 16px 0px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.protection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.protection-title-area {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.protection-emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.protection-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.protection-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: white;
+}
+
+.protection-desc {
+  font-size: 10px;
+  color: #aaa;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.protection-help {
+  font-size: 10px;
+  color: var(--color-gold-muted);
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.protection-help span {
+  font-weight: bold;
+  color: white;
+}
+
+/* Switch 開關樣式 */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.15);
+  transition: .3s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+}
+
+input:checked + .slider {
+  background-color: #3b82f6; /* 亮藍色 */
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.slider.round {
+  border-radius: 24px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/* 新手徽章與按鈕 */
+.newbie-badge {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #60a5fa; /* 藍色 */
+  font-size: 9px;
+  font-weight: bold;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.newbie-toggle-area {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  z-index: 5;
+}
+
+.btn-newbie-toggle {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #bbb;
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-newbie-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.btn-newbie-toggle.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.btn-newbie-toggle.active:hover {
+  background: rgba(59, 130, 246, 0.25);
+}
+
+/* 標記新手卡片樣式變換 */
+.draw-player-card.is-newbie-card {
+  border-color: rgba(59, 130, 246, 0.2) !important;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, rgba(26, 27, 35, 0.95) 100%) !important;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>
