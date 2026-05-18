@@ -29,6 +29,7 @@ export interface SetupWizardState {
   selectedRoleIds: string[]
   selectedBluffIds: string[]
   drunkFakeRoleId: string | null
+  wudaozheFakeRoleId: string | null
   lunaticFakeRoleId: string | null
   marionetteFakeRoleId: string | null
   drawingResults: Record<string, string>
@@ -480,6 +481,7 @@ export const useUIStore = defineStore('ui', () => {
     selectedRoleIds: [],
     selectedBluffIds: [],
     drunkFakeRoleId: null,
+    wudaozheFakeRoleId: null,
     lunaticFakeRoleId: null,
     marionetteFakeRoleId: null,
     drawingResults: {},

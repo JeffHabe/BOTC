@@ -2,7 +2,7 @@
   {
     "id": "_meta",
     "name": "全角色",
-    "author": "",
+    "author": "Jeff",
     "use_title_image": false,
     "use_second_page_title_image": false,
     "conflicts": []
@@ -945,8 +945,6 @@
     "ability": "你以為你是一個惡魔，但其實你不是。惡魔知道你是瘋子以及你在每個夜晚選擇了哪些玩家。",
     "team": "outsider",
     "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/lunatic.png",
-    "firstNight": 2005.3000000000002,
-    "otherNight": 28,
     "firstNightReminder": "喚醒瘋子並向他提供惡魔信息。如可能，則讓瘋子進行相應的惡魔行動。隨後在惡魔信息環節對惡魔提供瘋子的相關信息。",
     "otherNightReminder": "如果瘋子以為的惡魔會在當晚行動，喚醒瘋子，並讓他以惡魔的方式行動。",
     "reminders": [
@@ -2137,9 +2135,6 @@
     "otherNight": 98.5,
     "firstNightReminder": "喚醒引路人，讓他選擇至多三名玩家，告訴引路人今晚是否有邪惡玩家的能力選擇或影響了他們之中的玩家。",
     "otherNightReminder": "喚醒引路人，讓他選擇至多三名玩家，告訴引路人今晚是否有邪惡玩家的能力選擇或影響了他們之中的玩家。",
-    "reminders": [
-      ""
-    ],
     "conflicts": []
   },
   {
@@ -2175,9 +2170,6 @@
     "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/zhifu.png",
     "otherNight": 91.7,
     "otherNightReminder": "喚醒知府，告訴他今天是否有非鎮民且非旅行者的玩家死亡。",
-    "reminders": [
-      ""
-    ],
     "conflicts": []
   },
   {
