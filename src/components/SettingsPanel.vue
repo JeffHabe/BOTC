@@ -273,6 +273,69 @@
 
         <div class="divider" />
 
+        <!-- 自訂角色技能音效 -->
+        <div class="section-title">自訂角色技能音效</div>
+        <div class="sound-manager-box">
+          <button class="import-sound-btn" @click="triggerSoundUpload">
+            ➕ 匯入角色技能音效
+          </button>
+          <input 
+            type="file" 
+            ref="soundFileInput" 
+            hidden 
+            accept="audio/*" 
+            @change="handleSoundFileChange" 
+          />
+
+          <!-- 自訂音效清單 -->
+          <div v-if="uiStore.customSounds.length === 0" class="no-sounds-tip">
+            暫無自訂技能音效，請點擊上方按鈕匯入
+          </div>
+          <div v-else class="sounds-list">
+            <div 
+              v-for="sound in uiStore.customSounds" 
+              :key="sound.id" 
+              class="sound-item"
+              :class="{ 'is-pinned': uiStore.pinnedSoundId === sound.id }"
+            >
+              <div class="sound-info">
+                <span class="sound-pin-indicator" v-if="uiStore.pinnedSoundId === sound.id">📌</span>
+                <span class="sound-name">{{ sound.name }}</span>
+                <span class="sound-tag" v-if="uiStore.pinnedSoundId === sound.id">主要播放</span>
+              </div>
+              <div class="sound-actions">
+                <!-- 釘選按鈕 -->
+                <button 
+                  class="action-btn pin-btn" 
+                  :class="{ active: uiStore.pinnedSoundId === sound.id }"
+                  title="釘選為主要播放音效"
+                  @click="uiStore.pinSound(sound.id)"
+                >
+                  📌
+                </button>
+                <!-- 播放/停止按鈕 -->
+                <button 
+                  class="action-btn play-btn" 
+                  :class="{ 'is-playing': uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === sound.id }"
+                  @click="togglePlaySound(sound.id)"
+                >
+                  {{ uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === sound.id ? '⏹️' : '▶️' }}
+                </button>
+                <!-- 刪除按鈕 -->
+                <button 
+                  v-if="!sound.id.startsWith('default-')"
+                  class="action-btn delete-btn" 
+                  @click="deleteCustomSound(sound.id, sound.name)"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider" />
+
         <!-- 危險區域 -->
         <div class="section-title danger-section">危險區域</div>
         <div class="settings-grid">
@@ -328,6 +391,58 @@ function handleKeydown(e: KeyboardEvent) {
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const uploadTarget = ref<'day' | 'night'>('day')
+
+// 自訂音效管理
+const soundFileInput = ref<HTMLInputElement | null>(null)
+
+function triggerSoundUpload() {
+  soundFileInput.value?.click()
+}
+
+async function handleSoundFileChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+
+  const defaultName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name
+  const name = prompt('請輸入此角色發動技能音效的名稱（例如：守鴉人）：', defaultName)
+  
+  if (name === null) {
+    if (soundFileInput.value) soundFileInput.value.value = ''
+    return
+  }
+  
+  const finalName = name.trim() || defaultName
+
+  try {
+    const buffer = await file.arrayBuffer()
+    await uiStore.addCustomSound(finalName, buffer)
+    alert(`音效「${finalName}」匯入成功！`)
+  } catch (err) {
+    console.error('音效匯入失敗:', err)
+    alert('音效匯入失敗，請確認檔案格式是否正確。')
+  }
+
+  if (soundFileInput.value) soundFileInput.value.value = ''
+}
+
+function togglePlaySound(id: string) {
+  if (uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === id) {
+    uiStore.stopSpecificSound()
+  } else {
+    uiStore.playSpecificSound(id)
+  }
+}
+
+function deleteCustomSound(id: string, name: string) {
+  uiStore.showConfirm(
+    '刪除自訂音效',
+    `確認要刪除自訂音效「${name}」嗎？此操作無法恢復。`,
+    () => {
+      uiStore.removeCustomSound(id)
+    },
+    true
+  )
+}
 
 function triggerFile(target: 'day' | 'night') {
   uploadTarget.value = target
@@ -1242,4 +1357,150 @@ function resetGame() {
   opacity: 0.85;
 }
 
+/* 自訂音效管理樣式 */
+.sound-manager-box {
+  padding: 8px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.import-sound-btn {
+  width: 100%;
+  background: rgba(201, 168, 76, 0.15);
+  border: 1px dashed var(--color-gold);
+  color: var(--color-gold-bright);
+  border-radius: 10px;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.import-sound-btn:hover {
+  background: rgba(201, 168, 76, 0.25);
+  box-shadow: 0 4px 12px rgba(201, 168, 76, 0.15);
+}
+
+.no-sounds-tip {
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  padding: 16px 0;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.sounds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.sound-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: all 0.2s ease;
+}
+
+.sound-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(201, 168, 76, 0.2);
+}
+
+.sound-item.is-pinned {
+  background: rgba(201, 168, 76, 0.08);
+  border-color: rgba(201, 168, 76, 0.4);
+}
+
+.sound-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sound-pin-indicator {
+  font-size: 12px;
+}
+
+.sound-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sound-tag {
+  font-size: 9px;
+  background: rgba(201, 168, 76, 0.25);
+  color: var(--color-gold-bright);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 700;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  margin-left: 6px;
+}
+
+.sound-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.action-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ccc;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+  padding: 0;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.action-btn.pin-btn.active {
+  background: rgba(201, 168, 76, 0.2);
+  border-color: var(--color-gold);
+  color: var(--color-gold-bright);
+}
+
+.action-btn.play-btn.is-playing {
+  background: rgba(231, 76, 60, 0.2);
+  border-color: rgba(231, 76, 60, 0.5);
+  color: #ff6b6b;
+}
+
+.action-btn.delete-btn:hover {
+  background: rgba(231, 76, 60, 0.15);
+  border-color: rgba(231, 76, 60, 0.3);
+  color: #ff6b6b;
+}
 </style>

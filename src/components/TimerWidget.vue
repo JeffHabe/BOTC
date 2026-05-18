@@ -13,6 +13,19 @@
         <span class="time-text">{{ uiStore.isBellPlaying ? '停止鐘聲' : formattedTime }}</span>
       </div>
 
+      <!-- 播放釘選自訂音效的按鈕 (並排在碼錶右側) -->
+      <button 
+        v-if="uiStore.pinnedSound"
+        class="main-custom-sound-btn" 
+        :class="{ 
+          'is-playing': uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === uiStore.pinnedSoundId,
+          'icon-only': !uiStore.pinnedSoundShortName
+        }"
+        @click="uiStore.togglePinnedSound()"
+      >
+        <span class="icon">{{ uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === uiStore.pinnedSoundId ? '⏹️' : '▶️' }}</span>
+        <span class="text" v-if="uiStore.pinnedSoundShortName">{{ uiStore.pinnedSoundShortName }}</span>
+      </button>
     </div>
 
     <!-- 展開狀態 (Panel Mode) -->
@@ -357,5 +370,59 @@ function handleMiniClick() {
   0%, 100% { transform: rotate(0deg); }
   25% { transform: rotate(4deg) scale(1.02); }
   75% { transform: rotate(-4deg) scale(0.98); }
+}
+
+/* 主頁自訂音效膠囊按鈕樣式 */
+.main-custom-sound-btn {
+  background: rgba(18, 18, 24, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 確保內容 100% 絕對居中 */
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transition: all 0.3s ease;
+  user-select: none;
+  color: var(--color-gold-bright, #f1c40f);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  height: 34px;
+  box-sizing: border-box;
+}
+
+.main-custom-sound-btn.icon-only {
+  width: 34px;
+  padding: 0;
+  border-radius: 50%;
+  gap: 0;
+}
+
+.main-custom-sound-btn:hover {
+  background: rgba(201, 168, 76, 0.15);
+  border-color: rgba(201, 168, 76, 0.4);
+  box-shadow: 0 4px 14px rgba(201, 168, 76, 0.2);
+  transform: translateY(-1px);
+}
+
+.main-custom-sound-btn:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.main-custom-sound-btn.is-playing {
+  background: rgba(186, 45, 45, 0.6);
+  border-color: rgba(255, 82, 82, 0.7);
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(255, 82, 82, 0.5);
+  animation: pulse-playing-btn 1s infinite alternate;
+}
+
+@keyframes pulse-playing-btn {
+  0% { box-shadow: 0 0 6px rgba(255, 82, 82, 0.3); }
+  100% { box-shadow: 0 0 18px rgba(255, 82, 82, 0.7); }
 }
 </style>

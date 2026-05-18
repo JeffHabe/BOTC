@@ -149,7 +149,7 @@ export async function playClocktowerBell(onEnded?: () => void) {
   stopClocktowerBell();
 
   try {
-    const buffer = await loadAudioFile('/church-bell.wav');
+    const buffer = await loadAudioFile('/sound/church-bell.wav');
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     
@@ -188,4 +188,61 @@ export async function playClocktowerBell(onEnded?: () => void) {
     }
   }
 }
+
+let customSoundSource: AudioBufferSourceNode | null = null;
+
+/**
+ * 停止自訂技能音效
+ */
+export function stopCustomSound() {
+  if (customSoundSource) {
+    try {
+      customSoundSource.stop();
+    } catch (e) {
+      console.warn('停止自訂音效失敗:', e);
+    }
+    customSoundSource = null;
+  }
+}
+
+/**
+ * 播放自訂技能音效 (使用 ArrayBuffer)
+ */
+export async function playCustomSound(soundData: ArrayBuffer, onEnded?: () => void) {
+  const ctx = getAudioContext();
+  
+  if (ctx.state === 'suspended') {
+    await ctx.resume().catch(() => console.warn('自動播放被攔截，請確保已點擊播放自訂音效'));
+  }
+
+  // 先停止前一次播放
+  stopCustomSound();
+
+  try {
+    const buffer = await ctx.decodeAudioData(soundData.slice(0));
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    
+    const gainNode = ctx.createGain();
+    gainNode.gain.value = 1.0;
+    
+    source.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    customSoundSource = source;
+    
+    source.onended = () => {
+      if (customSoundSource === source) {
+        customSoundSource = null;
+        if (onEnded) onEnded();
+      }
+    };
+    
+    source.start(0);
+  } catch (e) {
+    console.error('播放自訂音效失敗:', e);
+    if (onEnded) onEnded();
+  }
+}
+
 

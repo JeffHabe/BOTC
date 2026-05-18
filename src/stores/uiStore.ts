@@ -2,7 +2,8 @@
 import { defineStore } from 'pinia'
 import { ref, watch, computed } from 'vue'
 import type { Player } from '../types'
-import { playClocktowerBell, stopClocktowerBell, unlockAudio } from '../utils/audio'
+import { playClocktowerBell, stopClocktowerBell, unlockAudio, playCustomSound, stopCustomSound } from '../utils/audio'
+import { saveSound, getAllSoundsMeta, getSoundData, deleteSound } from '../utils/soundDb'
 import { invoke } from '@tauri-apps/api/core'
 
 export type Panel =
@@ -310,6 +311,164 @@ export const useUIStore = defineStore('ui', () => {
     localStorage.setItem('botc-timer-notification', String(enabled))
   }
 
+  // --- 自訂音效管理 (Custom Sounds) ---
+  const SYSTEM_DEFAULT_SOUNDS = [
+    { id: 'default-scream-horror', name: '報喪女妖技能 (scream-horror)' },
+    { id: 'default-bomb', name: '炸彈人技能 (bomb)' }
+  ]
+
+  const customSounds = ref<{ id: string; name: string }[]>([])
+  const pinnedSoundId = ref<string | null>(localStorage.getItem('botc-pinned-sound-id'))
+  const isCustomSoundPlaying = ref(false)
+  const playingCustomSoundId = ref<string | null>(null)
+
+  // 取得目前釘選的主要播放音效
+  const pinnedSound = computed(() => {
+    return customSounds.value.find(s => s.id === pinnedSoundId.value) || null
+  })
+
+  // 取得目前釘選的主要播放音效的簡短名稱 (最長 6 字且去除括號)
+  const pinnedSoundShortName = computed(() => {
+    if (!pinnedSound.value) return ''
+    let name = pinnedSound.value.name.replace(/\s*[\(\（].*?[\)\）]/g, '')
+    if (name.length > 6) {
+      name = name.slice(0, 6) + '..'
+    }
+    return name
+  })
+
+  // 載入自訂音效清單
+  async function loadCustomSounds() {
+    try {
+      const list = await getAllSoundsMeta()
+      customSounds.value = [
+        ...SYSTEM_DEFAULT_SOUNDS,
+        ...list
+      ]
+      
+      // 如果沒有釘選音效，預設釘選系統內建的音效
+      if (!pinnedSoundId.value) {
+        pinSound('default-scream-horror')
+      }
+    } catch (e) {
+      console.error('載入自訂音效清單失敗:', e)
+      customSounds.value = [...SYSTEM_DEFAULT_SOUNDS]
+      if (!pinnedSoundId.value) {
+        pinSound('default-scream-horror')
+      }
+    }
+  }
+
+  // 新增自訂音效
+  async function addCustomSound(name: string, data: ArrayBuffer) {
+    try {
+      const id = 'sound-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
+      await saveSound(id, name, data)
+      await loadCustomSounds()
+      
+      // 如果目前沒有釘選音效，預設釘選第一個匯入的音效
+      if (!pinnedSoundId.value) {
+        pinSound(id)
+      }
+      return id
+    } catch (e) {
+      console.error('儲存音效失敗:', e)
+      throw e
+    }
+  }
+
+  // 刪除自訂音效
+  async function removeCustomSound(id: string) {
+    try {
+      // 系統預設音效不允許刪除
+      if (id.startsWith('default-')) return
+
+      // 如果正在播放則停止
+      if (playingCustomSoundId.value === id) {
+        stopSpecificSound()
+      }
+      await deleteSound(id)
+      if (pinnedSoundId.value === id) {
+        pinnedSoundId.value = null
+        localStorage.removeItem('botc-pinned-sound-id')
+      }
+      await loadCustomSounds()
+      
+      // 如果還有其他音效且沒有釘選的，預設釘選第一個
+      if (!pinnedSoundId.value && customSounds.value.length > 0) {
+        pinSound(customSounds.value[0].id)
+      }
+    } catch (e) {
+      console.error('刪除音效失敗:', e)
+    }
+  }
+
+  // 釘選自訂音效
+  function pinSound(id: string) {
+    pinnedSoundId.value = id
+    localStorage.setItem('botc-pinned-sound-id', id)
+  }
+
+  // 播放特定自訂音效
+  async function playSpecificSound(id: string) {
+    try {
+      // 用戶點擊「播放」時，立即解鎖音訊權限
+      unlockAudio()
+
+      let data: ArrayBuffer | null = null
+
+      if (id === 'default-scream-horror') {
+        // 從系統路徑載入預設音效
+        const response = await fetch('/sound/scream-horror.mp3')
+        data = await response.arrayBuffer()
+      } else if (id === 'default-bomb') {
+        // 從系統路徑載入預設音效
+        const response = await fetch('/sound/bomb.mp3')
+        data = await response.arrayBuffer()
+      } else {
+        data = await getSoundData(id)
+      }
+
+      if (!data) return
+
+      // 若正在播放其他音效，先停止
+      stopSpecificSound()
+
+      isCustomSoundPlaying.value = true
+      playingCustomSoundId.value = id
+
+      playCustomSound(data, () => {
+        isCustomSoundPlaying.value = false
+        playingCustomSoundId.value = null
+      })
+    } catch (e) {
+      console.error('播放特定音效失敗:', e)
+      isCustomSoundPlaying.value = false
+      playingCustomSoundId.value = null
+    }
+  }
+
+  // 停止特定自訂音效
+  function stopSpecificSound() {
+    isCustomSoundPlaying.value = false
+    playingCustomSoundId.value = null
+    stopCustomSound()
+  }
+
+  // 播放或停止釘選的主音效 (用於主頁面的碼錶下方按鈕)
+  function togglePinnedSound() {
+    if (!pinnedSoundId.value) return
+    
+    if (isCustomSoundPlaying.value && playingCustomSoundId.value === pinnedSoundId.value) {
+      stopSpecificSound()
+    } else {
+      playSpecificSound(pinnedSoundId.value)
+    }
+  }
+
+  // 初始化時自動載入
+  loadCustomSounds()
+
   // --- 縮放控制 (Zoom Control) ---
 
   // --- 自定義背景圖 ---
@@ -614,6 +773,10 @@ export const useUIStore = defineStore('ui', () => {
     isTimerSoundEnabled, isTimerNotificationEnabled, isBellPlaying,
     setTimerSoundEnabled, setTimerNotificationEnabled,
     startTimer, pauseTimer, resetTimer, addTimerSeconds, calibrateTimer, stopBell,
+    // 自訂音效
+    customSounds, pinnedSoundId, isCustomSoundPlaying, playingCustomSoundId, pinnedSound, pinnedSoundShortName,
+    loadCustomSounds, addCustomSound, removeCustomSound, pinSound,
+    playSpecificSound, stopSpecificSound, togglePinnedSound,
     // 縮放與平移控制
     grimoireScale, setGrimoireScale, zoomIn, zoomOut, resetZoom,
     viewScale, setViewScale, zoomOrigin, setZoomOrigin,
