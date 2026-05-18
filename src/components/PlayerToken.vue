@@ -391,7 +391,7 @@ function getReminderStyle(rIdx: number, isPlus = false) {
     if (isPlus) {
       // 如果只有加號且沒標記
       if (props.player.reminders.length === 0) {
-        distV = isBottomHalf ? 75 : 70
+        distV = isBottomHalf ? 90 : 70
       }
       // 有標記或收起狀態下，加號按鈕自動採用與普通標記完全一致的標準安全間距 (gap)，徹底避免與展開鎖按鈕重疊
     }

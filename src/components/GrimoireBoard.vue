@@ -128,7 +128,7 @@
           @click="uiStore.activeBluffTab = 'demon'"
           title="惡魔偽裝"
         >
-          <span class="icon">👹</span>
+          <img class="icon" src="/pic/Demons.png" />
         </button>
 
         <!-- 收納按鈕 -->
@@ -1377,6 +1377,12 @@ const activePanelComponent = computed(() => {
   transition: all 0.3s ease;
   background: linear-gradient(to right, rgba(30, 20, 15, 0.95), rgba(42, 27, 21, 0.95));
   color: rgba(210, 180, 140, 0.5);
+}
+
+.bluffs-tab-btn img.icon {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
 }
 
 .lunatic-tab {
