@@ -84,22 +84,7 @@
             </div>
           </div>
 
-          <!-- B. 角色身份標記 (如：是哲學家、是瘋子) -->
-          <div v-if="allGlobalReminders.length > 0" class="section">
-            <div class="section-title">身份標記</div>
-            <div class="badges-container">
-              <button
-                v-for="remObj in allGlobalReminders"
-                :key="'global-'+remObj.text"
-                class="reminder-badge global-badge"
-                @click="quickAdd(remObj.text, remObj.source)"
-              >
-                {{ remObj.text }}
-              </button>
-            </div>
-          </div>
-
-          <div class="divider" />
+          <!-- 身份標記已整合至下方場上角色專屬標記中 -->
 
           <!-- C. 場上角色標記 -->
           <div v-if="inPlayGroups.length > 0" class="section">
@@ -166,24 +151,44 @@ const editingId = ref<string | null>(null)
 const inputRef = ref<HTMLInputElement | null>(null)
 const contentRef = ref<HTMLElement | null>(null)
 
-const commonReminders = ['中毒', '醉酒', '已被選中', '已被提名', '即將死亡','善良','邪惡']
+const commonReminders = ['善良','邪惡']
 /**
  * 分類場上角色標記
  */
 const inPlayGroups = computed(() => {
   const groups: { roleName: string; reminders: string[] }[] = []
+  
   // 取得目前所有曾經上場的角色 ID，加上如果有人身上有該角色留下的標記也算
   const currentSources = new Set(gameStore.players.flatMap(p => p.reminders.map(r => r.source_role)))
   
   const roleIdsInPlay = new Set([
     ...gameStore.historicalRoleIds,
-    ...gameStore.players.map(p => p.role?.id).filter(Boolean)
+    ...gameStore.players.map(p => p.role?.id).filter(Boolean),
+    ...gameStore.activeFabled
   ])
-  
-  if (!gameStore.script) return []
-  
-  for (const char of gameStore.script.characters) {
-    // 只要角色曾經上場，或者他的標記目前還留在場上，就顯示他的提示標記群組
+
+  // 合併當前劇本角色與全域大全角色，保證完整提取 reminders 與 remindersGlobal 資訊
+  const allAvailableChars = new Map<string, any>()
+  if (scriptStore.masterScript?.characters) {
+    scriptStore.masterScript.characters.forEach(c => allAvailableChars.set(c.id, c))
+  }
+  if (gameStore.script?.characters) {
+    gameStore.script.characters.forEach(c => {
+      if (allAvailableChars.has(c.id)) {
+        const existing = allAvailableChars.get(c.id)
+        allAvailableChars.set(c.id, {
+          ...existing,
+          reminders: Array.from(new Set([...(existing.reminders || []), ...(c.reminders || [])])),
+          remindersGlobal: Array.from(new Set([...(existing.remindersGlobal || []), ...(c.remindersGlobal || [])]))
+        })
+      } else {
+        allAvailableChars.set(c.id, c)
+      }
+    })
+  }
+
+  for (const char of allAvailableChars.values()) {
+    // 只要該角色在場上、曾經在場上、或者其標記目前還留在場上，即顯示其提示標記群組
     if (roleIdsInPlay.has(char.id) || currentSources.has(char.name)) {
       const allReminders = Array.from(new Set([
         ...(char.reminders || []),
@@ -201,35 +206,7 @@ const inPlayGroups = computed(() => {
   return groups
 })
 
-// 提取當前劇本中所有的全域身份標記 (如：是哲學家、是瘋子等)
-const allGlobalReminders = computed(() => {
-  const allMap = new Map<string, string>() // 標記文字 -> 來源角色名稱
-  
-  if (!gameStore.script || !gameStore.script.characters) return []
-  
-  // 取得目前所有曾經上場的角色 ID (包含傳說角色)，加上如果有人身上有該角色留下的標記也算
-  const currentSources = new Set(gameStore.players.flatMap(p => p.reminders.map(r => r.source_role)))
-  
-  const roleIdsInPlay = new Set([
-    ...gameStore.historicalRoleIds,
-    ...gameStore.players.map(p => p.role?.id).filter(Boolean),
-    ...gameStore.activeFabled
-  ])
-  
-  // 從 masterScript (全庫) 提取，因為只有它保證最新擁有 remindersGlobal 資料
-  scriptStore.masterScript.characters.forEach((char: any) => {
-    // 過濾：只要角色曾經上場，或者他的標記留在場上，才把它的身份標記加進來
-    if ((roleIdsInPlay.has(char.id) || currentSources.has(char.name)) && char.remindersGlobal) {
-      char.remindersGlobal.forEach((r: string) => {
-        if (!allMap.has(r)) {
-          allMap.set(r, char.name)
-        }
-      })
-    }
-  })
-  
-  return Array.from(allMap.entries()).map(([text, source]) => ({ text, source }))
-})
+// 全域身份標記已合併入 inPlayGroups 中
 
 function startEdit(rem: ReminderToken) {
   editingId.value = rem.id

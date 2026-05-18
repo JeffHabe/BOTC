@@ -52,7 +52,7 @@
     "firstNight": 3049,
     "firstNightReminder": "喚醒貴族，對他指向三名玩家。這三名玩家中有且僅有一名是邪惡玩家。",
     "reminders": [
-      "被得知"
+      "得知"
     ],
     "conflicts": []
   },
@@ -207,6 +207,21 @@
     "id": "balloonist",
     "name": "氣球駕駛員",
     "ability": "每個夜晚，你會得知一名與上個夜晚得知的玩家角色類型不同的玩家。[+0~1外來者]",
+    "team": "townsfolk",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/balloonist.png",
+    "firstNight": 3050,
+    "otherNight": 90,
+    "firstNightReminder": "喚醒氣球駕駛員，對他指向一名玩家。",
+    "otherNightReminder": "喚醒氣球駕駛員，對他指向一名玩家，這名玩家與之前氣球駕駛員上一個夜晚得知過的玩家屬於不同的角色類型。",
+    "reminders": [
+      "得知"
+    ],
+    "conflicts": []
+  },
+  {
+    "id": "balloonist_old_version",
+    "name": "氣球駕駛員(舊版)",
+    "ability": "每個夜晚，你會得知一名不同角色類型的玩家，直到場上所有角色類型你都得知過一次。[+1外來者]",
     "team": "townsfolk",
     "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/balloonist.png",
     "firstNight": 3050,
@@ -453,7 +468,6 @@
     "otherNight": 2150,
     "otherNightReminder": "讓雜技演員選擇一名玩家。標記該名玩家“被選擇”。讓雜技演員重新入睡。 如果被選擇的玩家在當晚任何時刻醉酒或中毒，標記雜技演員”死亡“。",
     "reminders": [
-      "被選擇",
       "死亡"
     ],
     "conflicts": []
@@ -936,7 +950,7 @@
     "firstNightReminder": "喚醒瘋子並向他提供惡魔信息。如可能，則讓瘋子進行相應的惡魔行動。隨後在惡魔信息環節對惡魔提供瘋子的相關信息。",
     "otherNightReminder": "如果瘋子以為的惡魔會在當晚行動，喚醒瘋子，並讓他以惡魔的方式行動。",
     "reminders": [
-      "被選擇"
+      "選擇"
     ],
     "remindersGlobal": [
       "是瘋子"
@@ -1090,7 +1104,7 @@
     "firstNightReminder": "如果落難少女在場，對爪牙展示落難少女角色標記。",
     "otherNightReminder": "0",
     "reminders": [
-      "已被猜測"
+      "已猜測"
     ],
     "conflicts": []
   },
@@ -1275,6 +1289,9 @@
     "ability": "每個白天，在提名開始前，你可以公開選擇一名玩家：他死亡。如果你被處決，提名你的玩家需要和你猜拳，只有你輸了你才會死亡。",
     "team": "minion",
     "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/psychopath.png",
+    "reminders": [
+      "死亡"
+    ],
     "conflicts": []
   },
   {
@@ -1330,6 +1347,7 @@
       "第一夜",
       "第二夜",
       "第三夜",
+      "第四夜",
       "大限已至"
     ],
     "conflicts": []
@@ -1456,6 +1474,9 @@
     "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/boffin.png",
     "firstNight": 1.45,
     "firstNightReminder": "（分別或同時）喚醒科學怪人和惡魔，通知他們惡魔因為科學怪人而獲得的善良角色的能力。",
+    "reminders": [
+      "是科學怪人"
+    ],
     "conflicts": []
   },
   {

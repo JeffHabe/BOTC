@@ -139,7 +139,7 @@ const SYSTEM_ACTIONS: any[] = [
     id: 'sys_demon_info',
     name: '惡魔信息',
     role_type: 'Demon',
-    first_night_reminder: '惡魔得知爪牙是誰，並獲得三個不在場的角色作為偽裝（偽裝聲勢）。',
+    first_night_reminder: '惡魔得知爪牙是誰，並獲得三個不在場的角色作為偽裝。',
     is_system: true
   }
 ]
@@ -155,7 +155,24 @@ const currentOrder = computed(() => {
 
   // 3. 首夜添加系統步驟 (任何劇本首夜皆顯示)
   if (isFirst) {
-    return [...SYSTEM_ACTIONS, ...baseOrder]
+    const isTeensy = gameStore.players.length === 5 || gameStore.players.length === 6
+    let systemActions = [...SYSTEM_ACTIONS]
+    
+    if (isTeensy) {
+      systemActions = systemActions
+        .filter(act => act.id !== 'sys_minion_info')
+        .map(act => {
+          if (act.id === 'sys_demon_info') {
+            return {
+              ...act,
+              first_night_reminder: '惡魔獲得三個不在場的角色作為偽裝。'
+            }
+          }
+          return act
+        })
+    }
+    
+    return [...systemActions, ...baseOrder]
   }
   
   return baseOrder
