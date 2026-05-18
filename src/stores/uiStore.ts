@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref, watch, computed } from 'vue'
 import type { Player } from '../types'
-import { playClocktowerBell, unlockAudio } from '../utils/audio'
+import { playClocktowerBell, stopClocktowerBell, unlockAudio } from '../utils/audio'
 import { invoke } from '@tauri-apps/api/core'
 
 export type Panel =
@@ -293,6 +293,12 @@ export const useUIStore = defineStore('ui', () => {
 
   const isTimerSoundEnabled = ref(localStorage.getItem('botc-timer-sound') !== 'false')
   const isTimerNotificationEnabled = ref(localStorage.getItem('botc-timer-notification') !== 'false')
+  const isBellPlaying = ref(false)
+
+  function stopBell() {
+    isBellPlaying.value = false
+    stopClocktowerBell()
+  }
 
   function setTimerSoundEnabled(enabled: boolean) {
     isTimerSoundEnabled.value = enabled
@@ -339,6 +345,9 @@ export const useUIStore = defineStore('ui', () => {
 
   function startTimer() {
     if (timerRemaining.value <= 0) return
+    if (isBellPlaying.value) {
+      stopBell()
+    }
     if (!isTimerRunning.value) {
       isTimerRunning.value = true
 
@@ -370,7 +379,10 @@ export const useUIStore = defineStore('ui', () => {
               
               // 觸發提醒：鐘聲立刻響
               if (isTimerSoundEnabled.value) {
-                playClocktowerBell()
+                isBellPlaying.value = true
+                playClocktowerBell(() => {
+                  isBellPlaying.value = false
+                })
               }
 
               // 移除重複的前端通知，交給後端 start_background_timer 處理即可
@@ -398,6 +410,7 @@ export const useUIStore = defineStore('ui', () => {
     timerRemaining.value = 0
     timerTotal.value = 0
     timerTargetTimestamp.value = null
+    stopBell()
   }
 
   /**
@@ -417,7 +430,10 @@ export const useUIStore = defineStore('ui', () => {
           
           // 補發提醒
           if (isTimerSoundEnabled.value) {
-            playClocktowerBell()
+            isBellPlaying.value = true
+            playClocktowerBell(() => {
+              isBellPlaying.value = false
+            })
           }
 
           // 移除重複的前端通知，交給後端處理
@@ -595,9 +611,9 @@ export const useUIStore = defineStore('ui', () => {
     isArrangingPlayers, toggleArrangingPlayers,
     // 計時器
     timerRemaining, timerTotal, isTimerRunning, isTimerExpanded, timerTargetTimestamp,
-    isTimerSoundEnabled, isTimerNotificationEnabled,
+    isTimerSoundEnabled, isTimerNotificationEnabled, isBellPlaying,
     setTimerSoundEnabled, setTimerNotificationEnabled,
-    startTimer, pauseTimer, resetTimer, addTimerSeconds, calibrateTimer,
+    startTimer, pauseTimer, resetTimer, addTimerSeconds, calibrateTimer, stopBell,
     // 縮放與平移控制
     grimoireScale, setGrimoireScale, zoomIn, zoomOut, resetZoom,
     viewScale, setViewScale, zoomOrigin, setZoomOrigin,

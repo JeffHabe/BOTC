@@ -1,11 +1,16 @@
 <template>
-  <div class="timer-widget" :class="{ 'is-expanded': uiStore.isTimerExpanded, 'is-running': uiStore.isTimerRunning, 'is-urgent': isUrgent }">
+  <div class="timer-widget" :class="{ 
+    'is-expanded': uiStore.isTimerExpanded, 
+    'is-running': uiStore.isTimerRunning, 
+    'is-urgent': isUrgent,
+    'is-bell-playing': uiStore.isBellPlaying
+  }">
     <!-- 頂部工具列容器 (碼錶 + 形狀切換) -->
     <div class="timer-controls-row">
       <!-- 縮小狀態 (Mini Mode) -->
-      <div class="timer-mini" @click="uiStore.isTimerExpanded = !uiStore.isTimerExpanded">
-        <span class="icon">⏱️</span>
-        <span class="time-text">{{ formattedTime }}</span>
+      <div class="timer-mini" :class="{ 'bell-playing-mini': uiStore.isBellPlaying }" @click="handleMiniClick">
+        <span class="icon">{{ uiStore.isBellPlaying ? '🔕' : '⏱️' }}</span>
+        <span class="time-text">{{ uiStore.isBellPlaying ? '停止鐘聲' : formattedTime }}</span>
       </div>
 
     </div>
@@ -20,6 +25,13 @@
         
         <div class="timer-display" :class="{ 'text-urgent': isUrgent }">
           {{ formattedTime }}
+        </div>
+
+        <!-- 鐘聲播放中的大號停止按鈕 -->
+        <div v-if="uiStore.isBellPlaying" class="bell-alert-zone">
+          <button class="stop-bell-large-btn" @click="uiStore.stopBell()">
+            🔕 停止鐘聲
+          </button>
         </div>
 
         <div class="timer-adjust">
@@ -60,6 +72,13 @@ const formattedTime = computed(() => {
 
 const isUrgent = computed(() => uiStore.timerRemaining > 0 && uiStore.timerRemaining <= 30)
 
+function handleMiniClick() {
+  if (uiStore.isBellPlaying) {
+    uiStore.stopBell()
+  } else {
+    uiStore.isTimerExpanded = !uiStore.isTimerExpanded
+  }
+}
 </script>
 
 <style scoped>
@@ -274,5 +293,69 @@ const isUrgent = computed(() => uiStore.timerRemaining > 0 && uiStore.timerRemai
 @keyframes pulse-text {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
+}
+
+/* 鐘聲播放狀態的樣式 */
+.timer-mini.bell-playing-mini {
+  background: linear-gradient(135deg, #d32f2f, #b71c1c);
+  border-color: #ff5252;
+  box-shadow: 0 0 15px rgba(255, 82, 82, 0.6);
+  animation: pulse-bell-mini 1s infinite alternate, shake-bell 0.6s infinite;
+}
+
+.timer-mini.bell-playing-mini .time-text {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.bell-alert-zone {
+  margin: 4px 0;
+  width: 100%;
+}
+
+.stop-bell-large-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-radius: 10px;
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+  transition: all 0.2s ease;
+  animation: shake-bell 0.6s infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.stop-bell-large-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+  background: linear-gradient(135deg, #ff4d4d, #d32f2f);
+}
+
+.stop-bell-large-btn:active {
+  transform: scale(0.98);
+}
+
+/* 整個 Widget 在播放鐘聲時的外邊框發光 */
+.timer-widget.is-bell-playing .timer-panel {
+  border-color: #ff5252;
+  box-shadow: 0 0 25px rgba(255, 82, 82, 0.4), 0 10px 30px rgba(0,0,0,0.8);
+}
+
+@keyframes pulse-bell-mini {
+  0% { box-shadow: 0 0 8px rgba(255, 82, 82, 0.4); border-color: rgba(255, 82, 82, 0.5); }
+  100% { box-shadow: 0 0 20px rgba(255, 82, 82, 0.9); border-color: rgba(255, 82, 82, 1); }
+}
+
+@keyframes shake-bell {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(4deg) scale(1.02); }
+  75% { transform: rotate(-4deg) scale(0.98); }
 }
 </style>
