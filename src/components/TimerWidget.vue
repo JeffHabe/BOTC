@@ -9,8 +9,14 @@
     <div class="timer-controls-row">
       <!-- 縮小狀態 (Mini Mode) -->
       <div class="timer-mini" :class="{ 'bell-playing-mini': uiStore.isBellPlaying }" @click="handleMiniClick">
-        <span class="icon">{{ uiStore.isBellPlaying ? '🔕' : '⏱️' }}</span>
-        <span class="time-text">{{ uiStore.isBellPlaying ? '停止鐘聲' : formattedTime }}</span>
+        <img 
+          class="icon" 
+          :src="uiStore.isBellPlaying ? '/pic/silent.png' : '/pic/hourglass.png'" 
+        />
+        <span class="time-text">
+          <img v-if="uiStore.isBellPlaying" class="stop-bell-icon" src="/pic/stop-button.png" />
+          <template v-else>{{ formattedTime }}</template>
+        </span>
       </div>
 
       <!-- 播放釘選自訂音效的按鈕 (並排在碼錶右側) -->
@@ -23,7 +29,10 @@
         }"
         @click="uiStore.togglePinnedSound()"
       >
-        <span class="icon">{{ uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === uiStore.pinnedSoundId ? '⏹️' : '▶️' }}</span>
+        <img 
+          class="icon" 
+          :src="uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === uiStore.pinnedSoundId ? '/pic/stop-button.png' : '/pic/play.png'" 
+        />
         <span class="text" v-if="uiStore.pinnedSoundShortName">{{ uiStore.pinnedSoundShortName }}</span>
       </button>
     </div>
@@ -57,13 +66,16 @@
 
         <div class="timer-controls">
           <button v-if="!uiStore.isTimerRunning" class="control-btn play" @click="uiStore.startTimer()">
-            ▶️ 開始
+            <img class="btn-icon" src="/pic/play.png" />
+            <!-- <span>開始</span> -->
           </button>
           <button v-else class="control-btn pause" @click="uiStore.pauseTimer()">
-            ⏸️ 暫停
+            <img class="btn-icon" src="/pic/pause.png" />
+            <!-- <span>暫停</span> -->
           </button>
           <button class="control-btn reset" @click="uiStore.resetTimer()">
-            🔄 重置
+            <img class="btn-icon" src="/pic/reset.png" />
+            <!-- <span>重置</span> -->
           </button>
         </div>
       </div>
@@ -124,6 +136,20 @@ function handleMiniClick() {
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   transition: all 0.3s ease;
   user-select: none;
+}
+
+.timer-mini .icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  display: block;
+}
+
+.stop-bell-icon {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  display: block;
 }
 
 .timer-mini:hover {
@@ -271,6 +297,12 @@ function handleMiniClick() {
   gap: 4px;
 }
 
+.control-btn .btn-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
 .control-btn.play {
   background: rgba(76, 175, 80, 0.2);
   border: 1px solid rgba(76, 175, 80, 0.5);
@@ -400,6 +432,13 @@ function handleMiniClick() {
   padding: 0;
   border-radius: 50%;
   gap: 0;
+}
+
+.main-custom-sound-btn .icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  display: block;
 }
 
 .main-custom-sound-btn:hover {

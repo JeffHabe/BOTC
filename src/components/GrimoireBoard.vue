@@ -117,7 +117,8 @@
 
         <!-- 檢視按鈕 (僅展開時顯示) -->
         <button v-if="uiStore.isBluffsExpanded" class="bluffs-showcase-btn" @click="uiStore.isBluffsShowcase = true" title="展示給惡魔/瘋子">
-          <span class="icon">👁️</span>
+          <!-- <span class="icon">👁️</span> -->
+          <img class="icon" src="/pic/search.png" />
         </button>
 
         <!-- 惡魔分頁 (僅展開時顯示) -->
@@ -184,18 +185,22 @@
         @click="uiStore.isSideToolbarExpanded = !uiStore.isSideToolbarExpanded"
         :title="uiStore.isSideToolbarExpanded ? '收起選單' : '功能選單'"
       >
-        <span class="icon">{{ uiStore.isSideToolbarExpanded ? '✕' : '⚙️' }}</span>
+        <img class="icon" v-if="uiStore.isSideToolbarExpanded" src="/pic/close.png"/>
+        <img class="icon" v-else src="/pic/gear.png" />
       </button>
 
       <!-- 被收藏的功能項 -->
       <transition-group name="side-stagger">
         <template v-if="uiStore.isSideToolbarExpanded">
           <button key="settings" class="menu-btn" @click="uiStore.openPanel('settings'); uiStore.isSideToolbarExpanded = false" title="設置">
-            <span class="icon">🛠️</span>
+            <!-- <span class="icon">🛠️</span> -->
+            <img class="icon" src="/pic/repair.png" />
+
           </button>
 
           <button key="night-order" class="menu-btn" @click="uiStore.openPanel('night-order'); uiStore.isSideToolbarExpanded = false" title="夜晚順序">
-            <span class="icon">🌙</span>
+            <!-- <span class="icon">🌙</span> -->
+             <img class="icon" src="/pic/moon.png" />
           </button>
 
           <button 
@@ -206,8 +211,10 @@
             :title="uiStore.isRolesHidden ? '顯示角色' : '隱藏角色'"
           >
             <div class="privacy-icon-wrapper">
-              <span class="icon">👁️</span>
-              <span v-if="uiStore.isRolesHidden" class="ban-icon">🚫</span>
+              <!-- <span class="icon">👁️</span> -->
+              <img class="icon" src="/pic/show.png" />
+              <!-- <span v-if="uiStore.isRolesHidden" class="ban-icon">🚫</span> -->
+              <img class="ban-icon" v-if="uiStore.isRolesHidden" src="/pic/hide.png" />
             </div>
           </button>
           
@@ -217,11 +224,12 @@
             @click="uiStore.cycleGrimoireShape(); uiStore.isSideToolbarExpanded = false" 
             :title="`魔典圖形: ${currentShapeLabel}`"
           >
-            <span class="icon">{{ currentShapeIcon }}</span>
+            <img class="icon" :src="currentShapeIcon" />
           </button>
           
           <button key="whiteboard" class="menu-btn" @click="uiStore.openPanel('whiteboard'); uiStore.isSideToolbarExpanded = false" title="說書人資訊">
-            <span class="icon">📝</span>
+            <!-- <span class="icon">📝</span> -->
+            <img class="icon" src="/pic/notes.png" />
           </button>
         </template>
       </transition-group> 
@@ -740,8 +748,12 @@ function onTokenMouseUp() {
 
 
 const currentShapeIcon = computed(() => {
-  const map = { circle: '⏺️', oval: '0️⃣', rect: '⏹️' }
-  return map[uiStore.grimoireShape as keyof typeof map] || '⏺️'
+  const map = { 
+    circle: '/pic/circle.png', 
+    oval: '/pic/oval.png', 
+    rect: '/pic/rectangle.png' 
+  }
+  return map[uiStore.grimoireShape as keyof typeof map] || '/pic/circle.png'
 })
 
 const currentShapeLabel = computed(() => {
@@ -1727,6 +1739,9 @@ const activePanelComponent = computed(() => {
 
 .menu-btn .icon, .privacy-btn .icon, .side-action-group .side-action-btn .icon, .menu-toggle-btn .icon {
   font-size: 10px;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 
 .zoom-controls-bottom .reset-btn {
@@ -1782,7 +1797,9 @@ const activePanelComponent = computed(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -55%);
-  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
   opacity: 0.85;
   pointer-events: none;
 }

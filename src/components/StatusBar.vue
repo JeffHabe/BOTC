@@ -56,7 +56,7 @@
         </span>
         <span class="stat-item threshold" v-if="gameStore.phase === 'Day'" title="門檻">
           <span class="stat-icon">
-            <img src="/pic/guillotine (1).png" alt="處決門檻" class="stat-img img-guillotine" />
+            <img src="/pic/guillotine.png" alt="處決門檻" class="stat-img img-guillotine" />
           </span>
           <!-- <span class="stat-icon">⚔️</span> -->
           <span class="stat-num">{{ gameStore.threshold }}</span>

@@ -22,7 +22,7 @@
           <div class="stat-card" title="處決門檻">
             <!-- <span class="stat-card-icon">⚔️</span> -->
             <span class="stat-icon">
-            <img src="/pic/guillotine (1).png" alt="處決門檻" class="stat-img img-guillotine" />
+            <img src="/pic/guillotine.png" alt="處決門檻" class="stat-img img-guillotine" />
             </span>
             <span class="stat-card-val">{{ gameStore.threshold }}</span>
             <span class="stat-card-label">處決門檻</span>
@@ -223,7 +223,7 @@
             :class="{ active: uiStore.grimoireShape === shape.id }"
             @click="uiStore.setGrimoireShape(shape.id as any)"
           >
-            <span class="opt-icon">{{ shape.icon }}</span>
+            <img class="opt-icon" :src="shape.icon" />
             <span class="opt-label">{{ shape.label }}</span>
             <div v-if="uiStore.grimoireShape === shape.id" class="active-check">✓</div>
           </button>
@@ -515,9 +515,9 @@ async function processImage(dataUrl: string): Promise<string> {
 }
 
 const shapes = [
-  { id: 'circle', label: '經典正圓', icon: '⏺️' },
-  { id: 'oval', label: '優雅橢圓', icon: '0️⃣' },
-  { id: 'rect', label: '工整矩形', icon: '⏹️' },
+  { id: 'circle', label: '經典正圓', icon: '/pic/circle.png' },
+  { id: 'oval', label: '優雅橢圓', icon: '/pic/oval.png' },
+  { id: 'rect', label: '工整矩形', icon: '/pic/rectangle.png' },
 ]
 
 const layouts = [
@@ -937,6 +937,7 @@ function resetGame() {
   align-items: center;
   justify-content: center;
   font-size: 18px;
+  object-fit: contain;
 }
 
 .opt-img {
