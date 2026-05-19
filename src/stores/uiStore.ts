@@ -56,9 +56,19 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   // --- 提示標記佈局方案 ---
-  const reminderLayout = ref<ReminderLayout>(
-    (localStorage.getItem('botc-reminder-layout') as ReminderLayout) || 'inner'
-  )
+  let initialLayout: ReminderLayout = 'inner'
+  try {
+    const saved = localStorage.getItem('botc-reminder-layout')
+    if (saved === 'arc' || saved === 'grid' || saved === 'stack' || saved === 'inner') {
+      initialLayout = saved as ReminderLayout
+    } else {
+      initialLayout = 'inner'
+      localStorage.setItem('botc-reminder-layout', 'inner')
+    }
+  } catch (e) {
+    initialLayout = 'inner'
+  }
+  const reminderLayout = ref<ReminderLayout>(initialLayout)
 
   // 提示標記收納上限閥值 (預設為 4)
   const reminderCollapseThreshold = ref(

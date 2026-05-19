@@ -454,6 +454,19 @@ onMounted(async () => {
   // 啟用喚醒鎖
   requestWakeLock()
   document.addEventListener('visibilitychange', handleVisibilityChange)
+
+  // 🚀 延遲淡出並移除初始加載畫面 (Logo 頁)，提供極致流暢的開屏體驗
+  setTimeout(() => {
+    const loader = document.getElementById('initial-loader')
+    if (loader) {
+      loader.style.opacity = '0'
+      loader.style.visibility = 'hidden'
+      // 等待 0.5 秒淡出動畫結束後，將其從 DOM 中徹底清除
+      setTimeout(() => {
+        loader.remove()
+      }, 500)
+    }
+  }, 1200)
 })
 
 onUnmounted(() => {
