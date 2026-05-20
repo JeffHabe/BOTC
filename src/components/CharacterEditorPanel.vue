@@ -51,6 +51,11 @@
                 <span v-if="char.firstNight" class="night-order-info n-first">🌙1: {{ char.firstNight }}</span>
                 <span v-if="char.otherNight" class="night-order-info n-other">🌙+: {{ char.otherNight }}</span>
               </div>
+              <div v-if="char.reminders && char.reminders.length > 0" class="char-reminders-list">
+                <span v-for="r in char.reminders" :key="r" class="reminder-tag">
+                  🔹 {{ r }}
+                </span>
+              </div>
               <div v-if="char.conflicts && char.conflicts.length > 0" class="char-conflicts">
                 <div v-for="(rule, idx) in char.conflicts" :key="idx" class="conflict-badge">
                   <div class="conflict-badge-title">⚔️ vs {{ getCharacterName(rule.target || rule.charB) }}</div>
@@ -118,6 +123,22 @@
           <div class="form-group">
             <label>其他夜晚順序 (空白為無)</label>
             <input class="form-input" type="number" v-model.number="formData.otherNight" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label>提示標記 (Reminders)</label>
+            <button class="btn-ghost" style="padding: 4px 8px; font-size: 12px;" @click="addReminderToken">+ 新增標記</button>
+          </div>
+          <div class="reminders-list-edit">
+            <div v-for="(_, index) in formData.reminders" :key="index" class="reminder-edit-row">
+              <input class="form-input" v-model="formData.reminders[index]" placeholder="例如: 中毒" />
+              <button class="btn-danger-icon" @click="removeReminderToken(index)">✕</button>
+            </div>
+            <div v-if="!formData.reminders || formData.reminders.length === 0" class="no-reminders-hint">
+              無提示標記。點擊右上角新增，以便在遊戲中為玩家標記狀態。
+            </div>
           </div>
         </div>
 
@@ -197,7 +218,8 @@ const formData = ref<any>({
   image: '',
   firstNight: '',
   otherNight: '',
-  conflicts: []
+  conflicts: [],
+  reminders: []
 })
 
 const rawListWithoutMeta = computed(() => {
@@ -232,7 +254,8 @@ function openAdd() {
     image: '',
     firstNight: '',
     otherNight: '',
-    conflicts: []
+    conflicts: [],
+    reminders: []
   }
   mode.value = 'form'
 }
@@ -247,7 +270,8 @@ function openEdit(char: any) {
     image: char.image || '',
     firstNight: char.firstNight || '',
     otherNight: char.otherNight || '',
-    conflicts: char.conflicts ? JSON.parse(JSON.stringify(char.conflicts)) : []
+    conflicts: char.conflicts ? JSON.parse(JSON.stringify(char.conflicts)) : [],
+    reminders: char.reminders ? JSON.parse(JSON.stringify(char.reminders)) : []
   }
   mode.value = 'form'
 }
@@ -272,6 +296,7 @@ async function saveCharacter() {
     otherNight: formData.value.otherNight ? Number(formData.value.otherNight) : undefined,
     // 過濾掉沒有選擇對象的無效規則，並確保空陣列也能正確覆蓋舊規則
     conflicts: (formData.value.conflicts || []).filter((r: any) => r.target),
+    reminders: (formData.value.reminders || []).map((r: string) => r.trim()).filter((r: string) => r),
     // 標記為自定義/已修改
     is_custom: true
   }
@@ -310,6 +335,15 @@ function addConflictRule() {
 
 function removeConflictRule(index: number | string) {
   formData.value.conflicts.splice(Number(index), 1)
+}
+
+function addReminderToken() {
+  if (!formData.value.reminders) formData.value.reminders = []
+  formData.value.reminders.push('')
+}
+
+function removeReminderToken(index: number) {
+  formData.value.reminders.splice(index, 1)
 }
 
 function handleFileUpload(event: Event) {
@@ -746,4 +780,69 @@ async function importLibrary() {
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-ghost { background: rgba(255,255,255,0.1); color: white; }
 .btn-danger { background: rgba(244, 67, 54, 0.2); color: #f44336; border: 1px solid rgba(244, 67, 54, 0.4); }
+
+.char-reminders-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.reminder-tag {
+  font-size: 10px;
+  background: rgba(74, 144, 226, 0.12);
+  border: 1px solid rgba(74, 144, 226, 0.25);
+  color: #90caf9;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.reminders-list-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.05);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.reminder-edit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.reminder-edit-row .form-input {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.btn-danger-icon {
+  background: rgba(244, 67, 54, 0.15);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  color: #f44336;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: none;
+  transition: all var(--transition-fast);
+}
+
+.btn-danger-icon:active {
+  background: rgba(244, 67, 54, 0.3);
+}
+
+.no-reminders-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 8px 0;
+  line-height: 1.5;
+}
 </style>
