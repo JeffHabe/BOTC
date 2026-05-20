@@ -249,6 +249,37 @@ export const useUIStore = defineStore('ui', () => {
     confirmDialog.value = null
   }
 
+  // --- 輸入對話框 (Prompt Dialog) ---
+  const promptDialog = ref<{
+    title: string
+    message: string
+    defaultValue: string
+    onConfirm: (val: string) => void
+    onCancel: () => void
+  } | null>(null)
+
+  function showPrompt(title: string, message: string, defaultValue: string = ''): Promise<string | null> {
+    return new Promise((resolve) => {
+      promptDialog.value = {
+        title,
+        message,
+        defaultValue,
+        onConfirm: (val) => {
+          promptDialog.value = null
+          resolve(val)
+        },
+        onCancel: () => {
+          promptDialog.value = null
+          resolve(null)
+        }
+      }
+    })
+  }
+
+  function closePrompt() {
+    promptDialog.value = null
+  }
+
   const isBluffsExpanded = ref(false)
   const isBluffsShowcase = ref(false)
   const activeBluffTab = ref<'demon' | 'lunatic'>('demon')
@@ -637,6 +668,7 @@ export const useUIStore = defineStore('ui', () => {
       addPlayerDialogOpen.value ||
       renameDialogPlayer.value !== null ||
       confirmDialog.value !== null ||
+      promptDialog.value !== null ||
       isRolePickerOpen.value ||
       reminderPickerPlayerId.value !== null ||
       isBluffsShowcase.value ||
@@ -772,6 +804,8 @@ export const useUIStore = defineStore('ui', () => {
     openVotingDetail, closeVotingDetail, startNomination,
     // 確認框
     confirmDialog, showConfirm, closeConfirm,
+    // 輸入對話框
+    promptDialog, showPrompt, closePrompt,
     // 角色池
     activePoolPresetId, activePoolPresetName, excludedPoolIds,
     // 隱私模式

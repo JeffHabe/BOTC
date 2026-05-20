@@ -1054,7 +1054,7 @@ async function renameScriptOrPreset() {
   if (type === 'preset') {
     const preset = poolPresets.value.find(p => p.id === id)
     if (!preset) return
-    const newName = window.prompt('請輸入新的劇本名稱：', preset.name)
+    const newName = await uiStore.showPrompt('重新命名配置', '請輸入新的劇本名稱：', preset.name)
     if (newName !== null && newName.trim() !== '') {
       preset.name = newName.trim()
       localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
@@ -1063,7 +1063,7 @@ async function renameScriptOrPreset() {
   } else if (type === 'script') {
     const s = scriptStore.allScripts.find(x => x.id === id)
     if (!s) return
-    const newName = window.prompt('請輸入新的劇本名稱：', s.name)
+    const newName = await uiStore.showPrompt('重新命名劇本', '請輸入新的劇本名稱：', s.name)
     if (newName !== null && newName.trim() !== '') {
       const success = await scriptStore.renameScript(id, newName.trim())
       if (success) {
@@ -1151,7 +1151,7 @@ async function convertPresetToScript(presetId: string) {
   ]
   
   try {
-    const success = await scriptStore.importFromJson(JSON.stringify(jsonArray), true)
+    const success = await scriptStore.importFromJson(JSON.stringify(jsonArray), '', true)
     if (success) {
       alert(`✅ 已成功將預設【${preset.name}】轉換為獨立劇本並載入！`)
       deletePreset(presetId)
@@ -1206,7 +1206,11 @@ async function onOfficialJsonFileSelected(e: Event) {
   reader.onload = async (event) => {
     const content = event.target?.result as string
     try {
-      const success = await scriptStore.importFromJson(content)
+      let fileName = file.name
+      if (fileName.toLowerCase().endsWith('.json')) {
+        fileName = fileName.substring(0, fileName.length - 5)
+      }
+      const success = await scriptStore.importFromJson(content, fileName)
       if (success) {
         alert('✅ 官方劇本檔案已成功匯入與載入！')
         importString.value = ''

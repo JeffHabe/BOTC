@@ -1,29 +1,43 @@
 <template>
-  <div class="overlay" @click.self="uiStore.closeConfirm()">
+  <div class="overlay" @click.self="cancel">
     <div class="confirm-dialog animate-slide-up">
-      <div class="confirm-icon" :class="{ danger: uiStore.confirmDialog?.danger }">
-        {{ uiStore.confirmDialog?.danger ? '⚠️' : 'ℹ️' }}
+      <div class="confirm-icon">
+        📝
       </div>
-      <h3 class="confirm-title">{{ uiStore.confirmDialog?.title }}</h3>
-      <p class="confirm-message">{{ uiStore.confirmDialog?.message }}</p>
+      <h3 class="confirm-title">{{ uiStore.promptDialog?.title }}</h3>
+      <p class="confirm-message">{{ uiStore.promptDialog?.message }}</p>
+      
+      <input
+        v-model="inputValue"
+        ref="inputEl"
+        class="prompt-input"
+        @keyup.enter="confirm"
+        @keyup.esc="cancel"
+      />
+      
       <div class="confirm-actions">
-        <button class="btn-ghost" @click="uiStore.closeConfirm()">取消</button>
-        <button
-          :class="uiStore.confirmDialog?.danger ? 'btn-danger' : 'btn-primary'"
-          @click="onConfirm"
-        >確認</button>
+        <button class="btn-ghost" @click="cancel">取消</button>
+        <button class="btn-primary" @click="confirm">確認</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
+
 const uiStore = useUIStore()
+const inputValue = ref(uiStore.promptDialog?.defaultValue || '')
+const inputEl = ref<HTMLInputElement | null>(null)
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
+  // 自動聚焦輸入框並選中文字
+  setTimeout(() => {
+    inputEl.value?.focus()
+    inputEl.value?.select()
+  }, 100)
 })
 
 onBeforeUnmount(() => {
@@ -33,13 +47,16 @@ onBeforeUnmount(() => {
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' || e.key === 'Esc') {
     e.stopImmediatePropagation()
-    uiStore.closeConfirm()
+    cancel()
   }
 }
 
-function onConfirm() {
-  uiStore.confirmDialog?.onConfirm()
-  uiStore.closeConfirm()
+function confirm() {
+  uiStore.promptDialog?.onConfirm(inputValue.value)
+}
+
+function cancel() {
+  uiStore.promptDialog?.onCancel()
 }
 </script>
 
@@ -73,8 +90,6 @@ function onConfirm() {
   margin-bottom: 12px;
 }
 
-.confirm-icon.danger { color: var(--color-red-bright); }
-
 .confirm-title {
   font-family: var(--font-title);
   font-size: 17px;
@@ -86,7 +101,25 @@ function onConfirm() {
   font-size: 14px;
   color: var(--color-text-secondary);
   line-height: 1.6;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+}
+
+.prompt-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  margin-bottom: 20px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.prompt-input:focus {
+  border-color: var(--color-gold);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .confirm-actions {

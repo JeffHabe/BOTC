@@ -262,6 +262,7 @@
     <AddPlayerDialog v-if="uiStore.addPlayerDialogOpen" />
     <RenameDialog v-if="uiStore.renameDialogPlayer" />
     <ConfirmDialog v-if="uiStore.confirmDialog" />
+    <PromptDialog v-if="uiStore.promptDialog" />
     <RolePicker v-if="uiStore.isRolePickerOpen" />
     <ReminderPicker v-if="uiStore.reminderPickerPlayerId" />
 
@@ -371,6 +372,7 @@ const FabledSelectorPanel = defineAsyncComponent(() => import('./FabledSelectorP
 import AddPlayerDialog from './AddPlayerDialog.vue'
 import RenameDialog from './RenameDialog.vue'
 import ConfirmDialog from './ConfirmDialog.vue'
+import PromptDialog from './PromptDialog.vue'
 import RolePicker from './RolePicker.vue'
 import ReminderPicker from './ReminderPicker.vue'
 import PlayerControlSheet from './PlayerControlSheet.vue'

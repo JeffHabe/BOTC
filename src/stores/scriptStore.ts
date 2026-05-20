@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { CharacterDef, Script, RoleType } from '../types'
 import { useGameStore } from './gameStore'
+import { useUIStore } from './uiStore'
 
 import allCharacterRaw from '../../src-tauri/data/all_character.json'
 
@@ -209,7 +210,7 @@ export const useScriptStore = defineStore('script', () => {
     await gameStore.setScript(script)
   }
 
-  async function importFromJson(jsonStr: string, skipPrompt: boolean = false) {
+  async function importFromJson(jsonStr: string, defaultNameFromFile: string = '', skipPrompt: boolean = false) {
     try {
       const data = JSON.parse(jsonStr)
       
@@ -265,13 +266,14 @@ export const useScriptStore = defineStore('script', () => {
         })
 
         const scriptId = 'custom_' + Date.now()
-        // 嘗試從 _meta 取得名稱，若無則預設
+        // 嘗試從 _meta 取得名稱，若無則預設為傳入的檔名或「未具名劇本」
         const meta = enrichedData.find((item: any) => item.id === '_meta')
-        const defaultName = meta && meta.name ? meta.name : '未具名劇本'
+        const defaultName = meta && meta.name ? meta.name : (defaultNameFromFile || '未具名劇本')
         
         let scriptName = defaultName
         if (!skipPrompt) {
-          const userInput = window.prompt('請為這個劇本命名：', defaultName)
+          const uiStore = useUIStore()
+          const userInput = await uiStore.showPrompt('匯入劇本命名', '請為這個劇本命名：', defaultName)
           if (userInput === null) return false // 使用者取消
           scriptName = userInput.trim() || defaultName
         }

@@ -404,7 +404,7 @@ async function handleSoundFileChange(e: Event) {
   if (!file) return
 
   const defaultName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name
-  const name = prompt('請輸入此角色發動技能音效的名稱（例如：守鴉人）：', defaultName)
+  const name = await uiStore.showPrompt('匯入技能音效', '請輸入此角色發動技能音效的名稱（例如：守鴉人）：', defaultName)
   
   if (name === null) {
     if (soundFileInput.value) soundFileInput.value.value = ''
@@ -636,7 +636,13 @@ async function importScripts() {
 
     if (selected) {
       const content = await readTextFile(selected as string)
-      const success = await scriptStore.importFromJson(content)
+      const pathStr = selected as string
+      const lastSlash = Math.max(pathStr.lastIndexOf('/'), pathStr.lastIndexOf('\\'))
+      let fileName = lastSlash !== -1 ? pathStr.substring(lastSlash + 1) : pathStr
+      if (fileName.toLowerCase().endsWith('.json')) {
+        fileName = fileName.substring(0, fileName.length - 5)
+      }
+      const success = await scriptStore.importFromJson(content, fileName)
       if (success) {
         alert('劇本資料已成功匯入')
       }
@@ -652,7 +658,11 @@ async function importScripts() {
         const reader = new FileReader()
         reader.onload = async (e) => {
           const content = e.target?.result as string
-          const success = await scriptStore.importFromJson(content)
+          let fileName = file.name
+          if (fileName.toLowerCase().endsWith('.json')) {
+            fileName = fileName.substring(0, fileName.length - 5)
+          }
+          const success = await scriptStore.importFromJson(content, fileName)
           if (success) {
             alert('劇本資料已成功匯入')
           }

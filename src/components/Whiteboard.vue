@@ -185,8 +185,8 @@ const handleTemplateClick = (template: string) => {
   gameStore.setNightNotes(currentNotes + template)
 }
 
-const addNewTemplate = () => {
-  const newTemplate = window.prompt('請輸入新的提示卡內容：')
+const addNewTemplate = async () => {
+  const newTemplate = await uiStore.showPrompt('新增提示卡', '請輸入新的提示卡內容：')
   if (newTemplate && newTemplate.trim()) {
     gameStore.addHintTemplate(newTemplate.trim())
   }
