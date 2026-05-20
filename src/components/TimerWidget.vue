@@ -411,33 +411,33 @@ function handleMiniClick() {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
-  padding: 6px 12px;
+  padding: 3px 10px;
   display: flex;
   align-items: center;
   justify-content: center; /* 確保內容 100% 絕對居中 */
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   transition: all 0.3s ease;
   user-select: none;
   color: var(--color-gold-bright, #f1c40f);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
-  height: 34px;
+  height: 24px;
   box-sizing: border-box;
 }
 
 .main-custom-sound-btn.icon-only {
-  width: 34px;
+  width: 24px;
   padding: 0;
   border-radius: 50%;
   gap: 0;
 }
 
 .main-custom-sound-btn .icon {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   object-fit: contain;
   display: block;
 }
