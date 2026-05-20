@@ -34,3 +34,4 @@ src-tauri/binaries/
 # Logs
 log.txt
 *.log
+key/my-release-key.jks

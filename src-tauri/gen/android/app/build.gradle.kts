@@ -13,6 +13,13 @@ val tauriProperties = Properties().apply {
     }
 }
 
+val localProperties = Properties().apply {
+    val propFile = rootProject.file("local.properties")
+    if (propFile.exists()) {
+        propFile.inputStream().use { load(it) }
+    }
+}
+
 android {
     compileSdk = 36
     namespace = "com.botc.grimoire"
@@ -24,6 +31,23 @@ android {
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
+
+    signingConfigs {
+        create("release") {
+            val keystorePath = localProperties.getProperty("TAURI_ANDROID_KEYSTORE_PATH")
+            val keystorePassword = localProperties.getProperty("TAURI_ANDROID_KEYSTORE_PASSWORD")
+            val keyAlias = localProperties.getProperty("TAURI_ANDROID_KEY_ALIAS")
+            val keyPassword = localProperties.getProperty("TAURI_ANDROID_KEY_PASSWORD")
+
+            if (keystorePath != null && keystorePassword != null && keyAlias != null && keyPassword != null) {
+                storeFile = file(keystorePath)
+                storePassword = keystorePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+            }
+        }
+    }
+
     buildTypes {
         getByName("debug") {
             manifestPlaceholders["usesCleartextTraffic"] = "true"
@@ -37,6 +61,7 @@ android {
             }
         }
         getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }

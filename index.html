@@ -1,49 +1,57 @@
 <!doctype html>
 <html lang="zh-TW">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#060b12" />
-    <meta name="description" content="染鐘樓謎團官方魔典輔助應用 — 說書人工具" />
-    <title>染鐘樓謎團魔典</title>
 
-    <!-- 預載入關鍵字型，減少啟動閃爍 -->
-    <link rel="preload" href="/fonts/genkai.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="preload" href="/fonts/news.ttf" as="font" type="font/ttf" crossorigin>
-    
-    <!-- 預載入魔典核心 UI 圖片與大背景，確保 Logo 頁結束時 100% 無閃爍載入 -->
-    <link rel="preload" href="/pic/token1.png" as="image">
-    <link rel="preload" href="/pic/reminder1.png" as="image">
-    <link rel="preload" href="/pic/bg_day.png" as="image">
-    <link rel="preload" href="/pic/bg_night.png" as="image">
-    <style>
-      /* 自定義字型載入 */
-      @font-face {
-        font-family: 'NewsFont';
-        src: url('/fonts/news.ttf') format('truetype');
-        font-display: block; /* 優先隱藏直到載入，避免閃爍 */
-      }
-      @font-face {
-        font-family: 'ChineseFont';
-        src: url('/fonts/genkai.ttf') format('truetype');
-        font-display: block; /* 優先隱藏直到載入，避免閃爍 */
-      }
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#060b12" />
+  <meta name="description" content="染鐘樓謎團官方魔典輔助應用 — 說書人工具" />
+  <title>染鐘樓謎團魔典</title>
 
-      /* 防止雙擊縮放 */
-      * { touch-action: manipulation; }
-      /* 防止長按選取文字 */
-      body { 
-        -webkit-user-select: none; 
-        user-select: none; 
-        background-color: #0d1b2a; 
-        margin: 0; 
-      }
-    </style>
-  </head>
-  <body>
-    <!-- 初始啟動畫面：在 Vue 掛載前顯示，防止閃白或空白 -->
-    <div id="initial-loader" style="
+  <!-- 預載入關鍵字型，減少啟動閃爍 -->
+  <link rel="preload" href="/fonts/genkai.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/fonts/news.ttf" as="font" type="font/ttf" crossorigin>
+
+  <!-- 預載入魔典核心 UI 圖片與大背景，確保 Logo 頁結束時 100% 無閃爍載入 -->
+  <link rel="preload" href="/pic/token1.png" as="image">
+  <link rel="preload" href="/pic/reminder1.png" as="image">
+  <link rel="preload" href="/pic/bg_day.png" as="image">
+  <link rel="preload" href="/pic/bg_night.png" as="image">
+  <style>
+    /* 自定義字型載入 */
+    @font-face {
+      font-family: 'NewsFont';
+      src: url('/fonts/news.ttf') format('truetype');
+      font-display: block;
+      /* 優先隱藏直到載入，避免閃爍 */
+    }
+
+    @font-face {
+      font-family: 'ChineseFont';
+      src: url('/fonts/genkai.ttf') format('truetype');
+      font-display: block;
+      /* 優先隱藏直到載入，避免閃爍 */
+    }
+
+    /* 防止雙擊縮放 */
+    * {
+      touch-action: manipulation;
+    }
+
+    /* 防止長按選取文字 */
+    body {
+      -webkit-user-select: none;
+      user-select: none;
+      background-color: #0d1b2a;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 初始啟動畫面：在 Vue 掛載前顯示，防止閃白或空白 -->
+  <div id="initial-loader" style="
       position: fixed;
       inset: 0;
       background-color: #000000;
@@ -54,7 +62,7 @@
       z-index: 9999;
       transition: opacity 0.5s ease, visibility 0.5s ease;
     ">
-      <img src="./app-icon.png" style="
+    <img src="/pic/app-icon.png" style="
         width: 100px;
         height: 100px;
         border-radius: 22px;
@@ -62,7 +70,7 @@
         margin-bottom: 24px;
         animation: pulse 2s infinite ease-in-out;
       " alt="Logo" />
-      <div style="
+    <div style="
         color: #e5b54f;
         font-family: 'Cinzel', serif;
         font-size: 14px;
@@ -70,11 +78,11 @@
         text-indent: 4px;
         opacity: 0.8;
       ">
-        LOADING GRIMOIRE
-      </div>
+      LOADING GRIMOIRE
+    </div>
 
-      <!-- 進度條容器 -->
-      <div style="
+    <!-- 進度條容器 -->
+    <div style="
         width: 140px;
         height: 2px;
         background: #000000;
@@ -84,8 +92,8 @@
         position: relative;
         overflow: hidden;
       ">
-        <!-- 移動的進度條 -->
-        <div style="
+      <!-- 移動的進度條 -->
+      <div style="
           position: absolute;
           top: 0;
           left: 0;
@@ -95,20 +103,36 @@
           box-shadow: 0 0 8px #e5b54f;
           animation: progress-slide 2s infinite ease-in-out;
         "></div>
-      </div>
     </div>
+  </div>
 
-    <div id="app"></div>
-    <style>
-      @keyframes pulse {
-        0%, 100% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.05); opacity: 0.9; }
+  <div id="app"></div>
+  <style>
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
       }
-      @keyframes progress-slide {
-        0% { left: -40%; }
-        100% { left: 100%; }
+
+      50% {
+        transform: scale(1.05);
+        opacity: 0.9;
       }
-    </style>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+    }
+
+    @keyframes progress-slide {
+      0% {
+        left: -40%;
+      }
+
+      100% {
+        left: 100%;
+      }
+    }
+  </style>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>

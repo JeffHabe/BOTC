@@ -1,14 +1,16 @@
 {
   "name": "tauri-app",
   "private": true,
-  "version": "0.1.129",
+  "version": "0.1.138",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "build:android": "node bump-version.js && tauri android build --debug --target aarch64 && node post-build.js"
+    "build:android": "npm run build:android:release",
+    "build:android:debug": "node bump-version.js && tauri android build --debug --target aarch64 && node post-build.js debug",
+    "build:android:release": "node bump-version.js && tauri android build --target aarch64 && node post-build.js release"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

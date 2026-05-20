@@ -10,9 +10,14 @@ const packagePath = path.resolve(__dirname, 'package.json');
 const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
 const version = pkg.version;
 
-const releaseDir = path.resolve(__dirname, 'releases');
+const isDebug = process.argv.includes('debug');
+const isRelease = process.argv.includes('release');
+
+let releaseDir = isDebug 
+  ? path.resolve(__dirname, 'debug') 
+  : path.resolve(__dirname, 'releases');
 if (!fs.existsSync(releaseDir)) {
-  fs.mkdirSync(releaseDir);
+  fs.mkdirSync(releaseDir, { recursive: true });
 }
 
 const baseApkDir = path.resolve(__dirname, 'src-tauri/gen/android/app/build/outputs/apk');
@@ -38,17 +43,26 @@ function findApkRecursive(dir) {
 
 const allApks = findApkRecursive(baseApkDir);
 
+// 根據參數決定搜尋哪種 APK
+let filteredApks = allApks;
+if (isDebug) {
+  filteredApks = allApks.filter(f => f.toLowerCase().includes('debug'));
+} else if (isRelease) {
+  filteredApks = allApks.filter(f => f.toLowerCase().includes('release'));
+}
+
 // 優先順序：aarch64 > universal > x86_64 > 其他
 let source = '';
-if (allApks.length > 0) {
-  source = allApks.find(f => f.includes('aarch64')) || 
-           allApks.find(f => f.includes('universal')) || 
-           allApks.find(f => f.includes('arm64')) ||
-           allApks[0];
+if (filteredApks.length > 0) {
+  source = filteredApks.find(f => f.includes('aarch64')) || 
+           filteredApks.find(f => f.includes('universal')) || 
+           filteredApks.find(f => f.includes('arm64')) ||
+           filteredApks[0];
 }
 
 if (source) {
-  const destName = `BOTC_v${version}.apk`;
+  const suffix = isDebug ? '_debug' : '';
+  const destName = `BOTC_v${version}${suffix}.apk`;
   const destPath = path.join(releaseDir, destName);
   
   try {

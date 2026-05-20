@@ -62,7 +62,7 @@
           <img v-if="gameStore.script?.logo" :src="gameStore.script.logo" class="center-logo-img" />
           <!-- <span v-else class="center-logo-icon">📖</span> -->
             <div class="empty-icon">
-          <img src="/app-icon.png" class="empty-logo" />
+          <img src="/pic/app-icon.png" class="empty-logo" />
         </div>
         </div>
         <div class="center-script-name">{{ uiStore.activePoolPresetName || gameStore.script?.name || '選擇劇本' }}</div>
