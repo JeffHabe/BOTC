@@ -118,6 +118,19 @@
             <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
           </div>
           
+          <!-- 功能分類篩選 (Class Filter) -->
+          <div class="class-filter-container">
+            <button 
+              v-for="cls in ['全部', '首夜', '每夜', '每夜*', '限一次', '特殊', '勝敗']" 
+              :key="cls"
+              class="class-filter-pill"
+              :class="{ 'is-active': selectedClass === (cls === '全部' ? '' : cls) }"
+              @click="selectedClass = (cls === '全部' ? '' : cls)"
+            >
+              {{ cls }}
+            </button>
+          </div>
+          
           <div class="selection-status-bar sticky-tabs">
             <div v-for="type in roleTypes" :key="type.key" 
                  class="type-pill interactive"
@@ -232,6 +245,19 @@
               @keyup.enter="handleSearchEnter"
             />
             <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
+          </div>
+
+          <!-- 功能分類篩選 (Class Filter) -->
+          <div class="class-filter-container">
+            <button 
+              v-for="cls in ['全部', '首夜', '每夜', '每夜*', '限一次', '特殊', '勝敗']" 
+              :key="cls"
+              class="class-filter-pill"
+              :class="{ 'is-active': selectedClass === (cls === '全部' ? '' : cls) }"
+              @click="selectedClass = (cls === '全部' ? '' : cls)"
+            >
+              {{ cls }}
+            </button>
           </div>
 
           <div class="selection-status-bar sticky-tabs">
@@ -802,7 +828,7 @@ const currentScriptName = computed(() => {
 })
 
 const canEditPoolQuickly = computed(() => {
-  return !!activePresetId.value || gameStore.script?.id === 'all_character'
+  return !!activePresetId.value || gameStore.script?.id === 'all_character_sort'
 })
 
 // 抽獎與酒鬼邏輯
@@ -927,13 +953,20 @@ const setupWarnings = computed(() => {
 })
 
 const searchQuery = ref('') // 新增搜尋關鍵字
+const selectedClass = ref('') // 新增分類篩選
+
+// 當步驟切換時，自動重置搜尋和分類，避免進入新步驟時列表為空
+watch(() => step.value, () => {
+  searchQuery.value = ''
+  selectedClass.value = ''
+})
 
 // 相似劇本偵測 (動態比對系統內所有劇本，排除全角色大全及目前選擇的劇本)
 const similarScriptNotice = computed(() => {
   if (!gameStore.script) return null
 
   // 僅在「全角色大全」且「步驟 1 (pool，篩選可用角色池)」時進行相似劇本偵測
-  if (gameStore.script.id !== 'all_character' || step.value !== 'pool') return null
+  if (gameStore.script.id !== 'all_character_sort' || step.value !== 'pool') return null
 
   const currentScriptId = gameStore.script.id
 
@@ -950,7 +983,7 @@ const similarScriptNotice = computed(() => {
   // 遍歷系統內所有載入的劇本
   for (const s of scriptStore.allScripts) {
     // 排除全角色大全與當前劇本
-    if (s.id === 'all_character' || s.id === currentScriptId) continue
+    if (s.id === 'all_character_sort' || s.id === currentScriptId) continue
 
     const scriptCharIds = s.characters.map(c => c.id)
     const intersection = scriptCharIds.filter(id => currentIdsSet.has(id)).length
@@ -1136,7 +1169,7 @@ function loadPresets() {
 function savePreset() {
   if (!presetNameInput.value.trim() || !gameStore.script) return
   
-  const masterScript = scriptStore.allScripts.find(s => s.id === 'all_character') || scriptStore.masterScript
+  const masterScript = scriptStore.allScripts.find(s => s.id === 'all_character_sort') || scriptStore.masterScript
   const allMasterIds = masterScript ? masterScript.characters.map(c => c.id) : []
   
   const currentIncludedIds = new Set(
@@ -1150,7 +1183,7 @@ function savePreset() {
   const newPreset: PoolPreset = {
     id: Date.now().toString(),
     name: presetNameInput.value.trim(),
-    script_id: 'all_character',
+    script_id: 'all_character_sort',
     excluded_ids: newExcludedIds
   }
   
@@ -1221,7 +1254,7 @@ async function deleteScriptOrPreset() {
       deletePreset(id)
     }
   } else if (type === 'script') {
-    if (id === 'all_character') {
+    if (id === 'all_character_sort') {
       alert('無法刪除全角色大全！')
       return
     }
@@ -1235,7 +1268,7 @@ async function deleteScriptOrPreset() {
       if (success) {
         alert('✅ 劇本已刪除！')
         // if currently open, maybe reset selection or close
-        selectedCombinedId.value = `script::all_character`
+        selectedCombinedId.value = `script::all_character_sort`
       }
     }
   }
@@ -1269,7 +1302,7 @@ async function convertPresetToScript(presetId: string) {
   
   // 找出該 preset 基礎劇本的所有角色
   let baseChars = []
-  if (preset.script_id === 'all_character') {
+  if (preset.script_id === 'all_character_sort') {
     baseChars = scriptStore.masterScript.characters
   } else {
     const s = scriptStore.allScripts.find(x => x.id === preset.script_id)
@@ -1385,7 +1418,12 @@ const fullGroupedCharacters = computed(() => {
       const tType = t.key.trim().toLowerCase()
       const matchesType = cType === tType
       const matchesQuery = !query || c.name.toLowerCase().includes(query)
-      return matchesType && matchesQuery
+      
+      const globalChar = scriptStore.rawCharacterList.find(rc => rc.id === c.id.split('::COPY::')[0])
+      const charClass = c.class || (globalChar ? globalChar.class : null)
+      const matchesClass = !selectedClass.value || charClass === selectedClass.value
+      
+      return matchesType && matchesQuery && matchesClass
     })
   }))
 })
@@ -1403,8 +1441,11 @@ const groupedCharacters = computed(() => {
       const tType = t.key.trim().toLowerCase()
       const matchesType = cType === tType && !excluded.has(c.id)
       const matchesQuery = !query || c.name.toLowerCase().includes(query)
+      const globalChar = scriptStore.rawCharacterList.find(rc => rc.id === c.id.split('::COPY::')[0])
+      const charClass = c.class || (globalChar ? globalChar.class : null)
+      const matchesClass = !selectedClass.value || charClass === selectedClass.value
       
-      if (matchesType && matchesQuery) {
+      if (matchesType && matchesQuery && matchesClass) {
         // 如果是「村夫」，則提供 3 個可選項
         if (c.name === '村夫') {
           list.push({ ...c, id: c.id })
@@ -2662,6 +2703,51 @@ function getRoleTypeEmoji(type: string) {
   color: #888;
   font-size: 14px;
   cursor: pointer;
+}
+
+/* 功能分類篩選樣式 */
+.class-filter-container {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 14px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none; /* Firefox */
+}
+
+.class-filter-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.class-filter-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  color: #ccc;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.class-filter-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.class-filter-pill:active {
+  transform: translateY(0) scale(0.95);
+}
+
+.class-filter-pill.is-active {
+  background: rgba(201, 168, 76, 0.2);
+  border-color: var(--color-gold);
+  color: var(--color-gold-bright, #fff);
+  box-shadow: 0 0 10px rgba(201, 168, 76, 0.25);
+  font-weight: bold;
 }
 
 .warning-text { font-size: 11px; color: #ff4d4f; margin-left: 8px; font-weight: normal; }

@@ -15,6 +15,18 @@
           class="search-input"
           @keyup.enter="($event.target as HTMLInputElement).blur()"
         />
+        <!-- 分類篩選標籤 -->
+        <div class="class-filter-container">
+          <button 
+            v-for="cls in ['首夜', '每夜', '每夜*', '限一次', '特殊', '勝敗']" 
+            :key="cls"
+            class="class-filter-pill"
+            :class="{ active: selectedClass === cls }"
+            @click="selectedClass = selectedClass === cls ? '' : cls"
+          >
+            {{ cls }}
+          </button>
+        </div>
         <div class="filter-row">
           <div class="filter-tabs">
             <button 
@@ -104,9 +116,22 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 const showAllRoles = ref(false)
+const selectedClass = ref('')
 
 const characters = computed(() => {
-  const all = scriptStore.filteredCharacters
+  let all = scriptStore.filteredCharacters
+  
+  if (selectedClass.value) {
+    all = all.filter(c => {
+      let cClass = c.class
+      if (!cClass) {
+        const rawChar = scriptStore.rawCharacterList.find(rc => rc.id === c.id)
+        cClass = rawChar?.class || ''
+      }
+      return cClass === selectedClass.value
+    })
+  }
+
   if (showAllRoles.value) return all
   
   const excluded = new Set(uiStore.excludedPoolIds)
@@ -194,8 +219,44 @@ function getCharacterName(id?: string) {
   border: 1px solid rgba(201,168,76,0.2);
   border-radius: 10px;
   color: white;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   outline: none;
+}
+
+.class-filter-container {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+}
+
+.class-filter-container::-webkit-scrollbar {
+  display: none;
+}
+
+.class-filter-pill {
+  white-space: nowrap;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.class-filter-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.class-filter-pill.active {
+  background: rgba(201, 168, 76, 0.2);
+  border-color: var(--color-gold);
+  color: var(--color-gold);
 }
 
 .filter-row {

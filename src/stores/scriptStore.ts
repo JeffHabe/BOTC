@@ -5,7 +5,7 @@ import type { CharacterDef, Script, RoleType } from '../types'
 import { useGameStore } from './gameStore'
 import { useUIStore } from './uiStore'
 
-import allCharacterRaw from '../../src-tauri/data/all_character.json'
+import allCharacterRaw from '../../src-tauri/data/all_character_sort.json'
 
 import { BaseDirectory, exists, readTextFile, writeTextFile, mkdir } from '@tauri-apps/plugin-fs'
 
@@ -20,6 +20,14 @@ function parseRawArray(raw: any[], id: string, defaultName: string): Script {
     if (t === 'traveler') mappedType = 'Traveler'
     if (t === 'fabled') mappedType = 'Fabled'
     if (t === 'loric') mappedType = 'Loric'
+
+    let classVal = r.class || null
+    if (!classVal) {
+      const found = allCharacterRaw.find((x: any) => x.id === r.id)
+      if (found && found.class) {
+        classVal = found.class
+      }
+    }
 
     return {
       id: r.id,
@@ -37,6 +45,7 @@ function parseRawArray(raw: any[], id: string, defaultName: string): Script {
       first_night_reminder: r.firstNightReminder || null,
       other_night_reminder: r.otherNightReminder || null,
       conflicts: r.conflicts || [],
+      class: classVal,
     }
   })
 
@@ -55,9 +64,9 @@ export const useScriptStore = defineStore('script', () => {
   const searchQuery = ref('')
   const filterType = ref<RoleType | 'All'>('All')
   const customScripts = ref<Script[]>([])
-  
+
   // 核心角色大全配置 (具有響應式)
-  const masterScript = ref<Script>(parseRawArray(allCharacterRaw, 'all_character', '全角色大全'))
+  const masterScript = ref<Script>(parseRawArray(allCharacterRaw, 'all_character_sort', '全角色大全'))
   // 保存原始的 JSON 節點，便於寫回
   const rawCharacterList = ref<any[]>([...allCharacterRaw])
 
@@ -70,10 +79,10 @@ export const useScriptStore = defineStore('script', () => {
 
   const filteredCharacters = computed<CharacterDef[]>(() => {
     if (!currentScript.value) return []
-    
+
     // 預設從當前腳本撈取
     let chars = currentScript.value.characters
-    
+
     // 如果篩選條件是旅行者，因為旅行者通常不寫在特定腳本中（可加入任何腳本），
     // 所以我們直接從「全角色大全 (masterScript)」中提取所有旅行者。
     if (filterType.value === 'Traveler') {
@@ -96,16 +105,16 @@ export const useScriptStore = defineStore('script', () => {
   async function loadCharacters() {
     try {
       // 1. 載入核心角色大全
-      const dbExists = await exists('all_character.json', { baseDir: BaseDirectory.AppData })
+      const dbExists = await exists('all_character_sort.json', { baseDir: BaseDirectory.AppData })
       if (!dbExists) {
         await mkdir('', { baseDir: BaseDirectory.AppData, recursive: true })
-        await writeTextFile('all_character.json', JSON.stringify(allCharacterRaw, null, 2), { baseDir: BaseDirectory.AppData })
+        await writeTextFile('all_character_sort.json', JSON.stringify(allCharacterRaw, null, 2), { baseDir: BaseDirectory.AppData })
         rawCharacterList.value = [...allCharacterRaw]
       } else {
-        const content = await readTextFile('all_character.json', { baseDir: BaseDirectory.AppData })
+        const content = await readTextFile('all_character_sort.json', { baseDir: BaseDirectory.AppData })
         rawCharacterList.value = JSON.parse(content)
       }
-      masterScript.value = parseRawArray(rawCharacterList.value, 'all_character', '全角色大全')
+      masterScript.value = parseRawArray(rawCharacterList.value, 'all_character_sort', '全角色大全')
 
       // 2. 載入自定義劇本清單
       const scriptsExists = await exists('custom_scripts.json', { baseDir: BaseDirectory.AppData })
@@ -115,8 +124,8 @@ export const useScriptStore = defineStore('script', () => {
       }
 
       // 如果尚未裝載其他劇本，預設選擇大全
-      if (!gameStore.script || gameStore.script.id === 'all_character') {
-         await gameStore.setScript(masterScript.value)
+      if (!gameStore.script || gameStore.script.id === 'all_character_sort') {
+        await gameStore.setScript(masterScript.value)
       }
     } catch (e) {
       console.error('載入資料失敗:', e)
@@ -132,7 +141,7 @@ export const useScriptStore = defineStore('script', () => {
   }
 
   async function renameScript(id: string, newName: string) {
-    if (id === 'all_character') {
+    if (id === 'all_character_sort') {
       masterScript.value.name = newName
       const metaIndex = rawCharacterList.value.findIndex((r: any) => r.id === '_meta')
       if (metaIndex >= 0) {
@@ -141,7 +150,7 @@ export const useScriptStore = defineStore('script', () => {
         rawCharacterList.value.unshift({ id: '_meta', name: newName })
       }
       await saveCharacters([...rawCharacterList.value])
-      if (gameStore.script?.id === 'all_character') {
+      if (gameStore.script?.id === 'all_character_sort') {
         gameStore.script.name = newName
         await gameStore.setScript({ ...gameStore.script })
       }
@@ -163,7 +172,7 @@ export const useScriptStore = defineStore('script', () => {
   }
 
   async function deleteCustomScript(id: string) {
-    if (id === 'all_character') return false
+    if (id === 'all_character_sort') return false
     const idx = customScripts.value.findIndex(s => s.id === id)
     if (idx !== -1) {
       customScripts.value.splice(idx, 1)
@@ -178,26 +187,26 @@ export const useScriptStore = defineStore('script', () => {
 
   async function saveCharacters(newRawList: any[]) {
     try {
-      await writeTextFile('all_character.json', JSON.stringify(newRawList, null, 2), { baseDir: BaseDirectory.AppData })
+      await writeTextFile('all_character_sort.json', JSON.stringify(newRawList, null, 2), { baseDir: BaseDirectory.AppData })
     } catch (e) {
       console.warn('Failed to save characters to filesystem', e)
     }
-    
+
     rawCharacterList.value = newRawList
-    masterScript.value = parseRawArray(rawCharacterList.value, 'all_character', '全角色大全')
-    
-    if (gameStore.script && gameStore.script.id === 'all_character') {
+    masterScript.value = parseRawArray(rawCharacterList.value, 'all_character_sort', '全角色大全')
+
+    if (gameStore.script && gameStore.script.id === 'all_character_sort') {
       await gameStore.setScript(masterScript.value)
     }
   }
 
   async function resetToDefault() {
     try {
-      await writeTextFile('all_character.json', JSON.stringify(allCharacterRaw, null, 2), { baseDir: BaseDirectory.AppData })
+      await writeTextFile('all_character_sort.json', JSON.stringify(allCharacterRaw, null, 2), { baseDir: BaseDirectory.AppData })
       rawCharacterList.value = [...allCharacterRaw]
-      masterScript.value = parseRawArray(rawCharacterList.value, 'all_character', '全角色大全')
-      
-      if (gameStore.script && gameStore.script.id === 'all_character') {
+      masterScript.value = parseRawArray(rawCharacterList.value, 'all_character_sort', '全角色大全')
+
+      if (gameStore.script && gameStore.script.id === 'all_character_sort') {
         await gameStore.setScript(masterScript.value)
       }
     } catch (e) {
@@ -213,17 +222,17 @@ export const useScriptStore = defineStore('script', () => {
   async function importFromJson(jsonStr: string, defaultNameFromFile: string = '', skipPrompt: boolean = false) {
     try {
       const data = JSON.parse(jsonStr)
-      
+
       // 情況 A：這是我們自己格式的「劇本包」(包含多個劇本)
       if (data && data.scripts && Array.isArray(data.scripts)) {
         // 過濾掉大全，將匯入的劇本合併進自定義清單
-        const incoming = data.scripts.filter((s: any) => s.id !== 'all_character')
-        
+        const incoming = data.scripts.filter((s: any) => s.id !== 'all_character_sort')
+
         // 簡單去重：如果 ID 相同則覆蓋
         const existingMap = new Map(customScripts.value.map(s => [s.id, s]))
         incoming.forEach((s: any) => existingMap.set(s.id, s))
         customScripts.value = Array.from(existingMap.values())
-        
+
         await saveCustomScripts()
 
         // 如果匯入包包含自定義角色庫，進行合併
@@ -245,14 +254,14 @@ export const useScriptStore = defineStore('script', () => {
 
         return true
       }
-      
+
       // 情況 B：這是官方格式的「單一劇本 JSON」(通常是個陣列)
       if (Array.isArray(data)) {
         // 官方 JSON 通常只包含 { "id": "角色ID" }，我們需要從全庫(rawCharacterList)中把完整資料補齊
         const enrichedData = data.map((item: any) => {
           let id = typeof item === 'string' ? item : item.id
           if (!id) return item
-          
+
           if (id === '_meta') return item
 
           // 如果只有 ID，沒有名稱或技能，就去全庫尋找
@@ -269,7 +278,7 @@ export const useScriptStore = defineStore('script', () => {
         // 嘗試從 _meta 取得名稱，若無則預設為傳入的檔名或「未具名劇本」
         const meta = enrichedData.find((item: any) => item.id === '_meta')
         const defaultName = meta && meta.name ? meta.name : (defaultNameFromFile || '未具名劇本')
-        
+
         let scriptName = defaultName
         if (!skipPrompt) {
           const uiStore = useUIStore()
@@ -277,16 +286,16 @@ export const useScriptStore = defineStore('script', () => {
           if (userInput === null) return false // 使用者取消
           scriptName = userInput.trim() || defaultName
         }
-        
+
         const newScript = parseRawArray(enrichedData, scriptId, scriptName)
-        
+
         // 加入自定義清單
         customScripts.value.push(newScript)
         await selectScript(newScript)
         await saveCustomScripts()
         return true
       }
-      
+
       return false
     } catch (e) {
       console.error('匯入劇本失敗:', e)
@@ -296,7 +305,7 @@ export const useScriptStore = defineStore('script', () => {
 
   async function exportAllScripts() {
     // 確保當前正在使用的劇本也被收錄進去 (如果是透過舊版方法載入且尚未在清單中的話)
-    if (gameStore.script && gameStore.script.id !== 'all_character') {
+    if (gameStore.script && gameStore.script.id !== 'all_character_sort') {
       const exists = customScripts.value.some(s => s.id === gameStore.script!.id)
       if (!exists) {
         customScripts.value.push(gameStore.script)

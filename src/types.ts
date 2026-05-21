@@ -51,6 +51,7 @@ export interface CharacterDef {
   first_night_reminder?: string | null
   other_night_reminder?: string | null
   conflicts?: ConflictRule[]
+  class?: string | null
 }
 
 export interface Player {

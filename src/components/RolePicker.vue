@@ -17,6 +17,18 @@
           ref="searchInput"
           @keyup.enter="($event.target as HTMLInputElement).blur()"
         />
+        <!-- 分類篩選標籤 -->
+        <div class="class-filter-container">
+          <button 
+            v-for="cls in ['首夜', '每夜', '每夜*', '限一次', '特殊', '勝敗']" 
+            :key="cls"
+            class="class-filter-pill"
+            :class="{ active: selectedClass === cls }"
+            @click="selectedClass = selectedClass === cls ? '' : cls"
+          >
+            {{ cls }}
+          </button>
+        </div>
         <div class="filter-row">
           <div class="type-filters">
             <button 
@@ -131,6 +143,7 @@ const title = computed(() => {
 })
 
 const showAllRoles = ref(false)
+const selectedClass = ref('')
 
 // 長按顯示詳情邏輯
 const longPressChar = ref<CharacterDef | null>(null)
@@ -148,7 +161,18 @@ function handlePressEnd() {
 }
 
 const displayedCharacters = computed(() => {
-  const all = scriptStore.filteredCharacters
+  let all = scriptStore.filteredCharacters
+  
+  if (selectedClass.value) {
+    all = all.filter(c => {
+      let cClass = c.class
+      if (!cClass) {
+        const rawChar = scriptStore.rawCharacterList.find(rc => rc.id === c.id)
+        cClass = rawChar?.class || ''
+      }
+      return cClass === selectedClass.value
+    })
+  }
   
   // 如果是旅行者或傳說角色，不受到「僅限池內」的限制，因為他們本來就不在標準抽籤池中
   if (showAllRoles.value || scriptStore.filterType === 'Traveler' || scriptStore.filterType === 'Fabled') {
@@ -304,8 +328,44 @@ async function selectRole(char: CharacterDef | null) {
   border: 1px solid rgba(201,168,76,0.3);
   border-radius: 10px;
   color: white;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   outline: none;
+}
+
+.class-filter-container {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+}
+
+.class-filter-container::-webkit-scrollbar {
+  display: none;
+}
+
+.class-filter-pill {
+  white-space: nowrap;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.class-filter-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.class-filter-pill.active {
+  background: rgba(201, 168, 76, 0.2);
+  border-color: var(--color-gold);
+  color: var(--color-gold);
 }
 
 .filter-row {

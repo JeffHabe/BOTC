@@ -14,6 +14,20 @@
           <input v-model="searchQuery" placeholder="搜尋角色名稱/ID..." class="search-input" />
           <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
         </div>
+
+        <!-- 分類篩選標籤 -->
+        <div class="class-filter-container">
+          <button 
+            v-for="cls in ['首夜', '每夜', '每夜*', '限一次', '特殊', '勝敗']" 
+            :key="cls"
+            class="class-filter-pill"
+            :class="{ active: selectedClass === cls }"
+            @click="selectedClass = selectedClass === cls ? '' : cls"
+          >
+            {{ cls }}
+          </button>
+        </div>
+
         <div class="header-actions">
           <button class="btn-primary add-btn" @click="openAdd">
             + 新增角色
@@ -207,6 +221,7 @@ function handleKeydown(e: KeyboardEvent) {
 const fileInput = ref<HTMLInputElement | null>(null)
 const mode = ref<'list' | 'form'>('list')
 const searchQuery = ref('')
+const selectedClass = ref('')
 const editingId = ref<string | null>(null)
 
 // 綁定到表單的資料
@@ -240,6 +255,16 @@ const filteredRawCharacters = computed(() => {
       (c.name && c.name.toLowerCase().includes(q)) || 
       (c.id && c.id.toLowerCase().includes(q))
     )
+  }
+  if (selectedClass.value) {
+    list = list.filter(c => {
+      let cClass = c.class
+      if (!cClass) {
+        const rawChar = scriptStore.rawCharacterList.find(rc => rc.id === c.id)
+        cClass = rawChar?.class || ''
+      }
+      return cClass === selectedClass.value
+    })
   }
   return list
 })
@@ -342,8 +367,8 @@ function addReminderToken() {
   formData.value.reminders.push('')
 }
 
-function removeReminderToken(index: number) {
-  formData.value.reminders.splice(index, 1)
+function removeReminderToken(index: number | string) {
+  formData.value.reminders.splice(Number(index), 1)
 }
 
 function handleFileUpload(event: Event) {
@@ -524,6 +549,42 @@ async function importLibrary() {
   position: relative;
   margin: 10px 16px; /* 縮小上下外距 */
   margin-bottom: 8px;
+}
+
+.class-filter-container {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0 16px 4px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+}
+
+.class-filter-container::-webkit-scrollbar {
+  display: none;
+}
+
+.class-filter-pill {
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.class-filter-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.class-filter-pill.active {
+  background: rgba(201, 168, 76, 0.2);
+  border-color: var(--color-gold);
+  color: var(--color-gold);
 }
 
 .search-icon {
