@@ -131,7 +131,7 @@
               >
                 <div class="vote-player-wrap">
                   <span v-if="!p.is_alive" class="vote-ghost-icon">👻</span>
-                  <span class="vote-player">{{ idx + 1 }}. {{ p.name }}</span>
+                  <span class="vote-player" :style="{ color: getPlayerColor(p.id) }">{{ idx + 1 }}. {{ p.name }}</span>
                 </div>
                 <span v-if="nom.votes_for.includes(p.id)" class="vote-mark">✓</span>
               </button>

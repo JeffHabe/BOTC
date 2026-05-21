@@ -1451,6 +1451,13 @@ const groupedCharacters = computed(() => {
           list.push({ ...c, id: c.id })
           list.push({ ...c, id: c.id + '::COPY::2', displayName: '村夫 (2)' })
           list.push({ ...c, id: c.id + '::COPY::3', displayName: '村夫 (3)' })
+        } else if (c.id === 'legion' || c.name === '軍團') {
+          // 根據參與玩家數量的 70% 創建軍團角色選項
+          const count = Math.max(1, Math.ceil(totalPlayers.value * 0.7))
+          list.push({ ...c, id: c.id })
+          for (let i = 2; i <= count; i++) {
+            list.push({ ...c, id: `${c.id}::COPY::${i}`, displayName: `${c.name} (${i})` })
+          }
         } else {
           list.push(c)
         }
