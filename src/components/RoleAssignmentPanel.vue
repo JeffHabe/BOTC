@@ -67,8 +67,8 @@
                   <button class="btn-icon" @click="showSaveModal = true" title="另存新檔">📁</button>
                   <button class="btn-icon" @click="renameScriptOrPreset" title="編輯名稱">✏️</button>
                   <button v-if="activePresetId" class="btn-icon" @click="convertPresetToScript(activePresetId)" title="轉換為獨立劇本">📜</button>
-                  <button v-if="activePresetId" class="btn-icon" @click="exportPreset(activePresetId)" title="匯出預設 (複製)">📤</button>
-                  <button class="btn-icon" @click="showImportModal = true" title="匯入預設">📥</button>
+                  <button v-if="activePresetId" class="btn-icon" @click="exportPreset(activePresetId)" title="匯出預設 (複製)">📥</button>
+                  <button class="btn-icon" @click="showImportModal = true" title="匯入預設">📤</button>
                   <button v-if="selectedCombinedId" class="btn-icon text-danger" @click="deleteScriptOrPreset" title="刪除">🗑️</button>
                 </div>
               </div>
@@ -607,7 +607,7 @@
                 <div class="player-name">
                   {{ player.name }}
                   <!-- 只有在抽獎完成（按鈕隱藏）後，才在名字旁保留靜態新手徽章作為歷史記錄 -->
-                  <span v-if="isNewbieProtectionEnabled && newbiePlayerIds.includes(player.id) && drawnPlayerIds.includes(player.id)" class="newbie-badge">🔰 新手</span>
+                  <span v-if="isNewbieProtectionEnabled && newbiePlayerIds.includes(player.id) && drawnPlayerIds.includes(player.id)" class="newbie-badge">🔰</span>
                 </div>
                 <div v-if="drawnPlayerIds.includes(player.id)" class="drawn-status">
                   已完成抽獎
@@ -1379,8 +1379,14 @@ async function onOfficialJsonFileSelected(e: Event) {
     const content = event.target?.result as string
     try {
       let fileName = file.name
+      try {
+        fileName = decodeURIComponent(fileName)
+      } catch (_) {}
       if (fileName.toLowerCase().endsWith('.json')) {
         fileName = fileName.substring(0, fileName.length - 5)
+      }
+      if (/^msf:\d+$/i.test(fileName) || fileName.includes('/') || fileName.includes(':')) {
+        fileName = '匯入劇本'
       }
       const success = await scriptStore.importFromJson(content, fileName)
       if (success) {

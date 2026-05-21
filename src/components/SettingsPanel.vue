@@ -54,9 +54,9 @@
           <button v-if="gameStore.phase === 'FirstNight'" class="grid-item" @click="openAssignment">
             <!-- <span class="grid-icon">🎭</span> -->
             <span class="stat-icon">
-            <img src="/pic/theater.png" alt="劇本" class="stat-img img-theater" />
+            <img src="/pic/theater.png" alt="開局" class="stat-img img-theater" />
             </span>
-            <span class="grid-label">選取劇本</span>
+            <span class="grid-label">開局</span>
           </button>
 
           <button class="grid-item" @click="openVoting">
@@ -628,50 +628,31 @@ async function exportGame() {
 }
 
 async function importScripts() {
-  try {
-    const selected = await open({
-      multiple: false,
-      filters: [{ name: 'JSON', extensions: ['json'] }]
-    })
-
-    if (selected) {
-      const content = await readTextFile(selected as string)
-      const pathStr = selected as string
-      const lastSlash = Math.max(pathStr.lastIndexOf('/'), pathStr.lastIndexOf('\\'))
-      let fileName = lastSlash !== -1 ? pathStr.substring(lastSlash + 1) : pathStr
-      if (fileName.toLowerCase().endsWith('.json')) {
-        fileName = fileName.substring(0, fileName.length - 5)
-      }
-      const success = await scriptStore.importFromJson(content, fileName)
-      if (success) {
-        alert('劇本資料已成功匯入')
-      }
-    }
-  } catch (e) {
-    console.warn('Tauri open failed, falling back to browser input', e)
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.json'
-    input.onchange = (event) => {
-      const file = (event.target as HTMLInputElement).files?.[0]
-      if (file) {
-        const reader = new FileReader()
-        reader.onload = async (e) => {
-          const content = e.target?.result as string
-          let fileName = file.name
-          if (fileName.toLowerCase().endsWith('.json')) {
-            fileName = fileName.substring(0, fileName.length - 5)
-          }
-          const success = await scriptStore.importFromJson(content, fileName)
-          if (success) {
-            alert('劇本資料已成功匯入')
-          }
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.json'
+  input.onchange = (event) => {
+    const file = (event.target as HTMLInputElement).files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        const content = e.target?.result as string
+        let fileName = file.name
+        try {
+          fileName = decodeURIComponent(fileName)
+        } catch (_) {}
+        if (fileName.toLowerCase().endsWith('.json')) {
+          fileName = fileName.substring(0, fileName.length - 5)
         }
-        reader.readAsText(file)
+        const success = await scriptStore.importFromJson(content, fileName)
+        if (success) {
+          alert('劇本資料已成功匯入')
+        }
       }
+      reader.readAsText(file)
     }
-    input.click()
   }
+  input.click()
 }
 
 async function exportAllScripts() {

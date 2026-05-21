@@ -33,10 +33,10 @@
             + 新增角色
           </button>
           <button class="btn-ghost" @click="exportLibrary" title="匯出當前角色庫備份">
-             📤 
+            📥
           </button>
           <button class="btn-ghost" @click="importLibrary" title="從備份檔案匯入角色庫">
-             📥 
+             📤 
           </button>
           <button class="btn-ghost" @click="resetToDefault" title="恢復成官方預設全庫">
              🔄 
@@ -67,7 +67,7 @@
               </div>
               <div v-if="char.reminders && char.reminders.length > 0" class="char-reminders-list">
                 <span v-for="r in char.reminders" :key="r" class="reminder-tag">
-                  🔹 {{ r }}
+                  🔸{{ r }}
                 </span>
               </div>
               <div v-if="char.conflicts && char.conflicts.length > 0" class="char-conflicts">
@@ -853,7 +853,7 @@ async function importLibrary() {
   font-size: 10px;
   background: rgba(74, 144, 226, 0.12);
   border: 1px solid rgba(74, 144, 226, 0.25);
-  color: #90caf9;
+  color: #e79718;
   padding: 2px 6px;
   border-radius: 4px;
 }
