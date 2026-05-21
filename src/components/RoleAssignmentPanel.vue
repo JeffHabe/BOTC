@@ -22,6 +22,17 @@
             </button>
           </div>
 
+          <!-- 相似劇本提示 -->
+          <div v-if="similarScriptNotice" class="similar-script-notice-banner animate-fade-in">
+            <span class="notice-icon">💡</span>
+            <div class="notice-text">
+              偵測到您選擇的角色與現有劇本<strong>【{{ similarScriptNotice.name }}】</strong>相似度達 <strong>{{ similarScriptNotice.similarity }}%</strong>！
+            </div>
+            <button class="btn-xs btn-notice-action" @click="switchToSimilarScript(similarScriptNotice.id)">
+              直接套用此劇本
+            </button>
+          </div>
+
           <div class="collapsible-header" @click="isPresetExpanded = !isPresetExpanded">
             <span class="header-text">
               📋 劇本 配置 :
@@ -195,6 +206,8 @@
               下一步 →
             </button>
           </div>
+
+
 
           <!-- 配置變動警告 -->
           <div v-if="setupWarnings.length > 0" class="setup-warning-banner animate-pulse-subtle">
@@ -692,6 +705,8 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+
+
 // 狀態管理
 type Step = 'pool' | 'config' | 'select' | 'drunk' | 'wudaozhe' | 'lunatic' | 'marionette' | 'bluff' | 'preview' | 'draw'
 
@@ -787,7 +802,7 @@ const currentScriptName = computed(() => {
 })
 
 const canEditPoolQuickly = computed(() => {
-  return !!activePresetId.value
+  return !!activePresetId.value || gameStore.script?.id === 'all_character'
 })
 
 // 抽獎與酒鬼邏輯
@@ -912,6 +927,130 @@ const setupWarnings = computed(() => {
 })
 
 const searchQuery = ref('') // 新增搜尋關鍵字
+
+// 相似劇本偵測 (動態比對系統內所有劇本，排除全角色大全及目前選擇的劇本)
+const similarScriptNotice = computed(() => {
+  if (!gameStore.script) return null
+
+  // 僅在「全角色大全」且「步驟 1 (pool，篩選可用角色池)」時進行相似劇本偵測
+  if (gameStore.script.id !== 'all_character' || step.value !== 'pool') return null
+
+  const currentScriptId = gameStore.script.id
+
+  // 取得目前使用者點選的角色 ID (排除掉不包含的角色)
+  const currentIds = gameStore.script.characters
+    .filter(c => !excludedPoolIds.value.includes(c.id))
+    .map(c => c.id)
+
+  if (currentIds.length < 5) return null // 角色太少時不提示
+
+  const currentIdsSet = new Set(currentIds)
+  let bestMatch: { id: string; name: string; similarity: number } | null = null
+
+  // 遍歷系統內所有載入的劇本
+  for (const s of scriptStore.allScripts) {
+    // 排除全角色大全與當前劇本
+    if (s.id === 'all_character' || s.id === currentScriptId) continue
+
+    const scriptCharIds = s.characters.map(c => c.id)
+    const intersection = scriptCharIds.filter(id => currentIdsSet.has(id)).length
+    const union = new Set([...currentIds, ...scriptCharIds]).size
+    const similarity = union > 0 ? (intersection / union) : 0
+
+    // 相似度大於等於 60%
+    if (similarity >= 0.60) {
+      if (!bestMatch || similarity > bestMatch.similarity) {
+        bestMatch = { id: s.id, name: s.name, similarity }
+      }
+    }
+  }
+
+  if (bestMatch) {
+    return {
+      id: bestMatch.id,
+      name: bestMatch.name,
+      similarity: Math.round(bestMatch.similarity * 100)
+    }
+  }
+
+  return null
+})
+
+// 用於鎖定避免在切換劇本時觸發重複彈窗的標記
+const isSwitchingScript = ref(false)
+
+// 切換至相似劇本
+async function switchToSimilarScript(scriptId: string) {
+  const targetScript = scriptStore.allScripts.find(s => s.id === scriptId)
+  if (!targetScript) return
+
+  isSwitchingScript.value = true
+  try {
+    await scriptStore.selectScript(targetScript)
+    selectedCombinedId.value = `script::${targetScript.id}`
+    activePresetId.value = ''
+    uiStore.activePoolPresetName = ''
+    excludedPoolIds.value = []
+    selectedRoleIds.value = []
+    alert(`已切換至劇本【${targetScript.name}】！`)
+  } finally {
+    nextTick(() => {
+      setTimeout(() => {
+        isSwitchingScript.value = false
+      }, 300)
+    })
+  }
+}
+
+// 用於避免重複為同一個劇本彈出相同比例的提示
+const alertedThresholds = ref<Record<string, Set<number>>>({})
+
+watch(() => similarScriptNotice.value, (newNotice) => {
+  if (isSwitchingScript.value) return // 正在切換劇本時直接忽略任何新的提示偵測
+
+  if (!newNotice) {
+    // 取得目前篩選角色池的角色數 (未排除的角色數量)
+    const currentIdsCount = gameStore.script
+      ? gameStore.script.characters.filter(c => !excludedPoolIds.value.includes(c.id)).length
+      : 0
+    // 只有在角色池確實被清空或角色數太少時（表示重新開始或重置角色池），才重置提示紀錄
+    if (currentIdsCount < 5) {
+      alertedThresholds.value = {}
+    }
+    return
+  }
+
+  const { id: scriptId, name: scriptName, similarity } = newNotice
+  
+  // 檢查是否達到 80%, 90%, 100%
+  const targetThresholds = [80, 90, 100]
+  // 找出目前相似度超過且最接近的閾值
+  const matchedThreshold = targetThresholds.slice().reverse().find(t => similarity >= t)
+
+  if (matchedThreshold) {
+    if (!alertedThresholds.value[scriptId]) {
+      alertedThresholds.value[scriptId] = new Set()
+    }
+
+    // 如果該劇本的這個閾值還沒有彈出過
+    if (!alertedThresholds.value[scriptId].has(matchedThreshold)) {
+      alertedThresholds.value[scriptId].add(matchedThreshold)
+
+      // 延遲一下彈窗，避免阻塞點擊卡片的 UI 動畫
+      setTimeout(() => {
+        // 在定時器觸發時，再次確認目前沒有正在切換劇本
+        if (isSwitchingScript.value) return
+
+        const confirmSwitch = window.confirm(
+          `偵測到您選擇的角色與劇本【${scriptName}】相似度已達 ${similarity}%！\n\n是否直接套用此劇本並重置配置？`
+        )
+        if (confirmSwitch) {
+          switchToSimilarScript(scriptId)
+        }
+      }, 100)
+    }
+  }
+}, { deep: true })
 
 // 長按顯示詳情邏輯
 const longPressChar = ref<CharacterDef | null>(null)
@@ -3156,5 +3295,50 @@ input:checked + .slider:before {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+.similar-script-notice-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(229, 181, 79, 0.12); /* 淡淡的金黃色 */
+  border: 1px solid rgba(229, 181, 79, 0.3);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin: 10px 0;
+  font-size: 12px;
+  color: #f1c40f;
+  line-height: 1.4;
+  backdrop-filter: blur(10px);
+}
+
+.similar-script-notice-banner .notice-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.similar-script-notice-banner .notice-text {
+  flex: 1;
+}
+
+.similar-script-notice-banner .notice-text strong {
+  color: #fff;
+}
+
+.btn-notice-action {
+  background: var(--color-gold, #e5b54f);
+  color: #111;
+  border: none;
+  font-weight: bold;
+  border-radius: 4px;
+  padding: 3.5px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 11px;
+  transition: all 0.2s ease;
+}
+
+.btn-notice-action:hover {
+  background: #f39c12;
+  transform: scale(1.02);
 }
 </style>
