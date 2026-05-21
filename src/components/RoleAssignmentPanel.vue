@@ -51,8 +51,8 @@
               <div class="preset-label">劇本：</div>
               <div class="preset-controls">
                 <select v-model="selectedCombinedId" class="preset-select">
-                  <optgroup label="標準劇本">
-                    <option v-for="s in scriptStore.allScripts" :key="'script::'+s.id" :value="'script::'+s.id">
+                  <optgroup v-for="g in groupedScripts" :key="g.category" :label="g.category">
+                    <option v-for="s in g.list" :key="'script::'+s.id" :value="'script::'+s.id">
                       {{ s.name }}
                     </option>
                   </optgroup>
@@ -695,7 +695,7 @@ import { ref, computed, reactive, onMounted, onBeforeUnmount, watch, nextTick } 
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 import { useScriptStore } from '../stores/scriptStore'
-import type { CharacterDef } from '../types'
+import type { CharacterDef, Script } from '../types'
 import { ROLE_TYPE_COLOR } from '../types'
 import CharacterDetailOverlay from './CharacterDetailOverlay.vue'
 
@@ -805,6 +805,22 @@ const selectedCombinedId = computed({
     }
   }
 })
+
+const groupedScripts = computed(() => {
+  const groups: Record<string, Script[]> = {}
+  scriptStore.allScripts.forEach(s => {
+    const cat = s.category || '標準劇本'
+    if (!groups[cat]) {
+      groups[cat] = []
+    }
+    groups[cat].push(s)
+  })
+  return Object.keys(groups).map(cat => ({
+    category: cat,
+    list: groups[cat]
+  }))
+})
+
 interface PoolPreset {
   id: string
   name: string
@@ -1237,9 +1253,20 @@ async function renameScriptOrPreset() {
     if (!s) return
     const newName = await uiStore.showPrompt('重新命名劇本', '請輸入新的劇本名稱：', s.name)
     if (newName !== null && newName.trim() !== '') {
-      const success = await scriptStore.renameScript(id, newName.trim())
+      let newCategory = s.category || '標準劇本'
+      if (id !== 'all_character_sort') {
+        const userCat = await uiStore.showPrompt(
+          '設定劇本分類',
+          '請輸入劇本分類（例如：官方劇本、小劇本、新手局建議）：',
+          newCategory
+        )
+        if (userCat !== null) {
+          newCategory = userCat.trim() || '標準劇本'
+        }
+      }
+      const success = await scriptStore.renameScript(id, newName.trim(), newCategory)
       if (success) {
-        alert('✅ 劇本名稱已更新！')
+        alert('✅ 劇本已更新！')
       }
     }
   }

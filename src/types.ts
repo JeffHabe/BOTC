@@ -73,6 +73,7 @@ export interface Script {
   author?: string | null
   logo?: string | null
   characters: CharacterDef[]
+  category?: string
 }
 
 export type GamePhase = 'Setup' | 'FirstNight' | 'Day' | 'Night'

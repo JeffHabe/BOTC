@@ -55,7 +55,8 @@ function parseRawArray(raw: any[], id: string, defaultName: string): Script {
     name_en: meta.name_en || id,
     author: meta.author || '',
     logo: meta.logo || null,
-    characters: chars
+    characters: chars,
+    category: meta.category || '標準劇本'
   }
 }
 
@@ -140,18 +141,21 @@ export const useScriptStore = defineStore('script', () => {
     }
   }
 
-  async function renameScript(id: string, newName: string) {
+  async function renameScript(id: string, newName: string, category?: string) {
     if (id === 'all_character_sort') {
       masterScript.value.name = newName
+      if (category) masterScript.value.category = category
       const metaIndex = rawCharacterList.value.findIndex((r: any) => r.id === '_meta')
       if (metaIndex >= 0) {
         rawCharacterList.value[metaIndex].name = newName
+        if (category) rawCharacterList.value[metaIndex].category = category
       } else {
-        rawCharacterList.value.unshift({ id: '_meta', name: newName })
+        rawCharacterList.value.unshift({ id: '_meta', name: newName, category })
       }
       await saveCharacters([...rawCharacterList.value])
       if (gameStore.script?.id === 'all_character_sort') {
         gameStore.script.name = newName
+        if (category) gameStore.script.category = category
         await gameStore.setScript({ ...gameStore.script })
       }
       return true
@@ -160,10 +164,12 @@ export const useScriptStore = defineStore('script', () => {
     const script = customScripts.value.find(s => s.id === id)
     if (script) {
       script.name = newName
+      if (category) script.category = category
       await saveCustomScripts()
       if (gameStore.script && gameStore.script.id === id) {
         // Trigger reactivity for game store
         gameStore.script.name = newName
+        gameStore.script.category = category
         await gameStore.setScript({ ...gameStore.script })
       }
       return true
