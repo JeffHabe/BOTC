@@ -1889,13 +1889,13 @@ function startActualDraw() {
 
   // 新手保護機制：如果啟用總開關，且當前玩家被標記為新手
   if (isNewbieProtectionEnabled.value && newbiePlayerIds.value.includes(curPlayerId)) {
-    const goodPool = finalPool.filter(roleId => {
+    const nonDemonPool = finalPool.filter(roleId => {
       const char = getCharacterById(roleId)
-      return char && (char.role_type === 'Townsfolk' || char.role_type === 'Outsider')
+      return char && char.role_type !== 'Demon'
     })
-    // 只有在池內確實還有善良角色的情況下才進行過濾，防止卡死
-    if (goodPool.length > 0) {
-      finalPool = goodPool
+    // 只有在池內確實還有非惡魔角色的情況下才進行過濾，防止卡死
+    if (nonDemonPool.length > 0) {
+      finalPool = nonDemonPool
     }
   }
   const resultId = finalPool[Math.floor(Math.random() * finalPool.length)]
