@@ -107,7 +107,7 @@
             <button class="btn-ghost btn-xs" @click="excludeAllRoles">🚫 清空池子</button>
           </div>
 
-          <div class="search-bar-assignment">
+          <div class="search-bar-assignment" v-if="false">
             <span class="search-icon">🔍</span>
             <input 
               v-model="searchQuery" 
@@ -118,18 +118,7 @@
             <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
           </div>
           
-          <!-- 功能分類篩選 (Class Filter) -->
-          <div class="class-filter-container">
-            <button 
-              v-for="cls in ['全部', '首夜', '每夜', '每夜*', '限一次', '特殊', '勝敗']" 
-              :key="cls"
-              class="class-filter-pill"
-              :class="{ 'is-active': selectedClass === (cls === '全部' ? '' : cls) }"
-              @click="selectedClass = (cls === '全部' ? '' : cls)"
-            >
-              {{ cls }}
-            </button>
-          </div>
+
           
           <div class="selection-status-bar sticky-tabs">
             <div v-for="type in roleTypes" :key="type.key" 
@@ -815,7 +804,17 @@ const groupedScripts = computed(() => {
     }
     groups[cat].push(s)
   })
-  return Object.keys(groups).map(cat => ({
+  
+  // 依據 categories 排序，未定義的排在最後
+  const sortedCategories = Object.keys(groups).sort((a, b) => {
+    const idxA = scriptStore.categories.indexOf(a)
+    const idxB = scriptStore.categories.indexOf(b)
+    const valA = idxA === -1 ? 99999 : idxA
+    const valB = idxB === -1 ? 99999 : idxB
+    return valA - valB
+  })
+
+  return sortedCategories.map(cat => ({
     category: cat,
     list: groups[cat]
   }))
@@ -2473,6 +2472,16 @@ function getRoleTypeEmoji(type: string) {
   padding: 6px 20px 8px;
   border-radius: 0;
   border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.selection-status-bar.sticky-tabs .type-pill {
+  flex: 1;
+  text-align: center;
+  padding: 4px 2px;
+  white-space: nowrap;
 }
 
 .type-pill.interactive {

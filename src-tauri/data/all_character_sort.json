@@ -1100,17 +1100,6 @@
     "class": "首夜"
   },
   {
-    "id": "xizi_2",
-    "name": "戲子(改)",
-    "ability": "其他善良玩家醉酒(旅行者除外)，你們互相認識且無法轉變陣營，對調勝負結果，即使你失去能力。",
-    "team": "townsfolk",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/xizi.png",
-    "firstNight": 3012,
-    "firstNightReminder": "喚醒所有戲子並讓他們互認。",
-    "conflicts": [],
-    "class": "首夜"
-  },
-  {
     "id": "xionghaizi",
     "name": "熊孩子",
     "ability": "每個夜晚，你要選擇一個鎮民角色：他們的能力會產生錯誤信息，直到下個黃昏。",
@@ -1289,6 +1278,17 @@
     ],
     "conflicts": [],
     "class": "每夜*"
+  },
+  {
+    "id": "xizi_2",
+    "name": "戲子(改)",
+    "ability": "其他善良玩家醉酒(旅行者除外)，你們互相認識且無法轉變陣營，對調勝負結果，即使你失去能力。",
+    "team": "townsfolk",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/xizi.png",
+    "firstNight": 3012,
+    "firstNightReminder": "喚醒所有戲子並讓他們互認。",
+    "conflicts": [],
+    "class": "首夜"
   },
   {
     "id": "patrol",
@@ -1511,31 +1511,6 @@
     "class": "特殊"
   },
   {
-    "id": "ogre",
-    "name": "食人魔",
-    "ability": "在你的首個夜晚，你要選擇除你以外的一名玩家：你轉變為他的陣營，即使你已醉酒或中毒，但你不知道你轉變後的陣營。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/ogre.png",
-    "firstNight": 3059,
-    "firstNightReminder": "喚醒食人魔，讓他選擇一名玩家。如果他選擇了邪惡玩家，將他的角色標記在魔典中倒置以表示他轉變為邪惡陣營。",
-    "reminders": [
-      "摯友"
-    ],
-    "conflicts": [],
-    "class": "首夜"
-  },
-  {
-    "id": "snitch",
-    "name": "告密者",
-    "ability": "爪牙會在其首個夜晚得知三個偽裝。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/snitch.png",
-    "firstNight": 2005,
-    "firstNightReminder": "如果告密者在場，對爪牙展示三個不在場的善良角色標記。",
-    "conflicts": [],
-    "class": "首夜"
-  },
-  {
     "id": "butler",
     "name": "管家",
     "ability": "每個夜晚，你要選擇除你以外的一名玩家：明天白天，只有他投票時你才能投票。",
@@ -1552,51 +1527,66 @@
     "class": "每夜"
   },
   {
-    "id": "nichen",
-    "name": "逆臣",
-    "ability": "在你的首個夜晚，你要選擇除你以外的一名玩家：如果他先死於處決，你會在當晚轉變為邪惡；如果你先死於處決，他會在當晚轉變為邪惡。",
+    "id": "drunk",
+    "name": "酒鬼",
+    "ability": "你不知道你是酒鬼。你以為你是一個鎮民角色，但其實你不是。",
     "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/nichen.png",
-    "firstNight": 3042,
-    "otherNight": 25,
-    "firstNightReminder": "喚醒逆臣，讓他選擇一名除自己以外的玩家，那名玩家現在與他不共戴天。",
-    "otherNightReminder": "如果逆臣或他的目標玩家，這兩人之一死於處決，喚醒另一名玩家並通知他陣營變化。",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/drunk.png",
     "reminders": [
-      "不共戴天"
+      "是酒鬼"
+    ],
+    "remindersGlobal": [
+      "是酒鬼"
     ],
     "conflicts": [],
-    "class": "每夜"
+    "class": "特殊"
   },
   {
-    "id": "boy_attendant",
-    "name": "書童",
-    "ability": "在你的首個夜晚，你要選擇除你以外的一名玩家：除首個夜晚以外，當他被邪惡玩家的能力選擇或影響時，你會在當晚死亡。",
+    "id": "recluse",
+    "name": "陌客",
+    "ability": "你可能會被當作邪惡陣營、爪牙角色或惡魔角色，即使你已死亡。",
     "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/shutong.png",
-    "firstNight": 3034.5,
-    "otherNight": 60.5,
-    "firstNightReminder": "喚醒書童，讓他選擇一名玩家。",
-    "otherNightReminder": "如果被書童選擇的玩家被邪惡玩家的能力選擇或影響時，書童會在當晚死亡。",
-    "reminders": [
-      "選擇",
-      "死亡"
-    ],
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/recluse.png",
     "conflicts": [],
-    "class": "每夜"
+    "class": "特殊"
   },
   {
-    "id": "disappointed",
-    "name": "失望",
-    "ability": "你以為你是一個爪牙，但其實你不是。",
+    "id": "saint",
+    "name": "聖徒",
+    "ability": "如果你死於處決，你的陣營落敗。",
     "team": "outsider",
-    "image": "https://botc.letshare.fun/imgs/icons/outsider/disappointed.png",
-    "firstNight": 5,
-    "otherNight": 5,
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/saint.png",
+    "conflicts": [],
+    "class": "勝敗"
+  },
+  {
+    "id": "lunatic",
+    "name": "瘋子",
+    "ability": "你以為你是一個惡魔，但其實你不是。惡魔知道你是瘋子以及你在每個夜晚選擇了哪些玩家。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/lunatic.png",
+    "firstNightReminder": "喚醒瘋子並向他提供惡魔信息。如可能，則讓瘋子進行相應的惡魔行動。隨後在惡魔信息環節對惡魔提供瘋子的相關信息。",
+    "otherNightReminder": "如果瘋子以為的惡魔會在當晚行動，喚醒瘋子，並讓他以惡魔的方式行動。",
     "reminders": [
-      "是失望"
+      "選擇"
+    ],
+    "remindersGlobal": [
+      "是瘋子"
     ],
     "conflicts": [],
-    "class": "每夜"
+    "class": "特殊"
+  },
+  {
+    "id": "goon",
+    "name": "莽夫",
+    "ability": "每個夜晚，首個使用其自身能力選擇了你的玩家會醉酒直到下個黃昏。你會轉變為他的陣營。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/goon.png",
+    "reminders": [
+      "醉酒"
+    ],
+    "conflicts": [],
+    "class": "特殊"
   },
   {
     "id": "tinker",
@@ -1608,34 +1598,6 @@
     "otherNightReminder": "在夜晚的任意時機，你都可以決定殺死修補匠。這裡只是一個提示以免遺忘修補匠。",
     "reminders": [
       "死亡"
-    ],
-    "conflicts": [],
-    "class": "每夜*"
-  },
-  {
-    "id": "sweetheart",
-    "name": "心上人",
-    "ability": "當你死亡時，會有一名玩家開始醉酒。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/sweetheart.png",
-    "otherNight": 68,
-    "otherNightReminder": "如果心上人死亡，一名玩家醉酒。",
-    "reminders": [
-      "醉酒"
-    ],
-    "conflicts": [],
-    "class": "每夜*"
-  },
-  {
-    "id": "plague_doctor",
-    "name": "瘟疫醫生",
-    "ability": "當你死亡時，說書人會獲得一個爪牙能力。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/plague_doctor.png",
-    "otherNight": 72,
-    "otherNightReminder": "如果瘟疫醫生死亡，說書人獲得一項爪牙能力。",
-    "reminders": [
-      "說書人能力"
     ],
     "conflicts": [],
     "class": "每夜*"
@@ -1655,6 +1617,20 @@
     "class": "每夜*"
   },
   {
+    "id": "disappointed",
+    "name": "失望",
+    "ability": "你以為你是一個爪牙，但其實你不是。",
+    "team": "outsider",
+    "image": "https://botc.letshare.fun/imgs/icons/outsider/disappointed.png",
+    "firstNight": 5,
+    "otherNight": 5,
+    "reminders": [
+      "是失望"
+    ],
+    "conflicts": [],
+    "class": "每夜"
+  },
+  {
     "id": "barber",
     "name": "理髮師",
     "ability": "如果你死亡，在當晚惡魔可以選擇兩名玩家（不能選擇其他惡魔）交換角色。",
@@ -1669,46 +1645,96 @@
     "class": "每夜*"
   },
   {
-    "id": "hatter",
-    "name": "帽匠",
-    "ability": "如果你死亡，當晚爪牙和惡魔玩家可以選擇變成新的爪牙和惡魔角色。",
+    "id": "snowman",
+    "name": "雪人",
+    "ability": "每局遊戲限一次，惡魔可以公開猜測你是雪人，如果猜中，當天他被處決時你會代替他被處決。如果白天沒人被處決，你的陣營落敗。",
     "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/hatter.png",
-    "otherNight": 3,
-    "otherNightReminder": "如果帽匠死於白天，（建議分別）喚醒惡魔和爪牙並讓他們選擇是否改變角色。如果帽匠死於夜晚，則在當前玩家行動結束後立即開始茶會。",
+    "image": "https://botc.letshare.fun/imgs/icons/outsider/snowman.png",
     "reminders": [
-      "今晚茶會"
+      "已被猜測",
+      "被猜中"
+    ],
+    "conflicts": [],
+    "class": "限一次"
+  },
+  {
+    "id": "klutz",
+    "name": "呆瓜",
+    "ability": "當你得知你死亡時，你要公開選擇一名存活的玩家：如果他是邪惡的，你的陣營落敗。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/klutz.png",
+    "conflicts": [],
+    "class": "勝敗"
+  },
+  {
+    "id": "mutant",
+    "name": "畸形秀演員",
+    "ability": "如果你“瘋狂”地證明自己是外來者，你可能被處決。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/mutant.png",
+    "conflicts": [],
+    "class": "特殊"
+  },
+  {
+    "id": "barber",
+    "name": "理髮師",
+    "ability": "如果你死亡，在當晚惡魔可以選擇兩名玩家（不能選擇其他惡魔）交換角色。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/barber.png",
+    "otherNight": 67,
+    "otherNightReminder": "如果理髮師死於白天，喚醒惡魔讓他決定是否使用理髮師的能力。如果理髮師死於夜晚，（如果讓除攻擊理髮師以外的惡魔進行選擇則需要等當前惡魔入睡後）讓一名惡魔決定是否使用理髮師的能力。",
+    "reminders": [
+      "今晚理髮"
     ],
     "conflicts": [],
     "class": "每夜*"
   },
   {
-    "id": "shaxing",
-    "name": "煞星",
-    "ability": "如果你死亡，當晚與你鄰近的存活玩家之一可能會死亡。",
+    "id": "sweetheart",
+    "name": "心上人",
+    "ability": "當你死亡時，會有一名玩家開始醉酒。",
     "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/shaxing.png",
-    "otherNight": 65,
-    "otherNightReminder": "如果煞星死亡，決定是否讓一名與他鄰近的存活玩家死亡。",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/sweetheart.png",
+    "otherNight": 68,
+    "otherNightReminder": "如果心上人死亡，一名玩家醉酒。",
     "reminders": [
-      "死亡"
+      "醉酒"
     ],
     "conflicts": [],
     "class": "每夜*"
   },
   {
-    "id": "rulianshi",
-    "name": "入殮師",
-    "ability": "如果你提名了惡魔且他死於這次處決，你會變成那個邪惡的惡魔。當剩餘存活玩家小於等於四人時（旅行者除外），你失去能力。",
+    "id": "snitch",
+    "name": "告密者",
+    "ability": "爪牙會在其首個夜晚得知三個偽裝。",
     "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/rulianshi.png",
-    "otherNight": 27.5,
-    "otherNightReminder": "如果入殮師白天提名了惡魔且惡魔死於這次處決，喚醒入殮師，告知他變成新的邪惡的惡魔。",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/snitch.png",
+    "firstNight": 2005,
+    "firstNightReminder": "如果告密者在場，對爪牙展示三個不在場的善良角色標記。",
+    "conflicts": [],
+    "class": "首夜"
+  },
+  {
+    "id": "puzzlemaster",
+    "name": "解謎大師",
+    "ability": "一名玩家醉酒，即使你已死亡。每局遊戲限一次，你可以猜測誰是那個醉酒的玩家，如果猜對了，你會得知誰是惡魔，但如果猜錯了，你會得知錯誤的“誰是惡魔”信息。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/puzzlemaster.png",
     "reminders": [
-      "入殮"
+      "醉酒",
+      "已猜測"
     ],
     "conflicts": [],
-    "class": "每夜*"
+    "class": "限一次"
+  },
+  {
+    "id": "zealot",
+    "name": "狂熱者",
+    "ability": "如果有大於等於五名玩家存活，你必須在所有提名中投票。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/zealot.png",
+    "conflicts": [],
+    "class": "特殊"
   },
   {
     "id": "damsel",
@@ -1726,14 +1752,126 @@
     "class": "限一次"
   },
   {
-    "id": "puzzlemaster",
-    "name": "解謎大師",
-    "ability": "一名玩家醉酒，即使你已死亡。每局遊戲限一次，你可以猜測誰是那個醉酒的玩家，如果猜對了，你會得知誰是惡魔，但如果猜錯了，你會得知錯誤的“誰是惡魔”信息。",
+    "id": "hatter",
+    "name": "帽匠",
+    "ability": "如果你死亡，當晚爪牙和惡魔玩家可以選擇變成新的爪牙和惡魔角色。",
     "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/puzzlemaster.png",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/hatter.png",
+    "otherNight": 3,
+    "otherNightReminder": "如果帽匠死於白天，（建議分別）喚醒惡魔和爪牙並讓他們選擇是否改變角色。如果帽匠死於夜晚，則在當前玩家行動結束後立即開始茶會。",
     "reminders": [
-      "醉酒",
-      "已猜測"
+      "今晚茶會"
+    ],
+    "conflicts": [],
+    "class": "每夜*"
+  },
+  {
+    "id": "golem",
+    "name": "魔像",
+    "ability": "每局遊戲你只能發起提名一次。當你發起提名時，如果被你提名的玩家不是惡魔，他死亡。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/golem.png",
+    "reminders": [
+      "無法提名"
+    ],
+    "conflicts": [],
+    "class": "特殊"
+  },
+  {
+    "id": "ogre",
+    "name": "食人魔",
+    "ability": "在你的首個夜晚，你要選擇除你以外的一名玩家：你轉變為他的陣營，即使你已醉酒或中毒，但你不知道你轉變後的陣營。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/ogre.png",
+    "firstNight": 3059,
+    "firstNightReminder": "喚醒食人魔，讓他選擇一名玩家。如果他選擇了邪惡玩家，將他的角色標記在魔典中倒置以表示他轉變為邪惡陣營。",
+    "reminders": [
+      "摯友"
+    ],
+    "conflicts": [],
+    "class": "首夜"
+  },
+  {
+    "id": "plague_doctor",
+    "name": "瘟疫醫生",
+    "ability": "當你死亡時，說書人會獲得一個爪牙能力。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/plague_doctor.png",
+    "otherNight": 72,
+    "otherNightReminder": "如果瘟疫醫生死亡，說書人獲得一項爪牙能力。",
+    "reminders": [
+      "說書人能力"
+    ],
+    "conflicts": [],
+    "class": "每夜*"
+  },
+  {
+    "id": "heretic",
+    "name": "異端分子",
+    "ability": "對調勝負結果，即使你已死亡。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/heretic.png",
+    "conflicts": [],
+    "class": "勝敗"
+  },
+  {
+    "id": "hermit",
+    "name": "隱士",
+    "ability": "你擁有所有外來者能力。[-0~1外來者]",
+    "team": "outsider",
+    "image": "https://botc.letshare.fun/imgs/icons/outsider/hermit.png",
+    "firstNightReminder": "0",
+    "otherNightReminder": "0",
+    "conflicts": [],
+    "class": "特殊"
+  },
+  {
+    "id": "politician",
+    "name": "政客",
+    "ability": "如果你是對你的陣營落敗負最大責任的人，你轉變陣營並獲勝，即使你已死亡。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/politician.png",
+    "conflicts": [],
+    "class": "勝敗"
+  },
+  {
+    "id": "nichen",
+    "name": "逆臣",
+    "ability": "在你的首個夜晚，你要選擇除你以外的一名玩家：如果他先死於處決，你會在當晚轉變為邪惡；如果你先死於處決，他會在當晚轉變為邪惡。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/nichen.png",
+    "firstNight": 3042,
+    "otherNight": 25,
+    "firstNightReminder": "喚醒逆臣，讓他選擇一名除自己以外的玩家，那名玩家現在與他不共戴天。",
+    "otherNightReminder": "如果逆臣或他的目標玩家，這兩人之一死於處決，喚醒另一名玩家並通知他陣營變化。",
+    "reminders": [
+      "不共戴天"
+    ],
+    "conflicts": [],
+    "class": "每夜"
+  },
+  {
+    "id": "shaxing",
+    "name": "煞星",
+    "ability": "如果你死亡，當晚與你鄰近的存活玩家之一可能會死亡。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/shaxing.png",
+    "otherNight": 65,
+    "otherNightReminder": "如果煞星死亡，決定是否讓一名與他鄰近的存活玩家死亡。",
+    "reminders": [
+      "死亡"
+    ],
+    "conflicts": [],
+    "class": "每夜*"
+  },
+  {
+    "id": "shijie",
+    "name": "使節",
+    "ability": "每個夜晚限一次，一名玩家在使用自身能力選擇邪惡玩家時會改為選中你，即使你已死亡。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/shijie.png",
+    "reminders": [
+      "已觸發"
     ],
     "conflicts": [],
     "class": "限一次"
@@ -1756,125 +1894,6 @@
     "class": "限一次"
   },
   {
-    "id": "shijie",
-    "name": "使節",
-    "ability": "每個夜晚限一次，一名玩家在使用自身能力選擇邪惡玩家時會改為選中你，即使你已死亡。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/shijie.png",
-    "reminders": [
-      "已觸發"
-    ],
-    "conflicts": [],
-    "class": "限一次"
-  },
-  {
-    "id": "snowman",
-    "name": "雪人",
-    "ability": "每局遊戲限一次，惡魔可以公開猜測你是雪人，如果猜中，當天他被處決時你會代替他被處決。如果白天沒人被處決，你的陣營落敗。",
-    "team": "outsider",
-    "image": "https://botc.letshare.fun/imgs/icons/outsider/snowman.png",
-    "reminders": [
-      "已被猜測",
-      "被猜中"
-    ],
-    "conflicts": [],
-    "class": "限一次"
-  },
-  {
-    "id": "hermit",
-    "name": "隱士",
-    "ability": "你擁有所有外來者能力。[-0~1外來者]",
-    "team": "outsider",
-    "image": "https://botc.letshare.fun/imgs/icons/outsider/hermit.png",
-    "firstNightReminder": "0",
-    "otherNightReminder": "0",
-    "conflicts": [],
-    "class": "特殊"
-  },
-  {
-    "id": "goon",
-    "name": "莽夫",
-    "ability": "每個夜晚，首個使用其自身能力選擇了你的玩家會醉酒直到下個黃昏。你會轉變為他的陣營。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/goon.png",
-    "reminders": [
-      "醉酒"
-    ],
-    "conflicts": [],
-    "class": "特殊"
-  },
-  {
-    "id": "lunatic",
-    "name": "瘋子",
-    "ability": "你以為你是一個惡魔，但其實你不是。惡魔知道你是瘋子以及你在每個夜晚選擇了哪些玩家。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/lunatic.png",
-    "firstNightReminder": "喚醒瘋子並向他提供惡魔信息。如可能，則讓瘋子進行相應的惡魔行動。隨後在惡魔信息環節對惡魔提供瘋子的相關信息。",
-    "otherNightReminder": "如果瘋子以為的惡魔會在當晚行動，喚醒瘋子，並讓他以惡魔的方式行動。",
-    "reminders": [
-      "選擇"
-    ],
-    "remindersGlobal": [
-      "是瘋子"
-    ],
-    "conflicts": [],
-    "class": "特殊"
-  },
-  {
-    "id": "recluse",
-    "name": "陌客",
-    "ability": "你可能會被當作邪惡陣營、爪牙角色或惡魔角色，即使你已死亡。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/recluse.png",
-    "conflicts": [],
-    "class": "特殊"
-  },
-  {
-    "id": "golem",
-    "name": "魔像",
-    "ability": "每局遊戲你只能發起提名一次。當你發起提名時，如果被你提名的玩家不是惡魔，他死亡。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/golem.png",
-    "reminders": [
-      "無法提名"
-    ],
-    "conflicts": [],
-    "class": "特殊"
-  },
-  {
-    "id": "mutant",
-    "name": "畸形秀演員",
-    "ability": "如果你“瘋狂”地證明自己是外來者，你可能被處決。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/mutant.png",
-    "conflicts": [],
-    "class": "特殊"
-  },
-  {
-    "id": "zealot",
-    "name": "狂熱者",
-    "ability": "如果有大於等於五名玩家存活，你必須在所有提名中投票。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/zealot.png",
-    "conflicts": [],
-    "class": "特殊"
-  },
-  {
-    "id": "drunk",
-    "name": "酒鬼",
-    "ability": "你不知道你是酒鬼。你以為你是一個鎮民角色，但其實你不是。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/drunk.png",
-    "reminders": [
-      "是酒鬼"
-    ],
-    "remindersGlobal": [
-      "是酒鬼"
-    ],
-    "conflicts": [],
-    "class": "特殊"
-  },
-  {
     "id": "Bartender",
     "name": "酒保",
     "ability": "與你鄰近的善良玩家之一醉酒，即使你已死亡。",
@@ -1887,6 +1906,37 @@
     "class": "特殊"
   },
   {
+    "id": "rulianshi",
+    "name": "入殮師",
+    "ability": "如果你提名了惡魔且他死於這次處決，你會變成那個邪惡的惡魔。當剩餘存活玩家小於等於四人時（旅行者除外），你失去能力。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/rulianshi.png",
+    "otherNight": 27.5,
+    "otherNightReminder": "如果入殮師白天提名了惡魔且惡魔死於這次處決，喚醒入殮師，告知他變成新的邪惡的惡魔。",
+    "reminders": [
+      "入殮"
+    ],
+    "conflicts": [],
+    "class": "每夜*"
+  },
+  {
+    "id": "boy_attendant",
+    "name": "書童",
+    "ability": "在你的首個夜晚，你要選擇除你以外的一名玩家：除首個夜晚以外，當他被邪惡玩家的能力選擇或影響時，你會在當晚死亡。",
+    "team": "outsider",
+    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/shutong.png",
+    "firstNight": 3034.5,
+    "otherNight": 60.5,
+    "firstNightReminder": "喚醒書童，讓他選擇一名玩家。",
+    "otherNightReminder": "如果被書童選擇的玩家被邪惡玩家的能力選擇或影響時，書童會在當晚死亡。",
+    "reminders": [
+      "選擇",
+      "死亡"
+    ],
+    "conflicts": [],
+    "class": "每夜"
+  },
+  {
     "id": "lost_dreamer",
     "name": "失去夢想家",
     "ability": "你的能力是如果…，那麼…。在你的首個白天拜訪並告知說書人\"如果\"，說書人會告知你能力的\"那麼\"。",
@@ -1897,42 +1947,6 @@
     ],
     "conflicts": [],
     "class": "特殊"
-  },
-  {
-    "id": "klutz",
-    "name": "呆瓜",
-    "ability": "當你得知你死亡時，你要公開選擇一名存活的玩家：如果他是邪惡的，你的陣營落敗。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/klutz.png",
-    "conflicts": [],
-    "class": "勝敗"
-  },
-  {
-    "id": "saint",
-    "name": "聖徒",
-    "ability": "如果你死於處決，你的陣營落敗。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/saint.png",
-    "conflicts": [],
-    "class": "勝敗"
-  },
-  {
-    "id": "politician",
-    "name": "政客",
-    "ability": "如果你是對你的陣營落敗負最大責任的人，你轉變陣營並獲勝，即使你已死亡。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/politician.png",
-    "conflicts": [],
-    "class": "勝敗"
-  },
-  {
-    "id": "heretic",
-    "name": "異端分子",
-    "ability": "對調勝負結果，即使你已死亡。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/heretic.png",
-    "conflicts": [],
-    "class": "勝敗"
   },
   {
     "id": "widow",
@@ -2634,7 +2648,7 @@
     "class": "每夜"
   },
   {
-    "id": "day_dreamer",
+    "id": "yamaraja",
     "name": "閻羅",
     "ability": "在你的首個夜晚，你能查看魔典並選擇一名玩家：他在第三個夜晚死亡，即使因為任何原因讓他不會死亡。每個夜晚，你要選擇一名玩家：上個夜晚被你選擇的玩家死亡。",
     "team": "demon",

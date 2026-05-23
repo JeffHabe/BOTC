@@ -11,6 +11,7 @@ export type Panel =
   | 'night-order'
   | 'character-sheet'
   | 'character-editor'
+  | 'script-editor'
   | 'script-import'
   | 'voting'
   | 'settings'

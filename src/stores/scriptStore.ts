@@ -65,6 +65,105 @@ export const useScriptStore = defineStore('script', () => {
   const searchQuery = ref('')
   const filterType = ref<RoleType | 'All'>('All')
   const customScripts = ref<Script[]>([])
+  
+  // 劇本類別狀態管理
+  const categories = ref<string[]>([])
+
+  function loadCategories() {
+    try {
+      const saved = localStorage.getItem('botc-script-categories')
+      if (saved) {
+        categories.value = JSON.parse(saved)
+      } else {
+        categories.value = ['標準劇本', '官方劇本', '小劇本', '新手局建議']
+        saveCategories()
+      }
+    } catch (e) {
+      categories.value = ['標準劇本', '官方劇本', '小劇本', '新手局建議']
+    }
+  }
+
+  function saveCategories() {
+    localStorage.setItem('botc-script-categories', JSON.stringify(categories.value))
+  }
+
+  function addCategory(name: string) {
+    if (!name.trim()) return
+    const trimmed = name.trim()
+    if (!categories.value.includes(trimmed)) {
+      categories.value.push(trimmed)
+      saveCategories()
+    }
+  }
+
+  async function deleteCategory(name: string) {
+    const idx = categories.value.indexOf(name)
+    if (idx !== -1) {
+      categories.value.splice(idx, 1)
+      saveCategories()
+      
+      const fallback = categories.value[0] || '標準劇本'
+      customScripts.value.forEach(s => {
+        if (s.category === name) {
+          s.category = fallback
+        }
+      })
+      await saveCustomScripts()
+      
+      if (masterScript.value.category === name) {
+        masterScript.value.category = fallback
+        const metaIndex = rawCharacterList.value.findIndex((r: any) => r.id === '_meta')
+        if (metaIndex >= 0) {
+          rawCharacterList.value[metaIndex].category = fallback
+        }
+        await saveCharacters([...rawCharacterList.value])
+      }
+    }
+  }
+
+  async function updateCategory(oldName: string, newName: string) {
+    const trimmedNew = newName.trim()
+    if (!trimmedNew || oldName === trimmedNew) return
+    const idx = categories.value.indexOf(oldName)
+    if (idx !== -1) {
+      if (categories.value.includes(trimmedNew)) {
+        categories.value.splice(idx, 1)
+      } else {
+        categories.value[idx] = trimmedNew
+      }
+      saveCategories()
+
+      customScripts.value.forEach(s => {
+        if (s.category === oldName) {
+          s.category = trimmedNew
+        }
+      })
+      await saveCustomScripts()
+
+      if (masterScript.value.category === oldName) {
+        masterScript.value.category = trimmedNew
+        const metaIndex = rawCharacterList.value.findIndex((r: any) => r.id === '_meta')
+        if (metaIndex >= 0) {
+          rawCharacterList.value[metaIndex].category = trimmedNew
+        }
+        await saveCharacters([...rawCharacterList.value])
+      }
+    }
+  }
+
+  async function createCustomScript(name: string, characters: CharacterDef[], category: string) {
+    const scriptId = 'custom_' + Date.now()
+    const newScript: Script = {
+      id: scriptId,
+      name: name.trim(),
+      characters,
+      category: category || categories.value[0] || '標準劇本'
+    }
+    customScripts.value.push(newScript)
+    await saveCustomScripts()
+    return newScript
+  }
+
 
   // 核心角色大全配置 (具有響應式)
   const masterScript = ref<Script>(parseRawArray(allCharacterRaw, 'all_character_sort', '全角色大全'))
@@ -105,6 +204,8 @@ export const useScriptStore = defineStore('script', () => {
 
   async function loadCharacters() {
     try {
+      // 載入類別
+      loadCategories()
       // 1. 載入核心角色大全
       const dbExists = await exists('all_character_sort.json', { baseDir: BaseDirectory.AppData })
       if (!dbExists) {
@@ -350,5 +451,11 @@ export const useScriptStore = defineStore('script', () => {
     exportAllScripts,
     renameScript,
     deleteCustomScript,
+    categories,
+    saveCategories,
+    addCategory,
+    deleteCategory,
+    updateCategory,
+    createCustomScript,
   }
 })

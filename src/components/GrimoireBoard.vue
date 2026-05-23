@@ -60,10 +60,9 @@
       <div class="center-logo-box" @click="uiStore.openPanel('role-assignment')">
         <div class="center-logo-inner">
           <img v-if="gameStore.script?.logo" :src="gameStore.script.logo" class="center-logo-img" />
-          <!-- <span v-else class="center-logo-icon">📖</span> -->
-            <div class="empty-icon">
-          <img src="/pic/app-icon.png" class="empty-logo" />
-        </div>
+          <div v-else class="empty-icon">
+            <img src="/pic/app-icon.png" class="empty-logo" />
+          </div>
         </div>
         <div class="center-script-name">{{ uiStore.activePoolPresetName || gameStore.script?.name || '選擇劇本' }}</div>
       </div>
@@ -368,6 +367,7 @@ const CharacterEditorPanel = defineAsyncComponent(() => import('./CharacterEdito
 const PlayerOrderPanel = defineAsyncComponent(() => import('./PlayerOrderPanel.vue'))
 const GameLogPanel = defineAsyncComponent(() => import('./GameLogPanel.vue'))
 const FabledSelectorPanel = defineAsyncComponent(() => import('./FabledSelectorPanel.vue'))
+const ScriptEditorPanel = defineAsyncComponent(() => import('./ScriptEditorPanel.vue'))
 
 import AddPlayerDialog from './AddPlayerDialog.vue'
 import RenameDialog from './RenameDialog.vue'
@@ -955,6 +955,7 @@ const activePanelComponent = computed(() => {
     case 'night-order': return NightOrder
     case 'character-sheet': return CharacterSheet
     case 'character-editor': return CharacterEditorPanel
+    case 'script-editor': return ScriptEditorPanel
     case 'player-order': return PlayerOrderPanel
     case 'role-assignment': return RoleAssignmentPanel
     case 'game-log': return GameLogPanel

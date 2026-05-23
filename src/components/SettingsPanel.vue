@@ -14,15 +14,15 @@
           <div class="stat-card" title="剩餘提名權">
             <!-- <span class="stat-card-icon">🙋</span> -->
             <span class="stat-icon">
-            <img src="/pic/nomination.png" alt="提名權" class="stat-img img-nomination" />
-          </span>
+              <img src="/pic/nomination.png" alt="提名權" class="stat-img img-nomination" />
+            </span>
             <span class="stat-card-val">{{ nominationsRemaining }}</span>
             <span class="stat-card-label">剩餘提名</span>
           </div>
           <div class="stat-card" title="處決門檻">
             <!-- <span class="stat-card-icon">⚔️</span> -->
             <span class="stat-icon">
-            <img src="/pic/guillotine.png" alt="處決門檻" class="stat-img img-guillotine" />
+              <img src="/pic/guillotine.png" alt="處決門檻" class="stat-img img-guillotine" />
             </span>
             <span class="stat-card-val">{{ gameStore.threshold }}</span>
             <span class="stat-card-label">處決門檻</span>
@@ -30,7 +30,7 @@
           <div class="stat-card" title="有效票數">
             <!-- <span class="stat-icon">🗳️</span> -->
             <span class="stat-icon">
-            <img src="/pic/vote-yes.png" alt="有效票數" class="stat-img img-vote-yes" />
+              <img src="/pic/vote-yes.png" alt="有效票數" class="stat-img img-vote-yes" />
             </span>
             <span class="stat-card-val">{{ totalVotes }}</span>
             <span class="stat-card-label">有效票數</span>
@@ -54,16 +54,24 @@
           <button v-if="gameStore.phase === 'FirstNight'" class="grid-item" @click="openAssignment">
             <!-- <span class="grid-icon">🎭</span> -->
             <span class="stat-icon">
-            <img src="/pic/theater.png" alt="開局" class="stat-img img-theater" />
+              <img src="/pic/theater.png" alt="開局" class="stat-img img-theater" />
             </span>
             <span class="grid-label">開局</span>
+          </button>
+
+          <button class="grid-item" @click="openScriptEditor">
+            <!-- <span class="grid-icon">📜</span> -->
+            <span class="stat-icon">
+              <img src="/pic/spellbook.png" alt="劇本管理" class="stat-img img-theater" />
+            </span>
+            <span class="grid-label">劇本管理</span>
           </button>
 
           <button class="grid-item" @click="openVoting">
             <span class="grid-icon">🗳️</span>
             <span class="grid-label">投票面板</span>
           </button>
-          
+
           <button class="grid-item" @click="openFabled">
             <div class="grid-double-icon">
               <img src="/pic/Fabled_new.png" alt="傳說" class="double-img fabled-img" />
@@ -91,11 +99,13 @@
             <span class="grid-icon">🪑</span>
             <span class="grid-label">座位編排</span>
           </button>
-      
+
           <button class="grid-item" @click="openCharacterEditor">
             <span class="grid-icon">📝</span>
             <span class="grid-label">自訂庫</span>
           </button>
+
+
           <!-- 階段推進功能目前暫時移除 -->
           <!-- 
           <button class="grid-item primary" @click="advance">
@@ -109,7 +119,7 @@
         <!-- 資料管理 -->
         <div class="section-title">資料管理</div>
         <div class="settings-grid cols-2">
-          
+
           <button class="grid-item" @click="importGame">
             <span class="grid-icon">📋🔽</span>
             <span class="grid-label">匯入遊戲</span>
@@ -118,38 +128,34 @@
             <span class="grid-icon">📋🔼</span>
             <span class="grid-label">匯出遊戲</span>
           </button>
-          
+
           <button class="grid-item" @click="importScripts">
             <span class="grid-icon">📜🔽</span>
             <span class="grid-label">匯入劇本</span>
           </button>
 
-          <button class="grid-item" @click="exportAllScripts">
+           <button class="grid-item" @click="exportAllScripts">
             <span class="grid-icon">📜🔼</span>
             <span class="grid-label">匯出劇本</span>
           </button>
+
         </div>
 
         <div class="divider" />
 
         <!-- 介面設置 (暫時隱藏，預設為內圈向心) -->
-        
+
         <div class="section-title">提示標記佈局 (Reminder Layout)</div>
         <div class="layout-selector-grid cols-2">
-          <button 
-            v-for="mode in layouts" 
-            :key="mode.id"
-            class="layout-option"
-            :class="{ active: uiStore.reminderLayout === mode.id }"
-            @click="uiStore.setReminderLayout(mode.id as any)"
-          >
+          <button v-for="mode in layouts" :key="mode.id" class="layout-option"
+            :class="{ active: uiStore.reminderLayout === mode.id }" @click="uiStore.setReminderLayout(mode.id as any)">
             <span class="opt-icon">
               <img v-if="mode.icon.startsWith('/')" :src="mode.icon" :alt="mode.label" class="opt-img" />
               <template v-else>{{ mode.icon }}</template>
             </span>
-   
+
             <span class="opt-label">{{ mode.label }}</span>
-    
+
             <div v-if="uiStore.reminderLayout === mode.id" class="active-check">✓</div>
           </button>
         </div>
@@ -158,21 +164,13 @@
         <div class="section-title">提示標記收納上限</div>
         <div class="threshold-slider-box">
           <div class="threshold-counter">
-            <button 
-              class="counter-btn" 
-              type="button"
-              :disabled="uiStore.reminderCollapseThreshold <= 1"
-              @click="uiStore.setReminderCollapseThreshold(uiStore.reminderCollapseThreshold - 1)"
-            >
+            <button class="counter-btn" type="button" :disabled="uiStore.reminderCollapseThreshold <= 1"
+              @click="uiStore.setReminderCollapseThreshold(uiStore.reminderCollapseThreshold - 1)">
               －
             </button>
             <span class="counter-value">{{ uiStore.reminderCollapseThreshold }}</span>
-            <button 
-              class="counter-btn" 
-              type="button"
-              :disabled="uiStore.reminderCollapseThreshold >= 8"
-              @click="uiStore.setReminderCollapseThreshold(uiStore.reminderCollapseThreshold + 1)"
-            >
+            <button class="counter-btn" type="button" :disabled="uiStore.reminderCollapseThreshold >= 8"
+              @click="uiStore.setReminderCollapseThreshold(uiStore.reminderCollapseThreshold + 1)">
               ＋
             </button>
           </div>
@@ -182,27 +180,31 @@
         </div>
 
         <div class="divider" />
-       
+
 
         <!-- 自定義背景 -->
         <div class="section-title">自定義佈景</div>
         <div class="background-settings-grid">
           <div class="bg-setting-item">
-            <div class="bg-preview" :style="uiStore.customDayBackground ? { backgroundImage: `url(${uiStore.customDayBackground})` } : {}">
+            <div class="bg-preview"
+              :style="uiStore.customDayBackground ? { backgroundImage: `url(${uiStore.customDayBackground})` } : {}">
               <div v-if="!uiStore.customDayBackground" class="bg-placeholder">預設白天</div>
               <div class="bg-overlay">
                 <button class="bg-btn" @click="triggerFile('day')">匯入圖檔</button>
-                <button v-if="uiStore.customDayBackground" class="bg-btn reset" @click="uiStore.setDayBackground(null)">重置</button>
+                <button v-if="uiStore.customDayBackground" class="bg-btn reset"
+                  @click="uiStore.setDayBackground(null)">重置</button>
               </div>
             </div>
             <div class="bg-name">白天背景</div>
           </div>
           <div class="bg-setting-item">
-            <div class="bg-preview" :style="uiStore.customNightBackground ? { backgroundImage: `url(${uiStore.customNightBackground})` } : {}">
+            <div class="bg-preview"
+              :style="uiStore.customNightBackground ? { backgroundImage: `url(${uiStore.customNightBackground})` } : {}">
               <div v-if="!uiStore.customNightBackground" class="bg-placeholder night">預設夜晚</div>
               <div class="bg-overlay">
                 <button class="bg-btn" @click="triggerFile('night')">匯入圖檔</button>
-                <button v-if="uiStore.customNightBackground" class="bg-btn reset" @click="uiStore.setNightBackground(null)">重置</button>
+                <button v-if="uiStore.customNightBackground" class="bg-btn reset"
+                  @click="uiStore.setNightBackground(null)">重置</button>
               </div>
             </div>
             <div class="bg-name">夜晚背景</div>
@@ -213,33 +215,22 @@
         <div class="divider" />
 
         <!-- 魔典排列圖形 (已移至頂部工具列) -->
-        
+
         <div class="section-title">魔典排列圖形 (Grimoire Shape)</div>
         <div class="layout-selector-grid cols-3">
-          <button 
-            v-for="shape in shapes" 
-            :key="shape.id"
-            class="layout-option"
-            :class="{ active: uiStore.grimoireShape === shape.id }"
-            @click="uiStore.setGrimoireShape(shape.id as any)"
-          >
+          <button v-for="shape in shapes" :key="shape.id" class="layout-option"
+            :class="{ active: uiStore.grimoireShape === shape.id }" @click="uiStore.setGrimoireShape(shape.id as any)">
             <img class="opt-icon" :src="shape.icon" />
             <span class="opt-label">{{ shape.label }}</span>
             <div v-if="uiStore.grimoireShape === shape.id" class="active-check">✓</div>
           </button>
         </div>
-       
+
         <div class="section-title">魔典縮放 (Inverted Zoom)</div>
         <div class="zoom-slider-box">
-          <input 
-            type="range" 
-            min="0.5" 
-            max="2.0" 
-            step="0.05" 
-            :value="uiStore.grimoireScale"
+          <input type="range" min="0.5" max="2.0" step="0.05" :value="uiStore.grimoireScale"
             @input="e => uiStore.setGrimoireScale(parseFloat((e.target as HTMLInputElement).value))"
-            class="settings-slider"
-          />
+            class="settings-slider" />
           <div class="slider-labels">
             <span>調整玩家令片顯示大小</span>
             <span class="scale-val">{{ Math.round(uiStore.grimoireScale * 100) }}%</span>
@@ -251,20 +242,14 @@
         <!-- 計時器設置 -->
         <div class="section-title">計時器設置</div>
         <div class="layout-selector-grid cols-2">
-          <button 
-            class="layout-option"
-            :class="{ active: uiStore.isTimerSoundEnabled }"
-            @click="uiStore.setTimerSoundEnabled(!uiStore.isTimerSoundEnabled)"
-          >
+          <button class="layout-option" :class="{ active: uiStore.isTimerSoundEnabled }"
+            @click="uiStore.setTimerSoundEnabled(!uiStore.isTimerSoundEnabled)">
             <span class="opt-icon">🔔</span>
             <span class="opt-label">到點鐘聲</span>
             <div v-if="uiStore.isTimerSoundEnabled" class="active-check">✓</div>
           </button>
-          <button 
-            class="layout-option"
-            :class="{ active: uiStore.isTimerNotificationEnabled }"
-            @click="uiStore.setTimerNotificationEnabled(!uiStore.isTimerNotificationEnabled)"
-          >
+          <button class="layout-option" :class="{ active: uiStore.isTimerNotificationEnabled }"
+            @click="uiStore.setTimerNotificationEnabled(!uiStore.isTimerNotificationEnabled)">
             <span class="opt-icon">🖥️</span>
             <span class="opt-label">桌面通知</span>
             <div v-if="uiStore.isTimerNotificationEnabled" class="active-check">✓</div>
@@ -279,25 +264,15 @@
           <button class="import-sound-btn" @click="triggerSoundUpload">
             ➕ 匯入角色技能音效
           </button>
-          <input 
-            type="file" 
-            ref="soundFileInput" 
-            hidden 
-            accept="audio/*" 
-            @change="handleSoundFileChange" 
-          />
+          <input type="file" ref="soundFileInput" hidden accept="audio/*" @change="handleSoundFileChange" />
 
           <!-- 自訂音效清單 -->
           <div v-if="uiStore.customSounds.length === 0" class="no-sounds-tip">
             暫無自訂技能音效，請點擊上方按鈕匯入
           </div>
           <div v-else class="sounds-list">
-            <div 
-              v-for="sound in uiStore.customSounds" 
-              :key="sound.id" 
-              class="sound-item"
-              :class="{ 'is-pinned': uiStore.pinnedSoundId === sound.id }"
-            >
+            <div v-for="sound in uiStore.customSounds" :key="sound.id" class="sound-item"
+              :class="{ 'is-pinned': uiStore.pinnedSoundId === sound.id }">
               <div class="sound-info">
                 <span class="sound-pin-indicator" v-if="uiStore.pinnedSoundId === sound.id">📌</span>
                 <span class="sound-name">{{ sound.name }}</span>
@@ -305,28 +280,19 @@
               </div>
               <div class="sound-actions">
                 <!-- 釘選按鈕 -->
-                <button 
-                  class="action-btn pin-btn" 
-                  :class="{ active: uiStore.pinnedSoundId === sound.id }"
-                  title="釘選為主要播放音效"
-                  @click="uiStore.pinSound(sound.id)"
-                >
+                <button class="action-btn pin-btn" :class="{ active: uiStore.pinnedSoundId === sound.id }"
+                  title="釘選為主要播放音效" @click="uiStore.pinSound(sound.id)">
                   📌
                 </button>
                 <!-- 播放/停止按鈕 -->
-                <button 
-                  class="action-btn play-btn" 
+                <button class="action-btn play-btn"
                   :class="{ 'is-playing': uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === sound.id }"
-                  @click="togglePlaySound(sound.id)"
-                >
+                  @click="togglePlaySound(sound.id)">
                   {{ uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === sound.id ? '⏹️' : '▶️' }}
                 </button>
                 <!-- 刪除按鈕 -->
-                <button 
-                  v-if="!sound.id.startsWith('default-')"
-                  class="action-btn delete-btn" 
-                  @click="deleteCustomSound(sound.id, sound.name)"
-                >
+                <button v-if="!sound.id.startsWith('default-')" class="action-btn delete-btn"
+                  @click="deleteCustomSound(sound.id, sound.name)">
                   🗑️
                 </button>
               </div>
@@ -405,12 +371,12 @@ async function handleSoundFileChange(e: Event) {
 
   const defaultName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name
   const name = await uiStore.showPrompt('匯入技能音效', '請輸入此角色發動技能音效的名稱（例如：守鴉人）：', defaultName)
-  
+
   if (name === null) {
     if (soundFileInput.value) soundFileInput.value.value = ''
     return
   }
-  
+
   const finalName = name.trim() || defaultName
 
   try {
@@ -504,7 +470,7 @@ async function processImage(dataUrl: string): Promise<string> {
 
       // 繪製並優化
       ctx.drawImage(img, 0, 0, width, height)
-      
+
       // 輸出為 JPEG, 品質設為 0.8 (檔案大小與清晰度的平衡點)
       const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.8)
       resolve(optimizedDataUrl)
@@ -551,6 +517,10 @@ function openAssignment() {
 
 function openCharacterEditor() {
   uiStore.openPanel('character-editor')
+}
+
+function openScriptEditor() {
+  uiStore.openPanel('script-editor')
 }
 
 function openFabled() {
@@ -640,7 +610,7 @@ async function importScripts() {
         let fileName = file.name
         try {
           fileName = decodeURIComponent(fileName)
-        } catch (_) {}
+        } catch (_) { }
         if (fileName.toLowerCase().endsWith('.json')) {
           fileName = fileName.substring(0, fileName.length - 5)
         }
@@ -708,13 +678,14 @@ function resetGame() {
     true
   )
 }
+
 </script>
 
 <style scoped>
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   z-index: 150;
   display: flex;
   align-items: flex-end;
@@ -737,11 +708,13 @@ function resetGame() {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  border-bottom: 1px solid rgba(201,168,76,0.1);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.1);
   flex-shrink: 0;
 }
 
-.panel-icon { font-size: 18px; }
+.panel-icon {
+  font-size: 18px;
+}
 
 .panel-title {
   font-family: var(--font-title);
@@ -772,7 +745,9 @@ function resetGame() {
   text-transform: uppercase;
 }
 
-.danger-section { color: rgba(224,32,32,0.6); }
+.danger-section {
+  color: rgba(224, 32, 32, 0.6);
+}
 
 .settings-item {
   width: 100%;
@@ -782,17 +757,30 @@ function resetGame() {
   padding: 18px 16px;
   background: none;
   text-align: left;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   transition: background var(--transition-fast);
 }
 
-.settings-item:active { background: rgba(255,255,255,0.05); }
+.settings-item:active {
+  background: rgba(255, 255, 255, 0.05);
+}
 
-.settings-item-warning .settings-label { color: var(--color-gold-bright, #e8a040); }
-.settings-item-danger .settings-label { color: var(--color-red-bright); }
+.settings-item-warning .settings-label {
+  color: var(--color-gold-bright, #e8a040);
+}
 
-.settings-icon { font-size: 20px; flex-shrink: 0; }
-.settings-info { flex: 1; }
+.settings-item-danger .settings-label {
+  color: var(--color-red-bright);
+}
+
+.settings-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.settings-info {
+  flex: 1;
+}
 
 .settings-label {
   font-size: 14px;
@@ -813,7 +801,7 @@ function resetGame() {
 
 .divider {
   height: 1px;
-  background: rgba(201,168,76,0.1);
+  background: rgba(201, 168, 76, 0.1);
   margin: 8px 16px;
 }
 
@@ -970,7 +958,7 @@ function resetGame() {
 }
 
 /* 確保所有按鈕的圖示區域高度完全一致，從而讓下方的文字標題在同一條水平線上絕對對齊！ */
-.grid-item > *:first-child {
+.grid-item>*:first-child {
   height: 48px;
   display: flex;
   align-items: center;
@@ -1008,6 +996,7 @@ function resetGame() {
   background: rgba(224, 160, 32, 0.1);
   border-color: rgba(224, 160, 32, 0.3);
 }
+
 .grid-item.warning .grid-label {
   color: #e8a040;
 }
@@ -1016,6 +1005,7 @@ function resetGame() {
   background: rgba(224, 32, 32, 0.1);
   border-color: rgba(224, 32, 32, 0.3);
 }
+
 .grid-item.danger .grid-label {
   color: var(--color-red-bright);
 }
@@ -1036,8 +1026,8 @@ function resetGame() {
 
 .bg-preview {
   aspect-ratio: 16/9;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   position: relative;
   overflow: hidden;
@@ -1057,7 +1047,7 @@ function resetGame() {
 .bg-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1067,7 +1057,8 @@ function resetGame() {
   transition: opacity 0.2s;
 }
 
-.bg-preview:hover .bg-overlay, .bg-preview:active .bg-overlay {
+.bg-preview:hover .bg-overlay,
+.bg-preview:active .bg-overlay {
   opacity: 1;
 }
 
@@ -1083,8 +1074,8 @@ function resetGame() {
 }
 
 .bg-btn.reset {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .bg-name {
@@ -1094,7 +1085,7 @@ function resetGame() {
 }
 
 .zoom-slider-box {
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
   padding: 16px;
   border-radius: 16px;
   margin-bottom: 12px;
@@ -1158,7 +1149,7 @@ function resetGame() {
   background: rgba(201, 168, 76, 0.05);
   border-color: rgba(201, 168, 76, 0.35);
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 6px 15px rgba(0, 0, 0, 0.25),
     0 0 10px rgba(201, 168, 76, 0.1) inset;
 }
@@ -1182,11 +1173,13 @@ function resetGame() {
   font-weight: 600;
   letter-spacing: 0.5px;
 }
+
 .stat-icon {
   font-size: 14px;
   display: flex;
   align-items: center;
-  justify-content: center; /* 確保圖片容器內部完美水平置中 */
+  justify-content: center;
+  /* 確保圖片容器內部完美水平置中 */
 }
 
 .stat-img {
@@ -1211,10 +1204,12 @@ function resetGame() {
   /* 投票打勾圖示：因右側綠色勾勾突出，視覺重心偏左，微調向右偏移以達到視覺居中 */
   transform: translate(3px, 0px);
 }
+
 .img-heart {
   /* 投票打勾圖示：因右側綠色勾勾突出，視覺重心偏左，微調向右偏移以達到視覺居中 */
   transform: translate(0px, 0px);
 }
+
 .img-theater {
   width: 42px;
   height: 42px;
@@ -1227,7 +1222,8 @@ function resetGame() {
 .grid-double-icon {
   position: relative;
   width: 54px;
-  height: 48px; /* 👈 高度同步調整為 48px，使所有圖示佔位一致 */
+  height: 48px;
+  /* 👈 高度同步調整為 48px，使所有圖示佔位一致 */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1293,7 +1289,7 @@ function resetGame() {
   border-radius: 20px;
   max-width: 180px;
   margin: 0 auto;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .counter-btn {
@@ -1316,7 +1312,7 @@ function resetGame() {
 .counter-btn:disabled {
   opacity: 0.25;
   cursor: not-allowed;
-  border-color: rgba(255,255,255,0.1);
+  border-color: rgba(255, 255, 255, 0.1);
   color: var(--color-text-muted);
 }
 
