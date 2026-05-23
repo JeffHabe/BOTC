@@ -2198,6 +2198,10 @@ async function confirmAssignment() {
       const fakeRole = getCharacterById(lunaticFakeRoleId.value)
       return { player_id: a.player_id, role: fakeRole || a.role }
     }
+    if (a.role?.id === 'marionette' && marionetteFakeRoleId.value) {
+      const fakeRole = getCharacterById(marionetteFakeRoleId.value)
+      return { player_id: a.player_id, role: fakeRole || a.role }
+    }
     return a
   })
 
@@ -2235,7 +2239,7 @@ async function confirmAssignment() {
   if (hasLunatic.value && lunaticFakeRoleId.value) {
     const lunaticEntry = previewAssignments.value.find(a => a.role?.id === 'lunatic')
     const lunaticChar = getCharacterById('lunatic')
-    const reminderText = lunaticChar?.reminders?.[0] || '是瘋子'
+    const reminderText = lunaticChar?.remindersGlobal?.[0] || '是瘋子'
     const sourceName = lunaticChar?.name || '瘋子'
     
     if (lunaticEntry) {
@@ -2249,7 +2253,7 @@ async function confirmAssignment() {
   if (hasMarionette.value && marionetteFakeRoleId.value) {
     const marionetteEntry = previewAssignments.value.find(a => a.role?.id === 'marionette')
     const marionetteChar = getCharacterById('marionette')
-    const reminderText = marionetteChar?.reminders?.[0] || '是提線木偶'
+    const reminderText = marionetteChar?.remindersGlobal?.[0] || '是提線木偶'
     const sourceName = marionetteChar?.name || '提線木偶'
     
     if (marionetteEntry) {
