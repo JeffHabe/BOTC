@@ -1267,6 +1267,8 @@ const activePanelComponent = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  left: -4px; /* 往左偏移 5px，統一平衡自訂與預設 Logo 的視覺重心 */
 }
 
 .center-logo-img { 
