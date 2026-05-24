@@ -13,7 +13,7 @@
       <!-- 分頁切換 Tabs -->
       <div class="panel-tabs">
         <button class="tab-btn" :class="{ active: activeTab === 'create' }" @click="activeTab = 'create'">
-          ➕ 建立劇本
+          {{ editingScriptId ? '📝 編輯劇本' : '➕ 建立劇本' }}
         </button>
         <button class="tab-btn" :class="{ active: activeTab === 'categories' }" @click="activeTab = 'categories'">
           📂 劇本分類
@@ -114,10 +114,22 @@
           </div>
 
           <!-- 建立按鈕 -->
-          <div class="form-actions">
-            <button class="btn-primary create-btn" :disabled="!newScriptName.trim() || selectedRoleIds.length === 0"
-              @click="handleCreateScript">
-              🚀 確認建立劇本
+          <div class="form-actions" style="display: flex; gap: 8px;">
+            <button 
+              v-if="editingScriptId"
+              class="btn-ghost cancel-edit-btn"
+              style="flex: 1;"
+              @click="cancelEditingScript"
+            >
+              ❌ 取消
+            </button>
+            <button 
+              class="btn-primary create-btn" 
+              style="flex: 2;"
+              :disabled="!newScriptName.trim() || selectedRoleIds.length === 0"
+              @click="editingScriptId ? handleUpdateScript() : handleCreateScript()"
+            >
+              {{ editingScriptId ? '💾 確認儲存變更' : '🚀 確認建立劇本' }}
             </button>
           </div>
         </div>
@@ -181,14 +193,34 @@
                 </div>
               </div>
 
-              <!-- 歸類 Select 下拉選單 -->
-              <select :value="script.category || '標準劇本'"
-                @change="handleAssignScriptCategory(script, ($event.target as HTMLSelectElement).value)"
-                class="script-cat-select">
-                <option v-for="cat in scriptStore.categories" :key="cat" :value="cat">
-                  {{ cat }}
-                </option>
-              </select>
+              <!-- 歸類與編輯 -->
+              <div class="script-cat-actions">
+                <select :value="script.category || '標準劇本'"
+                  @change="handleAssignScriptCategory(script, ($event.target as HTMLSelectElement).value)"
+                  class="script-cat-select">
+                  <option v-for="cat in scriptStore.categories" :key="cat" :value="cat">
+                    {{ cat }}
+                  </option>
+                </select>
+                
+                <button 
+                  v-if="script.id !== 'all_character_sort'" 
+                  class="btn-edit-script" 
+                  @click="startEditingScript(script)"
+                  title="編輯劇本角色"
+                >
+                  📝
+                </button>
+                
+                <button 
+                  v-if="script.id !== 'all_character_sort'" 
+                  class="btn-delete-script" 
+                  @click="handleDeleteScript(script)"
+                  title="刪除劇本"
+                >
+                  🗑️
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -212,7 +244,8 @@ const scriptStore = useScriptStore()
 
 const activeTab = ref<'create' | 'categories'>('create')
 
-// 建立劇本相關狀態
+// 編輯與建立劇本相關狀態
+const editingScriptId = ref<string | null>(null)
 const newScriptName = ref('')
 const newScriptCategory = ref('標準劇本')
 const selectedRoleIds = ref<string[]>([])
@@ -625,6 +658,75 @@ async function handleCreateScript() {
     console.error('建立劇本失敗:', err)
     alert('建立劇本失敗，請確認資料是否正常。')
   }
+}
+
+function startEditingScript(script: Script) {
+  editingScriptId.value = script.id
+  newScriptName.value = script.name
+  newScriptCategory.value = script.category || '標準劇本'
+  selectedRoleIds.value = script.characters.map(c => c.id)
+  activeTab.value = 'create'
+}
+
+function cancelEditingScript() {
+  editingScriptId.value = null
+  newScriptName.value = ''
+  selectedRoleIds.value = []
+  if (scriptStore.categories.length > 0) {
+    newScriptCategory.value = scriptStore.categories[0]
+  }
+}
+
+async function handleUpdateScript() {
+  if (!editingScriptId.value || !newScriptName.value.trim() || selectedRoleIds.value.length === 0) return
+  
+  const characters = scriptStore.masterScript.characters.filter(c =>
+    selectedRoleIds.value.includes(c.id)
+  )
+  
+  try {
+    const success = await scriptStore.updateCustomScript(
+      editingScriptId.value,
+      newScriptName.value.trim(),
+      characters,
+      newScriptCategory.value
+    )
+    
+    if (success) {
+      alert(`劇本「${newScriptName.value}」更新成功！`)
+      cancelEditingScript()
+      activeTab.value = 'categories'
+    } else {
+      alert('更新劇本失敗：找不到該劇本。')
+    }
+  } catch (err) {
+    console.error('更新劇本失敗:', err)
+    alert('更新劇本失敗，請確認資料是否正常。')
+  }
+}
+
+function handleDeleteScript(script: Script) {
+  uiStore.showConfirm(
+    '刪除劇本',
+    `確認要刪除自訂劇本「${script.name}」嗎？此操作無法復原。`,
+    async () => {
+      try {
+        const success = await scriptStore.deleteCustomScript(script.id)
+        if (success) {
+          alert(`劇本「${script.name}」已成功刪除！`)
+          if (editingScriptId.value === script.id) {
+            cancelEditingScript()
+          }
+        } else {
+          alert('刪除劇本失敗：找不到該劇本。')
+        }
+      } catch (err) {
+        console.error('刪除劇本失敗:', err)
+        alert('刪除劇本失敗，請確認系統是否正常。')
+      }
+    },
+    true
+  )
 }
 
 // 建立新類別
@@ -1326,6 +1428,64 @@ function moveCategory(index: number, direction: number) {
   font-size: 12px;
   outline: none;
   width: 120px;
+}
+
+.script-cat-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-edit-script {
+  background: rgba(201, 168, 76, 0.1);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: var(--color-gold);
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 25.6px;
+  width: 25.6px;
+}
+
+.btn-edit-script:hover {
+  background: rgba(201, 168, 76, 0.25);
+}
+
+.btn-delete-script {
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #ff4d4f;
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 25.6px;
+  width: 25.6px;
+}
+
+.btn-delete-script:hover {
+  background: rgba(220, 53, 69, 0.25);
+}
+
+.cancel-edit-btn {
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--color-text-muted) !important;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-edit-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 .import-json-btn {

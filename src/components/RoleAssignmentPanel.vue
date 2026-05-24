@@ -189,7 +189,49 @@
             <div class="total-status" :class="{ 'is-match': totalConfigured === totalPlayers }">
               總計配置: {{ totalConfigured }} / {{ totalPlayers }}
             </div>
-          
+          </div>
+
+          <!-- 官方配比參考表格 -->
+          <div class="reference-table-wrapper">
+            <div class="reference-title">📋 官方人數標準配比參考</div>
+            <div class="reference-table-scroll">
+              <table class="reference-table">
+                <thead>
+                  <tr>
+                    <th>玩家</th>
+                    <th v-for="n in [7, 8, 9, 10, 11, 12, 13, 14, 15]" :key="n" :class="{ 'highlight-col': totalPlayers === n || (n === 15 && totalPlayers >= 15) }">
+                      {{ n === 15 ? '15+' : n }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="ref-label townsfolk">鎮民</td>
+                    <td v-for="(v, i) in [5, 5, 5, 7, 7, 7, 9, 9, 9]" :key="i" :class="{ 'highlight-col': totalPlayers === (i + 7) || (i === 8 && totalPlayers >= 15) }">
+                      {{ v }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="ref-label outsider">外來者</td>
+                    <td v-for="(v, i) in [0, 1, 2, 0, 1, 2, 0, 1, 2]" :key="i" :class="{ 'highlight-col': totalPlayers === (i + 7) || (i === 8 && totalPlayers >= 15) }">
+                      {{ v }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="ref-label minion">爪牙</td>
+                    <td v-for="(v, i) in [1, 1, 1, 2, 2, 2, 3, 3, 3]" :key="i" :class="{ 'highlight-col': totalPlayers === (i + 7) || (i === 8 && totalPlayers >= 15) }">
+                      {{ v }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="ref-label demon">惡魔</td>
+                    <td v-for="(v, i) in [1, 1, 1, 1, 1, 1, 1, 1, 1]" :key="i" :class="{ 'highlight-col': totalPlayers === (i + 7) || (i === 8 && totalPlayers >= 15) }">
+                      {{ v }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -2908,6 +2950,82 @@ function getRoleTypeEmoji(type: string) {
 .total-status { font-size: 12px; color: var(--color-text-muted); margin-bottom: 12px; }
 .total-status.is-match { color: var(--color-gold); font-weight: bold; }
 .start-btn { width: 100%; padding: 14px; }
+
+/* 官方配比參考表格樣式 */
+.reference-table-wrapper {
+  margin-top: 24px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.reference-title {
+  font-size: 12px;
+  color: var(--color-gold);
+  font-weight: bold;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reference-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.reference-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  text-align: center;
+  min-width: 320px;
+}
+
+.reference-table th, .reference-table td {
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.reference-table th {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.reference-table th:first-child, .reference-table td:first-child {
+  text-align: left;
+  padding-left: 8px;
+  font-weight: bold;
+  min-width: 60px;
+  position: sticky;
+  left: 0;
+  background: #1a1b23; /* 與 .assignment-panel 背景一致，防止滾動重疊 */
+  z-index: 2;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+}
+
+.ref-label.townsfolk { color: var(--color-townsfolk); }
+.ref-label.outsider { color: var(--color-outsider); }
+.ref-label.minion { color: var(--color-minion); }
+.ref-label.demon { color: var(--color-demon); }
+
+/* 當前玩家人數的高亮列 */
+.highlight-col {
+  background: rgba(201, 168, 76, 0.15) !important;
+  color: var(--color-gold) !important;
+  font-weight: bold;
+  box-shadow: inset 0 0 0 1px rgba(201, 168, 76, 0.3);
+}
+
+.reference-table td.highlight-col {
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+}
 
 .preview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .preview-title { font-family: var(--font-title); font-size: 14px; color: var(--color-gold-muted); }

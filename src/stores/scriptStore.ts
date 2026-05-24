@@ -164,6 +164,25 @@ export const useScriptStore = defineStore('script', () => {
     return newScript
   }
 
+  async function updateCustomScript(id: string, name: string, characters: CharacterDef[], category: string) {
+    const script = customScripts.value.find(s => s.id === id)
+    if (script) {
+      script.name = name.trim()
+      script.characters = characters
+      script.category = category || categories.value[0] || '標準劇本'
+      await saveCustomScripts()
+      
+      if (gameStore.script && gameStore.script.id === id) {
+        gameStore.script.name = name.trim()
+        gameStore.script.characters = characters
+        gameStore.script.category = category
+        await gameStore.setScript({ ...gameStore.script })
+      }
+      return true
+    }
+    return false
+  }
+
 
   // 核心角色大全配置 (具有響應式)
   const masterScript = ref<Script>(parseRawArray(allCharacterRaw, 'all_character_sort', '全角色大全'))
@@ -457,5 +476,6 @@ export const useScriptStore = defineStore('script', () => {
     deleteCategory,
     updateCategory,
     createCustomScript,
+    updateCustomScript,
   }
 })
