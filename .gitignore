@@ -11,6 +11,9 @@ yarn-error.log*
 src-tauri/target/
 src-tauri/gen/
 src-tauri/binaries/
+target/
+target_temp/
+
 
 # Android build artifacts (Standard locations)
 **/*.apk

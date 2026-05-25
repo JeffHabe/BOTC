@@ -7,6 +7,7 @@ use serde_json::Value;
 use std::sync::Mutex;
 use tauri::{AppHandle, State};
 use tauri_plugin_notification::NotificationExt;
+use log::{info, warn, error, debug};
 
 pub struct AppState(pub Mutex<GameState>);
 
@@ -21,6 +22,7 @@ pub fn get_game_state(state: State<AppState>) -> GameState {
 /// 重置/新遊戲
 #[tauri::command]
 pub fn new_game(state: State<AppState>) -> GameState {
+    info!("開始新對局 (New Game)");
     let mut gs = state.0.lock().unwrap();
     *gs = GameState::default();
     gs.clone()
@@ -29,6 +31,7 @@ pub fn new_game(state: State<AppState>) -> GameState {
 /// 重置所有玩家狀態（保留名單）
 #[tauri::command]
 pub fn reset_players_state(state: State<AppState>) -> GameState {
+    info!("重置所有玩家狀態，保留座位名單");
     let mut gs = state.0.lock().unwrap();
     gs.phase = GamePhase::FirstNight;
     gs.round = 1;
@@ -795,8 +798,10 @@ pub fn import_game_state(json_str: String, state: State<AppState>) -> Result<Gam
 /// 啟動後端計時器通知 (針對 Android 背景優化)
 #[tauri::command]
 pub async fn start_background_timer(app: AppHandle, seconds: u64) {
+    info!("啟動背景計時器通知，計時時間: {} 秒", seconds);
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_secs(seconds));
+        info!("背景計時器時間到，觸發本地推送通知");
         let _ = app
             .notification()
             .builder()
@@ -815,9 +820,13 @@ pub fn import_custom_script(json_str: String, state: State<AppState>) -> Result<
     if let Ok(s) = serde_json::from_str::<Script>(&json_str) {
         script = s;
     } else {
+        debug!("嘗試以常規 Script 格式解析失敗，改用社群 Array 格式解析...");
         // 如果失敗，試著以社群常見的陣列格式解析
         let values: Vec<Value> =
-            serde_json::from_str(&json_str).map_err(|e| format!("腳本格式解析失敗: {}", e))?;
+            serde_json::from_str(&json_str).map_err(|e| {
+                warn!("自定義劇本 JSON 解析失敗: {}", e);
+                format!("腳本格式解析失敗: {}", e)
+            })?;
 
         let mut characters = Vec::new();
 
@@ -981,8 +990,15 @@ fn get_save_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
 #[tauri::command]
 pub fn save_game_state(state: GameState, app: tauri::AppHandle) -> Result<(), String> {
     let path = get_save_path(&app)?;
-    let json = serde_json::to_string_pretty(&state).map_err(|e| e.to_string())?;
-    fs::write(path, json).map_err(|e| e.to_string())?;
+    let json = serde_json::to_string_pretty(&state).map_err(|e| {
+        error!("序列化存檔失敗: {}", e);
+        e.to_string()
+    })?;
+    fs::write(&path, json).map_err(|e| {
+        error!("寫入存檔檔案失敗: {}", e);
+        e.to_string()
+    })?;
+    info!("遊戲狀態已成功保存至: {:?}", path);
     Ok(())
 }
 
@@ -991,14 +1007,22 @@ pub fn save_game_state(state: GameState, app: tauri::AppHandle) -> Result<(), St
 pub fn load_game_state(state: State<AppState>, app: tauri::AppHandle) -> Result<GameState, String> {
     let path = get_save_path(&app)?;
     if !path.exists() {
+        warn!("載入存檔失敗，檔案不存在: {:?}", path);
         return Err("SAVENOTFOUND".into());
     }
-    let json = fs::read_to_string(path).map_err(|e| e.to_string())?;
-    let loaded_state: GameState = serde_json::from_str(&json).map_err(|e| e.to_string())?;
+    let json = fs::read_to_string(&path).map_err(|e| {
+        error!("讀取存檔檔案失敗: {}", e);
+        e.to_string()
+    })?;
+    let loaded_state: GameState = serde_json::from_str(&json).map_err(|e| {
+        error!("解析存檔 JSON 失敗: {}", e);
+        e.to_string()
+    })?;
 
     // 同步到內存狀態
     let mut gs = state.0.lock().unwrap();
     *gs = loaded_state.clone();
+    info!("已成功載入本地遊戲存檔");
 
     Ok(loaded_state)
 }

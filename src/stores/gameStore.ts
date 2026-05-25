@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import type { GameState, CharacterDef, Script, GamePhase } from '../types'
+import { logger } from '../utils/logger'
 import { aliveCount, deadCount, executionThreshold } from '../types'
 
 export interface GameLogEntry {
@@ -112,12 +113,13 @@ export const useGameStore = defineStore('game', () => {
   async function callCommand<T = GameState>(cmd: string, args?: Record<string, unknown>): Promise<T | null> {
     loading.value = true
     error.value = null
+    logger.debug(`呼叫 Tauri 指令 [${cmd}], 參數:`, args)
     try {
       const result = await invoke<T>(cmd, args)
       return result
     } catch (e) {
       error.value = String(e)
-      console.error(`[${cmd}] 錯誤:`, e)
+      logger.error(`[${cmd}] 呼叫失敗: ${e}`, { args })
       return null
     } finally {
       loading.value = false
