@@ -52,7 +52,13 @@
           <div class="toolbar-section">
             <div class="search-and-actions">
               <div class="search-box">
-                <input type="text" v-model="characterSearch" placeholder="搜尋角色名稱/能力..." class="search-input" />
+                <input 
+                  type="text" 
+                  v-model="characterSearch" 
+                  placeholder="搜尋角色名稱/能力..." 
+                  class="search-input" 
+                  @keyup.enter="($event.target as HTMLInputElement).blur()"
+                />
                 <button v-if="characterSearch" class="clear-search-btn" @click="characterSearch = ''">
                   ✕
                 </button>
@@ -100,8 +106,7 @@
               <div class="role-grid">
                 <button v-for="char in group.list" :key="char.id" class="role-item"
                   :class="[char.role_type.toLowerCase(), { 'is-selected': selectedRoleIds.includes(char.id) }]"
-                  @click="toggleRole(char.id)" @touchstart="handlePressStart(char)" @touchend="handlePressEnd"
-                  @mousedown="handlePressStart(char)" @mouseup="handlePressEnd">
+                  @click="toggleRole(char.id)">
                   <div class="role-icon">
                     <img v-if="char.image" :src="char.image" :alt="char.name" />
                     <span v-else class="emoji">👤</span>
@@ -211,6 +216,14 @@
                 >
                   📝
                 </button>
+
+                <button 
+                  class="btn-export-script" 
+                  @click="exportSingleScript(script)"
+                  title="匯出劇本 JSON"
+                >
+                <img class="icon" src="/pic/export.png" />
+                </button>
                 
                 <button 
                   v-if="script.id !== 'all_character_sort'" 
@@ -227,8 +240,6 @@
       </div>
     </div>
 
-    <!-- 角色詳情彈窗 -->
-    <CharacterDetailOverlay v-if="longPressChar" :character="longPressChar" @close="longPressChar = null" />
   </div>
 </template>
 
@@ -236,8 +247,9 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
-import type { CharacterDef, Script, RoleType } from '../types'
-import CharacterDetailOverlay from './CharacterDetailOverlay.vue'
+import type { Script, RoleType } from '../types'
+import { save } from '@tauri-apps/plugin-dialog'
+import { writeTextFile } from '@tauri-apps/plugin-fs'
 
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
@@ -441,10 +453,6 @@ const EXP_ROLES = new Set([
 const newCategoryName = ref('')
 const dragIndex = ref<number | null>(null)
 
-// 詳情查看
-const longPressChar = ref<CharacterDef | null>(null)
-let pressTimer: any = null
-
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
   // 如果已經載入分類，將分類預設為第一個
@@ -460,11 +468,7 @@ onBeforeUnmount(() => {
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' || e.key === 'Esc') {
     e.stopImmediatePropagation()
-    if (longPressChar.value) {
-      longPressChar.value = null
-    } else {
-      uiStore.closePanel()
-    }
+    uiStore.closePanel()
   }
 }
 
@@ -532,18 +536,6 @@ function scrollToRoleGroup(key: string) {
 const allEditableScripts = computed(() => {
   return scriptStore.allScripts
 })
-
-// 長按顯示詳細資訊
-function handlePressStart(char: CharacterDef) {
-  clearTimeout(pressTimer)
-  pressTimer = setTimeout(() => {
-    longPressChar.value = char
-  }, 500)
-}
-
-function handlePressEnd() {
-  clearTimeout(pressTimer)
-}
 
 // 點選角色 checkbox 切換
 function toggleRole(id: string) {
@@ -727,6 +719,55 @@ function handleDeleteScript(script: Script) {
     },
     true
   )
+}
+
+async function exportSingleScript(script: Script) {
+  const exportData = []
+  const meta: any = {
+    id: "_meta",
+    name: script.name
+  }
+  if (script.author) meta.author = script.author
+  if (script.logo) meta.logo = script.logo
+  exportData.push(meta)
+
+  script.characters.forEach(c => {
+    exportData.push({
+      id: c.id,
+      name: c.name,
+      name_en: c.name_en,
+      ability: c.ability,
+      team: c.role_type.toLowerCase(),
+      firstNight: c.night_order_first,
+      otherNight: c.night_order_other,
+      reminders: c.reminders,
+      image: c.image
+    })
+  })
+
+  const json = JSON.stringify(exportData, null, 2)
+  const fileName = `${script.name}.json`
+
+  try {
+    const filePath = await save({
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+      defaultPath: fileName
+    })
+
+    if (filePath) {
+      await writeTextFile(filePath, json)
+      alert(`劇本「${script.name}」已成功匯出至：${filePath}`)
+    }
+  } catch (e) {
+    console.warn('Tauri export failed, falling back to browser download', e)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 }
 
 // 建立新類別
@@ -1474,6 +1515,32 @@ function moveCategory(index: number, direction: number) {
 
 .btn-delete-script:hover {
   background: rgba(220, 53, 69, 0.25);
+}
+
+.btn-export-script {
+  background: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  color: #28a745;
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 25.6px;
+  width: 25.6px;
+}
+
+.btn-export-script:hover {
+  background: rgba(40, 167, 69, 0.25);
+}
+
+.btn-export-script img.icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
 }
 
 .cancel-edit-btn {

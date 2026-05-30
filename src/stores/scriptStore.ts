@@ -218,6 +218,24 @@ export const useScriptStore = defineStore('script', () => {
         c.ability.toLowerCase().includes(q)
       )
     }
+
+    // 當篩選分類為 'All' 時，依據 鎮民 -> 外來者 -> 爪牙 -> 惡魔 的順序進行排序
+    if (filterType.value === 'All') {
+      const typeOrder: Record<string, number> = {
+        Townsfolk: 1,
+        Outsider: 2,
+        Minion: 3,
+        Demon: 4,
+        Traveler: 5,
+        Fabled: 6
+      }
+      chars = [...chars].sort((a, b) => {
+        const orderA = typeOrder[a.role_type] ?? 99
+        const orderB = typeOrder[b.role_type] ?? 99
+        return orderA - orderB
+      })
+    }
+
     return chars
   })
 
