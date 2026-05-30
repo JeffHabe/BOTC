@@ -431,7 +431,7 @@ const gameStore = useGameStore()
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
 
-// --- 實體劇本大圖檢視狀態 ---
+// --- 實體劇本大圖檢視狀態 ───
 const showPhysicalImageOverlay = ref(false)
 const imgScale = ref(1)
 const imgTranslateX = ref(0)
@@ -439,6 +439,11 @@ const imgTranslateY = ref(0)
 const isDraggingImg = ref(false)
 let imgDragStart = { x: 0, y: 0 }
 let imgTranslateStart = { x: 0, y: 0 }
+
+// 雙指手勢縮放相關變數
+const isPinchZooming = ref(false)
+let imgStartTouchDistance = 0
+let imgStartScale = 1
 
 function handleScriptNameClick() {
   if (gameStore.script?.physical_image) {
@@ -458,6 +463,20 @@ function handleImgWheel(e: WheelEvent) {
 }
 
 function handleImgMouseDown(e: MouseEvent | TouchEvent) {
+  // 偵測雙指觸控手勢
+  if ('touches' in e && e.touches.length === 2) {
+    isPinchZooming.value = true
+    isDraggingImg.value = false
+    imgStartTouchDistance = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    )
+    imgStartScale = imgScale.value
+    return
+  }
+
+  // 單指觸控或滑鼠拖曳
+  isPinchZooming.value = false
   const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX
   const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY
   
@@ -467,6 +486,22 @@ function handleImgMouseDown(e: MouseEvent | TouchEvent) {
 }
 
 function handleImgMouseMove(e: MouseEvent | TouchEvent) {
+  // 雙指觸控手勢縮放處理
+  if (isPinchZooming.value && 'touches' in e && e.touches.length === 2) {
+    const currentDistance = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    )
+    const factor = currentDistance / imgStartTouchDistance
+    imgScale.value = Math.min(Math.max(0.3, imgStartScale * factor), 5)
+    
+    if (e.cancelable) {
+      e.preventDefault()
+    }
+    return
+  }
+
+  // 普通拖曳處理
   if (!isDraggingImg.value) return
   
   const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX
@@ -485,6 +520,7 @@ function handleImgMouseMove(e: MouseEvent | TouchEvent) {
 
 function handleImgMouseUp() {
   isDraggingImg.value = false
+  isPinchZooming.value = false
 }
 
 function resetImgZoom() {
