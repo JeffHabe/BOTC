@@ -382,10 +382,10 @@ async function handleSoundFileChange(e: Event) {
   try {
     const buffer = await file.arrayBuffer()
     await uiStore.addCustomSound(finalName, buffer)
-    alert(`音效「${finalName}」匯入成功！`)
+    uiStore.showAlert('匯入成功', `音效「${finalName}」匯入成功！`)
   } catch (err) {
     console.error('音效匯入失敗:', err)
-    alert('音效匯入失敗，請確認檔案格式是否正確。')
+    uiStore.showAlert('匯入失敗', '音效匯入失敗，請確認檔案格式是否正確。')
   }
 
   if (soundFileInput.value) soundFileInput.value.value = ''
@@ -538,7 +538,7 @@ async function importGame() {
     if (selected) {
       const content = await readTextFile(selected as string)
       await gameStore.importState(content)
-      alert('遊戲狀態已成功還原')
+      uiStore.showAlert('還原成功', '遊戲狀態已成功還原')
       uiStore.closePanel()
     }
   } catch (e) {
@@ -554,7 +554,7 @@ async function importGame() {
         reader.onload = async (e) => {
           const content = e.target?.result as string
           await gameStore.importState(content)
-          alert('遊戲狀態已成功還原')
+          uiStore.showAlert('還原成功', '遊戲狀態已成功還原')
           uiStore.closePanel()
         }
         reader.readAsText(file)
@@ -582,7 +582,7 @@ async function exportGame() {
 
     if (filePath) {
       await writeTextFile(filePath, json)
-      alert('已成功匯出至：' + filePath)
+      uiStore.showAlert('匯出成功', '已成功匯出至：' + filePath)
     }
   } catch (e) {
     // 如果不在 Tauri 環境或發生錯誤，退回到網頁下載方式
@@ -616,7 +616,7 @@ async function importScripts() {
         }
         const success = await scriptStore.importFromJson(content, fileName)
         if (success) {
-          alert('劇本資料已成功匯入')
+          uiStore.showAlert('匯入成功', '劇本資料已成功匯入')
         }
       }
       reader.readAsText(file)
@@ -641,7 +641,7 @@ async function exportAllScripts() {
 
     if (filePath) {
       await writeTextFile(filePath, json)
-      alert('所有劇本已成功匯出至：' + filePath)
+      uiStore.showAlert('匯出成功', '所有劇本已成功匯出至：' + filePath)
     }
   } catch (e) {
     console.warn('Tauri export failed, falling back to browser download', e)

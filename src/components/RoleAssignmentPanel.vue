@@ -1083,7 +1083,7 @@ async function switchToSimilarScript(scriptId: string) {
     uiStore.activePoolPresetName = ''
     excludedPoolIds.value = []
     selectedRoleIds.value = []
-    alert(`已切換至劇本【${targetScript.name}】！`)
+    uiStore.showAlert('切換成功', `已切換至劇本【${targetScript.name}】！`)
   } finally {
     nextTick(() => {
       setTimeout(() => {
@@ -1259,7 +1259,7 @@ function updatePreset() {
   if (preset) {
     preset.excluded_ids = [...excludedPoolIds.value]
     localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
-    alert(`角色池預設 "${preset.name}" 已更新！`)
+    uiStore.showAlert('更新成功', `角色池預設 "${preset.name}" 已更新！`)
   }
 }
 
@@ -1308,7 +1308,7 @@ async function renameScriptOrPreset() {
       }
       const success = await scriptStore.renameScript(id, newName.trim(), newCategory)
       if (success) {
-        alert('✅ 劇本已更新！')
+        uiStore.showAlert('更新成功', '✅ 劇本已更新！')
       }
     }
   }
@@ -1319,27 +1319,34 @@ async function deleteScriptOrPreset() {
 
   const [type, id] = selectedCombinedId.value.split('::')
   if (type === 'preset') {
-    if (window.confirm('確定要刪除這個角色池配置嗎？')) {
-      deletePreset(id)
-    }
+    uiStore.showConfirm(
+      '刪除配置',
+      '確定要刪除這個角色池配置嗎？',
+      () => { deletePreset(id) },
+      true
+    )
   } else if (type === 'script') {
     if (id === 'all_character_sort') {
-      alert('無法刪除全角色大全！')
+      uiStore.showAlert('無法刪除', '無法刪除全角色大全！')
       return
     }
     const customScript = scriptStore.customScripts.find(x => x.id === id)
     if (!customScript) {
-      alert('這是官方內建劇本，無法刪除喔！')
+      uiStore.showAlert('無法刪除', '這是官方內建劇本，無法刪除喔！')
       return
     }
-    if (window.confirm(`確定要刪除自訂劇本「${customScript.name}」嗎？這個操作無法復原。`)) {
-      const success = await scriptStore.deleteCustomScript(id)
-      if (success) {
-        alert('✅ 劇本已刪除！')
-        // if currently open, maybe reset selection or close
-        selectedCombinedId.value = `script::all_character_sort`
-      }
-    }
+    uiStore.showConfirm(
+      '刪除劇本',
+      `確定要刪除自訂劇本「${customScript.name}」嗎？這個操作無法復原。`,
+      async () => {
+        const success = await scriptStore.deleteCustomScript(id)
+        if (success) {
+          uiStore.showAlert('刪除成功', '✅ 劇本已刪除！')
+          selectedCombinedId.value = `script::all_character_sort`
+        }
+      },
+      true
+    )
   }
 }
 
@@ -1358,10 +1365,10 @@ function exportPreset(id: string) {
     // 處理中文編碼
     const str = btoa(encodeURIComponent(JSON.stringify(exportData)))
     navigator.clipboard.writeText(str).then(() => {
-      alert('✅ 匯出成功！已將代碼複製到剪貼簿，請分享給其他說書人。')
+      uiStore.showAlert('匯出成功', '✅ 匯出成功！已將代碼複製到剪貼簿，請分享給其他說書人。')
     })
   } catch (e) {
-    alert('❌ 匯出失敗')
+    uiStore.showAlert('匯出失敗', '❌ 匯出失敗')
   }
 }
 
@@ -1394,12 +1401,12 @@ async function convertPresetToScript(presetId: string) {
   try {
     const success = await scriptStore.importFromJson(JSON.stringify(jsonArray), '', true)
     if (success) {
-      alert(`✅ 已成功將預設【${preset.name}】轉換為獨立劇本並載入！`)
+      uiStore.showAlert('轉換成功', `✅ 已成功將預設【${preset.name}】轉換為獨立劇本並載入！`)
       deletePreset(presetId)
       uiStore.closePanel()
     }
   } catch (e) {
-    alert('轉換失敗：' + e)
+    uiStore.showAlert('轉換失敗', '轉換失敗：' + e)
   }
 }
 
@@ -1427,10 +1434,10 @@ function handleImport() {
     
     importString.value = ''
     showImportModal.value = false
-    alert('✅ 匯入成功！您可以在預設清單中選取它了。')
+    uiStore.showAlert('匯入成功', '✅ 匯入成功！您可以在預設清單中選取它了。')
   } catch (e) {
     console.error(e)
-    alert('❌ 匯入失敗，請確認代碼是否完整且正確。')
+    uiStore.showAlert('匯入失敗', '❌ 匯入失敗，請確認代碼是否完整且正確。')
   }
 }
 
@@ -1459,19 +1466,18 @@ async function onOfficialJsonFileSelected(e: Event) {
       }
       const success = await scriptStore.importFromJson(content, fileName)
       if (success) {
-        alert('✅ 官方劇本檔案已成功匯入與載入！')
+        uiStore.showAlert('匯入成功', '✅ 官方劇本檔案已成功匯入與載入！')
         importString.value = ''
         showImportModal.value = false
-        // 自動切換下拉選單到新匯入的劇本
         const lastScript = scriptStore.customScripts[scriptStore.customScripts.length - 1]
         if (lastScript) {
           selectedCombinedId.value = `script::${lastScript.id}`
         }
       } else {
-        alert('❌ 匯入失敗：檔案內容無法解析為有效劇本格式')
+        uiStore.showAlert('匯入失敗', '❌ 匯入失敗：檔案內容無法解析為有效劇本格式')
       }
     } catch (err) {
-      alert('❌ 匯入官方 JSON 失敗：請確保檔案格式為官方標準陣列格式')
+      uiStore.showAlert('匯入失敗', '❌ 匯入官方 JSON 失敗：請確保檔案格式為官方標準陣列格式')
     }
     // 復原 input 值以利重複選取同名檔案
     if (officialJsonInput.value) officialJsonInput.value.value = ''
@@ -2057,7 +2063,7 @@ function toggleRoleSelection(role: CharacterDef) {
     if (selectedRoleIds.value.length < totalPlayers.value) {
       selectedRoleIds.value.push(role.id)
     } else {
-      alert(`已經選滿 ${totalPlayers.value} 個玩家角色囉！`)
+      uiStore.showAlert('已選滿', `已經選滿 ${totalPlayers.value} 個玩家角色囉！`)
     }
   }
 }
@@ -2310,41 +2316,43 @@ async function confirmAssignment() {
 }
 
 function handleResetSetup() {
-  if (window.confirm('確定要清除目前的指派進度並重新開始嗎？')) {
-    uiStore.resetSetupWizard()
+  uiStore.showConfirm(
+    '重置設定',
+    '確定要清除目前的指派進度並重新開始嗎？',
+    () => {
+      uiStore.resetSetupWizard()
     // 重新載入初始狀態
-    const newState = uiStore.setupWizardState as any
-    step.value = newState.step
-    Object.assign(counts, newState.counts)
-    selectedRoleIds.value = [...newState.selectedRoleIds]
-    selectedBluffIds.value = [...newState.selectedBluffIds]
-    drunkFakeRoleId.value = newState.drunkFakeRoleId
-    wudaozheFakeRoleId.value = newState.wudaozheFakeRoleId
-    lunaticFakeRoleId.value = newState.lunaticFakeRoleId
-    marionetteFakeRoleId.value = newState.marionetteFakeRoleId
-    isNewbieProtectionEnabled.value = newState.isNewbieProtectionEnabled || false
-    newbiePlayerIds.value = [...(newState.newbiePlayerIds || [])]
-    for (const key in drawingResults) delete drawingResults[key]
-    Object.assign(drawingResults, newState.drawingResults)
-    previewAssignments.value = [...newState.previewAssignments]
-    previewBluffs.value = [...newState.previewBluffs]
-    
+      const newState = uiStore.setupWizardState as any
+      step.value = newState.step
+      Object.assign(counts, newState.counts)
+      selectedRoleIds.value = [...newState.selectedRoleIds]
+      selectedBluffIds.value = [...newState.selectedBluffIds]
+      drunkFakeRoleId.value = newState.drunkFakeRoleId
+      wudaozheFakeRoleId.value = newState.wudaozheFakeRoleId
+      lunaticFakeRoleId.value = newState.lunaticFakeRoleId
+      marionetteFakeRoleId.value = newState.marionetteFakeRoleId
+      isNewbieProtectionEnabled.value = newState.isNewbieProtectionEnabled || false
+      newbiePlayerIds.value = [...(newState.newbiePlayerIds || [])]
+      for (const key in drawingResults) delete drawingResults[key]
+      Object.assign(drawingResults, newState.drawingResults)
+      previewAssignments.value = [...newState.previewAssignments]
+      previewBluffs.value = [...newState.previewBluffs]
+
     // 觸發 initial counts logic
-    const p = totalPlayers.value
-    if (p === 5) { counts.Townsfolk = 3; counts.Outsider = 0; counts.Minion = 1; counts.Demon = 1; }
-    else if (p === 6) { counts.Townsfolk = 3; counts.Outsider = 1; counts.Minion = 1; counts.Demon = 1; }
-    else if (p === 7) { counts.Townsfolk = 5; counts.Outsider = 0; counts.Minion = 1; counts.Demon = 1; }
-    else if (p === 8) { counts.Townsfolk = 5; counts.Outsider = 1; counts.Minion = 1; counts.Demon = 1; }
-    else if (p === 9) { counts.Townsfolk = 5; counts.Outsider = 2; counts.Minion = 1; counts.Demon = 1; }
-    else if (p === 10) { counts.Townsfolk = 7; counts.Outsider = 0; counts.Minion = 2; counts.Demon = 1; }
-    else if (p === 11) { counts.Townsfolk = 7; counts.Outsider = 1; counts.Minion = 2; counts.Demon = 1; }
-    else if (p === 12) { counts.Townsfolk = 7; counts.Outsider = 2; counts.Minion = 2; counts.Demon = 1; }
-    else if (p >= 13) { counts.Townsfolk = 9; counts.Outsider = 0 + (p-13); counts.Minion = 3; counts.Demon = 1; }
-    else {
-      counts.Townsfolk = Math.max(0, p - 3)
-      counts.Demon = 1; counts.Minion = 1; counts.Outsider = 1;
-    }
-  }
+      const p = totalPlayers.value
+      if (p === 5) { counts.Townsfolk = 3; counts.Outsider = 0; counts.Minion = 1; counts.Demon = 1; }
+      else if (p === 6) { counts.Townsfolk = 3; counts.Outsider = 1; counts.Minion = 1; counts.Demon = 1; }
+      else if (p === 7) { counts.Townsfolk = 5; counts.Outsider = 0; counts.Minion = 1; counts.Demon = 1; }
+      else if (p === 8) { counts.Townsfolk = 5; counts.Outsider = 1; counts.Minion = 1; counts.Demon = 1; }
+      else if (p === 9) { counts.Townsfolk = 5; counts.Outsider = 2; counts.Minion = 1; counts.Demon = 1; }
+      else if (p === 10) { counts.Townsfolk = 7; counts.Outsider = 0; counts.Minion = 2; counts.Demon = 1; }
+      else if (p === 11) { counts.Townsfolk = 7; counts.Outsider = 1; counts.Minion = 2; counts.Demon = 1; }
+      else if (p === 12) { counts.Townsfolk = 7; counts.Outsider = 2; counts.Minion = 2; counts.Demon = 1; }
+      else if (p >= 13) { counts.Townsfolk = 9; counts.Outsider = 0 + (p-13); counts.Minion = 3; counts.Demon = 1; }
+      else { counts.Townsfolk = Math.max(0, p - 3); counts.Demon = 1; counts.Minion = 1; counts.Outsider = 1; }
+    },
+    true
+  )
 }
 
 function scrollToGroup(typeKey: string) {

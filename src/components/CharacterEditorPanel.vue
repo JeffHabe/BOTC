@@ -334,7 +334,7 @@ async function saveCharacter() {
   } else {
     // 檢查 ID
     if (newList.some(c => c.id === newChar.id)) {
-      alert('該 ID 已存在，請更換一個。')
+      uiStore.showAlert('ID 已存在', '該 ID 已存在，請更換一個。')
       return
     }
     newList.push(newChar)
@@ -346,11 +346,16 @@ async function saveCharacter() {
 
 async function deleteCharacter() {
   if (!editingId.value) return
-  if (!confirm('確定要刪除這個角色嗎？')) return
-
-  const newList = scriptStore.rawCharacterList.filter(c => c.id !== editingId.value)
-  await scriptStore.saveCharacters(newList)
-  mode.value = 'list'
+  uiStore.showConfirm(
+    '刪除角色',
+    '確定要刪除這個角色嗎？',
+    async () => {
+      const newList = scriptStore.rawCharacterList.filter(c => c.id !== editingId.value)
+      await scriptStore.saveCharacters(newList)
+      mode.value = 'list'
+    },
+    true
+  )
 }
 
 function addConflictRule() {
@@ -377,7 +382,7 @@ function handleFileUpload(event: Event) {
   
   const file = target.files[0]
   if (file.size > 2 * 1024 * 1024) {
-    alert('圖片太大了 (超過 2MB)，請壓縮後再上傳。')
+    uiStore.showAlert('圖片過大', '圖片太大了 (超過 2MB)，請壓縮後再上傳。')
     return
   }
 
@@ -391,15 +396,18 @@ function handleFileUpload(event: Event) {
 }
 
 async function resetToDefault() {
-  if (!confirm('確定要將角色庫恢復成官方預設狀態嗎？這將會覆蓋您新增或修改過的所有角色且無法復原！建議先執行「匯出備份」。')) {
-    return
-  }
-  
-  try {
-    await scriptStore.resetToDefault()
-  } catch (e) {
-    alert('恢復失敗：' + String(e))
-  }
+  uiStore.showConfirm(
+    '復原預設',
+    '確定要將角色庫恢復成官方預設狀態嗎？這將會榆蓋您新增或修改過的所有角色且無法復原！建議先執行「匯出備份」。',
+    async () => {
+      try {
+        await scriptStore.resetToDefault()
+      } catch (e) {
+        uiStore.showAlert('復原失敗', '復原失敗：' + String(e))
+      }
+    },
+    true
+  )
 }
 
 async function exportLibrary() {
@@ -414,7 +422,7 @@ async function exportLibrary() {
 
     if (filePath) {
       await writeTextFile(filePath, json)
-      alert('角色庫已成功匯出至：' + filePath)
+      uiStore.showAlert('匯出成功', '角色庫已成功匯出至：' + filePath)
     }
   } catch (e) {
     console.warn('Tauri export failed, falling back to browser download', e)
@@ -427,6 +435,7 @@ async function exportLibrary() {
     URL.revokeObjectURL(url)
   }
 }
+
 async function importLibrary() {
   try {
     const filePath = await open({
@@ -440,47 +449,36 @@ async function importLibrary() {
     const importedList = JSON.parse(json)
 
     if (!Array.isArray(importedList)) {
-      alert('匯入失敗：檔案格式不正確（必須是 JSON 陣列）')
+      uiStore.showAlert('匯入失敗', '匯入失敗：檔案格式不正確（必須是 JSON 陣列）')
       return
     }
 
-    if (confirm(`確定要匯入此備份嗎？若偵測到重複的「自定義角色」將會自動重新命名以保護現有資料。檔案內含 ${importedList.length} 個角色。`)) {
-      const currentList = [...scriptStore.rawCharacterList]
-      
-      importedList.forEach((newChar: any) => {
-        const existingIdx = currentList.findIndex(c => c.id === newChar.id)
-        const existing = existingIdx > -1 ? currentList[existingIdx] : null
-
-        if (existing && existing.is_custom) {
-          // 衝突處理：現有角色是自定義的，將新匯入的角色重新命名
-          let counter = 1
-          let newId = `${newChar.id}_${counter}`
-          while (currentList.some(c => c.id === newId)) {
-            counter++
-            newId = `${newChar.id}_${counter}`
+    uiStore.showConfirm(
+      '匯入處理',
+      `確定要匯入此備份嗎？若偵測到重複的「自定義角色」將會自動重新命名以保護現有資料。檔案內含 ${importedList.length} 個角色。`,
+      async () => {
+        const currentList = [...scriptStore.rawCharacterList]
+        importedList.forEach((newChar: any) => {
+          const existingIdx = currentList.findIndex(c => c.id === newChar.id)
+          const existing = existingIdx > -1 ? currentList[existingIdx] : null
+          if (existing && existing.is_custom) {
+            let counter = 1
+            let newId = `${newChar.id}_${counter}`
+            while (currentList.some(c => c.id === newId)) { counter++; newId = `${newChar.id}_${counter}` }
+            currentList.push({ ...newChar, id: newId, name: `${newChar.name}_${counter}` })
+          } else if (existing) {
+            currentList[existingIdx] = newChar
+          } else {
+            currentList.push(newChar)
           }
-          
-          const renamedChar = {
-            ...newChar,
-            id: newId,
-            name: `${newChar.name}_${counter}`
-          }
-          currentList.push(renamedChar)
-        } else if (existing) {
-          // 覆蓋非自定義的角色（官方預設版）
-          currentList[existingIdx] = newChar
-        } else {
-          // 無衝突，直接新增
-          currentList.push(newChar)
-        }
-      })
-
-      await scriptStore.saveCharacters(currentList)
-      alert('✅ 角色庫已成功匯入（衝突角色已自動重新命名）！')
-    }
+        })
+        await scriptStore.saveCharacters(currentList)
+        uiStore.showAlert('匯入成功', '✅ 角色庫已成功匯入（衝突角色已自動重新命名）！')
+      }
+    )
   } catch (e) {
     console.error('Import failed', e)
-    alert('❌ 匯入失敗：' + String(e))
+    uiStore.showAlert('匯入失敗', '❌ 匯入失敗：' + String(e))
   }
 }
 </script>

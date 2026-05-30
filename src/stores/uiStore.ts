@@ -238,12 +238,18 @@ export const useUIStore = defineStore('ui', () => {
   const confirmDialog = ref<{
     title: string
     message: string
-    onConfirm: () => void
+    onConfirm: () => void | Promise<void>
     danger?: boolean
+    alertOnly?: boolean  // 純通知模式：只顯示「確認」按鈕，無取消
   } | null>(null)
 
-  function showConfirm(title: string, message: string, onConfirm: () => void, danger = false) {
+  function showConfirm(title: string, message: string, onConfirm: () => void | Promise<void>, danger = false) {
     confirmDialog.value = { title, message, onConfirm, danger }
+  }
+
+  /** 純通知用（取代 alert()），不阻塞 JS，不造成 Tauri 凍結 */
+  function showAlert(title: string, message: string) {
+    confirmDialog.value = { title, message, onConfirm: () => {}, alertOnly: true }
   }
 
   function closeConfirm() {
@@ -827,7 +833,7 @@ export const useUIStore = defineStore('ui', () => {
     activeNominationIndex, nominationNominatorId, nominationNomineeId,
     openVotingDetail, closeVotingDetail, startNomination,
     // 確認框
-    confirmDialog, showConfirm, closeConfirm,
+    confirmDialog, showConfirm, showAlert, closeConfirm,
     // 輸入對話框
     promptDialog, showPrompt, closePrompt,
     // 角色池

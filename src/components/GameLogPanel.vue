@@ -130,7 +130,7 @@ async function exportGame() {
 
     if (filePath) {
       await writeTextFile(filePath, json)
-      alert('對局記錄已成功匯出至：' + filePath)
+      uiStore.showAlert('匯出成功', '對局記錄已成功匯出至：' + filePath)
     }
   } catch (e) {
     // 退回到網頁下載方式

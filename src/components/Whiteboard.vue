@@ -274,6 +274,7 @@ const copyToClipboard = async () => {
   overflow: visible;
   height: 80vh; /* 固定面板總高度，確保收放時高度一致 */
   box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 32px); /* 留空間給傳統的系統工具列，+12px 為可調整的紅線間距 */
 }
 
 .panel-header {
@@ -307,6 +308,7 @@ const copyToClipboard = async () => {
   flex-direction: column;
   gap: 2px;
   overflow: hidden;
+  min-height: 100px; /* 允許 flex 項目收縮，防止溢出並讓 padding-bottom 生效 */
 }
 
 .whiteboard-desc {
@@ -686,13 +688,13 @@ const copyToClipboard = async () => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding-top: 0;
+  padding-top: 20px;
 }
 
 .copy-btn, .clear-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 50px;
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 13px;

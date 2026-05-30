@@ -198,6 +198,7 @@ export const useGameStore = defineStore('game', () => {
     const currentScript = script.value // 備份劇本
     const gs = await callCommand<GameState>('new_game')
     if (gs) {
+      historicalRoleIds.value.clear()
       state.value = gs
       logs.value = [] // 重置日誌
       addLog('action', '開始新遊戲')
@@ -212,6 +213,7 @@ export const useGameStore = defineStore('game', () => {
     const currentScript = script.value // 備份劇本
     const gs = await callCommand<GameState>('reset_players_state')
     if (gs) {
+      historicalRoleIds.value.clear()
       state.value = gs
       // 確保劇本被還原
       if (currentScript) {
@@ -226,6 +228,8 @@ export const useGameStore = defineStore('game', () => {
     compatScript.characters.forEach(c => {
       c.role_type = c.role_type.toLowerCase() as any
     })
+
+    historicalRoleIds.value.clear()
 
     const gs = await callCommand<GameState>('set_script', { script: compatScript })
     await syncState(gs)

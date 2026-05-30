@@ -7,7 +7,7 @@
       <h3 class="confirm-title">{{ uiStore.confirmDialog?.title }}</h3>
       <p class="confirm-message">{{ uiStore.confirmDialog?.message }}</p>
       <div class="confirm-actions">
-        <button class="btn-ghost" @click="uiStore.closeConfirm()">取消</button>
+        <button v-if="!uiStore.confirmDialog?.alertOnly" class="btn-ghost" @click="uiStore.closeConfirm()">取消</button>
         <button
           :class="uiStore.confirmDialog?.danger ? 'btn-danger' : 'btn-primary'"
           @click="onConfirm"
@@ -37,8 +37,8 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
-function onConfirm() {
-  uiStore.confirmDialog?.onConfirm()
+async function onConfirm() {
+  await uiStore.confirmDialog?.onConfirm()
   uiStore.closeConfirm()
 }
 </script>

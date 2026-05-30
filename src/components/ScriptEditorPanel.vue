@@ -362,7 +362,7 @@ async function handleJsonFileChange(e: Event) {
       }
 
       if (importedRoleIds.length === 0) {
-        alert('未在 JSON 中解析到有效的角色 ID，請確認檔案格式是否正確。')
+        uiStore.showAlert('格式錯誤', '未在 JSON 中解析到有效的角色 ID，請確認檔案格式是否正確。')
         return
       }
 
@@ -377,10 +377,10 @@ async function handleJsonFileChange(e: Event) {
       }
 
       selectedRoleIds.value = importedRoleIds
-      alert(`成功載入劇本 JSON！已自動為您勾選 ${importedRoleIds.length} 個角色。`)
+      uiStore.showAlert('匯入成功', `成功載入劇本 JSON！已自動為您勾選 ${importedRoleIds.length} 個角色。`)
     } catch (err) {
       console.error(err)
-      alert('解析 JSON 檔案失敗，請確保是合法的 JSON 格式。')
+      uiStore.showAlert('解析失敗', '解析 JSON 檔案失敗，請確保是合法的 JSON 格式。')
     } finally {
       if (jsonFileInput.value) {
         jsonFileInput.value.value = ''
@@ -675,7 +675,7 @@ async function handleCreateScript() {
     // 預設將當前載入劇本切換為這個新建立的劇本
     await scriptStore.selectScript(newScript)
 
-    alert(`劇本「${newScriptName.value}」建立成功，並已為您切換至此劇本！`)
+    uiStore.showAlert('建立成功', `劇本「${newScriptName.value}」建立成功，並已為您切換至此劇本！`)
 
     // 重設狀態
     newScriptName.value = ''
@@ -684,7 +684,7 @@ async function handleCreateScript() {
     activeTab.value = 'categories' // 切換到管理分類查看
   } catch (err) {
     console.error('建立劇本失敗:', err)
-    alert('建立劇本失敗，請確認資料是否正常。')
+    uiStore.showAlert('建立失敗', '建立劇本失敗，請確認資料是否正常。')
   }
 }
 
@@ -724,15 +724,15 @@ async function handleUpdateScript() {
     )
     
     if (success) {
-      alert(`劇本「${newScriptName.value}」更新成功！`)
+      uiStore.showAlert('更新成功', `劇本「${newScriptName.value}」更新成功！`)
       cancelEditingScript()
       activeTab.value = 'categories'
     } else {
-      alert('更新劇本失敗：找不到該劇本。')
+      uiStore.showAlert('更新失敗', '更新劇本失敗：找不到該劇本。')
     }
   } catch (err) {
     console.error('更新劇本失敗:', err)
-    alert('更新劇本失敗，請確認資料是否正常。')
+    uiStore.showAlert('更新失敗', '更新劇本失敗，請確認資料是否正常。')
   }
 }
 
@@ -744,16 +744,16 @@ function handleDeleteScript(script: Script) {
       try {
         const success = await scriptStore.deleteCustomScript(script.id)
         if (success) {
-          alert(`劇本「${script.name}」已成功刪除！`)
+          uiStore.showAlert('刪除成功', `劇本「${script.name}」已成功刪除！`)
           if (editingScriptId.value === script.id) {
             cancelEditingScript()
           }
         } else {
-          alert('刪除劇本失敗：找不到該劇本。')
+          uiStore.showAlert('刪除失敗', '刪除劇本失敗：找不到該劇本。')
         }
       } catch (err) {
         console.error('刪除劇本失敗:', err)
-        alert('刪除劇本失敗，請確認系統是否正常。')
+        uiStore.showAlert('刪除失敗', '刪除劇本失敗，請確認系統是否正常。')
       }
     },
     true
@@ -795,7 +795,7 @@ async function exportSingleScript(script: Script) {
 
     if (filePath) {
       await writeTextFile(filePath, json)
-      alert(`劇本「${script.name}」已成功匯出至：${filePath}`)
+      uiStore.showAlert('匯出成功', `劇本「${script.name}」已成功匯出至：${filePath}`)
     }
   } catch (e) {
     console.warn('Tauri export failed, falling back to browser download', e)
@@ -814,7 +814,7 @@ function handleCreateCategory() {
   const val = newCategoryName.value.trim()
   if (!val) return
   if (scriptStore.categories.includes(val)) {
-    alert('該類別已經存在！')
+    uiStore.showAlert('已存在', '該類別已經存在！')
     return
   }
   scriptStore.addCategory(val)
@@ -824,7 +824,7 @@ function handleCreateCategory() {
 // 刪除分類
 function handleDeleteCategory(name: string) {
   if (scriptStore.categories.length <= 1) {
-    alert('必須保留至少一個分類！')
+    uiStore.showAlert('無法刪除', '必須保留至少一個分類！')
     return
   }
   uiStore.showConfirm(
@@ -843,7 +843,7 @@ function handleRenameCategory(oldName: string, newName: string) {
   if (!val) return
   if (val === oldName) return
   if (scriptStore.categories.includes(val)) {
-    alert('該名稱已存在！')
+    uiStore.showAlert('名稱重複', '該名稱已存在！')
     return
   }
   scriptStore.updateCategory(oldName, val)
@@ -855,7 +855,7 @@ async function handleAssignScriptCategory(script: Script, category: string) {
     await scriptStore.renameScript(script.id, script.name, category)
   } catch (err) {
     console.error('歸類失敗:', err)
-    alert('劇本歸類失敗')
+    uiStore.showAlert('歸類失敗', '劇本歸類失敗')
   }
 }
 

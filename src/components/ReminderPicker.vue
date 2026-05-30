@@ -276,7 +276,8 @@ async function quickAdd(text: string, source: string = '劇本') {
   box-shadow: var(--shadow-panel);
   display: flex;
   flex-direction: column;
-  max-height: 85vh;
+  height: 85vh;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); /* 留空間給傳統的系統工具列，+12px 為可調整的紅線間距 */
 }
 
 .panel-header {
