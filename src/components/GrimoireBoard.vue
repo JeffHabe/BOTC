@@ -57,7 +57,7 @@
       }"
     >
       <!-- 中央劇本標誌 -->
-      <div class="center-logo-box" @click="handleScriptNameClick">
+      <div class="center-logo-box">
         <div class="center-logo-inner">
           <img v-if="gameStore.script?.logo" :src="gameStore.script.logo" class="center-logo-img" />
           <div v-else class="empty-icon">
@@ -174,6 +174,16 @@
     </div>
 
     <!-- 側邊或浮動按鈕 -->
+    <!-- 檢視實體劇本按鈕 (只在有 physical_image 時顯示，位於加號按鈕正上方) -->
+    <button
+      v-if="gameStore.script?.physical_image"
+      class="view-physical-script-btn"
+      @click="openPhysicalImageOverlay"
+      title="檢視實體劇本"
+    >
+      <img src="/pic/app-icon.png" class="view-script-icon" />
+    </button>
+
     <button class="add-player-btn" @click="uiStore.addPlayerDialogOpen = true">
       <span class="icon">➕</span>
     </button>
@@ -447,16 +457,12 @@ const isPinchZooming = ref(false)
 let imgStartTouchDistance = 0
 let imgStartScale = 1
 
-function handleScriptNameClick() {
-  if (gameStore.script?.physical_image) {
-    // 重設縮放拖曳狀態
-    imgScale.value = 1
-    imgTranslateX.value = 0
-    imgTranslateY.value = 0
-    showPhysicalImageOverlay.value = true
-  } else {
-    uiStore.openPanel('role-assignment')
-  }
+function openPhysicalImageOverlay() {
+  // 重設縮放拖曳狀態
+  imgScale.value = 1
+  imgTranslateX.value = 0
+  imgTranslateY.value = 0
+  showPhysicalImageOverlay.value = true
 }
 
 function handleImgWheel(e: WheelEvent) {
@@ -1270,15 +1276,12 @@ const activePanelComponent = computed(() => {
   flex-direction: column;
   align-items: center;
   gap: 0px; /* 將間距降至 0px，強制元素拉近 */
-  cursor: pointer;
+  cursor: default;
   z-index: 1; /* 降低層級，確保標誌作為背景，不遮擋令片與提示標記 */
-  pointer-events: auto; /* 重中之重：確保穿透父層的 none */
+  pointer-events: none; /* 停用點擊，避免新增提示標時誤觸 */
   transition: all 0.3s ease;
 }
 
-.center-logo-box:active {
-  transform: translate(-50%, -50%) scale(0.92);
-}
 
 /* ─────────────────────────────────────────────────────────────────────────
    排列座位模式 (Arrange Mode)
@@ -1795,6 +1798,49 @@ const activePanelComponent = computed(() => {
 /* ─────────────────────────────────────────────────────────────────────────
    按鈕與動畫 
    ───────────────────────────────────────────────────────────────────────── */
+.view-physical-script-btn {
+  position: fixed;
+  bottom: calc(75px + env(safe-area-inset-bottom, 16px) + 60px);
+  left: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3d2512 0%, #1e1008 100%);
+  border: 2px solid #c8a96e;
+  color: #d4c8b0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5), 0 0 0 0 rgba(200,169,110,0.4);
+  transition: box-shadow 0.3s ease, transform 0.2s ease, border-color 0.2s ease;
+  animation: pulse-script-btn 2.5s infinite;
+  cursor: pointer;
+}
+
+.view-physical-script-btn:hover {
+  transform: scale(1.1);
+  border-color: #f0d080;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6), 0 0 12px rgba(200,169,110,0.5);
+  animation: none;
+}
+
+.view-physical-script-btn:active {
+  transform: scale(0.95);
+}
+
+.view-script-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: brightness(1.3) sepia(0.3);
+}
+
+@keyframes pulse-script-btn {
+  0%, 100% { box-shadow: 0 6px 16px rgba(0,0,0,0.5), 0 0 0 0 rgba(200,169,110,0.4); }
+  50% { box-shadow: 0 6px 16px rgba(0,0,0,0.5), 0 0 0 6px rgba(200,169,110,0); }
+}
+
 .add-player-btn {
   position: fixed;
   bottom: calc(75px + env(safe-area-inset-bottom, 16px));
