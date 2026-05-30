@@ -754,6 +754,29 @@ export const useUIStore = defineStore('ui', () => {
         cancelable: true 
       }))
 
+      // 🚀 強制清空所有可能產生遮罩的面板與對話框狀態，防止返回後遮罩殘留阻擋點擊
+      activePanel.value = 'none'
+      rolePickerPlayer.value = null
+      rolePickerDemonBluffIndex.value = null
+      rolePickerLunaticBluffIndex.value = null
+      reminderPickerPlayerId.value = null
+      addPlayerDialogOpen.value = false
+      renameDialogPlayer.value = null
+      confirmDialog.value = null
+      promptDialog.value = null
+      isBluffsShowcase.value = false
+      isSingleRoleShowcase.value = false
+      selectedPlayerId.value = null
+      isArrangingPlayers.value = false
+
+      // 🚀 釋放可能在拖曳或返回中殘留的焦點與觸控捕獲鎖
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur()
+      }
+      try {
+        document.body?.releasePointerCapture(1)
+      } catch (e) {}
+
       // 由於 topmost 元件可能僅關閉了其內部的二級說明窗 (如 longPressChar) 或仍有下層彈窗處於開啟狀態，
       // 延遲檢查若仍有彈出層處於開啟狀態，則再次寫入保護性 history state
       setTimeout(() => {
