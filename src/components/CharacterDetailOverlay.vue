@@ -3,9 +3,9 @@
     <div class="detail-card animate-scale-up" @click.stop>
       <div class="detail-header" :class="character.role_type.toLowerCase()">
         <div class="header-main">
-          <div class="char-icon-container">
+          <div class="char-icon-container" :class="character.role_type.toLowerCase()">
             <img v-if="character.image" :src="character.image" class="detail-img" />
-            <span v-else class="detail-emoji">{{ emoji }}</span>
+            <span v-else class="role-text-fallback">{{ character.name.charAt(0) }}</span>
           </div>
           <div class="detail-title">
             <h3>{{ character.name }}</h3>
@@ -73,13 +73,6 @@ const typeLabel = computed(() => {
   return ROLE_TYPE_LABEL[props.character.role_type] || props.character.role_type
 })
 
-const emoji = computed(() => {
-  if (!props.character) return '❓'
-  const map: Record<string, string> = {
-    Townsfolk: '🏘️', Outsider: '🧪', Minion: '🔱', Demon: '😈', Traveler: '🧳', Fabled: '📖'
-  }
-  return map[props.character.role_type] || '❓'
-})
 
 function getCharacterName(id?: string) {
   if (!id) return '未知'
@@ -262,4 +255,19 @@ function getCharacterName(id?: string) {
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 }
+.role-text-fallback {
+  font-size: 32px;
+  font-weight: 900;
+  font-family: 'ChineseFont', var(--font-title), sans-serif;
+  color: currentColor;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+.char-icon-container.townsfolk { color: var(--color-townsfolk); }
+.char-icon-container.outsider { color: var(--color-outsider); }
+.char-icon-container.minion { color: var(--color-minion); }
+.char-icon-container.demon { color: var(--color-demon); }
+.char-icon-container.traveler { color: var(--color-traveler); }
+.char-icon-container.fabled { color: #dca938; }
+.char-icon-container.loric { color: #3c9438; }
 </style>

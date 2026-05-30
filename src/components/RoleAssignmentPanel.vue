@@ -139,9 +139,9 @@
                      class="role-card"
                      :class="{ 'is-excluded': excludedPoolIds.includes(role.id) }"
                      @click="togglePoolInclusion(role.id)">
-                  <div class="role-card-icon">
+                  <div class="role-card-icon" :class="role.role_type.toLowerCase()">
                     <img v-if="role.image" :src="role.image" class="r-img" />
-                    <span v-else class="r-emoji">{{ getRoleTypeEmoji(role.role_type) }}</span>
+                    <span v-else class="role-text-fallback">{{ role.name.charAt(0) }}</span>
                   </div>
                   <div class="role-card-name">{{ role.name }}</div>
                 </div>
@@ -314,9 +314,9 @@
                      @touchend="handlePressEnd"
                      @mousedown="handlePressStart(role)"
                      @mouseup="handlePressEnd">
-                  <div class="role-card-icon">
+                  <div class="role-card-icon" :class="role.role_type.toLowerCase()">
                     <img v-if="role.image" :src="role.image" class="r-img" />
-                    <span v-else class="r-emoji">{{ getRoleTypeEmoji(role.role_type) }}</span>
+                    <span v-else class="role-text-fallback">{{ role.name.charAt(0) }}</span>
                   </div>
                   <div class="role-card-name">{{ (role as any).displayName || role.name }}</div>
                 </div>
@@ -358,9 +358,9 @@
                      class="role-card"
                      :class="{ 'is-selected': drunkFakeRoleId === role.id }"
                      @click="selectDrunkFake(role.id)">
-                  <div class="role-card-icon">
+                  <div class="role-card-icon townsfolk">
                     <img v-if="role.image" :src="role.image" class="r-img" />
-                    <span v-else class="r-emoji">👤</span>
+                    <span v-else class="role-text-fallback">{{ role.name.charAt(0) }}</span>
                   </div>
                   <div class="role-card-name">{{ role.name }}</div>
                 </div>
@@ -402,9 +402,9 @@
                      class="role-card"
                      :class="{ 'is-selected': wudaozheFakeRoleId === role.id }"
                      @click="selectWudaozheFake(role.id)">
-                  <div class="role-card-icon">
+                  <div class="role-card-icon outsider">
                     <img v-if="role.image" :src="role.image" class="r-img" />
-                    <span v-else class="r-emoji">👤</span>
+                    <span v-else class="role-text-fallback">{{ role.name.charAt(0) }}</span>
                   </div>
                   <div class="role-card-name">{{ role.name }}</div>
                 </div>
@@ -446,9 +446,9 @@
                      class="role-card"
                      :class="{ 'is-selected': lunaticFakeRoleId === role.id }"
                      @click="selectLunaticFake(role.id)">
-                  <div class="role-card-icon">
+                  <div class="role-card-icon demon">
                     <img v-if="role.image" :src="role.image" class="r-img" />
-                    <span v-else class="r-emoji">😈</span>
+                    <span v-else class="role-text-fallback">{{ role.name.charAt(0) }}</span>
                   </div>
                   <div class="role-card-name">{{ role.name }}</div>
                 </div>
@@ -490,9 +490,9 @@
                      class="role-card"
                      :class="{ 'is-selected': marionetteFakeRoleId === role.id }"
                      @click="selectMarionetteFake(role.id)">
-                  <div class="role-card-icon">
+                  <div class="role-card-icon" :class="role.role_type.toLowerCase()">
                     <img v-if="role.image" :src="role.image" class="r-img" />
-                    <span v-else class="r-emoji">👤</span>
+                    <span v-else class="role-text-fallback">{{ role.name.charAt(0) }}</span>
                   </div>
                   <div class="role-card-name">{{ role.name }}</div>
                 </div>
@@ -548,9 +548,9 @@
                      @touchend="handlePressEnd"
                      @mousedown="handlePressStart(role)"
                      @mouseup="handlePressEnd">
-                  <div class="role-card-icon">
+                  <div class="role-card-icon" :class="role.role_type.toLowerCase()">
                     <img v-if="role.image" :src="role.image" class="r-img" />
-                    <span v-else class="r-emoji">{{ getRoleTypeEmoji(role.role_type) }}</span>
+                    <span v-else class="role-text-fallback">{{ role.name.charAt(0) }}</span>
                   </div>
                   <div class="role-card-name">{{ role.name }}</div>
                 </div>
@@ -682,7 +682,7 @@
                      class="flicker-item"
                      :class="{ 'is-highlighted': isIdMatch(activeFlickerId, role.id) }">
                   <img v-if="role.image" :src="role.image || undefined" class="flicker-token" />
-                  <div v-else class="flicker-placeholder">👤</div>
+                  <span v-else class="role-text-fallback flicker-placeholder" :class="role.role_type.toLowerCase()">{{ role.name.charAt(0) }}</span>
                 </div>
               </div>
               <div class="flicker-scanline"></div>
@@ -700,6 +700,7 @@
                   <img v-if="getCharacterById(spinningResultId!)?.image" 
                        :src="getCharacterById(spinningResultId!)?.image || undefined" 
                        class="result-token-img" />
+                  <span v-else-if="getCharacterById(spinningResultId!)" class="role-text-fallback result-token-placeholder" :class="getCharacterById(spinningResultId!)?.role_type.toLowerCase()">{{ getCharacterById(spinningResultId!)?.name.charAt(0) }}</span>
                   <span v-else class="result-token-placeholder">👤</span>
                 </div>
                 <div class="result-role-name">{{ getRoleName(spinningResultId!) }}</div>
@@ -2353,10 +2354,6 @@ function scrollToGroup(typeKey: string) {
   }
 }
 
-function getRoleTypeEmoji(type: string) {
-  const map: Record<string, string> = { Townsfolk: '👤', Outsider: '👤', Minion: '🔱', Demon: '😈' }
-  return map[type] || '❓'
-}
 </script>
 
 <style scoped>
@@ -3270,7 +3267,7 @@ function getRoleTypeEmoji(type: string) {
   overflow-y: auto;
 }
 
-.result-header { font-size: 14px; color: var(--color-text-muted); margin-bottom: 24px; text-transform: uppercase; letter-spacing: 2px; }
+.result-header { font-size: 18px; color: var(--color-text-muted); margin-bottom: 24px; text-transform: uppercase; letter-spacing: 2px; }
 .role-card.jump-highlight {
   animation: jump-blink 1s ease-in-out infinite;
   box-shadow: 0 0 20px var(--color-gold);
@@ -3318,8 +3315,8 @@ function getRoleTypeEmoji(type: string) {
   opacity: 0.3;
 }
 
-.result-role-name { font-size: 32px; font-weight: bold; color: var(--color-gold); margin-bottom: 12px; }
-.result-role-desc { font-size: 14px; color: #888; margin-bottom: 30px; }
+.result-role-name { font-size: 42px; font-weight: bold; color: var(--color-gold); margin-bottom: 12px; }
+.result-role-desc { font-size: 18px; color: #888; margin-bottom: 30px; }
 
 /* Ready Modal Styles */
 .ready-modal {
@@ -3598,4 +3595,40 @@ input:checked + .slider:before {
   background: #f39c12;
   transform: scale(1.02);
 }
+.role-card-icon .role-text-fallback,
+.flicker-item .role-text-fallback {
+  font-size: 20px;
+  font-weight: 900;
+  font-family: 'ChineseFont', var(--font-title), sans-serif;
+  color: currentColor;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+.result-token-wrapper .role-text-fallback {
+  font-size: 64px;
+  font-weight: 900;
+  font-family: 'ChineseFont', var(--font-title), sans-serif;
+  color: currentColor;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+.role-card-icon.townsfolk,
+.flicker-item .role-text-fallback.townsfolk,
+.result-token-wrapper .role-text-fallback.townsfolk { color: var(--color-townsfolk); }
+
+.role-card-icon.outsider,
+.flicker-item .role-text-fallback.outsider,
+.result-token-wrapper .role-text-fallback.outsider { color: var(--color-outsider); }
+
+.role-card-icon.minion,
+.flicker-item .role-text-fallback.minion,
+.result-token-wrapper .role-text-fallback.minion { color: var(--color-minion); }
+
+.role-card-icon.demon,
+.flicker-item .role-text-fallback.demon,
+.result-token-wrapper .role-text-fallback.demon { color: var(--color-demon); }
+
+.role-card-icon.traveler,
+.flicker-item .role-text-fallback.traveler,
+.result-token-wrapper .role-text-fallback.traveler { color: var(--color-traveler); }
 </style>

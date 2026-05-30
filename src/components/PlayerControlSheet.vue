@@ -18,7 +18,8 @@
               title="點擊放大展示"
             >
               <img v-if="player.role?.image && !uiStore.isRolesHidden" :src="player.role.image" alt="" />
-              <span v-else>{{ (player.role && !uiStore.isRolesHidden) ? '🎭' : '👤' }}</span>
+              <span v-else-if="player.role && !uiStore.isRolesHidden" class="role-text-fallback">{{ player.role.name.charAt(0) }}</span>
+              <span v-else>👤</span>
             </div>
             <div class="player-meta">
               <h2 class="name" @click="handleRename" title="點擊修改名稱" style="cursor: pointer;">{{ player.name }}</h2>
@@ -627,4 +628,16 @@ function handleNominateHim() {
 .sheet-slide-enter-from, .sheet-slide-leave-to {
   transform: translateY(100%);
 }
+.role-text-fallback {
+  font-size: 32px;
+  font-weight: 900;
+  font-family: 'ChineseFont', var(--font-title), sans-serif;
+  color: currentColor;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+.player-avatar.townsfolk { border-color: var(--color-townsfolk); color: var(--color-townsfolk); }
+.player-avatar.outsider { border-color: var(--color-outsider); color: var(--color-outsider); }
+.player-avatar.minion { border-color: var(--color-minion); color: var(--color-minion); }
+.player-avatar.demon { border-color: var(--color-demon); color: var(--color-demon); }
 </style>

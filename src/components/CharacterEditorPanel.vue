@@ -50,9 +50,9 @@
             class="char-item" 
             @click="openEdit(char)"
           >
-            <div class="char-logo">
+            <div class="char-logo" :class="(char.team || char.role_type || '').toLowerCase()">
               <img v-if="char.image" :src="char.image" class="char-img" />
-              <span v-else>❓</span>
+              <span v-else class="char-text-fallback">{{ char.name.charAt(0) }}</span>
             </div>
             <div class="char-info">
               <div class="char-name">
@@ -658,6 +658,22 @@ async function importLibrary() {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.char-logo.townsfolk { color: #5dade2; }
+.char-logo.outsider { color: #48c9b0; }
+.char-logo.minion { color: #ec7063; }
+.char-logo.demon { color: #f1948a; }
+.char-logo.traveler { color: #8bb34d; }
+.char-logo.fabled { color: #e6c547; }
+
+.char-text-fallback {
+  font-size: 18px;
+  font-weight: 900;
+  font-family: 'ChineseFont', var(--font-title), sans-serif;
+  color: currentColor;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  user-select: none;
 }
 
 .char-img {

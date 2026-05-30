@@ -15,7 +15,7 @@
       >
         <div v-if="bluff" class="bluff-token">
           <img v-if="bluff.image" :src="bluff.image" :alt="bluff.name" class="bluff-img" />
-          <span v-else class="bluff-emoji">📸</span>
+          <span v-else class="role-text-fallback" :class="bluff.role_type.toLowerCase()">{{ bluff.name.charAt(0) }}</span>
           <div class="bluff-name">{{ bluff.name }}</div>
         </div>
         <div v-else class="bluff-empty">
@@ -129,4 +129,16 @@ const uiStore = useUIStore()
 
 .empty-plus { font-size: 16px; margin-bottom: -2px; }
 .empty-text { font-size: 9px; }
+.role-text-fallback {
+  font-size: 16px;
+  font-weight: 900;
+  font-family: 'ChineseFont', var(--font-title), sans-serif;
+  color: currentColor;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+.role-text-fallback.townsfolk { color: var(--color-townsfolk); }
+.role-text-fallback.outsider  { color: var(--color-outsider); }
+.role-text-fallback.minion    { color: var(--color-minion); }
+.role-text-fallback.demon     { color: var(--color-demon); }
 </style>

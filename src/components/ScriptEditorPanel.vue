@@ -109,7 +109,7 @@
                   @click="toggleRole(char.id)">
                   <div class="role-icon">
                     <img v-if="char.image" :src="char.image" :alt="char.name" />
-                    <span v-else class="emoji">👤</span>
+                    <span v-else class="role-text-fallback">{{ char.name.charAt(0) }}</span>
                   </div>
                   <div class="role-name">{{ char.name }}</div>
                   <div class="role-check" v-if="selectedRoleIds.includes(char.id)">✓</div>
@@ -1627,4 +1627,19 @@ function moveCategory(index: number, direction: number) {
   object-fit: contain;
   display: block;
 }
+.role-text-fallback {
+  font-size: 20px;
+  font-weight: 900;
+  font-family: 'ChineseFont', var(--font-title), sans-serif;
+  color: currentColor;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+.role-item.townsfolk .role-text-fallback { color: var(--color-townsfolk); }
+.role-item.outsider .role-text-fallback { color: var(--color-outsider); }
+.role-item.minion .role-text-fallback { color: var(--color-minion); }
+.role-item.demon .role-text-fallback { color: var(--color-demon); }
+.role-item.traveler .role-text-fallback { color: var(--color-traveler); }
+.role-item.fabled .role-text-fallback { color: #dca938; }
+.role-item.loric .role-text-fallback { color: #3c9438; }
 </style>

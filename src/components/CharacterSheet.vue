@@ -65,7 +65,7 @@
           <div class="card-header">
             <div class="char-icon">
               <img v-if="char.image" :src="char.image" :alt="char.name" />
-              <span v-else class="emoji">{{ getEmoji(char.role_type) }}</span>
+              <span v-else class="role-text-fallback">{{ char.name.charAt(0) }}</span>
             </div>
             <div class="char-meta">
               <div class="char-name-row">
@@ -151,12 +151,6 @@ function getRoleLabel(type: RoleType) {
   return ROLE_TYPE_LABEL[type] || type
 }
 
-function getEmoji(type: RoleType) {
-  const map: Record<string, string> = {
-    Townsfolk: '🏘️', Outsider: '🧪', Minion: '🔱', Demon: '😈', Traveler: '🧳', Fabled: '📖'
-  }
-  return map[type] || '❓'
-}
 
 function getCharacterName(id?: string) {
   if (!id) return '未知'
@@ -405,4 +399,17 @@ function getCharacterName(id?: string) {
   color: var(--color-text-muted);
   font-style: italic;
 }
+.role-text-fallback {
+  font-size: 20px;
+  font-weight: 900;
+  font-family: 'ChineseFont', var(--font-title), sans-serif;
+  color: currentColor;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+.character-card.townsfolk .role-text-fallback { color: var(--color-townsfolk); }
+.character-card.outsider .role-text-fallback { color: var(--color-outsider); }
+.character-card.minion .role-text-fallback { color: var(--color-minion); }
+.character-card.demon .role-text-fallback { color: var(--color-demon); }
+.character-card.traveler .role-text-fallback { color: var(--color-traveler); }
 </style>

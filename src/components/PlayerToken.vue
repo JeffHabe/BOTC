@@ -43,7 +43,7 @@
         <div class="role-icon-inner" :class="uiStore.isRolesHidden ? 'hidden-role' : player.role?.role_type.toLowerCase()">
           <!-- 隱藏模式時完全留白，不渲染任何圖示 -->
           <img v-if="player.role?.image && !uiStore.isRolesHidden" :src="player.role.image" :alt="player.role.name" class="role-img" />
-          <span v-else-if="player.role && !uiStore.isRolesHidden" class="role-emoji">{{ roleEmoji }}</span>
+          <span v-else-if="player.role && !uiStore.isRolesHidden" class="role-text-fallback">{{ player.role.name.charAt(0) }}</span>
         </div>
         <!-- 角色名稱 (弧形顯示) -->
         <svg v-if="player.role && !uiStore.isRolesHidden" viewBox="0 0 100 100" class="role-name-svg">
@@ -267,13 +267,6 @@ function getSourceChar(sourceName: string) {
   return scriptStore.masterScript?.characters?.find(c => c.name === sourceName) || null
 }
 
-const roleEmoji = computed(() => {
-  if (!props.player.role) return ''
-  const map: Record<string, string> = {
-    Townsfolk: '', Outsider: '', Minion: '🔱', Demon: '😈', Traveler: '🧳'
-  }
-  return map[props.player.role.role_type] || '❓'
-})
 
 function handleClick(e: Event) {
   if (hasTriggeredLongPress || uiStore.isArrangingPlayers) {
@@ -663,6 +656,22 @@ const deathTypeClass = computed(() => {
   /* 使用 text-shadow 代替 filter: drop-shadow，效能更好 */
   text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
+
+.role-text-fallback {
+  font-size: 42px;
+  font-weight: 900;
+  font-family: 'ChineseFont', var(--font-title), sans-serif;
+  color: currentColor;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+
+.role-icon-inner.townsfolk { color: var(--color-townsfolk, #4a9bd4); }
+.role-icon-inner.outsider  { color: var(--color-outsider, #49c5b6); }
+.role-icon-inner.minion    { color: var(--color-minion, #e87070); }
+.role-icon-inner.demon     { color: var(--color-demon, #8b1a1a); }
+.role-icon-inner.traveler  { color: #8bb34d; }
+.role-icon-inner.fabled    { color: #e6c547; }
 
 .role-name-svg {
   position: absolute;

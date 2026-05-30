@@ -153,8 +153,9 @@
             <!-- 角色令片內部設計 -->
             <div v-if="role" class="bluff-token-classic">
               <div class="bluff-inner-content">
-                <div class="bluff-canvas-inner">
-                  <img :src="getBluffIcon(role)" class="bluff-img" />
+                <div class="bluff-canvas-inner" :class="role.role_type.toLowerCase()">
+                  <img v-if="role.image" :src="role.image" class="bluff-img" />
+                  <span v-else class="bluff-text-fallback">{{ role.name.charAt(0) }}</span>
                 </div>
                 <!-- 角色名稱 (內部) -->
                 <div class="bluff-name-inner">
@@ -289,8 +290,9 @@
             <template v-if="role">
               <div class="showcase-token-large">
                 <div class="showcase-inner-content">
-                  <div class="showcase-canvas-inner">
-                    <img :src="getBluffIcon(role)" class="showcase-img" />
+                  <div class="showcase-canvas-inner" :class="role.role_type.toLowerCase()">
+                    <img v-if="role.image" :src="role.image" class="showcase-img" />
+                    <span v-else class="bluff-text-fallback">{{ role.name.charAt(0) }}</span>
                   </div>
                   <div class="showcase-name-inner">
                     {{ role.name }}
@@ -323,8 +325,9 @@
             <template v-if="selectedPlayer.role">
               <div class="showcase-token-large">
                 <div class="showcase-inner-content">
-                  <div class="showcase-canvas-inner">
-                    <img :src="getBluffIcon(selectedPlayer.role)" class="showcase-img" />
+                  <div class="showcase-canvas-inner" :class="selectedPlayer.role.role_type.toLowerCase()">
+                    <img v-if="selectedPlayer.role.image" :src="selectedPlayer.role.image" class="showcase-img" />
+                    <span v-else class="bluff-text-fallback">{{ selectedPlayer.role.name.charAt(0) }}</span>
                   </div>
                   <div class="showcase-name-inner">
                     {{ selectedPlayer.role.name }}
@@ -936,9 +939,6 @@ function getPlayerPosStyle(index: number): CSSProperties {
   }
 }
 
-function getBluffIcon(role: any) {
-  return role.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${role.id}`
-}
 
 function getCharacterIcon(id: string) {
   const char = scriptStore.rawCharacterList.find(c => c.id === id)
@@ -1994,5 +1994,37 @@ const activePanelComponent = computed(() => {
 @keyframes glowPulse {
   0%, 100% { opacity: 0.3; }
   50% { opacity: 0.7; }
+}
+
+.bluff-canvas-inner.townsfolk,
+.showcase-canvas-inner.townsfolk { color: #5dade2; }
+
+.bluff-canvas-inner.outsider,
+.showcase-canvas-inner.outsider  { color: #48c9b0; }
+
+.bluff-canvas-inner.minion,
+.showcase-canvas-inner.minion    { color: #ec7063; }
+
+.bluff-canvas-inner.demon,
+.showcase-canvas-inner.demon     { color: #f1948a; }
+
+.bluff-canvas-inner.traveler,
+.showcase-canvas-inner.traveler  { color: #8bb34d; }
+
+.bluff-canvas-inner.fabled,
+.showcase-canvas-inner.fabled    { color: #e6c547; }
+
+.bluff-text-fallback {
+  font-size: 26px;
+  font-weight: 900;
+  font-family: 'ChineseFont', var(--font-title), sans-serif;
+  color: currentColor;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+
+.showcase-inner-content .bluff-text-fallback {
+  font-size: 52px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 </style>

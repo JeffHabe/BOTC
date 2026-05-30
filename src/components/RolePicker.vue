@@ -78,7 +78,7 @@
 
           <div class="role-icon">
             <img v-if="char.image" :src="char.image" :alt="char.name" />
-            <span v-else class="emoji">{{ getEmoji(char.role_type) }}</span>
+            <span v-else class="role-text-fallback">{{ char.name.charAt(0) }}</span>
           </div>
           <div class="role-name">{{ char.name }}</div>
           <div class="role-check" v-if="isSelected(char)">✓</div>
@@ -192,12 +192,6 @@ const filterOptions: { label: string, value: RoleType | 'All' }[] = [
   { label: '旅行者', value: 'Traveler' },
 ]
 
-function getEmoji(type: RoleType) {
-  const map: Record<string, string> = {
-    Townsfolk: '🏘️', Outsider: '🧪', Minion: '🔱', Demon: '😈', Traveler: '🧳'
-  }
-  return map[type] || '❓'
-}
 
 function isSelected(char: CharacterDef) {
   if (uiStore.rolePickerPlayer) {
@@ -502,4 +496,17 @@ async function selectRole(char: CharacterDef | null) {
   justify-content: center;
   font-weight: bold;
 }
+.role-text-fallback {
+  font-size: 24px;
+  font-weight: 900;
+  font-family: 'ChineseFont', var(--font-title), sans-serif;
+  color: currentColor;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+.role-item.townsfolk .role-text-fallback { color: var(--color-townsfolk); }
+.role-item.outsider .role-text-fallback { color: var(--color-outsider); }
+.role-item.minion .role-text-fallback { color: var(--color-minion); }
+.role-item.demon .role-text-fallback { color: var(--color-demon); }
+.role-item.traveler .role-text-fallback { color: var(--color-traveler); }
 </style>

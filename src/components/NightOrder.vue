@@ -49,8 +49,9 @@
           <div class="order-index">{{ i + 1 }}</div>
 
           <!-- 角色圖示 -->
-          <div class="order-role-icon">
+          <div class="order-role-icon" :class="char.role_type?.toLowerCase()">
             <img v-if="char.image" :src="char.image" :alt="char.name" />
+            <span v-else-if="!char.is_system" class="role-text-fallback">{{ char.name.charAt(0) }}</span>
             <img v-else-if="roleEmoji(char).startsWith('/') || roleEmoji(char).startsWith('http')" :src="roleEmoji(char)" :alt="char.name" />
             <span v-else class="order-role-emoji">{{ roleEmoji(char) }}</span>
           </div>
@@ -423,4 +424,17 @@ function cancelLongPress() {
 }
 
 .order-player-dead { font-size: 12px; }
+.role-text-fallback {
+  font-size: 20px;
+  font-weight: 900;
+  font-family: 'ChineseFont', var(--font-title), sans-serif;
+  color: currentColor;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+.order-role-icon.townsfolk { color: var(--color-townsfolk); }
+.order-role-icon.outsider  { color: var(--color-outsider); }
+.order-role-icon.minion    { color: var(--color-minion); }
+.order-role-icon.demon     { color: var(--color-demon); }
+.order-role-icon.traveler  { color: var(--color-traveler); }
 </style>

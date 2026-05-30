@@ -25,7 +25,7 @@
           >
             <div class="role-icon">
               <img v-if="char.image" :src="char.image" :alt="char.name" />
-              <span v-else class="emoji">🦄</span>
+              <span v-else class="role-text-fallback">{{ char.name.charAt(0) }}</span>
             </div>
             <div class="role-name">{{ char.name }}</div>
             <div class="role-check" v-if="isFabledActive(char.id)">✓</div>
@@ -249,4 +249,14 @@ function handlePressEnd() {
 .img-mask {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
+.role-text-fallback {
+  font-size: 24px;
+  font-weight: 900;
+  font-family: 'ChineseFont', var(--font-title), sans-serif;
+  color: currentColor;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+.role-item.fabled .role-text-fallback { color: #dca938; }
+.role-item.loric .role-text-fallback { color: #3c9438; }
 </style>
