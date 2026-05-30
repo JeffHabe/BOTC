@@ -988,7 +988,17 @@ fn get_save_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
 
 /// 保存當前遊戲狀態到實體文件
 #[tauri::command]
-pub fn save_game_state(state: GameState, app: tauri::AppHandle) -> Result<(), String> {
+pub fn save_game_state(
+    state: GameState,
+    state_manager: State<AppState>,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    // 同步更新後端記憶體狀態
+    {
+        let mut gs = state_manager.0.lock().unwrap();
+        *gs = state.clone();
+    }
+
     let path = get_save_path(&app)?;
     let json = serde_json::to_string_pretty(&state).map_err(|e| {
         error!("序列化存檔失敗: {}", e);
@@ -998,7 +1008,7 @@ pub fn save_game_state(state: GameState, app: tauri::AppHandle) -> Result<(), St
         error!("寫入存檔檔案失敗: {}", e);
         e.to_string()
     })?;
-    info!("遊戲狀態已成功保存至: {:?}", path);
+    info!("遊戲狀態已成功保存並更新至記憶體: {:?}", path);
     Ok(())
 }
 
