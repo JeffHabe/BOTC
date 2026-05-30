@@ -353,18 +353,20 @@
         v-if="showPhysicalImageOverlay && gameStore.script?.physical_image" 
         class="physical-image-overlay"
         @click.self="showPhysicalImageOverlay = false"
-        @touchmove.prevent
+        @touchmove.stop.prevent
+        @mousedown.stop
+        @touchstart.stop
       >
         <!-- 毛玻璃背景與圖片顯示區 -->
         <div 
           class="physical-image-container"
-          @mousedown="handleImgMouseDown"
-          @mousemove="handleImgMouseMove"
-          @mouseup="handleImgMouseUp"
-          @mouseleave="handleImgMouseUp"
-          @touchstart="handleImgMouseDown"
-          @touchmove="handleImgMouseMove"
-          @touchend="handleImgMouseUp"
+          @mousedown.stop="handleImgMouseDown"
+          @mousemove.stop="handleImgMouseMove"
+          @mouseup.stop="handleImgMouseUp"
+          @mouseleave.stop="handleImgMouseUp"
+          @touchstart.stop="handleImgMouseDown"
+          @touchmove.stop.prevent="handleImgMouseMove"
+          @touchend.stop="handleImgMouseUp"
           @wheel.stop.prevent="handleImgWheel"
         >
           <img 
@@ -568,6 +570,7 @@ function updateZoomOrigin(e: MouseEvent | TouchEvent) {
 }
 
 function handleGlobalWheel(e: WheelEvent) {
+  if (showPhysicalImageOverlay.value) return // 顯示實體劇本大圖時，無視全域魔典縮放
   if (e.ctrlKey) {
     e.preventDefault()
     // 只有在原始比例時，或者開始新的滾動序列時更新中心點，防止跳動
