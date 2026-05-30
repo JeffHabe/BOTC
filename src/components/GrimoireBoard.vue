@@ -57,7 +57,7 @@
       }"
     >
       <!-- 中央劇本標誌 -->
-      <div class="center-logo-box" @click="uiStore.openPanel('role-assignment')">
+      <div class="center-logo-box" @click="handleScriptNameClick">
         <div class="center-logo-inner">
           <img v-if="gameStore.script?.logo" :src="gameStore.script.logo" class="center-logo-img" />
           <div v-else class="empty-icon">
@@ -346,6 +346,49 @@
         </button>
       </div>
     </transition>
+
+    <!-- 實體劇本大圖檢視 Overlay -->
+    <transition name="fade">
+      <div 
+        v-if="showPhysicalImageOverlay && gameStore.script?.physical_image" 
+        class="physical-image-overlay"
+        @click.self="showPhysicalImageOverlay = false"
+        @touchmove.prevent
+      >
+        <!-- 毛玻璃背景與圖片顯示區 -->
+        <div 
+          class="physical-image-container"
+          @mousedown="handleImgMouseDown"
+          @mousemove="handleImgMouseMove"
+          @mouseup="handleImgMouseUp"
+          @mouseleave="handleImgMouseUp"
+          @touchstart="handleImgMouseDown"
+          @touchmove="handleImgMouseMove"
+          @touchend="handleImgMouseUp"
+          @wheel.stop.prevent="handleImgWheel"
+        >
+          <img 
+            :src="gameStore.script.physical_image" 
+            class="physical-image-content"
+            :class="{ 'is-dragging': isDraggingImg }"
+            :style="{
+              transform: `translate(${imgTranslateX}px, ${imgTranslateY}px) scale(${imgScale})`,
+              cursor: isDraggingImg ? 'grabbing' : 'grab'
+            }"
+            draggable="false"
+          />
+        </div>
+
+        <!-- 浮動控制工具列 -->
+        <div class="image-control-toolbar">
+          <button class="tool-btn" @click="zoomImg(0.2)" title="放大">🔍➕</button>
+          <button class="tool-btn" @click="zoomImg(-0.2)" title="縮小">🔍➖</button>
+          <button class="tool-btn" @click="resetImgZoom" title="重設">🔄</button>
+          <button class="tool-btn settings-link" @click="openScriptSettingsFromOverlay" title="劇本設定">⚙️ 劇本設定</button>
+          <button class="tool-btn close-link" @click="showPhysicalImageOverlay = false" title="關閉">✕</button>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -387,6 +430,77 @@ import PlayerControlSheet from './PlayerControlSheet.vue'
 const gameStore = useGameStore()
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
+
+// --- 實體劇本大圖檢視狀態 ---
+const showPhysicalImageOverlay = ref(false)
+const imgScale = ref(1)
+const imgTranslateX = ref(0)
+const imgTranslateY = ref(0)
+const isDraggingImg = ref(false)
+let imgDragStart = { x: 0, y: 0 }
+let imgTranslateStart = { x: 0, y: 0 }
+
+function handleScriptNameClick() {
+  if (gameStore.script?.physical_image) {
+    // 重設縮放拖曳狀態
+    imgScale.value = 1
+    imgTranslateX.value = 0
+    imgTranslateY.value = 0
+    showPhysicalImageOverlay.value = true
+  } else {
+    uiStore.openPanel('role-assignment')
+  }
+}
+
+function handleImgWheel(e: WheelEvent) {
+  const delta = e.deltaY > 0 ? -0.15 : 0.15
+  imgScale.value = Math.min(Math.max(0.3, imgScale.value + delta), 5)
+}
+
+function handleImgMouseDown(e: MouseEvent | TouchEvent) {
+  const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX
+  const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY
+  
+  isDraggingImg.value = true
+  imgDragStart = { x: clientX, y: clientY }
+  imgTranslateStart = { x: imgTranslateX.value, y: imgTranslateY.value }
+}
+
+function handleImgMouseMove(e: MouseEvent | TouchEvent) {
+  if (!isDraggingImg.value) return
+  
+  const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX
+  const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY
+  
+  const dx = clientX - imgDragStart.x
+  const dy = clientY - imgDragStart.y
+  
+  imgTranslateX.value = imgTranslateStart.x + dx
+  imgTranslateY.value = imgTranslateStart.y + dy
+  
+  if (e.cancelable) {
+    e.preventDefault()
+  }
+}
+
+function handleImgMouseUp() {
+  isDraggingImg.value = false
+}
+
+function resetImgZoom() {
+  imgScale.value = 1
+  imgTranslateX.value = 0
+  imgTranslateY.value = 0
+}
+
+function zoomImg(factor: number) {
+  imgScale.value = Math.min(Math.max(0.3, imgScale.value + factor), 5)
+}
+
+function openScriptSettingsFromOverlay() {
+  showPhysicalImageOverlay.value = false
+  uiStore.openPanel('role-assignment')
+}
 
 // --- 視窗大小追蹤 (用於修正正圓形比例) ---
 const windowSize = ref({ width: window.innerWidth, height: window.innerHeight })

@@ -24,25 +24,42 @@
         <!-- 分頁 1: 建立劇本 -->
         <div v-if="activeTab === 'create'" class="tab-content create-tab">
           <!-- 劇本基本資料 -->
-          <div class="form-section">
-            <div class="form-group">
-              <label class="form-label">劇本名稱</label>
-              <input type="text" v-model="newScriptName" placeholder="例如：藍色眼淚、自訂新劇本..." class="form-input" />
+          <div class="form-section-container">
+            <div class="form-section">
+              <div class="form-group">
+                <label class="form-label">劇本名稱</label>
+                <input type="text" v-model="newScriptName" placeholder="例如：藍色眼淚、自訂新劇本..." class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">所屬分類</label>
+                <select v-model="newScriptCategory" class="form-select">
+                  <option v-for="cat in scriptStore.categories" :key="cat" :value="cat">
+                    {{ cat }}
+                  </option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">官方劇本</label>
+                <button class="import-json-btn" @click="triggerJsonImport">
+                  📥 匯入 JSON
+                </button>
+                <input type="file" ref="jsonFileInput" hidden accept=".json" @change="handleJsonFileChange" />
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">所屬分類</label>
-              <select v-model="newScriptCategory" class="form-select">
-                <option v-for="cat in scriptStore.categories" :key="cat" :value="cat">
-                  {{ cat }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">官方劇本</label>
-              <button class="import-json-btn" @click="triggerJsonImport">
-                📥 匯入 JSON
-              </button>
-              <input type="file" ref="jsonFileInput" hidden accept=".json" @change="handleJsonFileChange" />
+            
+            <div class="form-section-image">
+              <label class="form-label">實體劇本圖檔</label>
+              <div class="image-upload-wrapper">
+                <div v-if="newScriptPhysicalImage" class="image-preview-container">
+                  <img :src="newScriptPhysicalImage" class="physical-image-preview" />
+                  <button class="remove-image-btn" @click="newScriptPhysicalImage = null" type="button">✕ 刪除圖檔</button>
+                </div>
+                <div v-else class="upload-placeholder" @click="triggerImageUpload">
+                  <span class="upload-icon">📷</span>
+                  <span class="upload-text">上傳實體劇本圖檔 (支援主畫面大圖縮放拖移檢視)</span>
+                  <input type="file" ref="imageFileInput" hidden accept="image/*" @change="handleImageFileChange" />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -263,8 +280,25 @@ const newScriptCategory = ref('標準劇本')
 const selectedRoleIds = ref<string[]>([])
 const characterSearch = ref('')
 const selectedEdition = ref('All')
+const newScriptPhysicalImage = ref<string | null>(null)
 
 const jsonFileInput = ref<HTMLInputElement | null>(null)
+const imageFileInput = ref<HTMLInputElement | null>(null)
+
+function triggerImageUpload() {
+  imageFileInput.value?.click()
+}
+
+function handleImageFileChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    newScriptPhysicalImage.value = event.target?.result as string
+  }
+  reader.readAsDataURL(file)
+}
 
 function triggerJsonImport() {
   jsonFileInput.value?.click()
@@ -634,7 +668,8 @@ async function handleCreateScript() {
     const newScript = await scriptStore.createCustomScript(
       newScriptName.value.trim(),
       characters,
-      newScriptCategory.value
+      newScriptCategory.value,
+      newScriptPhysicalImage.value
     )
 
     // 預設將當前載入劇本切換為這個新建立的劇本
@@ -645,6 +680,7 @@ async function handleCreateScript() {
     // 重設狀態
     newScriptName.value = ''
     selectedRoleIds.value = []
+    newScriptPhysicalImage.value = null
     activeTab.value = 'categories' // 切換到管理分類查看
   } catch (err) {
     console.error('建立劇本失敗:', err)
@@ -656,6 +692,7 @@ function startEditingScript(script: Script) {
   editingScriptId.value = script.id
   newScriptName.value = script.name
   newScriptCategory.value = script.category || '標準劇本'
+  newScriptPhysicalImage.value = script.physical_image || null
   selectedRoleIds.value = script.characters.map(c => c.id)
   activeTab.value = 'create'
 }
@@ -664,6 +701,7 @@ function cancelEditingScript() {
   editingScriptId.value = null
   newScriptName.value = ''
   selectedRoleIds.value = []
+  newScriptPhysicalImage.value = null
   if (scriptStore.categories.length > 0) {
     newScriptCategory.value = scriptStore.categories[0]
   }
@@ -681,7 +719,8 @@ async function handleUpdateScript() {
       editingScriptId.value,
       newScriptName.value.trim(),
       characters,
-      newScriptCategory.value
+      newScriptCategory.value,
+      newScriptPhysicalImage.value
     )
     
     if (success) {

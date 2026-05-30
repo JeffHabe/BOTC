@@ -123,6 +123,8 @@ pub struct Script {
     pub author: Option<String>,
     pub logo: Option<String>, // 腳本圖示路徑
     pub characters: Vec<CharacterDef>,
+    #[serde(default)]
+    pub physical_image: Option<String>,
 }
 
 impl Script {
@@ -134,6 +136,7 @@ impl Script {
             author: None,
             logo: None,
             characters: Vec::new(),
+            physical_image: None,
         }
     }
 

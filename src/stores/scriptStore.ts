@@ -56,7 +56,8 @@ function parseRawArray(raw: any[], id: string, defaultName: string): Script {
     author: meta.author || '',
     logo: meta.logo || null,
     characters: chars,
-    category: meta.category || '標準劇本'
+    category: meta.category || '標準劇本',
+    physical_image: meta.physical_image || null
   }
 }
 
@@ -151,31 +152,34 @@ export const useScriptStore = defineStore('script', () => {
     }
   }
 
-  async function createCustomScript(name: string, characters: CharacterDef[], category: string) {
+  async function createCustomScript(name: string, characters: CharacterDef[], category: string, physicalImage?: string | null) {
     const scriptId = 'custom_' + Date.now()
     const newScript: Script = {
       id: scriptId,
       name: name.trim(),
       characters,
-      category: category || categories.value[0] || '標準劇本'
+      category: category || categories.value[0] || '標準劇本',
+      physical_image: physicalImage || null
     }
     customScripts.value.push(newScript)
     await saveCustomScripts()
     return newScript
   }
 
-  async function updateCustomScript(id: string, name: string, characters: CharacterDef[], category: string) {
+  async function updateCustomScript(id: string, name: string, characters: CharacterDef[], category: string, physicalImage?: string | null) {
     const script = customScripts.value.find(s => s.id === id)
     if (script) {
       script.name = name.trim()
       script.characters = characters
       script.category = category || categories.value[0] || '標準劇本'
+      script.physical_image = physicalImage || null
       await saveCustomScripts()
       
       if (gameStore.script && gameStore.script.id === id) {
         gameStore.script.name = name.trim()
         gameStore.script.characters = characters
         gameStore.script.category = category
+        gameStore.script.physical_image = physicalImage || null
         await gameStore.setScript({ ...gameStore.script })
       }
       return true

@@ -74,6 +74,7 @@ export interface Script {
   logo?: string | null
   characters: CharacterDef[]
   category?: string
+  physical_image?: string | null
 }
 
 export type GamePhase = 'Setup' | 'FirstNight' | 'Day' | 'Night'
