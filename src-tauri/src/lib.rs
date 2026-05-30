@@ -54,6 +54,7 @@ pub fn run() {
             commands::vote,
             commands::execute,
             commands::undo_execution,
+            commands::remove_nomination,
             // 持久化
             commands::export_game_state,
             commands::import_game_state,

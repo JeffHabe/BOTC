@@ -1026,3 +1026,55 @@ pub fn load_game_state(state: State<AppState>, app: tauri::AppHandle) -> Result<
 
     Ok(loaded_state)
 }
+
+/// 移除/取消提名
+#[tauri::command]
+pub fn remove_nomination(
+    nomination_index: usize,
+    state: State<AppState>,
+) -> Result<GameState, String> {
+    let mut gs = state.0.lock().unwrap();
+    let current_round = gs.round;
+
+    if nomination_index >= gs.nominations.len() {
+        return Err("找不到指定提名".into());
+    }
+
+    let nom = &gs.nominations[nomination_index];
+    if nom.executed {
+        return Err("已執行的提名無法取消，請先撤銷處決".into());
+    }
+    if nom.round != current_round {
+        return Err("只能取消當日的提名".into());
+    }
+
+    let nominator_id = nom.nominator_id.clone();
+    let nominee_id = nom.nominee_id.clone();
+    let voters = nom.votes_for.clone();
+
+    // 1. 還原提名者的 can_nominate
+    if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominator_id) {
+        p.can_nominate = true;
+    }
+
+    // 2. 還原被提名者的 is_nominated
+    if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominee_id) {
+        p.is_nominated = false;
+    }
+
+    // 3. 還原投票中所有死亡玩家的鬼魂投票權 (has_ghost_vote)
+    for voter_id in voters {
+        if let Some(p) = gs.players.iter_mut().find(|p| p.id == voter_id) {
+            if !p.is_alive {
+                p.has_ghost_vote = true;
+            }
+        }
+    }
+
+    // 4. 從陣列中移除
+    gs.nominations.remove(nomination_index);
+
+    gs.touch();
+    Ok(gs.clone())
+}
+

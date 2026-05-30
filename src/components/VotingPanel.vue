@@ -45,7 +45,7 @@
         <div class="section-title">提名記錄 (第 {{ currentRound }} 輪)</div>
 
         <!-- 邪惡勢力統計 (僅說書人可見，若隱藏角色則不顯示) -->
-        <div class="evil-stats-bar" v-if="!uiStore.isRolesHidden && nominations.length > 0">
+        <div class="evil-stats-bar" v-if="!uiStore.isRolesHidden && displayNominations.length > 0">
           <div class="stat-box">
             <span class="label">🔱 爪牙提名:</span>
             <span class="value">{{ evilStats.minionNoms }}</span>
@@ -57,12 +57,12 @@
           </div>
         </div>
         
-        <div v-if="nominations.length === 0" class="empty-nominations">
+        <div v-if="displayNominations.length === 0" class="empty-nominations">
           今日尚未有任何提名
         </div>
 
         <div 
-          v-for="(nom, index) in nominations" 
+          v-for="{ nom, originalIndex: index } in displayNominations" 
           :key="index"
           class="nomination-card"
           :class="{ 'nom-executed': nom.executed, 'nom-expandable': nom.executed || nom.round < currentRound }"
@@ -118,7 +118,7 @@
           <div class="nom-body" v-if="!nom.executed && nom.round === currentRound">
             <div class="vote-grid">
               <button 
-                v-for="(p, idx) in gameStore.players" 
+                v-for="{ player: p, originalIndex: idx } in getOrderedPlayers(nom)" 
                 :key="p.id"
                 class="vote-btn"
                 :class="{ 
@@ -137,7 +137,13 @@
               </button>
             </div>
 
-            <div class="nom-actions">
+            <div class="nom-actions" style="gap: 8px;">
+              <button 
+                class="btn-secondary" 
+                @click.stop="doRemoveNomination(index)"
+              >
+                取消提名
+              </button>
               <button 
                 class="btn-danger" 
                 :disabled="getExecutionStatus(index).disabled"
@@ -206,6 +212,11 @@ const nomineeId = computed({
 
 const currentRound = computed(() => gameStore.round)
 const nominations = computed(() => gameStore.nominations)
+const displayNominations = computed(() => {
+  return gameStore.nominations
+    .map((nom, idx) => ({ nom, originalIndex: idx }))
+    .reverse()
+})
 
 const expandedNoms = ref(new Set<number>())
 
@@ -389,6 +400,40 @@ async function doUndoExecute(nomIndex: number) {
     },
     false
   )
+}
+
+async function doRemoveNomination(nomIndex: number) {
+  uiStore.showConfirm(
+    '取消提名',
+    `確認要取消玩家 ${playerName(nominations.value[nomIndex].nominee_id)} 的提名記錄嗎？\n這將恢復提名者與被提名者的狀態，並退回已投票死亡玩家的幽靈票。`,
+    async () => {
+      await gameStore.removeNomination(nomIndex)
+    },
+    true
+  )
+}
+
+function getOrderedPlayers(nom: any) {
+  const players = gameStore.players
+  if (!players || players.length === 0) return []
+  
+  const nomineeId = nom.nominee_id
+  const nomineeIdx = players.findIndex(p => p.id === nomineeId)
+  if (nomineeIdx === -1) {
+    return players.map((p, idx) => ({ player: p, originalIndex: idx }))
+  }
+  
+  const ordered = []
+  const len = players.length
+  // 從被提名人下一位開始，繞一圈回到被提名人自己
+  for (let i = 1; i <= len; i++) {
+    const targetIdx = (nomineeIdx + i) % len
+    ordered.push({
+      player: players[targetIdx],
+      originalIndex: targetIdx
+    })
+  }
+  return ordered
 }
 </script>
 

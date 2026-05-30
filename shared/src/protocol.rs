@@ -36,8 +36,12 @@ pub enum GameMessage {
     JoinRoom { room_id: String, player_name: String },
     ToggleReady,
     CastVote { target_player_id: String },
+    SendMessage { message: String },
     
     // 伺服器廣播的狀態 (Server -> Client)
     RoomUpdated(RoomState),
     SystemMessage(String),
+    ChatMessage { sender_name: String, message: String },
+    PlayerJoined { player_name: String },
+    PlayerLeft { player_name: String },
 }

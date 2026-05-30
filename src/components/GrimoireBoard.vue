@@ -226,6 +226,10 @@
             <img class="icon" :src="currentShapeIcon" />
           </button>
           
+          <button key="voting" class="menu-btn" @click="uiStore.openPanel('voting'); uiStore.isSideToolbarExpanded = false" title="投票管理">
+            <img class="icon" src="/pic/vote-yes.png" />
+          </button>
+          
           <button key="whiteboard" class="menu-btn" @click="uiStore.openPanel('whiteboard'); uiStore.isSideToolbarExpanded = false" title="說書人資訊">
             <!-- <span class="icon">📝</span> -->
             <img class="icon" src="/pic/notes.png" />

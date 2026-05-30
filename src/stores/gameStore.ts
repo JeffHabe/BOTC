@@ -425,6 +425,11 @@ export const useGameStore = defineStore('game', () => {
     await syncState(gs)
   }
 
+  async function removeNomination(nominationIndex: number) {
+    const gs = await callCommand<GameState>('remove_nomination', { nominationIndex })
+    await syncState(gs)
+  }
+
   // 數據匯入匯出
   async function exportState(): Promise<string | null> {
     const stateJson = await callCommand<string>('export_game_state')
@@ -502,7 +507,7 @@ export const useGameStore = defineStore('game', () => {
     addReminder, removeReminder, updateReminder,
     killPlayer, revivePlayer, toggleAlive, toggleGhostVote, toggleCanNominate, useGhostVote,
     advancePhase, revertPhase, setPhase,
-    nominate, editNomination, vote, execute, undoExecution,
+    nominate, editNomination, vote, execute, undoExecution, removeNomination,
     exportState, importState, importCustomScript, updateScriptName,
     logs, addLog, relativeNightOrder,
     nightNotes, setNightNotes,
