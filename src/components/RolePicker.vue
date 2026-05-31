@@ -66,10 +66,6 @@
             { 'is-selected': isSelected(char), 'is-occupied': isOccupied(char) && !isSelected(char) }
           ]"
           @click="selectRole(char)"
-          @touchstart="handlePressStart(char)"
-          @touchend="handlePressEnd"
-          @mousedown="handlePressStart(char)"
-          @mouseup="handlePressEnd"
         >
           <!-- 佔用標記 -->
           <div v-if="isOccupied(char) && !isSelected(char)" class="role-badge-occupied">
@@ -86,12 +82,7 @@
       </div>
     </div>
 
-    <!-- 角色詳情彈窗 -->
-    <CharacterDetailOverlay 
-      v-if="longPressChar" 
-      :character="longPressChar" 
-      @close="longPressChar = null" 
-    />
+
   </div>
 </template>
 
@@ -101,7 +92,7 @@ import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
 import { useGameStore } from '../stores/gameStore'
 import type { CharacterDef, RoleType } from '../types'
-import CharacterDetailOverlay from './CharacterDetailOverlay.vue'
+
 
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
@@ -110,7 +101,6 @@ const gameStore = useGameStore()
 const searchInput = ref<HTMLInputElement | null>(null)
 
 onMounted(() => {
-  searchInput.value?.focus()
   window.addEventListener('keydown', handleKeydown)
 })
 
@@ -121,11 +111,7 @@ onBeforeUnmount(() => {
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' || e.key === 'Esc') {
     e.stopImmediatePropagation()
-    if (longPressChar.value) {
-      longPressChar.value = null
-    } else {
-      uiStore.closeRolePicker()
-    }
+    uiStore.closeRolePicker()
   }
 }
 
@@ -145,20 +131,7 @@ const title = computed(() => {
 const showAllRoles = ref(false)
 const selectedClass = ref('')
 
-// 長按顯示詳情邏輯
-const longPressChar = ref<CharacterDef | null>(null)
-let pressTimer: any = null
 
-function handlePressStart(char: CharacterDef) {
-  clearTimeout(pressTimer)
-  pressTimer = setTimeout(() => {
-    longPressChar.value = char
-  }, 500)
-}
-
-function handlePressEnd() {
-  clearTimeout(pressTimer)
-}
 
 const displayedCharacters = computed(() => {
   let all = scriptStore.filteredCharacters
