@@ -57,7 +57,8 @@ function parseRawArray(raw: any[], id: string, defaultName: string): Script {
     logo: meta.logo || null,
     characters: chars,
     category: meta.category || '標準劇本',
-    physical_image: meta.physical_image || null
+    physical_image: meta.physical_image || null,
+    physical_image_back: meta.physical_image_back || null
   }
 }
 
@@ -66,7 +67,7 @@ export const useScriptStore = defineStore('script', () => {
   const searchQuery = ref('')
   const filterType = ref<RoleType | 'All'>('All')
   const customScripts = ref<Script[]>([])
-  
+
   // 劇本類別狀態管理
   const categories = ref<string[]>([])
 
@@ -76,11 +77,11 @@ export const useScriptStore = defineStore('script', () => {
       if (saved) {
         categories.value = JSON.parse(saved)
       } else {
-        categories.value = ['標準劇本', '官方劇本', '小劇本', '新手局建議']
+        categories.value = ['官方劇本', '縫合劇本', '汀西維爾村']
         saveCategories()
       }
     } catch (e) {
-      categories.value = ['標準劇本', '官方劇本', '小劇本', '新手局建議']
+      categories.value = ['官方劇本', '縫合劇本', '汀西維爾村']
     }
   }
 
@@ -102,7 +103,7 @@ export const useScriptStore = defineStore('script', () => {
     if (idx !== -1) {
       categories.value.splice(idx, 1)
       saveCategories()
-      
+
       const fallback = categories.value[0] || '標準劇本'
       customScripts.value.forEach(s => {
         if (s.category === name) {
@@ -110,7 +111,7 @@ export const useScriptStore = defineStore('script', () => {
         }
       })
       await saveCustomScripts()
-      
+
       if (masterScript.value.category === name) {
         masterScript.value.category = fallback
         const metaIndex = rawCharacterList.value.findIndex((r: any) => r.id === '_meta')
@@ -152,34 +153,50 @@ export const useScriptStore = defineStore('script', () => {
     }
   }
 
-  async function createCustomScript(name: string, characters: CharacterDef[], category: string, physicalImage?: string | null) {
+  async function createCustomScript(
+    name: string,
+    characters: CharacterDef[],
+    category: string,
+    physicalImage?: string | null,
+    physicalImageBack?: string | null
+  ) {
     const scriptId = 'custom_' + Date.now()
     const newScript: Script = {
       id: scriptId,
       name: name.trim(),
       characters,
       category: category || categories.value[0] || '標準劇本',
-      physical_image: physicalImage || null
+      physical_image: physicalImage || null,
+      physical_image_back: physicalImageBack || null
     }
     customScripts.value.push(newScript)
     await saveCustomScripts()
     return newScript
   }
 
-  async function updateCustomScript(id: string, name: string, characters: CharacterDef[], category: string, physicalImage?: string | null) {
+  async function updateCustomScript(
+    id: string,
+    name: string,
+    characters: CharacterDef[],
+    category: string,
+    physicalImage?: string | null,
+    physicalImageBack?: string | null
+  ) {
     const script = customScripts.value.find(s => s.id === id)
     if (script) {
       script.name = name.trim()
       script.characters = characters
       script.category = category || categories.value[0] || '標準劇本'
       script.physical_image = physicalImage || null
+      script.physical_image_back = physicalImageBack || null
       await saveCustomScripts()
-      
+
       if (gameStore.script && gameStore.script.id === id) {
         gameStore.script.name = name.trim()
         gameStore.script.characters = characters
         gameStore.script.category = category
         gameStore.script.physical_image = physicalImage || null
+        gameStore.script.physical_image_back = physicalImageBack || null
         await gameStore.setScript({ ...gameStore.script })
       }
       return true
@@ -475,6 +492,62 @@ export const useScriptStore = defineStore('script', () => {
     return JSON.stringify(data, null, 2)
   }
 
+  // 重新排列當前劇本角色順序並持久化
+  async function reorderCurrentScriptCharacters(newCharacters: CharacterDef[]) {
+    const currentId = gameStore.script?.id
+    if (!currentId) return
+    const gs = gameStore.state
+
+    // 1. 立即重新指派整個 script 物件引用，確保 Vue 響應式 computed 正確觸發更新
+    if (gs && gs.script) {
+      gs.script = {
+        ...gs.script,
+        characters: newCharacters
+      }
+    }
+    if (currentId === 'all_character_sort') {
+      masterScript.value = {
+        ...masterScript.value,
+        characters: newCharacters
+      }
+    } else {
+      const script = customScripts.value.find(s => s.id === currentId)
+      if (script) {
+        script.characters = newCharacters
+      }
+    }
+
+    // 2. 非同步持久化寫檔
+    if (currentId === 'all_character_sort') {
+      const meta = rawCharacterList.value.filter((r: any) => r.id === '_meta')
+      const ordered = newCharacters.map(c =>
+        rawCharacterList.value.find((r: any) => r.id === c.id) || c
+      )
+      const newRaw = [...meta, ...ordered]
+      rawCharacterList.value = newRaw
+      try {
+        await writeTextFile('all_character_sort.json', JSON.stringify(newRaw, null, 2), { baseDir: BaseDirectory.AppData })
+      } catch (e) {
+        console.warn('儲存角色順序失敗', e)
+      }
+    } else {
+      try {
+        await saveCustomScripts()
+      } catch (e) {
+        console.warn('儲存自定義劇本失敗', e)
+      }
+    }
+
+    // 3. 同步至後端 Rust 狀態
+    if (gs?.script) {
+      try {
+        await gameStore.setScript({ ...gs.script, characters: newCharacters })
+      } catch (e) {
+        console.warn('同步後端腳本失敗', e)
+      }
+    }
+  }
+
   return {
     searchQuery,
     filterType,
@@ -499,5 +572,6 @@ export const useScriptStore = defineStore('script', () => {
     updateCategory,
     createCustomScript,
     updateCustomScript,
+    reorderCurrentScriptCharacters,
   }
 })

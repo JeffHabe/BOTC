@@ -47,17 +47,34 @@
               </div>
             </div>
             
-            <div class="form-section-image">
-              <label class="form-label">實體劇本圖檔</label>
-              <div class="image-upload-wrapper">
-                <div v-if="newScriptPhysicalImage" class="image-preview-container">
-                  <img :src="newScriptPhysicalImage" class="physical-image-preview" />
-                  <button class="remove-image-btn" @click="newScriptPhysicalImage = null" type="button">✕ 刪除圖檔</button>
+            <div class="form-image-row">
+              <div class="form-section-image">
+                <label class="form-label">實體劇本正面圖檔 </label>
+                <div class="image-upload-wrapper">
+                  <div v-if="newScriptPhysicalImage" class="image-preview-container">
+                    <img :src="newScriptPhysicalImage" class="physical-image-preview" />
+                    <button class="remove-image-btn" @click="newScriptPhysicalImage = null" type="button">✕ 刪除圖檔</button>
+                  </div>
+                  <div v-else class="upload-placeholder" @click="triggerImageUpload">
+                    <span class="upload-icon">📷</span>
+                    <span class="upload-text">上傳正面圖檔</span>
+                    <input type="file" ref="imageFileInput" hidden accept="image/*" @change="handleImageFileChange" />
+                  </div>
                 </div>
-                <div v-else class="upload-placeholder" @click="triggerImageUpload">
-                  <span class="upload-icon">📷</span>
-                  <span class="upload-text">上傳實體劇本圖檔 (支援主畫面大圖縮放拖移檢視)</span>
-                  <input type="file" ref="imageFileInput" hidden accept="image/*" @change="handleImageFileChange" />
+              </div>
+              
+              <div class="form-section-image">
+                <label class="form-label">實體劇本背面圖檔 </label>
+                <div class="image-upload-wrapper">
+                  <div v-if="newScriptPhysicalImageBack" class="image-preview-container">
+                    <img :src="newScriptPhysicalImageBack" class="physical-image-preview" />
+                    <button class="remove-image-btn" @click="newScriptPhysicalImageBack = null" type="button">✕ 刪除圖檔</button>
+                  </div>
+                  <div v-else class="upload-placeholder" @click="triggerImageUploadBack">
+                    <span class="upload-icon">📷</span>
+                    <span class="upload-text">上傳背面圖檔</span>
+                    <input type="file" ref="imageFileInputBack" hidden accept="image/*" @change="handleImageFileChangeBack" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -281,9 +298,11 @@ const selectedRoleIds = ref<string[]>([])
 const characterSearch = ref('')
 const selectedEdition = ref('All')
 const newScriptPhysicalImage = ref<string | null>(null)
+const newScriptPhysicalImageBack = ref<string | null>(null)
 
 const jsonFileInput = ref<HTMLInputElement | null>(null)
 const imageFileInput = ref<HTMLInputElement | null>(null)
+const imageFileInputBack = ref<HTMLInputElement | null>(null)
 
 function triggerImageUpload() {
   imageFileInput.value?.click()
@@ -296,6 +315,21 @@ function handleImageFileChange(e: Event) {
   const reader = new FileReader()
   reader.onload = (event) => {
     newScriptPhysicalImage.value = event.target?.result as string
+  }
+  reader.readAsDataURL(file)
+}
+
+function triggerImageUploadBack() {
+  imageFileInputBack.value?.click()
+}
+
+function handleImageFileChangeBack(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    newScriptPhysicalImageBack.value = event.target?.result as string
   }
   reader.readAsDataURL(file)
 }
@@ -669,7 +703,8 @@ async function handleCreateScript() {
       newScriptName.value.trim(),
       characters,
       newScriptCategory.value,
-      newScriptPhysicalImage.value
+      newScriptPhysicalImage.value,
+      newScriptPhysicalImageBack.value
     )
 
     // 預設將當前載入劇本切換為這個新建立的劇本
@@ -681,6 +716,7 @@ async function handleCreateScript() {
     newScriptName.value = ''
     selectedRoleIds.value = []
     newScriptPhysicalImage.value = null
+    newScriptPhysicalImageBack.value = null
     activeTab.value = 'categories' // 切換到管理分類查看
   } catch (err) {
     console.error('建立劇本失敗:', err)
@@ -693,6 +729,7 @@ function startEditingScript(script: Script) {
   newScriptName.value = script.name
   newScriptCategory.value = script.category || '標準劇本'
   newScriptPhysicalImage.value = script.physical_image || null
+  newScriptPhysicalImageBack.value = script.physical_image_back || null
   selectedRoleIds.value = script.characters.map(c => c.id)
   activeTab.value = 'create'
 }
@@ -702,6 +739,7 @@ function cancelEditingScript() {
   newScriptName.value = ''
   selectedRoleIds.value = []
   newScriptPhysicalImage.value = null
+  newScriptPhysicalImageBack.value = null
   if (scriptStore.categories.length > 0) {
     newScriptCategory.value = scriptStore.categories[0]
   }
@@ -720,7 +758,8 @@ async function handleUpdateScript() {
       newScriptName.value.trim(),
       characters,
       newScriptCategory.value,
-      newScriptPhysicalImage.value
+      newScriptPhysicalImage.value,
+      newScriptPhysicalImageBack.value
     )
     
     if (success) {
@@ -910,7 +949,7 @@ function moveCategory(index: number, direction: number) {
 .editor-panel {
   width: 100%;
   max-width: 440px;
-  height: 80vh;
+  height: 95vh;
   /* 固定高度，防止分頁切換時面板高度抖動 */
   display: flex;
   flex-direction: column;

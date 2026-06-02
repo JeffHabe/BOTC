@@ -4,3 +4,4 @@
 fn main() {
     tauri_app_lib::run()
 }
+// Force reload frontend assets for emoji to image icon

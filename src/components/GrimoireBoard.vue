@@ -174,14 +174,14 @@
     </div>
 
     <!-- 側邊或浮動按鈕 -->
-    <!-- 檢視實體劇本按鈕 (只在有 physical_image 時顯示，位於加號按鈕正上方) -->
+    <!-- 檢視實體劇本按鈕 (只在有 physical_image 或 physical_image_back 時顯示，位於加號按鈕正上方) -->
     <button
-      v-if="gameStore.script?.physical_image"
+      v-if="gameStore.script?.physical_image || gameStore.script?.physical_image_back"
       class="view-physical-script-btn"
       @click="openPhysicalImageOverlay"
       title="檢視實體劇本"
     >
-      <img src="/pic/app-icon.png" class="view-script-icon" />
+      <img src="/pic/magic-book.png" class="view-script-icon" />
     </button>
 
     <button class="add-player-btn" @click="uiStore.addPlayerDialogOpen = true">
@@ -360,7 +360,7 @@
     <!-- 實體劇本大圖檢視 Overlay -->
     <transition name="fade">
       <div 
-        v-if="showPhysicalImageOverlay && gameStore.script?.physical_image" 
+        v-if="showPhysicalImageOverlay && (gameStore.script?.physical_image || gameStore.script?.physical_image_back)" 
         class="physical-image-overlay"
         @click.self="showPhysicalImageOverlay = false"
         @touchmove.stop.prevent
@@ -380,7 +380,7 @@
           @wheel.stop.prevent="handleImgWheel"
         >
           <img 
-            :src="gameStore.script.physical_image" 
+            :src="currentViewingImageUrl" 
             class="physical-image-content"
             :class="{ 'is-dragging': isDraggingImg }"
             :style="{
@@ -393,8 +393,17 @@
 
         <!-- 浮動控制工具列 -->
         <div class="image-control-toolbar">
-          <button class="tool-btn" @click="zoomImg(0.2)" title="放大">🔍➕</button>
-          <button class="tool-btn" @click="zoomImg(-0.2)" title="縮小">🔍➖</button>
+          <button 
+            v-if="gameStore.script?.physical_image && gameStore.script?.physical_image_back"
+            class="tool-btn side-toggle-btn"
+            @click="toggleViewingSide"
+            :title="currentViewingSide === 'front' ? '切換至背面' : '切換至正面'"
+          >
+            <img src="/pic/flip.png" class="btn-image-icon" />
+            <span>{{ currentViewingSide === 'front' ? '正面' : '背面' }}</span>
+          </button>
+          <button class="tool-btn" @click="zoomImg(0.2)" title="放大">➕</button>
+          <button class="tool-btn" @click="zoomImg(-0.2)" title="縮小">➖</button>
           <button class="tool-btn" @click="resetImgZoom" title="重設">🔄</button>
           <button class="tool-btn settings-link" @click="openScriptSettingsFromOverlay" title="劇本設定">⚙️ 劇本設定</button>
           <button class="tool-btn close-link" @click="showPhysicalImageOverlay = false" title="關閉">✕</button>
@@ -445,6 +454,19 @@ const scriptStore = useScriptStore()
 
 // --- 實體劇本大圖檢視狀態 ───
 const showPhysicalImageOverlay = ref(false)
+const currentViewingSide = ref<'front' | 'back'>('front')
+
+const currentViewingImageUrl = computed(() => {
+  if (!gameStore.script) return undefined
+  const front = gameStore.script.physical_image
+  const back = gameStore.script.physical_image_back
+  
+  if (currentViewingSide.value === 'front') {
+    return (front || back) ?? undefined
+  } else {
+    return (back || front) ?? undefined
+  }
+})
 const imgScale = ref(1)
 const imgTranslateX = ref(0)
 const imgTranslateY = ref(0)
@@ -462,7 +484,22 @@ function openPhysicalImageOverlay() {
   imgScale.value = 1
   imgTranslateX.value = 0
   imgTranslateY.value = 0
+  
+  // 決定預設看哪一面：如果有正面，優先看正面；若無，看背面
+  if (gameStore.script?.physical_image) {
+    currentViewingSide.value = 'front'
+  } else if (gameStore.script?.physical_image_back) {
+    currentViewingSide.value = 'back'
+  } else {
+    currentViewingSide.value = 'front'
+  }
+  
   showPhysicalImageOverlay.value = true
+}
+
+function toggleViewingSide() {
+  currentViewingSide.value = currentViewingSide.value === 'front' ? 'back' : 'front'
+  resetImgZoom()
 }
 
 function handleImgWheel(e: WheelEvent) {

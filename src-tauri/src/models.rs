@@ -125,6 +125,8 @@ pub struct Script {
     pub characters: Vec<CharacterDef>,
     #[serde(default)]
     pub physical_image: Option<String>,
+    #[serde(default)]
+    pub physical_image_back: Option<String>,
 }
 
 impl Script {
@@ -137,6 +139,7 @@ impl Script {
             logo: None,
             characters: Vec::new(),
             physical_image: None,
+            physical_image_back: None,
         }
     }
 

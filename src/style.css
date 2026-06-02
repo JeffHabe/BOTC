@@ -506,6 +506,31 @@ input[type="search"]:focus {
 }
 
 /* ─── 實體劇本圖片上傳與檢視樣式 ─── */
+.form-image-row {
+  display: flex;
+  gap: 16px;
+  padding: 0 16px 8px;
+  width: 100%;
+}
+
+.form-image-row .form-section-image {
+  flex: 1;
+  padding: 0;
+}
+
+.form-image-row .form-label {
+  min-height: 34px;
+  display: flex;
+  align-items: flex-end;
+}
+
+@media (max-width: 360px) {
+  .form-image-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
 .form-section-container {
   display: flex;
   flex-direction: column;
@@ -668,6 +693,12 @@ input[type="search"]:focus {
   align-items: center;
   justify-content: center;
   gap: 4px;
+}
+
+.image-control-toolbar .btn-image-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 
 .image-control-toolbar .tool-btn:hover {

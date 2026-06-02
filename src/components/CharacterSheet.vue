@@ -4,11 +4,23 @@
       <div class="panel-header">
         <span class="panel-icon">📜</span>
         <h2 class="panel-title">角色清單</h2>
+        <button
+          v-if="gameStore.script"
+          class="sort-mode-btn"
+          :class="{ 'is-active': isSortMode }"
+          @click="toggleSortMode"
+          title="拖曳排序當前劇本角色"
+        >🔀</button>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
 
+      <!-- 排序模式提示 -->
+      <div v-if="isSortMode" class="sort-mode-hint">
+        ☰ 拖曳左側手柄以調整角色順序，完成後自動儲存至劇本
+      </div>
+
       <!-- 搜索與篩選 -->
-      <div class="search-bar">
+      <div v-if="!isSortMode" class="search-bar">
         <input 
           v-model="scriptStore.searchQuery" 
           placeholder="搜索角色名稱或能力..." 
@@ -50,8 +62,8 @@
         </div>
       </div>
 
-      <!-- 角色列表 -->
-      <div class="character-list">
+      <!-- 角色列表 (一般模式) -->
+      <div v-if="!isSortMode" class="character-list">
         <div v-if="characters.length === 0" class="empty-state">
           未找到符合條目的角色
         </div>
@@ -87,6 +99,42 @@
           </div>
         </div>
       </div>
+
+      <!-- 角色列表 (拖曳排序模式) -->
+      <div v-else class="character-list">
+        <div v-if="sortableCharacters.length === 0" class="empty-state">
+          目前劇本沒有角色
+        </div>
+        <div
+          v-for="(char, index) in sortableCharacters"
+          :key="char.id"
+          class="character-card sort-card"
+          :class="[
+            char.role_type.toLowerCase(),
+            { 'is-drag-over': sortOverIndex === index && sortDragIndex !== index },
+            { 'is-dragging': sortDragIndex === index }
+          ]"
+          :data-sort-index="String(index)"
+        >
+          <div
+            class="drag-handle"
+            @pointerdown="onPointerDown($event, index)"
+          >☰</div>
+          <div class="card-header" style="flex: 1; margin-bottom: 0;">
+            <div class="char-icon">
+              <img v-if="char.image" :src="char.image" :alt="char.name" />
+              <span v-else class="role-text-fallback">{{ char.name.charAt(0) }}</span>
+            </div>
+            <div class="char-meta">
+              <div class="char-name-row">
+                <span class="char-name">{{ char.name }}</span>
+                <span class="char-name-en">{{ char.name_en }}</span>
+              </div>
+              <div class="char-type">{{ getRoleLabel(char.role_type) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -95,10 +143,122 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
+import { useGameStore } from '../stores/gameStore'
 import { ROLE_TYPE_LABEL, type RoleType } from '../types'
 
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
+const gameStore = useGameStore()
+
+// 排序模式狀態
+const isSortMode = ref(false)
+const sortDragIndex = ref<number | null>(null)
+const sortOverIndex = ref<number | null>(null)
+
+const sortableCharacters = computed(() => gameStore.script?.characters ?? [])
+
+function toggleSortMode() {
+  isSortMode.value = !isSortMode.value
+  sortDragIndex.value = null
+  sortOverIndex.value = null
+}
+
+// 基於 Pointer Events 的自訂拖曳排序邏輯 (跨滑鼠與觸控)
+function onPointerDown(e: PointerEvent, index: number) {
+  // 僅限滑鼠左鍵或觸控
+  if (e.button !== 0 && e.pointerType === 'mouse') return
+  
+  sortDragIndex.value = index
+  sortOverIndex.value = index
+  
+  const handleEl = e.currentTarget as HTMLElement
+  // 鎖定 Pointer 事件追蹤，即便指標移出元件外仍能正常接收事件
+  try {
+    handleEl.setPointerCapture(e.pointerId)
+  } catch (err) {
+    console.warn('Pointer Capture 鎖定失敗:', err)
+  }
+  
+  handleEl.addEventListener('pointermove', onPointerMove)
+  handleEl.addEventListener('pointerup', onPointerUp)
+  handleEl.addEventListener('pointercancel', onPointerCancel)
+}
+
+function onPointerMove(e: PointerEvent) {
+  if (sortDragIndex.value === null) return
+  
+  // 暫時將當前被拖曳的卡片設為 pointer-events: none 以便 elementFromPoint 進行穿透檢測
+  const draggingEl = document.querySelector('.sort-card.is-dragging') as HTMLElement | null
+  let originalPointerEvents = ''
+  if (draggingEl) {
+    originalPointerEvents = draggingEl.style.pointerEvents
+    draggingEl.style.pointerEvents = 'none'
+  }
+  
+  const el = document.elementFromPoint(e.clientX, e.clientY)
+  
+  if (draggingEl) {
+    draggingEl.style.pointerEvents = originalPointerEvents
+  }
+  
+  const card = el?.closest('[data-sort-index]') as HTMLElement | null
+  if (card?.dataset.sortIndex !== undefined) {
+    const overIndex = parseInt(card.dataset.sortIndex)
+    const dragIndex = sortDragIndex.value
+    
+    if (overIndex !== dragIndex) {
+      // 2. 立即在響應式數組中調換順序，達成卡片讓位重排的實時視覺效果
+      const newList = [...sortableCharacters.value]
+      const [dragged] = newList.splice(dragIndex, 1)
+      newList.splice(overIndex, 0, dragged)
+      
+      // 同步到 store 前端狀態以觸發即時重繪
+      if (gameStore.state && gameStore.state.script) {
+        gameStore.state.script = {
+          ...gameStore.state.script,
+          characters: newList
+        }
+      }
+      
+      // 改變當前的 dragIndex 與 overIndex，使其以新位置為基底繼續計算
+      sortDragIndex.value = overIndex
+      sortOverIndex.value = overIndex
+    }
+  }
+}
+
+function onPointerUp(e: PointerEvent) {
+  const handleEl = e.currentTarget as HTMLElement
+  try {
+    handleEl.releasePointerCapture(e.pointerId)
+  } catch (err) {}
+  
+  handleEl.removeEventListener('pointermove', onPointerMove)
+  handleEl.removeEventListener('pointerup', onPointerUp)
+  handleEl.removeEventListener('pointercancel', onPointerCancel)
+  
+  // 3. 鬆開手指時，將最終的順序進行一次性的寫檔持久化與後端同步
+  if (sortDragIndex.value !== null) {
+    scriptStore.reorderCurrentScriptCharacters(sortableCharacters.value)
+  }
+  
+  sortDragIndex.value = null
+  sortOverIndex.value = null
+}
+
+function onPointerCancel(e: PointerEvent) {
+  const handleEl = e.currentTarget as HTMLElement
+  try {
+    handleEl.releasePointerCapture(e.pointerId)
+  } catch (err) {}
+  
+  handleEl.removeEventListener('pointermove', onPointerMove)
+  handleEl.removeEventListener('pointerup', onPointerUp)
+  handleEl.removeEventListener('pointercancel', onPointerCancel)
+  
+  sortDragIndex.value = null
+  sortOverIndex.value = null
+}
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
@@ -412,4 +572,60 @@ function getCharacterName(id?: string) {
 .character-card.minion .role-text-fallback { color: var(--color-minion); }
 .character-card.demon .role-text-fallback { color: var(--color-demon); }
 .character-card.traveler .role-text-fallback { color: var(--color-traveler); }
+
+/* 排序模式 */
+.sort-mode-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--color-text-muted);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-right: 4px;
+  transition: all 0.2s;
+}
+.sort-mode-btn.is-active {
+  background: rgba(201, 168, 76, 0.2);
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+.sort-mode-hint {
+  padding: 8px 16px;
+  background: rgba(201, 168, 76, 0.08);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+  font-size: 12px;
+  color: var(--color-gold);
+  text-align: center;
+  flex-shrink: 0;
+}
+.sort-card {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: default;
+  user-select: none;
+  transition: opacity 0.15s, background 0.15s;
+}
+.sort-card.is-dragging {
+  opacity: 0.35;
+}
+.sort-card.is-drag-over {
+  background: rgba(201, 168, 76, 0.12);
+  border-left-color: var(--color-gold);
+  border-left-width: 4px;
+}
+.drag-handle {
+  font-size: 18px;
+  color: var(--color-text-muted);
+  padding: 6px 14px 6px 4px;
+  cursor: grab;
+  touch-action: none;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.drag-handle:active {
+  cursor: grabbing;
+  color: var(--color-gold);
+}
 </style>
