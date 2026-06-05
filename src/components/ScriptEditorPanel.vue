@@ -13,10 +13,15 @@
       <!-- 分頁切換 Tabs -->
       <div class="panel-tabs">
         <button class="tab-btn" :class="{ active: activeTab === 'create' }" @click="activeTab = 'create'">
-          {{ editingScriptId ? '📝 編輯劇本' : '➕ 建立劇本' }}
+          <template v-if="editingScriptId">
+            <img src="/pic/edit.png" class="btn-icon-img" />編輯劇本
+          </template>
+          <template v-else>
+            <img src="/pic/plus.png" class="btn-icon-img" />建立劇本
+          </template>
         </button>
         <button class="tab-btn" :class="{ active: activeTab === 'categories' }" @click="activeTab = 'categories'">
-          📂 劇本分類
+          <img src="/pic/category.png" class="btn-icon-img" />劇本分類
         </button>
       </div>
 
@@ -41,7 +46,7 @@
               <div class="form-group">
                 <label class="form-label">官方劇本</label>
                 <button class="import-json-btn" @click="triggerJsonImport">
-                  📥 匯入 JSON
+                  <img src="/pic/import.png" class="btn-icon-img" />匯入 JSON
                 </button>
                 <input type="file" ref="jsonFileInput" hidden accept=".json" @change="handleJsonFileChange" />
               </div>
@@ -56,7 +61,7 @@
                     <button class="remove-image-btn" @click="newScriptPhysicalImage = null" type="button">✕ 刪除圖檔</button>
                   </div>
                   <div v-else class="upload-placeholder" @click="triggerImageUpload">
-                    <span class="upload-icon">📷</span>
+                    <img src="/pic/upload.png" class="upload-icon-img" />
                     <span class="upload-text">上傳正面圖檔</span>
                     <input type="file" ref="imageFileInput" hidden accept="image/*" @change="handleImageFileChange" />
                   </div>
@@ -71,7 +76,7 @@
                     <button class="remove-image-btn" @click="newScriptPhysicalImageBack = null" type="button">✕ 刪除圖檔</button>
                   </div>
                   <div v-else class="upload-placeholder" @click="triggerImageUploadBack">
-                    <span class="upload-icon">📷</span>
+                    <img src="/pic/upload.png" class="upload-icon-img" />
                     <span class="upload-text">上傳背面圖檔</span>
                     <input type="file" ref="imageFileInputBack" hidden accept="image/*" @change="handleImageFileChangeBack" />
                   </div>
@@ -99,10 +104,10 @@
               </div>
               <div class="batch-actions">
                 <button class="action-btn-mini success" @click="selectAllFilteredRoles" title="全選當前篩選的角色">
-                  ✅ 全選
+                  <img src="/pic/vote-yes.png" class="btn-icon-img" />全選
                 </button>
                 <button class="action-btn-mini danger" @click="clearAllFilteredRoles" title="清空當前篩選的角色">
-                  🧹 清空
+                  <img src="/pic/rubber.png" class="btn-icon-img" />清空
                 </button>
               </div>
             </div>
@@ -160,7 +165,7 @@
               style="flex: 1;"
               @click="cancelEditingScript"
             >
-              ❌ 取消
+              <img src="/pic/close.png" class="btn-icon-img" />取消
             </button>
             <button 
               class="btn-primary create-btn" 
@@ -168,7 +173,12 @@
               :disabled="!newScriptName.trim() || selectedRoleIds.length === 0"
               @click="editingScriptId ? handleUpdateScript() : handleCreateScript()"
             >
-              {{ editingScriptId ? '💾 確認儲存變更' : '🚀 確認建立劇本' }}
+              <template v-if="editingScriptId">
+                <img src="/pic/notes.png" class="btn-icon-img" />確認儲存變更
+              </template>
+              <template v-else>
+                <img src="/pic/play.png" class="btn-icon-img" />確認建立劇本
+              </template>
             </button>
           </div>
         </div>
@@ -201,7 +211,7 @@
                 </button>
                 <button class="delete-btn" :disabled="scriptStore.categories.length <= 1"
                   @click="handleDeleteCategory(cat)" title="刪除分類">
-                  🗑️
+                  <img src="/pic/trash.png" class="btn-icon-img-no-margin" />
                 </button>
               </div>
             </div>
@@ -212,7 +222,7 @@
             <input type="text" v-model="newCategoryName" placeholder="新增自訂分類名稱..." class="add-input"
               @keyup.enter="handleCreateCategory" />
             <button class="btn-gold-outline add-btn" :disabled="!newCategoryName.trim()" @click="handleCreateCategory">
-              ➕ 新增
+              <img src="/pic/plus.png" class="btn-icon-img" />新增
             </button>
           </div>
 
@@ -224,7 +234,7 @@
           <div class="scripts-categorize-list">
             <div v-for="script in allEditableScripts" :key="script.id" class="script-cat-item">
               <div class="script-info">
-                <span class="script-icon">📜</span>
+                <img src="/pic/book.png" class="script-icon-img" />
                 <div class="script-details">
                   <div class="script-name">{{ script.name }}</div>
                   <div class="script-meta">{{ script.characters.length }} 個角色 | {{ script.id.startsWith('custom_') ?
@@ -248,7 +258,7 @@
                   @click="startEditingScript(script)"
                   title="編輯劇本角色"
                 >
-                  📝
+                  <img src="/pic/edit.png" class="btn-icon-img-no-margin" />
                 </button>
 
                 <button 
@@ -265,7 +275,7 @@
                   @click="handleDeleteScript(script)"
                   title="刪除劇本"
                 >
-                  🗑️
+                  <img src="/pic/trash.png" class="btn-icon-img-no-margin" />
                 </button>
               </div>
             </div>
@@ -293,7 +303,7 @@ const activeTab = ref<'create' | 'categories'>('create')
 // 編輯與建立劇本相關狀態
 const editingScriptId = ref<string | null>(null)
 const newScriptName = ref('')
-const newScriptCategory = ref('標準劇本')
+const newScriptCategory = ref('縫合劇本')
 const selectedRoleIds = ref<string[]>([])
 const characterSearch = ref('')
 const selectedEdition = ref('All')
@@ -1047,9 +1057,9 @@ function moveCategory(index: number, direction: number) {
 
 /* 建立劇本表單 */
 .form-section {
-  padding: 14px 16px 8px;
+  padding: 14px 16px 4px;
   display: flex;
-  gap: 12px;
+  gap: 8px;
 }
 
 .form-group {
@@ -1720,4 +1730,33 @@ function moveCategory(index: number, direction: number) {
 .role-item.traveler .role-text-fallback { color: var(--color-traveler); }
 .role-item.fabled .role-text-fallback { color: #dca938; }
 .role-item.loric .role-text-fallback { color: #3c9438; }
+
+.btn-icon-img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.btn-icon-img-no-margin {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+.tab-btn .btn-icon-img {
+  width: 16px;
+  height: 16px;
+}
+.upload-icon-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+.script-icon-img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  vertical-align: middle;
+}
 </style>

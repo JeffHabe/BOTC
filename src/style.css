@@ -509,7 +509,7 @@ input[type="search"]:focus {
 .form-image-row {
   display: flex;
   gap: 16px;
-  padding: 0 16px 8px;
+  padding: 0 16px 4px;
   width: 100%;
 }
 
@@ -519,7 +519,6 @@ input[type="search"]:focus {
 }
 
 .form-image-row .form-label {
-  min-height: 34px;
   display: flex;
   align-items: flex-end;
 }
@@ -534,7 +533,7 @@ input[type="search"]:focus {
 .form-section-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .form-section-image {
@@ -745,4 +744,35 @@ input[type="search"]:focus {
     font-size: 13px;
     padding: 6px 8px;
   }
+}
+
+/* ─── 解決底部傳統工具列遮擋所有滑入分頁與面板的問題 ─── */
+:root {
+  --safe-area-bottom-padding: calc(env(safe-area-inset-bottom, 0px) + 4px);
+}
+
+/* 1. 確保所有 .overlay 背景容器保持在底部，但不把整個面板往上推，恢復頂部安全間距 */
+#app .overlay {
+  padding: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* 2. 針對 ConfirmDialog 等置中彈出框，維持原本的居中和內邊距 */
+#app .overlay:has(.confirm-dialog),
+#app .overlay:has(.rename-dialog),
+#app .overlay:has(.prompt-dialog),
+#app .overlay:has(.add-player-dialog) {
+  padding: 24px !important;
+  padding-bottom: 24px !important;
+  align-items: center !important;
+}
+
+/* 3. 僅對底部滑入面版容器內部底端加上安全留白，避免內容被遮擋，同時面板頂部不溢出 */
+#app .overlay:not(:has(.confirm-dialog)):not(:has(.rename-dialog)):not(:has(.prompt-dialog)):not(:has(.add-player-dialog)) > div {
+  padding-bottom: var(--safe-area-bottom-padding, 32px) !important;
+}
+
+/* 4. 覆寫 PlayerControlSheet.vue 的控制面板底部間距 */
+#app .control-sheet {
+  padding-bottom: var(--safe-area-bottom-padding, 32px) !important;
 }

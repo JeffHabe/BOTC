@@ -2,7 +2,7 @@
   <div class="overlay" @click.self="uiStore.closeReminderPicker()">
     <div class="reminder-panel animate-slide-up">
       <div class="panel-header">
-        <span class="panel-icon">🔖</span>
+        <img src="/pic/reminder1.png" class="panel-header-icon" />
         <h2 class="panel-title">{{ player?.name }} 的提示標記</h2>
         <button class="close-btn" @click="uiStore.closeReminderPicker()">✕</button>
       </div>
@@ -53,7 +53,7 @@
               @click="handleDelete"
               title="刪除此標記"
             >
-              🗑️
+              <img src="/pic/trash.png" class="delete-btn-img" />
             </button>
             <button 
               v-if="editingId" 
@@ -289,7 +289,11 @@ async function quickAdd(text: string, source: string = '劇本') {
   flex-shrink: 0;
 }
 
-.panel-icon { font-size: 18px; }
+.panel-header-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
 .panel-title {
   font-family: var(--font-title);
   font-size: 16px;
@@ -405,6 +409,12 @@ async function quickAdd(text: string, source: string = '劇本') {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.delete-btn-img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 }
 
 .cancel-btn {

@@ -38,3 +38,5 @@ target_temp/
 log.txt
 *.log
 key/my-release-key.jks
+guide/storyteller_guide.docx
+guide/player_guide.docx

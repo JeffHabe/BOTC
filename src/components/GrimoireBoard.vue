@@ -185,7 +185,7 @@
     </button>
 
     <button class="add-player-btn" @click="uiStore.addPlayerDialogOpen = true">
-      <span class="icon">➕</span>
+      <img src="/pic/plus.png" class="icon" />
     </button>
 
     <div class="side-action-group" :class="{ 'is-expanded': uiStore.isSideToolbarExpanded }">
@@ -204,13 +204,13 @@
         <template v-if="uiStore.isSideToolbarExpanded">
           <button key="settings" class="menu-btn" @click="uiStore.openPanel('settings'); uiStore.isSideToolbarExpanded = false" title="設置">
             <!-- <span class="icon">🛠️</span> -->
-            <img class="icon" src="/pic/repair.png" />
+            <img class="icon" src="/pic/magic-wand.png" />
 
           </button>
 
           <button key="night-order" class="menu-btn" @click="uiStore.openPanel('night-order'); uiStore.isSideToolbarExpanded = false" title="夜晚順序">
             <!-- <span class="icon">🌙</span> -->
-             <img class="icon" src="/pic/moon.png" />
+             <img class="icon" src="/pic/day-and-night.png" />
           </button>
 
           <button 
@@ -243,7 +243,7 @@
           
           <button key="whiteboard" class="menu-btn" @click="uiStore.openPanel('whiteboard'); uiStore.isSideToolbarExpanded = false" title="說書人資訊">
             <!-- <span class="icon">📝</span> -->
-            <img class="icon" src="/pic/notes.png" />
+            <img class="icon" src="/pic/whiteboard.png" />
           </button>
         </template>
       </transition-group> 
@@ -253,13 +253,13 @@
     <!-- 縮放按鈕 (底部中央水平排列) -->
     <div class="zoom-controls-bottom">
       <button class="side-action-btn" @click="uiStore.zoomOut()" title="縮小">
-        <span class="icon">➖</span>
+        <img src="/pic/minus.png" class="icon" />
       </button>
       <button class="side-action-btn reset-btn" @click="uiStore.resetZoom()" title="重置縮放">
         <span class="percentage">{{ Math.round(uiStore.grimoireScale * 100) }}%</span>
       </button>
       <button class="side-action-btn" @click="uiStore.zoomIn()" title="放大">
-        <span class="icon">➕</span>
+        <img src="/pic/plus.png" class="icon" />
       </button>
     </div>
 
@@ -402,10 +402,19 @@
             <img src="/pic/flip.png" class="btn-image-icon" />
             <span>{{ currentViewingSide === 'front' ? '正面' : '背面' }}</span>
           </button>
-          <button class="tool-btn" @click="zoomImg(0.2)" title="放大">➕</button>
-          <button class="tool-btn" @click="zoomImg(-0.2)" title="縮小">➖</button>
-          <button class="tool-btn" @click="resetImgZoom" title="重設">🔄</button>
-          <button class="tool-btn settings-link" @click="openScriptSettingsFromOverlay" title="劇本設定">⚙️ 劇本設定</button>
+          <button class="tool-btn" @click="zoomImg(0.2)" title="放大">
+            <img src="/pic/plus.png" class="btn-image-icon" />
+          </button>
+          <button class="tool-btn" @click="zoomImg(-0.2)" title="縮小">
+            <img src="/pic/minus.png" class="btn-image-icon" />
+          </button>
+          <button class="tool-btn" @click="resetImgZoom" title="重設">
+            <img src="/pic/reset.png" class="btn-image-icon" />
+          </button>
+          <button class="tool-btn settings-link" @click="openScriptSettingsFromOverlay" title="劇本設定">
+            <img src="/pic/gear.png" class="btn-image-icon" />
+            <span>劇本設定</span>
+          </button>
           <button class="tool-btn close-link" @click="showPhysicalImageOverlay = false" title="關閉">✕</button>
         </div>
       </div>
@@ -1995,7 +2004,7 @@ const activePanelComponent = computed(() => {
   transform: translateY(-10px) scale(0.5);
 }
 
-.menu-btn .icon, .privacy-btn .icon, .side-action-group .side-action-btn .icon, .menu-toggle-btn .icon {
+.menu-btn .icon, .privacy-btn .icon, .side-action-group .side-action-btn .icon, .menu-toggle-btn .icon, .add-player-btn .icon, .zoom-controls-bottom .side-action-btn .icon {
   font-size: 10px;
   width: 16px;
   height: 16px;

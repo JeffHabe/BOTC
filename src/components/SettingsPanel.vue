@@ -2,7 +2,7 @@
   <div class="overlay" @click.self="uiStore.closePanel()">
     <div class="settings-panel panel animate-slide-up">
       <div class="panel-header">
-        <span class="panel-icon">⚙️</span>
+        <span class="panel-icon"><img src="/pic/gear.png" class="panel-header-icon" /></span>
         <h2 class="panel-title">設置選項</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
@@ -68,7 +68,7 @@
           </button>
 
           <button class="grid-item" @click="openVoting">
-            <span class="grid-icon">🗳️</span>
+            <span class="grid-icon"><img src="/pic/vote.png" class="grid-img" /></span>
             <span class="grid-label">投票面板</span>
           </button>
 
@@ -81,27 +81,27 @@
           </button>
 
           <button class="grid-item" @click="openNightOrder">
-            <span class="grid-icon">🌙</span>
+            <span class="grid-icon"><img src="/pic/day-and-night.png" class="grid-img" /></span>
             <span class="grid-label">夜晚順序</span>
           </button>
 
           <button class="grid-item" @click="openGameLog">
-            <span class="grid-icon">📋</span>
+            <span class="grid-icon"><img src="/pic/history.png" class="grid-img" /></span>
             <span class="grid-label">對局記錄</span>
           </button>
 
           <button class="grid-item" @click="openCharSheet">
-            <span class="grid-icon">📜</span>
+            <span class="grid-icon"><img src="/pic/skin.png" class="grid-img" /></span>
             <span class="grid-label">角色清單</span>
           </button>
 
           <button class="grid-item" @click="openPlayerOrder">
-            <span class="grid-icon">🪑</span>
+            <span class="grid-icon"><img src="/pic/throne.png" class="grid-img" /></span>
             <span class="grid-label">座位編排</span>
           </button>
 
           <button class="grid-item" @click="openCharacterEditor">
-            <span class="grid-icon">📝</span>
+            <span class="grid-icon"><img src="/pic/anonymous.png" class="grid-img" /></span>
             <span class="grid-label">自訂庫</span>
           </button>
 
@@ -121,21 +121,21 @@
         <div class="settings-grid cols-2">
 
           <button class="grid-item" @click="importGame">
-            <span class="grid-icon">📋🔽</span>
+            <span class="grid-icon"><img src="/pic/downloading.png" class="grid-img" /></span>
             <span class="grid-label">匯入遊戲</span>
           </button>
           <button class="grid-item" @click="exportGame">
-            <span class="grid-icon">📋🔼</span>
+            <span class="grid-icon"><img src="/pic/upload.png" class="grid-img" /></span>
             <span class="grid-label">匯出遊戲</span>
           </button>
 
           <button class="grid-item" @click="importScripts">
-            <span class="grid-icon">📜🔽</span>
+            <span class="grid-icon"><img src="/pic/import.png" class="grid-img" /></span>
             <span class="grid-label">匯入劇本</span>
           </button>
 
            <button class="grid-item" @click="exportAllScripts">
-            <span class="grid-icon">📜🔼</span>
+            <span class="grid-icon"><img src="/pic/export.png" class="grid-img" /></span>
             <span class="grid-label">匯出劇本</span>
           </button>
 
@@ -306,12 +306,12 @@
         <div class="section-title danger-section">危險區域</div>
         <div class="settings-grid">
           <button class="grid-item warning" @click="resetStates">
-            <span class="grid-icon">🔄</span>
+            <span class="grid-icon"><img src="/pic/reset.png" class="grid-img" /></span>
             <span class="grid-label">重置狀態</span>
           </button>
 
           <button class="grid-item danger" @click="resetGame">
-            <span class="grid-icon">🗑️</span>
+            <span class="grid-icon"><img src="/pic/close.png" class="grid-img" /></span>
             <span class="grid-label">重置遊戲</span>
           </button>
         </div>
@@ -488,7 +488,7 @@ const shapes = [
 
 const layouts = [
   { id: 'inner', label: '向心排列', icon: '/pic/arrows-circle (1).png' },
-  { id: 'arc', label: '環繞排列', icon: '/pic/arrows-circle (2).png' },
+  { id: 'arc', label: '環繞排列', icon: '/pic/street-view.png' },
 ]
 
 function openNightOrder() {
@@ -983,6 +983,22 @@ function resetGame() {
 
 .grid-icon {
   font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grid-icon .grid-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.panel-header-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 .grid-label {
@@ -1211,8 +1227,8 @@ function resetGame() {
 }
 
 .img-theater {
-  width: 42px;
-  height: 42px;
+  width: 30px;
+  height: 30px;
   /* 確保圖片容器內部完美水平置中 */
   transform: translate(3px, 0px);
 }

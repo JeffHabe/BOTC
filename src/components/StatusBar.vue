@@ -56,7 +56,7 @@
         </span>
         <span class="stat-item threshold" v-if="gameStore.phase === 'Day'" title="門檻">
           <span class="stat-icon">
-            <img src="/pic/guillotine.png" alt="處決門檻" class="stat-img img-guillotine" />
+            <img src="/pic/suicide.png" alt="處決門檻" class="stat-img img-suicide" />
           </span>
           <!-- <span class="stat-icon">⚔️</span> -->
           <span class="stat-num">{{ gameStore.threshold }}</span>
@@ -304,7 +304,7 @@ const totalVotes = computed(() => {
   transform: translate(0px, 0px);
 }
 
-.img-guillotine {
+.img-suicide {
   /* 斷頭台處決門檻圖示微調 */
   transform: translate(0px, 0px);
 }

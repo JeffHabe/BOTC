@@ -32,8 +32,12 @@
         <span class="player-name-text">{{ player.name || '' }}</span>
         <!-- 狀態圖示 (是否有投票權等) 移入姓名標籤中 -->
         <div class="status-indicators-inline">
-          <span v-if="!player.is_alive && player.has_ghost_vote" class="ghost-vote" title="擁有靈魂投票權">👻</span>
-          <span v-if="!player.can_nominate" class="nominate-lock" title="今日已不能提名">🚫</span>
+          <span v-if="!player.is_alive && player.has_ghost_vote" class="ghost-vote" title="擁有靈魂投票權">
+            <img src="/pic/grave.png" class="ghost-vote-img" />
+          </span>
+          <span v-if="!player.can_nominate" class="nominate-lock" title="今日已不能提名">
+            <img src="/pic/nomination.png" class="nominate-lock-img" />
+          </span>
         </div>
       </div>
     
@@ -907,6 +911,20 @@ const deathTypeClass = computed(() => {
   font-size: 11px; /* 稍微縮小以配合標籤高度 */
   filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));
   line-height: 1;
+}
+
+.status-indicators-inline .ghost-vote-img {
+  width: 11px;
+  height: 11px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.status-indicators-inline .nominate-lock-img {
+  width: 11px;
+  height: 11px;
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 .pointer-events-none {

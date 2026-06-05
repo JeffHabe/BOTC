@@ -258,7 +258,7 @@ function cancelLongPress() {
 .night-order-panel {
   width: 100%;
   max-width: 440px;
-  max-height: 85vh;
+  height: 85vh;
   display: flex;
   flex-direction: column;
   border-radius: 20px 20px 12px 12px;

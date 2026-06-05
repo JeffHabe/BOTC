@@ -19,7 +19,7 @@
             >
               <img v-if="player.role?.image && !uiStore.isRolesHidden" :src="player.role.image" alt="" />
               <span v-else-if="player.role && !uiStore.isRolesHidden" class="role-text-fallback">{{ player.role.name.charAt(0) }}</span>
-              <span v-else>👤</span>
+              <img v-else src="/pic/token1.png" alt="預設頭像" />
             </div>
             <div class="player-meta">
               <h2 class="name" @click="handleRename" title="點擊修改名稱" style="cursor: pointer;">{{ player.name }}</h2>
@@ -38,20 +38,20 @@
           <div class="action-grid">
             <template v-if="player.is_alive">
               <button class="action-btn death-btn full-width" @click="handleKill">
-                <span class="icon">💀</span>
+                <img src="/pic/suicide.png" class="action-btn-img" />
                 <span class="label">死亡</span>
                 <span v-if="isProtected" class="warning-badge" title="注意：該玩家目前有保護標記">⚠️被保護</span>
               </button>
             </template>
             <template v-else>
               <button class="action-btn revive-btn full-width" @click="handleRevive">
-                <span class="icon">❤️</span>
+                <img src="/pic/heart.png" class="action-btn-img" />
                 <span class="label">復活</span>
               </button>
             </template>
 
             <button class="action-btn reminder-btn" @click="handleReminderPicker">
-              <span class="icon">🔖</span>
+              <img src="/pic/reminder1.png" class="action-btn-img" />
               <span class="label">提示標記</span>
               <span v-if="!uiStore.isRolesHidden && player.reminders.length > 0" class="rem-count-badge">
                 {{ player.reminders.length }}
@@ -59,7 +59,7 @@
             </button>
 
             <button class="action-btn role-btn" @click="handleRolePicker">
-              <span class="icon">🎭</span>
+              <img src="/pic/mask.png" class="action-btn-img" />
               <span class="label">變更角色</span>
             </button>
           </div>
@@ -68,7 +68,7 @@
           <div class="toggle-list">
             <div class="toggle-item" v-if="!player.is_alive">
               <div class="toggle-info">
-                <span class="t-icon">👻</span>
+                <img src="/pic/grave.png" class="toggle-icon-img" />
                 <div>
                   <div class="t-title">靈魂投票權</div>
                   <div class="t-sub">{{ player.has_ghost_vote ? '尚未使用' : '已使用' }}</div>
@@ -85,7 +85,7 @@
 
             <div class="toggle-item">
               <div class="toggle-info">
-                <span class="t-icon">🗳️</span>
+                <img src="/pic/nomination.png" class="toggle-icon-img" />
                 <div>
                   <div class="t-title">今日可提名</div>
                   <div class="t-sub">{{ player.can_nominate ? '可以提名' : '不可提名' }}</div>
@@ -110,7 +110,7 @@
                 @click="handleStartNominationAs"
                 :disabled="!player.is_alive || !player.can_nominate"
               >
-                <span class="icon">📢</span>
+                <img src="/pic/vote.png" class="action-btn-img" />
                 <span class="label">由他發起提名</span>
               </button>
               <button 
@@ -118,7 +118,7 @@
                 @click="handleNominateHim"
                 :disabled="player.is_nominated"
               >
-                <span class="icon">⚖️</span>
+                <img src="/pic/nomination.png" class="action-btn-img" />
                 <span class="label">提名此玩家</span>
               </button>
             </div>
@@ -127,7 +127,8 @@
           <!-- 底部操作列 -->
           <div class="sheet-footer-actions">
             <button class="remove-btn" @click="handleRemove">
-              🗑️ 移除此玩家
+              <img src="/pic/trash.png" class="remove-btn-img" />
+              移除此玩家
             </button>
             <button class="btn-ghost close-bottom-btn" @click="uiStore.selectPlayer(null)">
               ✕ 返回主畫面
@@ -445,7 +446,11 @@ function handleNominateHim() {
   transform: scale(0.96);
 }
 
-.action-btn .icon { font-size: 22px; }
+.action-btn-img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
 .action-btn .label {
   font-size: 14px;
   font-weight: 600;
@@ -583,6 +588,20 @@ function handleNominateHim() {
   color: #f44336;
   border-radius: 12px;
   font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.remove-btn-img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+.toggle-icon-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
 .nomination-actions {

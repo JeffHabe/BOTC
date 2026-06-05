@@ -2,7 +2,7 @@
   <div class="overlay" @click.self="uiStore.closePanel()">
     <div class="whiteboard-panel panel animate-slide-up">
       <div class="panel-header">
-        <span class="panel-icon">📝</span>
+        <span class="panel-icon"><img src="/pic/whiteboard.png" class="panel-header-icon" /></span>
         <h2 class="panel-title">說書人資訊</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
@@ -124,11 +124,14 @@
             @click="copyToClipboard"
             :class="{ success: copied }"
           >
-            <span class="icon">{{ copied ? '✅' : '📋' }}</span> 
+            <span class="icon">
+              <img v-if="copied" src="/pic/vote-yes.png" class="btn-image-icon" />
+              <img v-else src="/pic/copy.png" class="btn-image-icon" />
+            </span> 
             {{ copied ? '已複製內容' : '複製全部文字' }}
           </button>
           <button class="clear-btn" @click="gameStore.setNightNotes('')">
-            <span class="icon">🧹</span> 清除全部內容
+            <span class="icon"><img src="/pic/rubber.png" class="btn-image-icon" /></span> 清除全部內容
           </button>
         </div>
       </div>
@@ -731,4 +734,18 @@ const copyToClipboard = async () => {
 }
 
 .copy-btn .icon, .clear-btn .icon { font-size: 14px; }
+
+.panel-header-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.whiteboard-footer .btn-image-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: middle;
+}
 </style>

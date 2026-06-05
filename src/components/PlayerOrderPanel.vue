@@ -2,7 +2,7 @@
   <div class="overlay" @click.self="uiStore.closePanel()">
     <div class="order-panel panel animate-slide-up">
       <div class="panel-header">
-        <span class="panel-icon">🔄</span>
+        <img src="/pic/sort.png" class="panel-header-icon" />
         <h2 class="panel-title">調整座位順序</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
@@ -124,6 +124,13 @@ function closePanel() {
   align-items: center;
   padding: 16px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.panel-header-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  margin-right: 8px;
 }
 
 .panel-title {

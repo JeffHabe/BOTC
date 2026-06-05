@@ -2,7 +2,7 @@
   <div class="overlay" @click.self="uiStore.closePanel()">
     <div class="voting-panel panel animate-slide-up">
       <div class="panel-header">
-        <span class="panel-icon">🗳️</span>
+        <span class="panel-icon"><img src="/pic/vote.png" class="panel-header-icon" /></span>
         <h2 class="panel-title">投票管理</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
@@ -47,12 +47,12 @@
         <!-- 邪惡勢力統計 (僅說書人可見，若隱藏角色則不顯示) -->
         <div class="evil-stats-bar" v-if="!uiStore.isRolesHidden && displayNominations.length > 0">
           <div class="stat-box">
-            <span class="label">🔱 爪牙提名:</span>
+            <span class="label"><img src="/pic/Minions.png" class="stat-icon" /> 爪牙提名:</span>
             <span class="value">{{ evilStats.minionNoms }}</span>
           </div>
           <div class="stat-divider">|</div>
           <div class="stat-box">
-            <span class="label">👹 惡魔投票:</span>
+            <span class="label"><img src="/pic/Demons.png" class="stat-icon" /> 惡魔投票:</span>
             <span class="value">{{ evilStats.demonVotes }}</span>
           </div>
         </div>
@@ -83,7 +83,7 @@
                   @click.stop="startEditNomination(index)"
                   title="修改提名"
                 >
-                  ✍️
+                  <img src="/pic/edit.png" class="edit-icon" />
                 </button>
               </div>
               <div class="nom-score" :class="{ 'score-pass': nom.votes_for.length >= (nom.round === currentRound && !nom.executed ? gameStore.threshold : nom.threshold) }">
@@ -130,10 +130,10 @@
                 :disabled="!p.is_alive && !p.has_ghost_vote && !nom.votes_for.includes(p.id)"
               >
                 <div class="vote-player-wrap">
-                  <span v-if="!p.is_alive" class="vote-ghost-icon">👻</span>
+                  <span v-if="!p.is_alive" class="vote-ghost-icon"><img src="/pic/grave.png" class="vote-ghost-img" /></span>
                   <span class="vote-player" :style="{ color: getPlayerColor(p.id) }">{{ idx + 1 }}. {{ p.name }}</span>
                 </div>
-                <span v-if="nom.votes_for.includes(p.id)" class="vote-mark">✓</span>
+                <span v-if="nom.votes_for.includes(p.id)" class="vote-mark"><img src="/pic/vote-yes.png" class="vote-yes-img" /></span>
               </button>
             </div>
 
@@ -156,7 +156,7 @@
 
           <!-- 已執行或歷史記錄的樣式 -->
           <div class="nom-executed-badge" v-else-if="nom.executed">
-            <span class="status">⚖️ 已處決</span>
+            <span class="status"><img src="/pic/suicide.png" class="executed-img" /> 已處決</span>
             <span class="final-score">(今日最終票數: {{ nom.votes_for.length }})</span>
             <button class="btn-undo" @click.stop="doUndoExecute(index)">撤銷</button>
           </div>
@@ -452,7 +452,7 @@ function getOrderedPlayers(nom: any) {
 .voting-panel {
   width: 100%;
   max-width: 440px;
-  max-height: 85vh;
+  height: 85vh;
   display: flex;
   flex-direction: column;
   border-radius: 20px 20px 12px 12px;
@@ -814,6 +814,50 @@ function getOrderedPlayers(nom: any) {
 
 .voter-sep {
   color: var(--color-text-muted);
+  margin-right: 4px;
+}
+
+.panel-header-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.evil-stats-bar .stat-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.btn-edit-nom .edit-icon {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.vote-ghost-icon .vote-ghost-img {
+  width: 10px;
+  height: 10px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.vote-mark .vote-yes-img {
+  width: 10px;
+  height: 10px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.nom-executed-badge .executed-img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  vertical-align: middle;
   margin-right: 4px;
 }
 </style>

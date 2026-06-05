@@ -104,7 +104,7 @@ export const useScriptStore = defineStore('script', () => {
       categories.value.splice(idx, 1)
       saveCategories()
 
-      const fallback = categories.value[0] || '標準劇本'
+      const fallback = categories.value[0] || '縫合劇本'
       customScripts.value.forEach(s => {
         if (s.category === name) {
           s.category = fallback
@@ -165,7 +165,7 @@ export const useScriptStore = defineStore('script', () => {
       id: scriptId,
       name: name.trim(),
       characters,
-      category: category || categories.value[0] || '標準劇本',
+      category: category || categories.value[0] || '縫合劇本',
       physical_image: physicalImage || null,
       physical_image_back: physicalImageBack || null
     }
@@ -186,7 +186,7 @@ export const useScriptStore = defineStore('script', () => {
     if (script) {
       script.name = name.trim()
       script.characters = characters
-      script.category = category || categories.value[0] || '標準劇本'
+      script.category = category || categories.value[0] || '縫合劇本'
       script.physical_image = physicalImage || null
       script.physical_image_back = physicalImageBack || null
       await saveCustomScripts()

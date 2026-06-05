@@ -10,7 +10,8 @@
           :class="{ 'is-active': isSortMode }"
           @click="toggleSortMode"
           title="拖曳排序當前劇本角色"
-        >🔀</button>
+        > <img src="/pic/sort.png" class="sort-mode-btn-img" />
+      </button>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
 
@@ -51,14 +52,14 @@
               {{ type.label }}
             </button>
           </div>
-          <button 
+          <!-- <button 
             class="pool-toggle-btn" 
             :class="{ 'is-active': showAllRoles }" 
             @click="showAllRoles = !showAllRoles"
             title="切換顯示全部劇本或僅限本局角色池"
           >
-            {{ showAllRoles ? '☑️ 全部劇本' : '◻️ 僅限池內' }}
-          </button>
+            {{ showAllRoles ? '☑️ 全部劇本' : '◻️ 僅限池內' }} -->
+          <!-- </button> -->
         </div>
       </div>
 
@@ -334,7 +335,7 @@ function getCharacterName(id?: string) {
 .character-sheet-panel {
   width: 100%;
   max-width: 480px;
-  max-height: 85vh;
+  height: 90vh;
   display: flex;
   flex-direction: column;
   border-radius: 20px 20px 12px 12px;
@@ -628,4 +629,11 @@ function getCharacterName(id?: string) {
   cursor: grabbing;
   color: var(--color-gold);
 }
+.sort-mode-btn-img{
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
 </style>
