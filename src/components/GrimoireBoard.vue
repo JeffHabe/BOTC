@@ -411,6 +411,10 @@
           <button class="tool-btn" @click="resetImgZoom" title="重設">
             <img src="/pic/reset.png" class="btn-image-icon" />
           </button>
+          <button class="tool-btn export-link" @click="exportViewingImage" title="匯出圖檔">
+            <img src="/pic/downloading.png" class="btn-image-icon" />
+            <span>匯出圖檔</span>
+          </button>
           <button class="tool-btn settings-link" @click="openScriptSettingsFromOverlay" title="劇本設定">
             <img src="/pic/gear.png" class="btn-image-icon" />
             <span>劇本設定</span>
@@ -428,6 +432,8 @@ import type { CSSProperties } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
+import { save } from '@tauri-apps/plugin-dialog'
+import { writeFile } from '@tauri-apps/plugin-fs'
 
 import PlayerToken from './PlayerToken.vue'
 import StatusBar from './StatusBar.vue'
@@ -590,6 +596,72 @@ function zoomImg(factor: number) {
 function openScriptSettingsFromOverlay() {
   showPhysicalImageOverlay.value = false
   uiStore.openPanel('role-assignment')
+}
+
+function dataURLtoUint8Array(dataurl: string): Uint8Array {
+  const arr = dataurl.split(',')
+  const bstr = atob(arr[1])
+  let n = bstr.length
+  const u8arr = new Uint8Array(n)
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n)
+  }
+  return u8arr
+}
+
+async function urlToUint8Array(url: string): Promise<Uint8Array> {
+  if (url.startsWith('data:')) {
+    return dataURLtoUint8Array(url)
+  }
+  const res = await fetch(url)
+  const buffer = await res.arrayBuffer()
+  return new Uint8Array(buffer)
+}
+
+async function exportViewingImage() {
+  const url = currentViewingImageUrl.value
+  if (!url) {
+    uiStore.showAlert('匯出失敗', '找不到可供匯出的圖檔')
+    return
+  }
+
+  const scriptName = gameStore.script?.name || '未命名劇本'
+  const sideLabel = currentViewingSide.value === 'front' ? '正面' : '背面'
+  
+  let ext = 'jpg'
+  if (url.startsWith('data:image/png') || url.endsWith('.png')) {
+    ext = 'png'
+  }
+  const fileName = `${scriptName}_${sideLabel}.${ext}`
+
+  try {
+    // 1. 嘗試使用 Tauri 原生儲存對話框
+    const filePath = await save({
+      filters: [{ name: '圖片檔', extensions: [ext] }],
+      defaultPath: fileName
+    })
+
+    if (filePath) {
+      uiStore.showAlert('正在匯出', '正在下載並儲存圖檔...')
+      const arrayBuffer = await urlToUint8Array(url)
+      await writeFile(filePath, arrayBuffer)
+      uiStore.showAlert('匯出成功', '圖檔已成功儲存！')
+    }
+  } catch (e) {
+    // 2. 瀏覽器環境 Fallback 下載
+    console.warn('Tauri 匯出失敗，改用瀏覽器下載方式:', e)
+    try {
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } catch (browserErr) {
+      console.error('瀏覽器下載也失敗:', browserErr)
+      uiStore.showAlert('匯出失敗', '無法下載此圖檔')
+    }
+  }
 }
 
 // --- 視窗大小追蹤 (用於修正正圓形比例) ---
