@@ -94,7 +94,7 @@
           v-for="(rem, rIdx) in displayReminders" 
           :key="'circle-' + rem.id" 
           class="rem-dot-classic"
-          :style="getReminderStyle(rIdx)"
+          :style="getReminderStyle(rIdx + 1)"
           @click.stop="uiStore.openReminderPicker(player.id)"
         >
           <div class="rem-inner">
@@ -112,7 +112,7 @@
           v-if="player.reminders.length > uiStore.reminderCollapseThreshold && !isExpanded"
           key="expand-unlock-icon-btn"
           class="rem-dot-classic expand-toggle-btn unlock-btn"
-          :style="getReminderStyle(0)"
+          :style="getReminderStyle(1)"
           @click.stop="toggleExpand"
         >
           <div class="rem-inner">
@@ -126,8 +126,8 @@
           key="expand-lock-icon-btn"
           class="rem-dot-classic expand-toggle-btn lock-btn"
           :style="{
-            ...getReminderStyle(player.reminders.length),
-            '--lock-delay': `${player.reminders.length * 0.04 + 0.1}s`
+            ...getReminderStyle(player.reminders.length + 1),
+            '--lock-delay': `${(player.reminders.length + 1) * 0.04 + 0.1}s`
           }"
           @click.stop="toggleExpand"
         >
@@ -141,7 +141,7 @@
           v-for="(rem, rIdx) in displayReminders" 
           :key="'label-' + rem.id" 
           class="rem-label-container"
-          :style="getReminderStyle(rIdx)"
+          :style="getReminderStyle(rIdx + 1)"
         >
           <span class="rem-text-label">
             {{ rem.text }}
@@ -153,7 +153,7 @@
           v-if="player.reminders.length > uiStore.reminderCollapseThreshold && !isExpanded"
           key="expand-unlock-label-btn"
           class="rem-label-container"
-          :style="getReminderStyle(0)"
+          :style="getReminderStyle(1)"
         >
           <span class="rem-text-label expand-label">
             {{ `+${player.reminders.length}` }}
@@ -166,8 +166,8 @@
           key="expand-lock-label-btn"
           class="rem-label-container lock-label"
           :style="{
-            ...getReminderStyle(player.reminders.length),
-            '--lock-delay': `${player.reminders.length * 0.04 + 0.1}s`
+            ...getReminderStyle(player.reminders.length + 1),
+            '--lock-delay': `${(player.reminders.length + 1) * 0.04 + 0.1}s`
           }"
         >
           <span class="rem-text-label expand-label">
@@ -179,7 +179,7 @@
         <div 
           key="add-reminder-btn-global"
           class="add-reminder-btn"
-          :style="getReminderStyle(isExpanded ? player.reminders.length + 1 : (player.reminders.length > uiStore.reminderCollapseThreshold ? 1 : player.reminders.length), true)"
+          :style="getReminderStyle(0, true)"
           @click.stop="uiStore.openReminderPicker(player.id)"
           title="新增/編輯提示標記"
         >
@@ -382,16 +382,7 @@ function getReminderStyle(rIdx: number, isPlus = false) {
     // 🚀 優化：將起始軌道拉回貼近令片的 10px 黃金間距軌道 (底部 75%，其餘 70%)
     const effectiveBaseDist = isBottomHalf ? 75 : 70
 
-    let distV = effectiveBaseDist + rIdx * gap
-
-    // --- 針對加號按鈕的特別優化 ---
-    if (isPlus) {
-      // 如果只有加號且沒標記
-      if (props.player.reminders.length === 0) {
-        distV = isBottomHalf ? 90 : 70
-      }
-      // 有標記或收起狀態下，加號按鈕自動採用與普通標記完全一致的標準安全間距 (gap)，徹底避免與展開鎖按鈕重疊
-    }
+    const distV = effectiveBaseDist + rIdx * gap
 
     const top = 50 - (distV * Math.sin(radialAngle))
     const left = 50 - (distV * Math.cos(radialAngle))
@@ -410,33 +401,13 @@ function getReminderStyle(rIdx: number, isPlus = false) {
   // 2. 經典弧形 (Arc) - 對稱環繞模式
   else if (layout === 'arc') {
     // --- 弧形佈局配置區 ---
-    const innerRadius = 56                     // 內圈標記半徑 (鎖頭與提示標記，最靠近令片)
-    const outerRadius = 100                     // 外圈加號半徑 (固定在外側，不遮擋任何元素)
+    const innerRadius = 56                     // 內圈標記半徑 (包含加號、提示標記、鎖頭等)
     const arcSpread = 42                       // 標記之間的展開角度 (度)
     // -----------------------
     
     const spreadAngle = arcSpread * (Math.PI / 180) 
-    
-    let radius = innerRadius
-    let finalAngle = radialAngle
-
-    if (isPlus) {
-      // 🚀 優化點 2, 3, 4：加號初始與展開位置完全固定在正外側的 radialAngle 徑向直線上
-      // 且半徑為 outerRadius (86)，與內圈的鎖頭 (56) 保持高達 30% 寬度的安全物理距離，絕對不重疊！
-      finalAngle = radialAngle
-      radius = outerRadius
-    } else {
-      // 如果是提示標記或是鎖頭
-      if (!isExpanded.value && props.player.reminders.length > uiStore.reminderCollapseThreshold) {
-        // 🚀 摺疊收起狀態下，鎖頭 (圓心) 精確地位於 radialAngle 徑向直線上，且最靠近令片 (innerRadius)
-        finalAngle = radialAngle
-        radius = innerRadius
-      } else {
-        // 展開狀態或未超上限狀態：保留原本展開方式 (扇形分佈展開)
-        finalAngle = radialAngle + (rIdx) * spreadAngle
-        radius = innerRadius
-      }
-    }
+    const radius = innerRadius
+    const finalAngle = radialAngle + (rIdx) * spreadAngle
 
     const top = 50 - (radius * Math.sin(finalAngle)) 
     const left = 50 - (radius * Math.cos(finalAngle))
@@ -464,7 +435,7 @@ function getReminderStyle(rIdx: number, isPlus = false) {
     const baseDist = isBottomHalf ? 80 : 60
     
     const side = isRight ? 'right' : 'left'
-    const sideDist = (isPlus && props.player.reminders.length === 0) ? '105%' : '125%'
+    const sideDist = '120%'
     
     // 讓起點也參考向心模式的基礎高度感
     const topOffset = (baseDist / 100) * (40 * uiStore.grimoireScale)
