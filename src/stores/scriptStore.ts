@@ -272,7 +272,31 @@ export const useScriptStore = defineStore('script', () => {
         rawCharacterList.value = [...allCharacterRaw]
       } else {
         const content = await readTextFile('all_character_sort.json', { baseDir: BaseDirectory.AppData })
-        rawCharacterList.value = JSON.parse(content)
+        const localList = JSON.parse(content) as any[]
+
+        // 建立新封裝官方角色的 Map，方便快速查找
+        const rawMap = new Map(allCharacterRaw.map(c => [c.id, c]))
+
+        // 遍歷本機目前的角色清單
+        const mergedList = localList.map(localChar => {
+          // 如果 localChar 是官方角色（出現在新官方 Map 中）
+          if (rawMap.has(localChar.id)) {
+            const updated = rawMap.get(localChar.id)
+            rawMap.delete(localChar.id) // 標記已更新處理，將其移出 Map
+            return updated // 使用新包裡的最新官方資料覆蓋它（實現更新）
+          }
+          // 如果是說書人自己手動新增的角色（不在官方 Map 中），原封不動保留
+          return localChar
+        })
+
+        // 若新版本的官方資料中新增了全新角色（Map 中剩餘的角色），將其追加至尾端
+        for (const newChar of rawMap.values()) {
+          mergedList.push(newChar)
+        }
+
+        // 將合併後的安全清單寫回本機
+        await writeTextFile('all_character_sort.json', JSON.stringify(mergedList, null, 2), { baseDir: BaseDirectory.AppData })
+        rawCharacterList.value = mergedList
       }
       masterScript.value = parseRawArray(rawCharacterList.value, 'all_character_sort', '全角色大全')
 

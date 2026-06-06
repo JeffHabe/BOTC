@@ -137,7 +137,7 @@
     "class": "首夜"
   },
   {
-    "id": "fortune_teller",
+    "id": "fortuneteller",
     "name": "占卜師",
     "ability": "每個夜晚，你要選擇兩名玩家：你會得知他們之中是否有惡魔。會有一名善良玩家始終被你的能力當作惡魔。<i>（干擾項）</i>",
     "team": "townsfolk",
@@ -174,7 +174,7 @@
     "class": "勝敗"
   },
   {
-    "id": "tea_lady",
+    "id": "tealady",
     "name": "茶藝師",
     "ability": "如果與你鄰近的兩名存活的玩家是善良的，他們不會死亡。",
     "team": "townsfolk",
@@ -365,7 +365,7 @@
     "class": "特殊"
   },
   {
-    "id": "town_crier",
+    "id": "towncrier",
     "name": "城鎮公告員",
     "ability": "每個夜晚*，你會得知在今天白天時是否有爪牙發起過提名。",
     "team": "townsfolk",
@@ -438,7 +438,7 @@
     "class": "每夜"
   },
   {
-    "id": "snake_charmer",
+    "id": "snakecharmer",
     "name": "舞蛇人",
     "ability": "每個夜晚，你要選擇一名存活的玩家：如果你選中了惡魔，你和他交換角色和陣營，然後他中毒。",
     "team": "townsfolk",
@@ -563,7 +563,7 @@
     "class": "每夜*"
   },
   {
-    "id": "village_idiot",
+    "id": "villageidiot",
     "name": "村夫",
     "ability": "每個夜晚，你要選擇一名玩家：你會得知他的陣營。[+0~2村夫，複數村夫中有一人醉酒]",
     "team": "townsfolk",
@@ -700,7 +700,7 @@
     "class": "首夜"
   },
   {
-    "id": "high_priestess",
+    "id": "highpriestess",
     "name": "女祭司",
     "ability": "每個夜晚，你會得知一名說書人認為你最應該與其交流的玩家。",
     "team": "townsfolk",
@@ -770,7 +770,7 @@
     "class": "每夜"
   },
   {
-    "id": "bounty_hunter",
+    "id": "bountyhunter",
     "name": "賞金獵人",
     "ability": "在你的首個夜晚，你會得知一名邪惡玩家。每當你得知的玩家死亡，你會在當晚得知另一名邪惡玩家。[會有一名鎮民轉變為邪惡陣營]",
     "team": "townsfolk",
@@ -906,7 +906,7 @@
     "class": "限一次"
   },
   {
-    "id": "cult_leader",
+    "id": "cultleader",
     "name": "異教領袖",
     "ability": "每個夜晚，你會轉變為與你鄰近的一名存活的玩家的陣營。每個白天，你可以提議所有玩家加入你的教派，如果所有善良玩家同意加入，你的陣營獲勝。",
     "team": "townsfolk",
@@ -919,7 +919,7 @@
     "class": "每夜"
   },
   {
-    "id": "poppy_grower",
+    "id": "poppygrower",
     "name": "罌粟種植者",
     "ability": "爪牙和惡魔互相不認識。如果你死亡，當晚他們會互相認識。",
     "team": "townsfolk",
@@ -1792,7 +1792,7 @@
     "class": "首夜"
   },
   {
-    "id": "plague_doctor",
+    "id": "plaguedoctor",
     "name": "瘟疫醫生",
     "ability": "當你死亡時，說書人會獲得一個爪牙能力。",
     "team": "outsider",
@@ -1980,7 +1980,7 @@
     "class": "首夜"
   },
   {
-    "id": "evil_twin",
+    "id": "eviltwin",
     "name": "鏡像雙子",
     "ability": "你與一名對立陣營的玩家互相知道對方是什麼角色。如果其中善良玩家被處決，邪惡陣營獲勝。如果你們都存活，善良陣營無法獲勝。",
     "team": "minion",
@@ -2079,7 +2079,7 @@
     "class": "每夜"
   },
   {
-    "id": "devils_advocate",
+    "id": "devilsadvocate",
     "name": "魔鬼代言人",
     "ability": "每個夜晚，你要選擇一名存活的玩家（與上個夜晚不同）：如果明天白天他被處決，他不會死亡。",
     "team": "minion",
@@ -2285,7 +2285,7 @@
     "class": "每夜"
   },
   {
-    "id": "pit-hag",
+    "id": "pithag",
     "name": "麻臉巫婆",
     "ability": "每個夜晚*，你要選擇一名玩家和一個角色，如果該角色不在場，他變成該角色。如果因此創造了一個惡魔，當晚的死亡由說書人決定。",
     "team": "minion",
@@ -2296,7 +2296,7 @@
     "class": "每夜*"
   },
   {
-    "id": "scarlet_woman",
+    "id": "scarletwoman",
     "name": "紅唇女郎",
     "ability": "如果大於等於五名玩家存活時（旅行者不計算在內）惡魔死亡，你變成那個惡魔。",
     "team": "minion",
@@ -2387,7 +2387,7 @@
     "class": "特殊"
   },
   {
-    "id": "organ_grinder",
+    "id": "organgrinder",
     "name": "街頭風琴手",
     "ability": "所有玩家在投票時閉眼，且票數會祕密統計。每個夜晚，你要選擇自己是否醉酒，直到你下次選擇。",
     "team": "minion",
@@ -2527,7 +2527,7 @@
     "class": "每夜"
   },
   {
-    "id": "lil_monsta",
+    "id": "lilmonsta",
     "name": "小怪寶",
     "ability": "每個夜晚，所有爪牙要祕密決定由哪名玩家來照看小怪寶並且“是惡魔”。每個夜晚*，可能會有一名玩家死亡。[+1爪牙]",
     "team": "demon",
@@ -2560,7 +2560,7 @@
     "class": "每夜"
   },
   {
-    "id": "lord_of_typhon",
+    "id": "lordoftyphon",
     "name": "堤豐之首",
     "ability": "每個夜晚*，你要選擇一名玩家：他死亡。[邪惡角色全部鄰座，你位於正中，+1爪牙，-或+任意數量外來者]",
     "team": "demon",
@@ -2666,7 +2666,7 @@
     "class": "每夜"
   },
   {
-    "id": "no_dashii",
+    "id": "nodashii",
     "name": "諾-達鯴",
     "ability": "每個夜晚*，你要選擇一名玩家：他死亡。與你鄰近的兩名鎮民中毒。",
     "team": "demon",
@@ -2799,7 +2799,7 @@
     "class": "每夜*"
   },
   {
-    "id": "fang_gu",
+    "id": "fanggu",
     "name": "方古",
     "ability": "每個夜晚*，你要選擇一名玩家：他死亡。被該能力殺死的外來者變成邪惡的方古且你代替他死亡，但每局遊戲僅能成功轉化一次。[+1外來者]",
     "team": "demon",
@@ -2814,7 +2814,7 @@
     "class": "每夜*"
   },
   {
-    "id": "al-hadikhia",
+    "id": "alhadikhia",
     "name": "哈迪寂亞",
     "ability": "每個夜晚*，你可以選擇三名玩家（所有玩家會得知你選了誰）：他們分別祕密決定自己的生死，然後如果他們都存活則都死亡。",
     "team": "demon",
@@ -3364,15 +3364,6 @@
     "class": "特殊"
   },
   {
-    "id": "bootlegger",
-    "name": "私貨商人",
-    "ability": "這個劇本包含有自制角色或自制規則。",
-    "team": "fabled",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/bootlegger.png",
-    "conflicts": [],
-    "class": "特殊"
-  },
-  {
     "id": "buddhist",
     "name": "佛教徒",
     "ability": "每個白天的前兩分鐘，老玩家不能發言。",
@@ -3410,18 +3401,6 @@
     "ability": "在遊戲的最後一天所有已死亡玩家會重新獲得投票標記。",
     "team": "fabled",
     "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/ferryman.png",
-    "conflicts": [],
-    "class": "特殊"
-  },
-  {
-    "id": "gardener",
-    "name": "園丁",
-    "ability": "由說書人來為一名或更多玩家派發角色。",
-    "team": "fabled",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/gardener.png",
-    "reminders": [
-      "已使用"
-    ],
     "conflicts": [],
     "class": "特殊"
   },
@@ -3501,6 +3480,15 @@
     "class": "特殊"
   },
   {
+    "id": "bootlegger",
+    "name": "私貨商人",
+    "ability": "這個劇本包含有自制角色或自制規則。",
+    "team": "loric",
+    "image": "https://script.bloodontheclocktower.com/src/assets/icons/loric/bootlegger.webp",
+    "conflicts": [],
+    "class": "特殊"
+  },
+  {
     "id": "knaves_loric",
     "name": "詭詐傑克",
     "ability": "場上有兩位說書人：一人說真話，一人說假話。每局遊戲限一次，他們可能會在黃昏互換。",
@@ -3547,7 +3535,7 @@
     "name": "暴風捕手",
     "ability": "遊戲開始時，你要宣佈一個善良角色。如果該角色在場，他只能死於處決，但所有邪惡玩家會在首個夜晚得知他是哪—名玩家。",
     "team": "loric",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/stormcatcher.png",
+    "image": "https://script.bloodontheclocktower.com/src/assets/icons/loric/stormcatcher.webp",
     "reminders": [
       "改名"
     ],
@@ -3570,7 +3558,7 @@
     "name": "園丁",
     "ability": "由說書人來為一位或更多玩家派發角色。",
     "team": "loric",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/gardener.png",
+    "image": "https://script.bloodontheclocktower.com/src/assets/icons/loric/gardener.webp",
     "reminders": [
       "已使用"
     ],
