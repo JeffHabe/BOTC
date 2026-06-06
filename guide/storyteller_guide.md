@@ -163,7 +163,7 @@
 每一次發起的提名都會在下方產生一張獨立的提名卡片：
 
 *   **檢視提名資訊**：卡片頂部顯示「第 X 輪」標籤與提名人和被提名人姓名。右上角顯示獲得票數與處決門檻（若達門檻會呈現金色高亮）。
-*   **修改提名**：點選名字旁的編輯按鈕 **<img src="../public/pic/repair.png" width="16" height="16" style="vertical-align: middle;" />** 可展開編輯選單重新指派玩家。
+*   **修改提名**：點選名字旁的編輯按鈕 **<img src="../public/pic/edit   .png" width="16" height="16" style="vertical-align: middle;" />** 可展開編輯選單重新指派玩家。
     
     ![編輯提名表單畫面](../screenshots/storyteller_guide_all/3_voting_panel/07_edit_nomination_form.png)
     
