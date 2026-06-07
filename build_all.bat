@@ -13,8 +13,8 @@ echo 6. Run Playwright Integration Tests (Storyteller & Script Management)
 echo 7. Convert Markdown Guides to Word (.docx) (Storyteller & Player)
 echo.
 
-set /p CHOICE="Are you sure you want to build? [Y/N]: "
-if /I "%CHOICE%" neq "Y" goto END
+::set /p CHOICE="Are you sure you want to build? [Y/N]: "
+::if /I "%CHOICE%" neq "Y" goto END
 
 echo.
 echo ---------------------------------------------------
@@ -117,3 +117,4 @@ exit /b 0
 echo Operation cancelled.
 pause
 exit /b 0
+

@@ -371,16 +371,13 @@ async function handleJsonFileChange(e: Event) {
             }
             return
           }
-          const exists = scriptStore.masterScript.characters.some(c => c.id === id)
-          if (exists) {
-            importedRoleIds.push(id)
-          } else {
-            const matchedChar = scriptStore.masterScript.characters.find(
-              c => c.id.toLowerCase() === id.toLowerCase()
-            )
-            if (matchedChar) {
-              importedRoleIds.push(matchedChar.id)
-            }
+          // 💡 防呆：忽略連字號、底線與大小寫進行角色 ID 模糊比對
+          const cleanImportedId = id.replace(/[-_]/g, '').toLowerCase()
+          const matchedChar = scriptStore.masterScript.characters.find(
+            c => c.id.replace(/[-_]/g, '').toLowerCase() === cleanImportedId
+          )
+          if (matchedChar) {
+            importedRoleIds.push(matchedChar.id)
           }
         })
       } else if (data && typeof data === 'object') {
@@ -389,16 +386,13 @@ async function handleJsonFileChange(e: Event) {
           data.characters.forEach((char: any) => {
             const id = typeof char === 'string' ? char : char.id
             if (id) {
-              const exists = scriptStore.masterScript.characters.some(c => c.id === id)
-              if (exists) {
-                importedRoleIds.push(id)
-              } else {
-                const matchedChar = scriptStore.masterScript.characters.find(
-                  c => c.id.toLowerCase() === id.toLowerCase()
-                )
-                if (matchedChar) {
-                  importedRoleIds.push(matchedChar.id)
-                }
+              // 💡 防呆：忽略連字號、底線與大小寫進行角色 ID 模糊比對
+              const cleanImportedId = id.replace(/[-_]/g, '').toLowerCase()
+              const matchedChar = scriptStore.masterScript.characters.find(
+                c => c.id.replace(/[-_]/g, '').toLowerCase() === cleanImportedId
+              )
+              if (matchedChar) {
+                importedRoleIds.push(matchedChar.id)
               }
             }
           })
