@@ -1631,20 +1631,6 @@
     "class": "每夜"
   },
   {
-    "id": "barber",
-    "name": "理髮師",
-    "ability": "如果你死亡，在當晚惡魔可以選擇兩名玩家（不能選擇其他惡魔）交換角色。",
-    "team": "outsider",
-    "image": "https://oss.gstonegames.com/data_file/clocktower/web/icons/barber.png",
-    "otherNight": 67,
-    "otherNightReminder": "如果理髮師死於白天，喚醒惡魔讓他決定是否使用理髮師的能力。如果理髮師死於夜晚，（如果讓除攻擊理髮師以外的惡魔進行選擇則需要等當前惡魔入睡後）讓一名惡魔決定是否使用理髮師的能力。",
-    "reminders": [
-      "今晚理髮"
-    ],
-    "conflicts": [],
-    "class": "每夜*"
-  },
-  {
     "id": "snowman",
     "name": "雪人",
     "ability": "每局遊戲限一次，惡魔可以公開猜測你是雪人，如果猜中，當天他被處決時你會代替他被處決。如果白天沒人被處決，你的陣營落敗。",
