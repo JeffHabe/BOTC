@@ -14,6 +14,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_sharekit::init())
         .manage(AppState(Mutex::new(GameState::default())))
         .invoke_handler(tauri::generate_handler![
             // 遊戲管理

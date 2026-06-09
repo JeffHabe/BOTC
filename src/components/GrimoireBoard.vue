@@ -100,7 +100,7 @@
     </div>
 
     <!-- 偽裝聲勢 (Demon Bluffs) - 右下角垂直托盤設計 (可收納) -->
-    <div class="bluffs-drawer" :class="{ 'is-expanded': uiStore.isBluffsExpanded, 'tab-lunatic': uiStore.activeBluffTab === 'lunatic' }">
+    <div v-if="!showPhysicalImageOverlay" class="bluffs-drawer" :class="{ 'is-expanded': uiStore.isBluffsExpanded, 'tab-lunatic': uiStore.activeBluffTab === 'lunatic' }">
       <!-- 功能標籤組 -->
       <div class="bluffs-tabs">
         <!-- 瘋子分頁 (僅展開時顯示) -->
@@ -176,7 +176,7 @@
     <!-- 側邊或浮動按鈕 -->
     <!-- 檢視實體劇本按鈕 (只在有 physical_image 或 physical_image_back 時顯示，位於加號按鈕正上方) -->
     <button
-      v-if="gameStore.script?.physical_image || gameStore.script?.physical_image_back"
+      v-if="!showPhysicalImageOverlay && (gameStore.script?.physical_image || gameStore.script?.physical_image_back)"
       class="view-physical-script-btn"
       @click="openPhysicalImageOverlay"
       title="檢視實體劇本"
@@ -184,11 +184,11 @@
       <img src="/pic/magic-book.png" class="view-script-icon" />
     </button>
 
-    <button class="add-player-btn" @click="uiStore.addPlayerDialogOpen = true">
+    <button v-if="!showPhysicalImageOverlay" class="add-player-btn" @click="uiStore.addPlayerDialogOpen = true">
       <img src="/pic/plus.png" class="icon" />
     </button>
 
-    <div class="side-action-group" :class="{ 'is-expanded': uiStore.isSideToolbarExpanded }">
+    <div v-if="!showPhysicalImageOverlay" class="side-action-group" :class="{ 'is-expanded': uiStore.isSideToolbarExpanded }">
       <!-- 主開關按鈕 -->
       <button 
         class="menu-toggle-btn" 
@@ -251,7 +251,7 @@
 
 
     <!-- 縮放按鈕 (底部中央水平排列) -->
-    <div class="zoom-controls-bottom">
+    <div v-if="!showPhysicalImageOverlay" class="zoom-controls-bottom">
       <button class="side-action-btn" @click="uiStore.zoomOut()" title="縮小">
         <img src="/pic/minus.png" class="icon" />
       </button>
@@ -411,13 +411,13 @@
           <button class="tool-btn" @click="resetImgZoom" title="重設">
             <img src="/pic/reset.png" class="btn-image-icon" />
           </button>
-          <button class="tool-btn export-link" @click="exportViewingImage" title="匯出圖檔">
-            <img src="/pic/downloading.png" class="btn-image-icon" />
-            <span>匯出圖檔</span>
+          <button class="tool-btn export-link" @click="shareOrExportImage" title="分享圖檔">
+            <img src="/pic/send.png" class="btn-image-icon" />
+            <span>分享</span>
           </button>
           <button class="tool-btn settings-link" @click="openScriptSettingsFromOverlay" title="劇本設定">
             <img src="/pic/gear.png" class="btn-image-icon" />
-            <span>劇本設定</span>
+            <span>設定</span>
           </button>
           <button class="tool-btn close-link" @click="showPhysicalImageOverlay = false" title="關閉">✕</button>
         </div>
@@ -427,6 +427,8 @@
 </template>
 
 <script setup lang="ts">
+
+
 import { computed, onMounted, onUnmounted, ref, reactive, defineAsyncComponent } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useGameStore } from '../stores/gameStore'
@@ -434,6 +436,10 @@ import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
 import { save } from '@tauri-apps/plugin-dialog'
 import { writeFile } from '@tauri-apps/plugin-fs'
+import { shareFile } from '@choochmeque/tauri-plugin-sharekit-api'
+
+
+import { appLocalDataDir, join } from '@tauri-apps/api/path'
 
 import PlayerToken from './PlayerToken.vue'
 import StatusBar from './StatusBar.vue'
@@ -618,10 +624,22 @@ async function urlToUint8Array(url: string): Promise<Uint8Array> {
   return new Uint8Array(buffer)
 }
 
-async function exportViewingImage() {
+function dataURLtoBlob(dataurl: string): Blob {
+  const arr = dataurl.split(',')
+  const mime = arr[0].match(/:(.*?);/)![1]
+  const bstr = atob(arr[1])
+  let n = bstr.length
+  const u8arr = new Uint8Array(n)
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n)
+  }
+  return new Blob([u8arr], { type: mime })
+}
+
+async function shareOrExportImage() {
   const url = currentViewingImageUrl.value
   if (!url) {
-    uiStore.showAlert('匯出失敗', '找不到可供匯出的圖檔')
+    uiStore.showAlert('分享失敗', '找不到可供分享的圖檔')
     return
   }
 
@@ -629,37 +647,142 @@ async function exportViewingImage() {
   const sideLabel = currentViewingSide.value === 'front' ? '正面' : '背面'
   
   let ext = 'jpg'
+  let mimeType = 'image/jpeg'
   if (url.startsWith('data:image/png') || url.endsWith('.png')) {
     ext = 'png'
+    mimeType = 'image/png'
   }
   const fileName = `${scriptName}_${sideLabel}.${ext}`
 
+  // 1. 嘗試使用 Web Share API 原生分享
   try {
-    // 1. 嘗試使用 Tauri 原生儲存對話框
-    const filePath = await save({
-      filters: [{ name: '圖片檔', extensions: [ext] }],
-      defaultPath: fileName
-    })
-
-    if (filePath) {
-      uiStore.showAlert('正在匯出', '正在下載並儲存圖檔...')
-      const arrayBuffer = await urlToUint8Array(url)
-      await writeFile(filePath, arrayBuffer)
-      uiStore.showAlert('匯出成功', '圖檔已成功儲存！')
+    let file: File | null = null
+    if (url.startsWith('data:')) {
+      const blob = dataURLtoBlob(url)
+      file = new File([blob], fileName, { type: mimeType })
+    } else {
+      const res = await fetch(url)
+      const blob = await res.blob()
+      // 🚀 關鍵修復：使用計算好的 mimeType，避免 blob.type 為空或錯誤導致 canShare 失敗
+      file = new File([blob], fileName, { type: mimeType })
     }
-  } catch (e) {
-    // 2. 瀏覽器環境 Fallback 下載
-    console.warn('Tauri 匯出失敗，改用瀏覽器下載方式:', e)
+
+    if (navigator.share) {
+      // 🚀 關鍵修復：有些瀏覽器支援 navigator.share 但不支援 navigator.canShare，因此做降級處理
+      // 同時，若 canShare 支援，優先檢測是否能分享組合資料；如果不能，退而僅分享檔案本身
+      let shareData: ShareData = { files: [file] }
+      
+      const canShareCombined = navigator.canShare && navigator.canShare({
+        files: [file],
+        title: `${scriptName} (${sideLabel})`,
+        text: `分享「${scriptName}」的實體劇本大圖`
+      })
+
+      if (canShareCombined) {
+        shareData.title = `${scriptName} (${sideLabel})`
+        shareData.text = `分享「${scriptName}」的實體劇本大圖`
+      }
+
+      await navigator.share(shareData)
+      return
+    }
+  } catch (shareErr: any) {
+    console.warn('Web Share API 分享失敗，將退回到其他儲存管道:', shareErr)
+    // 如果使用者只是自己取消了分享，就不需要彈出儲存對話框
+    const errMsg = String(shareErr?.message || shareErr || '').toLowerCase()
+    if (errMsg.includes('abort') || errMsg.includes('cancel')) {
+      return
+    }
+  }
+
+  // 2. 判斷是否在 Tauri App 環境中
+  const isTauri = typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__ !== undefined
+
+  if (isTauri) {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    
+    if (isMobile) {
+      // 🚀 行動端 Tauri：使用 tauri-plugin-sharekit 直接叫用原生分享介面
+      try {
+        uiStore.showAlert('正在分享', '正在生成分享檔案...')
+        const appDataPath = await appLocalDataDir()
+        const tempFilePath = await join(appDataPath, fileName)
+        const arrayBuffer = await urlToUint8Array(url)
+        
+        // 寫入到 App 的私有本地暫存目錄中
+        await writeFile(tempFilePath, arrayBuffer)
+        
+        // 呼叫原生分享插件發送檔案
+        const fileUrl = 'file://' + tempFilePath
+        await shareFile(fileUrl, {
+          mimeType,
+          title: `${scriptName} (${sideLabel})`
+        })
+        return
+      } catch (shareErr) {
+        console.error('Tauri 行動端原生分享失敗，嘗試下載備用:', shareErr)
+      }
+    }
+
+    // 桌面端 (Tauri Desktop) 或行動端原生分享失敗時備用：使用儲存檔案對話框
     try {
-      const a = document.createElement('a')
-      a.href = url
-      a.download = fileName
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-    } catch (browserErr) {
-      console.error('瀏覽器下載也失敗:', browserErr)
-      uiStore.showAlert('匯出失敗', '無法下載此圖檔')
+      const filePath = await save({
+        filters: [{ name: '圖片檔', extensions: [ext] }],
+        defaultPath: fileName
+      })
+
+      if (filePath) {
+        uiStore.showAlert('正在匯出', '正在下載並儲存圖檔...')
+        const arrayBuffer = await urlToUint8Array(url)
+        await writeFile(filePath, arrayBuffer)
+        uiStore.showAlert('儲存成功', '圖檔已成功儲存！')
+        return
+      }
+    } catch (tauriErr) {
+      console.warn('Tauri 儲存失敗:', tauriErr)
+      uiStore.showAlert('儲存提示', '目前環境無法直接儲存，請進行螢幕截圖分享。')
+    }
+    return
+  }
+
+  // 3. 瀏覽器環境：先嘗試觸發下載，若失敗則提供複製到剪貼簿功能
+  try {
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  } catch (browserErr) {
+    console.error('瀏覽器下載失敗，將嘗試複製到剪貼簿:', browserErr)
+    
+    // 如果在不支援直接下載的行動環境（如 LINE/微信內建瀏覽器），則提供複製到剪貼簿作為高相容性替代方案
+    if (navigator.clipboard && navigator.clipboard.write) {
+      uiStore.showConfirm(
+        '下載提示',
+        '此瀏覽器可能不支援直接下載。是否將圖片複製到剪貼簿，以便您至社群軟體中直接貼上分享？',
+        async () => {
+          try {
+            let blob: Blob
+            if (url.startsWith('data:')) {
+              blob = dataURLtoBlob(url)
+            } else {
+              const res = await fetch(url)
+              blob = await res.blob()
+            }
+            const typedBlob = new Blob([blob], { type: mimeType })
+            await navigator.clipboard.write([
+              new ClipboardItem({ [mimeType]: typedBlob })
+            ])
+            uiStore.showAlert('複製成功', '圖片已成功複製！您可以直接至 LINE/微信對話框中貼上分享。')
+          } catch (clipErr) {
+            console.error('複製圖片失敗:', clipErr)
+            uiStore.showAlert('複製失敗', '此環境不支援剪貼簿複製，請使用螢幕截圖分享。')
+          }
+        }
+      )
+    } else {
+      uiStore.showAlert('分享提示', '此環境不支援直接下載，請使用螢幕截圖進行分享。')
     }
   }
 }

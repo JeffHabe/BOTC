@@ -10,7 +10,7 @@ echo 3. Rebuild frontend assets (Vite Build)
 echo 4. Package Windows version (.exe)
 echo 5. Package Android version (.apk)
 echo 6. Run Playwright Integration Tests (Storyteller & Script Management)
-echo 7. Convert Markdown Guides to Word (.docx) (Storyteller & Player)
+echo 7. Convert Markdown Guides to PDF (.pdf) (Storyteller & Player)
 echo.
 
 ::set /p CHOICE="Are you sure you want to build? [Y/N]: "
@@ -84,22 +84,22 @@ if %ERRORLEVEL% neq 0 (
 echo.
 
 echo ---------------------------------------------------
-echo Step [6/6]: Converting Markdown Guides to Word (.docx)...
+echo Step [6/6]: Converting Markdown Guides to PDF (.pdf)...
 echo ---------------------------------------------------
-echo Converting Storyteller Guide to Word...
-py scripts\md_to_docx.py guide\storyteller_guide.md
+echo Converting Storyteller Guide to PDF...
+py scripts\md_to_pdf.py guide\storyteller_guide.md
 if %ERRORLEVEL% neq 0 (
-    echo [WARNING] Failed to convert Storyteller Guide to docx!
+    echo [WARNING] Failed to convert Storyteller Guide to PDF!
 ) else (
-    echo Storyteller Guide successfully converted to Word!
+    echo Storyteller Guide successfully converted to PDF!
 )
 echo.
-echo Converting Player Guide to Word...
-py scripts\md_to_docx.py guide\player_guide.md
+echo Converting Player Guide to PDF...
+py scripts\md_to_pdf.py guide\player_guide.md
 if %ERRORLEVEL% neq 0 (
-    echo [WARNING] Failed to convert Player Guide to docx!
+    echo [WARNING] Failed to convert Player Guide to PDF!
 ) else (
-    echo Player Guide successfully converted to Word!
+    echo Player Guide successfully converted to PDF!
 )
 echo.
 
@@ -107,7 +107,7 @@ echo ===================================================
 echo   Build, Test & Document generation completed!
 echo   - Windows EXE: search in src-tauri\target\release
 echo   - Android APK: search in src-tauri\gen\android
-echo   - Word Docs  : search in guide folder (.docx)
+echo   - PDF Docs   : search in guide folder (.pdf)
 echo   - Test Results: check screenshots folder
 echo ===================================================
 pause

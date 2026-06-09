@@ -733,7 +733,7 @@ input[type="search"]:focus {
 /* 手機端工具列調整 */
 @media (max-width: 768px) {
   .image-control-toolbar {
-    bottom: 30px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); /* 向上抬高避開系統虛擬鍵或手勢條 */
     padding: 6px 12px;
     gap: 8px;
     width: 90%;

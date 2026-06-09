@@ -12,6 +12,7 @@
     "fs:allow-app-read",
     "dialog:allow-open",
     "dialog:allow-save",
-    "notification:default"
+    "notification:default",
+    "sharekit:default"
   ]
 }

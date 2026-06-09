@@ -369,6 +369,13 @@ async function handleJsonFileChange(e: Event) {
             if (item.name) {
               importedScriptName = item.name
             }
+            // 💡 自動載入實體大圖
+            if (item.physical_image) {
+              newScriptPhysicalImage.value = item.physical_image
+            }
+            if (item.physical_image_back) {
+              newScriptPhysicalImageBack.value = item.physical_image_back
+            }
             return
           }
           // 💡 防呆：忽略連字號、底線與大小寫進行角色 ID 模糊比對
@@ -382,6 +389,13 @@ async function handleJsonFileChange(e: Event) {
         })
       } else if (data && typeof data === 'object') {
         if (data.name) importedScriptName = data.name
+        // 💡 物件格式下的大圖載入
+        if (data.physical_image) {
+          newScriptPhysicalImage.value = data.physical_image
+        }
+        if (data.physical_image_back) {
+          newScriptPhysicalImageBack.value = data.physical_image_back
+        }
         if (Array.isArray(data.characters)) {
           data.characters.forEach((char: any) => {
             const id = typeof char === 'string' ? char : char.id
@@ -811,6 +825,10 @@ async function exportSingleScript(script: Script) {
   }
   if (script.author) meta.author = script.author
   if (script.logo) meta.logo = script.logo
+  // 💡 匯出時一併帶上正面與背面實體大圖
+  if (script.physical_image) meta.physical_image = script.physical_image
+  if (script.physical_image_back) meta.physical_image_back = script.physical_image_back
+  
   exportData.push(meta)
 
   script.characters.forEach(c => {

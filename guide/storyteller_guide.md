@@ -25,7 +25,7 @@
     2. 螢幕中央將彈出**實體劇本的大圖檢視 Overlay**。
     3. 您可以對大圖進行拖曳、雙指捏合縮放。點擊大圖右上角的「✕」按鈕或點擊大圖外側陰影處，即可關閉大圖。
     
-    ![檢視實體劇本按鈕](../public/pic/magic-book.png)
+    <img src="../public/pic/magic-book.png" width="32" height="32" style="vertical-align: middle;" /> 檢視實體劇本按鈕
     
     ![實體劇本大圖彈窗](../screenshots/script_management_all/3_script_lookup/03_script_overlay_loaded.png)
     
@@ -186,6 +186,6 @@
     ![執行處決按鈕狀態畫面](../screenshots/storyteller_guide_all/3_voting_panel/09_execute_execution_state.png)
     
 *   **已處決徽章與撤銷**：
-    *   處決執行後，卡片會變為半透明並顯示 `<img src="../public/pic/suicide.png" width="16" height="16" style="vertical-align: middle;" /> 已處決`。您可以點擊 **撤銷** 按鈕來恢復被處決玩家的存活狀態。
+    *   處決執行後，卡片會變為半透明並顯示 <img src="../public/pic/suicide.png" width="16" height="16" style="vertical-align: middle;" /> 已處決。您可以點擊 **撤銷** 按鈕來恢復被處決玩家的存活狀態。
     
     ![已處決徽章與撤銷按鈕畫面](../screenshots/storyteller_guide_all/3_voting_panel/10_undo_state_and_close.png)

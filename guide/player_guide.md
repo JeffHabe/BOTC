@@ -41,8 +41,8 @@
     ![劇本管理主面板開啟畫面](../screenshots/script_management_all/2_script_management/06_script_editor_opened.png) 
 *   **第三步：分頁導覽**
     *   **操作流程**：面板標題下方有兩個大分頁按鈕：
-        1.  `<img src="../public/pic/plus.png" width="16" height="16" style="vertical-align: middle;" /> 建立劇本` (編輯時為 `<img src="../public/pic/edit.png" width="16" height="16" style="vertical-align: middle;" /> 編輯劇本`)：管理劇本資料與角色池配置。
-        2.  `<img src="../public/pic/notes.png" width="16" height="16" style="vertical-align: middle;" /> 劇本分類`：管理自訂分類排序與劇本快速歸類。    
+        1.  <img src="../public/pic/plus.png" width="16" height="16" style="vertical-align: middle;" /> `建立劇本` (編輯時為 <img src="../public/pic/edit.png" width="16" height="16" style="vertical-align: middle;" /> `編輯劇本`)：管理劇本資料與角色池配置。
+        2.  <img src="../public/pic/notes.png" width="16" height="16" style="vertical-align: middle;" /> `劇本分類`：管理自訂分類排序與劇本快速歸類。    
     ![建立劇本分頁](../screenshots/script_management_all/2_script_management/07_tab_nav_create.png)
     ![劇本分類分頁](../screenshots/script_management_all/2_script_management/08_tab_nav_categories.png)
 ---
@@ -127,6 +127,83 @@
    ![清除白板內容畫面](../screenshots/script_management_all/4_whiteboard_info/07_click_clear_btn.png)
 7. **關閉白板面板**
    ![關閉白板後畫面](../screenshots/script_management_all/4_whiteboard_info/08_whiteboard_closed.png)
+
+---
+## <img src="../public/pic/vote.png" width="20" height="20" style="vertical-align: middle;" /> 進入投票面板
+
+*   **開啟功能選單**
+    *   **按鈕位置**：主畫面右下角。
+    *   **操作**：點擊帶有齒輪「<img src="../public/pic/gear.png" width="16" height="16" style="vertical-align: middle;" />」圖示的圓形按鈕展開功能選單。
+    
+    ![展開齒輪選單後畫面](../screenshots/storyteller_guide_all/3_voting_panel/02_click_menu_gear.png)
+    
+*   **開啟投票管理**
+    *   **按鈕位置**：齒輪選單展開後的按鈕之一（「<img src="../public/pic/vote-yes.png" width="16" height="16" style="vertical-align: middle;" />」圖示）。
+    *   **操作**：點擊名稱為 **投票管理** 的按鈕，投票管理面板將從畫面下方滑入。
+    
+    ![點擊投票管理按鈕前畫面](../screenshots/storyteller_guide_all/3_voting_panel/03_click_voting_btn.png)
+    
+    ![投票面板開啟畫面](../screenshots/storyteller_guide_all/3_voting_panel/04_voting_panel_opened.png)
+
+---
+
+## <img src="../public/pic/vote.png" width="20" height="20" style="vertical-align: middle;" /> 發起提名
+
+本區塊僅在白天階段顯示，用於為玩家建立新提名：
+
+*   **選擇提名者與被提名者**：
+    *   **提名者**：左側下拉選單，僅列出目前存活且今天還能提名的玩家。
+    *   **被提名者**：右側下拉選單，僅列出今天尚未被提名的玩家。
+*   **確認發起提名**：
+    *   點選下拉選單下方的 **確認提名** 按鈕即可完成發起。
+    
+    ![發起提名操作與確認按鈕](../screenshots/storyteller_guide_all/3_voting_panel/05_click_nominate_btn.png)
+
+---
+
+## <img src="../public/pic/Minions.png" width="20" height="20" style="vertical-align: middle;" /> 邪惡勢力統計
+
+當場上存在提名時，面板最上方會自動顯示一個紅色的邪惡勢力統計欄，僅限主持說書人可見：
+
+*   **<img src="../public/pic/Minions.png" width="16" height="16" style="vertical-align: middle;" /> 爪牙提名**：統計今日爪牙發起提名的總次數。
+*   **<img src="../public/pic/Demons.png" width="16" height="16" style="vertical-align: middle;" /> 惡魔投票**：統計今日投票中，惡魔投出贊成票的累計總次數。
+*   *註：若在設定中開啟隱私模式（隱藏角色），此紅色統計欄將會自動隱藏。*
+
+![邪惡勢力統計欄與提名卡片展示](../screenshots/storyteller_guide_all/3_voting_panel/06_nominations_list_displayed.png)
+
+---
+
+## <img src="../public/pic/spellbook.png" width="20" height="20" style="vertical-align: middle;" /> 提名記錄與編輯
+
+每一次發起的提名都會在下方產生一張獨立的提名卡片：
+
+*   **檢視提名資訊**：卡片頂部顯示「第 X 輪」標籤與提名人和被提名人姓名。右上角顯示獲得票數與處決門檻（若達門檻會呈現金色高亮）。
+*   **修改提名**：點選名字旁的編輯按鈕 **<img src="../public/pic/edit   .png" width="16" height="16" style="vertical-align: middle;" />** 可展開編輯選單重新指派玩家。
+    
+    ![編輯提名表單畫面](../screenshots/storyteller_guide_all/3_voting_panel/07_edit_nomination_form.png)
+    
+*   **取消提名記錄**：點選卡片底部的 **取消提名** 按鈕，確認後會移除該提名並退還可能已消耗的幽靈票。
+
+---
+
+## <img src="../public/pic/suicide.png" width="20" height="20" style="vertical-align: middle;" /> 投票計票與處決
+
+*   **投票計票網格**：
+    *   卡片中間顯示所有存活及已死亡的玩家座位按鈕。
+    *   **投贊成票**：點擊玩家按鈕使其亮起並顯示勾號 **<img src="../public/pic/vote-yes.png" width="16" height="16" style="vertical-align: middle;" />** ，票數即時累加。
+    *   **死亡玩家（靈魂投票）**：死亡玩家按鈕會帶有 **<img src="../public/pic/grave.png" width="16" height="16" style="vertical-align: middle;" />** 圖示。投贊成票後，其幽靈票會被自動扣除；已無幽靈票的死亡玩家按鈕會呈現半透明灰化且無法點擊。
+    
+    ![投票計票網格更新畫面](../screenshots/storyteller_guide_all/3_voting_panel/08_voting_grid_updated.png)
+    
+*   **執行處決**：
+    *   當某個提名的贊成票數已達門檻，且為今日唯一最高票時，右下角的 **執行處決** 按鈕會被啟用。點擊確認後即可處決該被提名玩家。
+        
+    ![執行處決按鈕狀態畫面](../screenshots/storyteller_guide_all/3_voting_panel/09_execute_execution_state.png)
+    
+*   **已處決徽章與撤銷**：
+    *   處決執行後，卡片會變為半透明並顯示 <img src="../public/pic/suicide.png" width="16" height="16" style="vertical-align: middle;" /> 已處決。您可以點擊 **撤銷** 按鈕來恢復被處決玩家的存活狀態。
+    
+    ![已處決徽章與撤銷按鈕畫面](../screenshots/storyteller_guide_all/3_voting_panel/10_undo_state_and_close.png)
 
 ---
 
