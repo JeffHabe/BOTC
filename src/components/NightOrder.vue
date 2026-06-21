@@ -66,6 +66,13 @@
             <div class="order-reminder" v-if="getNightReminder(char)">
               {{ getNightReminder(char) }}
             </div>
+            <!-- 相克規則 (僅顯示劇本存在的相克角色) -->
+            <div v-if="!char.is_system && getInScriptConflicts(char).length > 0" class="order-conflicts">
+              <div v-for="(rule, idx) in getInScriptConflicts(char)" :key="idx" class="conflict-item">
+                <span class="conflict-badge">⚔️ vs {{ getCharacterName(rule.target || rule.charB) }}</span>
+                <span v-if="rule.desc" class="conflict-desc">: {{ rule.desc }}</span>
+              </div>
+            </div>
           </div>
 
           <!-- 玩家名稱 (若已指派角色) -->
@@ -217,6 +224,21 @@ function getNightReminder(char: any) {
   return activeTab.value === 'first' 
     ? char.first_night_reminder 
     : char.other_night_reminder
+}
+
+function getInScriptConflicts(char: any) {
+  if (!char || !char.conflicts || !gameStore.script) return []
+  const scriptCharIds = new Set(gameStore.script.characters.map(c => c.id))
+  return char.conflicts.filter((rule: any) => {
+    const targetId = rule.target || rule.charB
+    return targetId && scriptCharIds.has(targetId)
+  })
+}
+
+function getCharacterName(id?: string) {
+  if (!id) return '未知'
+  const char = gameStore.script?.characters.find(c => c.id === id)
+  return char ? char.name : id
 }
 
 // 長按邏輯
@@ -437,4 +459,30 @@ function cancelLongPress() {
 .order-role-icon.minion    { color: var(--color-minion); }
 .order-role-icon.demon     { color: var(--color-demon); }
 .order-role-icon.traveler  { color: var(--color-traveler); }
+
+.order-conflicts {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.conflict-item {
+  font-size: 11px;
+  background: rgba(229, 115, 115, 0.08);
+  border: 1px solid rgba(229, 115, 115, 0.2);
+  border-radius: 6px;
+  padding: 4px 8px;
+  line-height: 1.4;
+}
+
+.conflict-badge {
+  color: #e57373;
+  font-weight: 700;
+}
+
+.conflict-desc {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
 </style>

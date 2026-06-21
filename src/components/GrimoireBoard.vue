@@ -482,11 +482,13 @@ const currentViewingImageUrl = computed(() => {
   const front = gameStore.script.physical_image
   const back = gameStore.script.physical_image_back
   
+  let rawUrl: string | null = null
   if (currentViewingSide.value === 'front') {
-    return (front || back) ?? undefined
+    rawUrl = (front || back) ?? null
   } else {
-    return (back || front) ?? undefined
+    rawUrl = (back || front) ?? null
   }
+  return scriptStore.getScriptImageUrl(rawUrl) ?? undefined
 })
 const imgScale = ref(1)
 const imgTranslateX = ref(0)

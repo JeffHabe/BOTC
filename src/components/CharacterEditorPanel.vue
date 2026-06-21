@@ -28,18 +28,39 @@
           </button>
         </div>
 
+        <!-- 角色類型篩選標籤 -->
+        <div class="team-filter-container">
+          <button 
+            v-for="team in [
+              { key: 'Townsfolk', label: '鎮民', color: 'var(--color-townsfolk)' },
+              { key: 'Outsider', label: '外來者', color: 'var(--color-outsider)' },
+              { key: 'Minion', label: '爪牙', color: 'var(--color-minion)' },
+              { key: 'Demon', label: '惡魔', color: 'var(--color-demon)' },
+              { key: 'Traveler', label: '旅行者', color: '#8bb34d' },
+              { key: 'Fabled', label: '傳奇', color: '#e6c547' }
+            ]" 
+            :key="team.key"
+            class="team-filter-pill"
+            :class="{ active: selectedTeam === team.key }"
+            :style="selectedTeam === team.key ? { borderColor: team.color, color: team.color, background: team.color + '1a' } : {}"
+            @click="selectedTeam = selectedTeam === team.key ? '' : team.key"
+          >
+            {{ team.label }}
+          </button>
+        </div>
+
         <div class="header-actions">
           <button class="btn-primary add-btn" @click="openAdd">
             + 新增角色
           </button>
-          <button class="btn-ghost" @click="exportLibrary" title="匯出當前角色庫備份">
-            📥
+          <button class="btn-ghost btn-icon-only" @click="exportLibrary" title="匯出當前角色庫備份">
+            <img src="/pic/export.png" class="btn-icon-img" />
           </button>
-          <button class="btn-ghost" @click="importLibrary" title="從備份檔案匯入角色庫">
-             📤 
+          <button class="btn-ghost btn-icon-only" @click="importLibrary" title="從備份檔案匯入角色庫">
+            <img src="/pic/import.png" class="btn-icon-img" />
           </button>
-          <button class="btn-ghost" @click="resetToDefault" title="恢復成官方預設全庫">
-             🔄 
+          <button class="btn-ghost btn-icon-only" @click="resetToDefault" title="恢復成官方預設全庫">
+            <img src="/pic/reset.png" class="btn-icon-img" />
           </button>
         </div>
 
@@ -222,6 +243,7 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const mode = ref<'list' | 'form'>('list')
 const searchQuery = ref('')
 const selectedClass = ref('')
+const selectedTeam = ref('')
 const editingId = ref<string | null>(null)
 
 // 綁定到表單的資料
@@ -264,6 +286,12 @@ const filteredRawCharacters = computed(() => {
         cClass = rawChar?.class || ''
       }
       return cClass === selectedClass.value
+    })
+  }
+  if (selectedTeam.value) {
+    list = list.filter(c => {
+      const t = (c.team || c.role_type || '').toLowerCase()
+      return t === selectedTeam.value.toLowerCase()
     })
   }
   return list
@@ -315,7 +343,7 @@ async function saveCharacter() {
     name: formData.value.name.trim(),
     team: formData.value.team,
     ability: formData.value.ability,
-    image: formData.value.image,
+    image: formData.value.image ? formData.value.image.replace(/\\/g, '') : '',
     // 如果為空則設為 undefined，合併時會覆蓋舊值並在序列化時移除
     firstNight: formData.value.firstNight ? Number(formData.value.firstNight) : undefined,
     otherNight: formData.value.otherNight ? Number(formData.value.otherNight) : undefined,
@@ -919,5 +947,57 @@ async function importLibrary() {
   text-align: center;
   padding: 8px 0;
   line-height: 1.5;
+}
+
+.team-filter-container {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0 16px 4px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+}
+
+.team-filter-container::-webkit-scrollbar {
+  display: none;
+}
+
+.team-filter-pill {
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.team-filter-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.team-filter-pill.active {
+  border-color: currentColor;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-icon-only {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px !important;
+  width: 38px;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.btn-icon-only .btn-icon-img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  display: block;
 }
 </style>

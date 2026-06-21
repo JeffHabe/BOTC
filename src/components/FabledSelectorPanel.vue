@@ -18,10 +18,9 @@
             class="role-item" 
             :class="[char.role_type.toLowerCase(), { 'is-selected': isFabledActive(char.id) }]"
             @click="toggleFabled(char.id)"
-            @touchstart="handlePressStart(char)"
-            @touchend="handlePressEnd"
-            @mousedown="handlePressStart(char)"
-            @mouseup="handlePressEnd"
+            @pointerdown="handlePressStart($event, char)"
+            @pointerup="handlePressEnd"
+            @pointercancel="handlePressEnd"
           >
             <div class="role-icon">
               <img v-if="char.image" :src="char.image" :alt="char.name" />
@@ -42,6 +41,7 @@
       v-if="longPressChar" 
       :character="longPressChar" 
       @close="longPressChar = null" 
+      @click.stop
     />
   </div>
 </template>
@@ -64,6 +64,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
+  clearTimeout(pressTimer)
 })
 
 function handleKeydown(e: KeyboardEvent) {
@@ -88,7 +89,10 @@ function isFabledActive(id: string) {
   return gameStore.activeFabled.includes(id)
 }
 
+let hasTriggeredLongPress = false
+
 function toggleFabled(id: string) {
+  if (hasTriggeredLongPress) return
   gameStore.toggleFabled(id)
 }
 
@@ -96,15 +100,33 @@ function toggleFabled(id: string) {
 const longPressChar = ref<CharacterDef | null>(null)
 let pressTimer: any = null
 
-function handlePressStart(char: CharacterDef) {
+function handlePressStart(e: PointerEvent, char: CharacterDef) {
+  const target = e.currentTarget as HTMLElement
+  try {
+    target.setPointerCapture(e.pointerId)
+  } catch (err) {}
+
   clearTimeout(pressTimer)
+  hasTriggeredLongPress = false
   pressTimer = setTimeout(() => {
     longPressChar.value = char
+    hasTriggeredLongPress = true
+    try {
+      target.releasePointerCapture(e.pointerId)
+    } catch (err) {}
   }, 500)
 }
 
-function handlePressEnd() {
+function handlePressEnd(e: PointerEvent) {
   clearTimeout(pressTimer)
+  const target = e.currentTarget as HTMLElement
+  try {
+    target.releasePointerCapture(e.pointerId)
+  } catch (err) {}
+  
+  setTimeout(() => {
+    hasTriggeredLongPress = false
+  }, 100)
 }
 </script>
 

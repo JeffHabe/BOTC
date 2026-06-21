@@ -8,6 +8,8 @@ import { useUIStore } from './uiStore'
 import allCharacterRaw from '../../src-tauri/data/all_character_sort.json'
 
 import { BaseDirectory, exists, readTextFile, writeTextFile, mkdir } from '@tauri-apps/plugin-fs'
+import { convertFileSrc } from '@tauri-apps/api/core'
+import { appDataDir } from '@tauri-apps/api/path'
 
 function parseRawArray(raw: any[], id: string, defaultName: string): Script {
   const meta = raw.find((r: any) => r.id === '_meta') || {}
@@ -41,7 +43,7 @@ function parseRawArray(raw: any[], id: string, defaultName: string): Script {
       reminders: r.reminders || [],
       remindersGlobal: r.remindersGlobal || [],
       setup: r.setup || false,
-      image: r.image || null,
+      image: r.image ? r.image.replace(/\\/g, '') : null,
       first_night_reminder: r.firstNightReminder || null,
       other_night_reminder: r.otherNightReminder || null,
       conflicts: r.conflicts || [],
@@ -153,6 +155,36 @@ export const useScriptStore = defineStore('script', () => {
     }
   }
 
+  const appDataDirPath = ref('')
+
+  async function initAppDataPath() {
+    try {
+      const path = await appDataDir()
+      appDataDirPath.value = path.replace(/\\/g, '/')
+    } catch (e) {
+      console.warn('無法獲取 appDataDir:', e)
+    }
+  }
+
+  initAppDataPath()
+
+  function getScriptImageUrl(path: string | null): string | null {
+    if (!path) return null
+    if (path.startsWith('data:image/') || path.startsWith('http://') || path.startsWith('https://') || path.startsWith('/')) {
+      return path
+    }
+    const cleanPath = path.replace(/\\/g, '/')
+    if (!appDataDirPath.value) {
+      return cleanPath
+    }
+    let fullPath = `${appDataDirPath.value}/${cleanPath}`
+    const isWindows = typeof navigator !== 'undefined' && /windows/i.test(navigator.userAgent)
+    if (isWindows) {
+      fullPath = fullPath.replace(/\//g, '\\')
+    }
+    return convertFileSrc(fullPath)
+  }
+
   async function createCustomScript(
     name: string,
     characters: CharacterDef[],
@@ -161,6 +193,7 @@ export const useScriptStore = defineStore('script', () => {
     physicalImageBack?: string | null
   ) {
     const scriptId = 'custom_' + Date.now()
+
     const newScript: Script = {
       id: scriptId,
       name: name.trim(),
@@ -591,11 +624,13 @@ export const useScriptStore = defineStore('script', () => {
     deleteCustomScript,
     categories,
     saveCategories,
+    saveCustomScripts,
     addCategory,
     deleteCategory,
     updateCategory,
     createCustomScript,
     updateCustomScript,
     reorderCurrentScriptCharacters,
+    getScriptImageUrl,
   }
 })

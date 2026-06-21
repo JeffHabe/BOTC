@@ -3576,5 +3576,151 @@
     "image": "https://botc.letshare.fun/imgs/icons/Loric/zenomancer_loric.png",
     "conflicts": [],
     "class": "特殊"
+  },
+  {
+    "id": "xiaoba01",
+    "image": "https://free.picui.cn/free/2025/09/21/68ced660b9ca4.png",
+    "name": "小八",
+    "team": "townsfolk",
+    "firstNight": 40000,
+    "otherNight": 0,
+    "reminders": [],
+    "setup": false,
+    "ability": "在你的首個夜晚，你要選擇一個角色類型，然後得知一個相關的資訊。如果你兩側的鄰座玩家陣營不同，則會獲得錯誤訊息"
+  },
+  {
+    "id": "shisa11",
+    "image": "https://free.picui.cn/free/2025/09/21/68ced6605e456.png",
+    "name": "獅薩",
+    "team": "townsfolk",
+    "firstNight": 50000,
+    "otherNight": 0,
+    "reminders": [],
+    "setup": false,
+    "ability": "在你的首個夜晚，你可以選擇任意數量的玩家:你會得知他們當中有幾種角色類型。如果你同時選擇了爪牙和惡魔，你得到錯誤訊息。"
+  },
+  {
+    "id": "jiyi01",
+    "image": "https://free.picui.cn/free/2025/09/21/68ced65d34494.png",
+    "name": "吉伊",
+    "team": "townsfolk",
+    "firstNight": 30000,
+    "otherNight": 30000,
+    "reminders": [
+      "正确",
+      "錯誤"
+    ],
+    "setup": false,
+    "ability": "每個夜晚，你要選兩名玩家:你會得知她們中是否存在邪惡陣營。你得知信息的正誤每晚交替，但你不知道首個夜晚信息的正誤"
+  },
+  {
+    "id": "wusaqi01",
+    "image": "https://free.picui.cn/free/2025/09/21/68ced6609c720.png",
+    "name": "烏薩奇",
+    "team": "townsfolk",
+    "firstNight": 60000,
+    "otherNight": 20000,
+    "reminders": [
+      "烏薩奇選中"
+    ],
+    "setup": false,
+    "ability": "每個夜晚，你要選兩個角色。在你死亡當晚，你會得知選擇過的角色有幾個在場"
+  },
+  {
+    "id": "hait11a",
+    "image": "https://free.picui.cn/free/2025/09/21/68ced65d624b9.png",
+    "name": "海獭",
+    "team": "townsfolk",
+    "firstNight": 0,
+    "otherNight": 0,
+    "reminders": [
+      "海獺提名過"
+    ],
+    "setup": false,
+    "ability": "如果場上存活的邪惡玩家都被你提名過，且你提名過的善良玩家不超過一名，你的陣營獲勝。"
+  },
+  {
+    "id": "lizimantou11",
+    "image": "https://free.picui.cn/free/2025/09/21/68ced6601bff6.png",
+    "name": "栗子饅頭",
+    "team": "townsfolk",
+    "firstNight": 0,
+    "otherNight": 0,
+    "reminders": [
+      "失去能力"
+    ],
+    "setup": false,
+    "ability": "每局遊戲限一次，你可以在白天公開聲稱自己是栗子饅頭，當晚惡魔不會造成死亡。"
+  },
+  {
+    "id": "dabaoba111o",
+    "image": "https://free.picui.cn/free/2025/09/21/68ced65cd39aa.png",
+    "name": "大寶寶",
+    "team": "outsider",
+    "firstNight": 0,
+    "otherNight": 0,
+    "remindersGlobal": [
+      "是大寶寶"
+    ],
+    "setup": false,
+    "ability": "你以為自己是一個鎮民角色。首個夜晚，你會得知自己是飛鼠，即使你不是。"
+  },
+  {
+    "id": "xiaobaob11ao",
+    "image": "https://free.picui.cn/free/2025/09/21/68ced66291515.png",
+    "name": "小寶寶",
+    "team": "outsider",
+    "firstNight": 0,
+    "otherNight": 0,
+    "reminders": [
+      "是小寶寶"
+    ],
+    "setup": false,
+    "ability": "遊戲開始前，說書⼈要公開宣布本局遊戲中小寶寶的能力是什麼，即使⼩寶寶不在場。"
+  },
+  {
+    "ability": "在你的首个夜晚，恶魔会得知自己是飞鼠。你会得知两个在场的善良角色",
+    "image": "https://free.picui.cn/free/2025/09/21/68ced65ce9d3e.png",
+    "edition": "custom",
+    "flavor": "",
+    "id": "guben11",
+    "name": "古本",
+    "otherNight": 0,
+    "firstNight": 20000,
+    "setup": false,
+    "reminders": [],
+    "remindersGlobal": [],
+    "team": "minion"
+  },
+  {
+    "ability": "在你的首個夜晚，你會得知兩名玩家：他們當中存在惡魔。你會得知兩個在場的善良角色。",
+    "image": "https://free.picui.cn/free/2025/09/21/68ced6602f17f.png",
+    "edition": "custom",
+    "flavor": "",
+    "id": "linzhongwupo11",
+    "name": "林中巫婆",
+    "otherNight": 0,
+    "firstNight": 10000,
+    "setup": false,
+    "reminders": [],
+    "remindersGlobal": [],
+    "team": "minion"
+  },
+  {
+    "ability": "你以為你是個善良角色，但其實你不是。每個夜晚*，可能會有一名玩家死亡。",
+    "image": "https://free.picui.cn/free/2025/09/21/68ced65d408fd.png",
+    "edition": "custom",
+    "flavor": "",
+    "id": "Aman11iti",
+    "name": "飛鼠",
+    "otherNight": 10000,
+    "setup": false,
+    "reminders": [],
+    "remindersGlobal": [
+      "死亡",
+      "是飛鼠"
+    ],
+    "team": "demon",
+    "firstNight": 0
   }
 ]

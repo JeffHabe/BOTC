@@ -326,7 +326,7 @@ import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 import { useScriptStore } from '../stores/scriptStore'
 import { save, open } from '@tauri-apps/plugin-dialog'
-import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs'
+import { writeTextFile, readTextFile, readFile } from '@tauri-apps/plugin-fs'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
@@ -410,9 +410,49 @@ function deleteCustomSound(id: string, name: string) {
   )
 }
 
-function triggerFile(target: 'day' | 'night') {
+async function triggerFile(target: 'day' | 'night') {
   uploadTarget.value = target
-  fileInput.value?.click()
+
+  // 行動端 (Android/iOS) 必須在使用者點擊的同步調用棧中觸發 input.click()，否則會被 WebView 安全政策攔截
+  const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent)
+  if (isMobile) {
+    fileInput.value?.click()
+    return
+  }
+  
+  try {
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }]
+    })
+    
+    if (selected) {
+      const filePath = selected as string
+      const fileBytes = await readFile(filePath)
+      const ext = filePath.split('.').pop()?.toLowerCase() || 'png'
+      const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`
+      
+      let binary = ''
+      const len = fileBytes.byteLength
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(fileBytes[i])
+      }
+      const rawSrc = `data:${mimeType};base64,${btoa(binary)}`
+      
+      try {
+        const optimizedSrc = await processImage(rawSrc)
+        if (uploadTarget.value === 'day') uiStore.setDayBackground(optimizedSrc)
+        else uiStore.setNightBackground(optimizedSrc)
+      } catch (err) {
+        console.error('圖片優化失敗:', err)
+        if (uploadTarget.value === 'day') uiStore.setDayBackground(rawSrc)
+        else uiStore.setNightBackground(rawSrc)
+      }
+    }
+  } catch (e) {
+    console.warn('Tauri open failed, falling back to browser upload', e)
+    fileInput.value?.click()
+  }
 }
 
 function handleFileChange(e: Event) {

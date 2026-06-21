@@ -1,5 +1,5 @@
 <template>
-  <div v-if="character" class="detail-overlay" @click="$emit('close')" @contextmenu.prevent>
+  <div v-if="character" class="detail-overlay" @click.stop="handleOverlayClick" @contextmenu.prevent>
     <div class="detail-card animate-scale-up" @click.stop>
       <div class="detail-header" :class="character.role_type.toLowerCase()">
         <div class="header-main">
@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import type { CharacterDef } from '../types'
 import { ROLE_TYPE_LABEL } from '../types'
 import { useScriptStore } from '../stores/scriptStore'
@@ -53,17 +53,30 @@ const emit = defineEmits(['close'])
 
 const scriptStore = useScriptStore()
 
+const canClose = ref(false)
+let initTimer: any = null
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
+  initTimer = setTimeout(() => {
+    canClose.value = true
+  }, 300) // 300ms 防誤觸延遲
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
+  clearTimeout(initTimer)
 })
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' || e.key === 'Esc') {
     e.stopImmediatePropagation()
+    emit('close')
+  }
+}
+
+function handleOverlayClick() {
+  if (canClose.value) {
     emit('close')
   }
 }

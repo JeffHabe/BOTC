@@ -6,6 +6,8 @@ use crate::models::{
 use serde_json::Value;
 use std::sync::Mutex;
 use tauri::{AppHandle, State};
+use std::fs::OpenOptions;
+use std::io::Write;
 use tauri_plugin_notification::NotificationExt;
 use log::{info, warn, error, debug};
 
@@ -809,6 +811,44 @@ pub async fn start_background_timer(app: AppHandle, seconds: u64) {
             .body("時間到囉！鐘樓的鐘聲響起了。")
             .show();
     });
+}
+
+/// 寫入實體日誌檔案，如果目錄不存在則自動建立
+#[tauri::command]
+pub fn write_log_file(app: AppHandle, level: String, message: String) -> Result<(), String> {
+    let log_dir = app.path().app_log_dir().map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(&log_dir).map_err(|e| e.to_string())?;
+    let log_path = log_dir.join("botc_app.log");
+
+    // 檢查檔案大小並在超過 1MB 時進行 Rotate 輪轉
+    if log_path.exists() {
+        if let Ok(metadata) = std::fs::metadata(&log_path) {
+            if metadata.len() >= 1 * 1024 * 1024 {
+                let max_backups = 3;
+                for i in (1..max_backups).rev() {
+                    let src = log_dir.join(format!("botc_app.{}.log", i));
+                    let dst = log_dir.join(format!("botc_app.{}.log", i + 1));
+                    if src.exists() {
+                        let _ = std::fs::rename(src, dst);
+                    }
+                }
+                let backup_1 = log_dir.join("botc_app.1.log");
+                let _ = std::fs::rename(&log_path, backup_1);
+            }
+        }
+    }
+
+    let timestamp = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+    let log_line = format!("[{}] [{}] {}\n", timestamp, level.to_uppercase(), message);
+
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(log_path)
+        .map_err(|e| e.to_string())?;
+
+    file.write_all(log_line.as_bytes()).map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 /// 從 JSON 匯入自定義腳本

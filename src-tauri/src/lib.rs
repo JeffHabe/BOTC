@@ -63,6 +63,7 @@ pub fn run() {
             commands::save_game_state,
             commands::load_game_state,
             commands::start_background_timer,
+            commands::write_log_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -442,6 +442,13 @@ export const useGameStore = defineStore('game', () => {
         const fullState = JSON.parse(stateJson)
         // 注入對局日誌
         fullState.game_logs = logs.value
+
+        // 動態載入 scriptStore 避免循環依賴，一併將自訂劇本與分類打包匯出
+        const { useScriptStore } = await import('./scriptStore')
+        const scriptStore = useScriptStore()
+        fullState.custom_scripts = scriptStore.customScripts
+        fullState.script_categories = scriptStore.categories
+
         return JSON.stringify(fullState, null, 2)
       } catch (e) {
         return stateJson
@@ -457,10 +464,50 @@ export const useGameStore = defineStore('game', () => {
       if (data.game_logs) {
         logs.value = data.game_logs
       }
-    } catch (e) {}
-    
-    const gs = await callCommand<GameState>('import_game_state', { jsonStr })
-    await syncState(gs)
+
+      // 如果 JSON 中包含自訂劇本，一併還原與持久化
+      if (data.custom_scripts && Array.isArray(data.custom_scripts)) {
+        const { useScriptStore } = await import('./scriptStore')
+        const scriptStore = useScriptStore()
+        const existingMap = new Map(scriptStore.customScripts.map(s => [s.id, s]))
+        data.custom_scripts.forEach((s: any) => {
+          if (s.id !== 'all_character_sort') {
+            existingMap.set(s.id, s)
+          }
+        })
+        scriptStore.customScripts = Array.from(existingMap.values())
+        await scriptStore.saveCustomScripts()
+      }
+
+      // 如果 JSON 中包含分類，一併合併還原與持久化
+      if (data.script_categories && Array.isArray(data.script_categories)) {
+        const { useScriptStore } = await import('./scriptStore')
+        const scriptStore = useScriptStore()
+        const newCats = [...scriptStore.categories]
+        data.script_categories.forEach((cat: string) => {
+          if (!newCats.includes(cat)) {
+            newCats.push(cat)
+          }
+        })
+        scriptStore.categories = newCats
+        scriptStore.saveCategories()
+      }
+
+      // 傳給後端 Rust 前過濾掉前端屬性
+      const rustState = { ...data }
+      delete rustState.game_logs
+      delete rustState.custom_scripts
+      delete rustState.script_categories
+
+      const cleanJsonStr = JSON.stringify(rustState)
+      const gs = await callCommand<GameState>('import_game_state', { jsonStr: cleanJsonStr })
+      await syncState(gs)
+    } catch (e) {
+      console.error('匯入遊戲狀態出錯:', e)
+      // 降級處理：若解析出錯，直接呼叫後端進行基礎還原
+      const gs = await callCommand<GameState>('import_game_state', { jsonStr })
+      await syncState(gs)
+    }
   }
 
   async function importCustomScript(jsonStr: string) {

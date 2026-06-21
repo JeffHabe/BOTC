@@ -57,7 +57,7 @@
                 <label class="form-label">實體劇本正面圖檔 </label>
                 <div class="image-upload-wrapper">
                   <div v-if="newScriptPhysicalImage" class="image-preview-container">
-                    <img :src="newScriptPhysicalImage" class="physical-image-preview" />
+                    <img :src="scriptStore.getScriptImageUrl(newScriptPhysicalImage) || undefined" class="physical-image-preview" />
                     <button class="remove-image-btn" @click="newScriptPhysicalImage = null" type="button">✕ 刪除圖檔</button>
                   </div>
                   <div v-else class="upload-placeholder" @click="triggerImageUpload">
@@ -72,7 +72,7 @@
                 <label class="form-label">實體劇本背面圖檔 </label>
                 <div class="image-upload-wrapper">
                   <div v-if="newScriptPhysicalImageBack" class="image-preview-container">
-                    <img :src="newScriptPhysicalImageBack" class="physical-image-preview" />
+                    <img :src="scriptStore.getScriptImageUrl(newScriptPhysicalImageBack) || undefined" class="physical-image-preview" />
                     <button class="remove-image-btn" @click="newScriptPhysicalImageBack = null" type="button">✕ 刪除圖檔</button>
                   </div>
                   <div v-else class="upload-placeholder" @click="triggerImageUploadBack">
@@ -284,6 +284,14 @@
       </div>
     </div>
 
+    <!-- 儲存中提示視窗 (Overlay Modal) -->
+    <div v-if="isSaving" class="saving-overlay">
+      <div class="saving-modal">
+        <div class="spinner"></div>
+        <div class="saving-text">劇本儲存中，請稍候...</div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -292,13 +300,16 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
 import type { Script, RoleType } from '../types'
-import { save } from '@tauri-apps/plugin-dialog'
-import { writeTextFile } from '@tauri-apps/plugin-fs'
+import { save, open } from '@tauri-apps/plugin-dialog'
+import { writeTextFile, readFile } from '@tauri-apps/plugin-fs'
+import { simplifyToTraditional } from '../utils/chineseConverter'
 
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
 
 const activeTab = ref<'create' | 'categories'>('create')
+
+const isSaving = ref(false)
 
 // 編輯與建立劇本相關狀態
 const editingScriptId = ref<string | null>(null)
@@ -313,9 +324,36 @@ const newScriptPhysicalImageBack = ref<string | null>(null)
 const jsonFileInput = ref<HTMLInputElement | null>(null)
 const imageFileInput = ref<HTMLInputElement | null>(null)
 const imageFileInputBack = ref<HTMLInputElement | null>(null)
+async function triggerImageUpload() {
+  const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent)
+  if (isMobile) {
+    imageFileInput.value?.click()
+    return
+  }
 
-function triggerImageUpload() {
-  imageFileInput.value?.click()
+  try {
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }]
+    })
+    
+    if (selected) {
+      const filePath = selected as string
+      const fileBytes = await readFile(filePath)
+      const ext = filePath.split('.').pop()?.toLowerCase() || 'png'
+      const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`
+      
+      let binary = ''
+      const len = fileBytes.byteLength
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(fileBytes[i])
+      }
+      newScriptPhysicalImage.value = `data:${mimeType};base64,${btoa(binary)}`
+    }
+  } catch (e) {
+    console.warn('Tauri open dialog failed, falling back to browser picker', e)
+    imageFileInput.value?.click()
+  }
 }
 
 function handleImageFileChange(e: Event) {
@@ -329,8 +367,36 @@ function handleImageFileChange(e: Event) {
   reader.readAsDataURL(file)
 }
 
-function triggerImageUploadBack() {
-  imageFileInputBack.value?.click()
+async function triggerImageUploadBack() {
+  const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent)
+  if (isMobile) {
+    imageFileInputBack.value?.click()
+    return
+  }
+
+  try {
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }]
+    })
+    
+    if (selected) {
+      const filePath = selected as string
+      const fileBytes = await readFile(filePath)
+      const ext = filePath.split('.').pop()?.toLowerCase() || 'png'
+      const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`
+      
+      let binary = ''
+      const len = fileBytes.byteLength
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(fileBytes[i])
+      }
+      newScriptPhysicalImageBack.value = `data:${mimeType};base64,${btoa(binary)}`
+    }
+  } catch (e) {
+    console.warn('Tauri open dialog failed, falling back to browser picker', e)
+    imageFileInputBack.value?.click()
+  }
 }
 
 function handleImageFileChangeBack(e: Event) {
@@ -360,36 +426,13 @@ async function handleJsonFileChange(e: Event) {
 
       let importedScriptName = ''
       const importedRoleIds: string[] = []
+      const items: any[] = []
 
+      // 統一將資料收集進 items 陣列中處理
       if (Array.isArray(data)) {
-        data.forEach((item: any) => {
-          const id = typeof item === 'string' ? item : item.id
-          if (!id) return
-          if (id === '_meta') {
-            if (item.name) {
-              importedScriptName = item.name
-            }
-            // 💡 自動載入實體大圖
-            if (item.physical_image) {
-              newScriptPhysicalImage.value = item.physical_image
-            }
-            if (item.physical_image_back) {
-              newScriptPhysicalImageBack.value = item.physical_image_back
-            }
-            return
-          }
-          // 💡 防呆：忽略連字號、底線與大小寫進行角色 ID 模糊比對
-          const cleanImportedId = id.replace(/[-_]/g, '').toLowerCase()
-          const matchedChar = scriptStore.masterScript.characters.find(
-            c => c.id.replace(/[-_]/g, '').toLowerCase() === cleanImportedId
-          )
-          if (matchedChar) {
-            importedRoleIds.push(matchedChar.id)
-          }
-        })
+        items.push(...data)
       } else if (data && typeof data === 'object') {
-        if (data.name) importedScriptName = data.name
-        // 💡 物件格式下的大圖載入
+        if (data.name) importedScriptName = simplifyToTraditional(data.name)
         if (data.physical_image) {
           newScriptPhysicalImage.value = data.physical_image
         }
@@ -397,20 +440,135 @@ async function handleJsonFileChange(e: Event) {
           newScriptPhysicalImageBack.value = data.physical_image_back
         }
         if (Array.isArray(data.characters)) {
-          data.characters.forEach((char: any) => {
-            const id = typeof char === 'string' ? char : char.id
-            if (id) {
-              // 💡 防呆：忽略連字號、底線與大小寫進行角色 ID 模糊比對
-              const cleanImportedId = id.replace(/[-_]/g, '').toLowerCase()
-              const matchedChar = scriptStore.masterScript.characters.find(
-                c => c.id.replace(/[-_]/g, '').toLowerCase() === cleanImportedId
-              )
-              if (matchedChar) {
-                importedRoleIds.push(matchedChar.id)
-              }
-            }
-          })
+          items.push(...data.characters)
         }
+        if (Array.isArray(data.jinxes)) {
+          items.push(...data.jinxes)
+        }
+      }
+
+      // 💡 1. 優先解析劇本 meta 資料以取得繁體化劇本名稱
+      const metaItem = items.find(item => item && (item.id === '_meta' || item.id === '_meta_new'))
+      if (metaItem) {
+        if (metaItem.name) {
+          importedScriptName = simplifyToTraditional(metaItem.name)
+        }
+        if (metaItem.physical_image) {
+          newScriptPhysicalImage.value = metaItem.physical_image
+        }
+        if (metaItem.physical_image_back) {
+          newScriptPhysicalImageBack.value = metaItem.physical_image_back
+        }
+      }
+
+      const currentList = [...scriptStore.rawCharacterList]
+      let needSaveCharacters = false
+
+      // 💡 2. 第一階段：處理所有普通角色
+      const characterItems = items.filter(item => {
+        if (!item) return false
+        const id = typeof item === 'string' ? item : item.id
+        if (!id || id === '_meta' || id === '_meta_new') return false
+        const t = (item.team || '').toLowerCase()
+        return !t.includes('jinx')
+      })
+
+      characterItems.forEach(item => {
+        const id = typeof item === 'string' ? item : item.id
+        let matchedChar = null
+
+        // 優先以繁體名稱進行比對
+        if (item && typeof item === 'object' && item.name) {
+          const tradName = simplifyToTraditional(item.name)
+          matchedChar = currentList.find(c => c.name === tradName)
+        }
+
+        // ID 模糊比對
+        if (!matchedChar && id) {
+          const cleanImportedId = id.replace(/[-_]/g, '').toLowerCase()
+          matchedChar = currentList.find(
+            c => c.id.replace(/[-_]/g, '').toLowerCase() === cleanImportedId
+          )
+        }
+
+        if (matchedChar) {
+          importedRoleIds.push(matchedChar.id)
+        } else if (item && typeof item === 'object' && item.id) {
+          // 找不到匹配角色，說明是未登錄的自創角色，自動將其新增為自定義角色
+          const tradName = item.name ? simplifyToTraditional(item.name) : '未命名角色'
+          const cleanId = item.id.replace('button', '') // 清理 button 後綴
+          const roleTypeMap: Record<string, string> = {
+            'townsfolk': 'Townsfolk',
+            'outsider': 'Outsider',
+            'minion': 'Minion',
+            'demon': 'Demon',
+            'traveler': 'Traveler',
+            'fabled': 'Fabled'
+          }
+          const t = (item.team || '').toLowerCase()
+          const mappedType = roleTypeMap[t] || 'Townsfolk'
+
+          const newChar: any = {
+            id: cleanId,
+            name: tradName,
+            name_en: item.name_eng || cleanId,
+            role_type: mappedType,
+            ability: item.ability ? simplifyToTraditional(item.ability) : '',
+            firstNight: item.firstNight ? Math.floor(Number(item.firstNight)) : undefined,
+            otherNight: item.otherNight ? Math.floor(Number(item.otherNight)) : undefined,
+            reminders: (item.reminders || []).map((r: string) => simplifyToTraditional(r)),
+            setup: item.setup || false,
+            image: item.image ? item.image.replace(/\\/g, '') : null,
+            firstNightReminder: item.firstNightReminder ? simplifyToTraditional(item.firstNightReminder) : undefined,
+            otherNightReminder: item.otherNightReminder ? simplifyToTraditional(item.otherNightReminder) : undefined,
+            conflicts: [],
+            is_custom: true
+          }
+
+          currentList.push(newChar)
+          importedRoleIds.push(newChar.id)
+          needSaveCharacters = true
+        }
+      })
+
+      // 💡 3. 第二階段：處理 Jinx 相克規則
+      const jinxItems = items.filter(item => {
+        if (!item || typeof item !== 'object') return false
+        const t = (item.team || '').toLowerCase()
+        return t.includes('jinx') && item.name && item.name.includes('&')
+      })
+
+      jinxItems.forEach(item => {
+        const parts = item.name.split('&')
+        if (parts.length === 2) {
+          const nameA = simplifyToTraditional(parts[0].trim())
+          const nameB = simplifyToTraditional(parts[1].trim())
+
+          const charA = currentList.find(c => c.name === nameA)
+          const charB = currentList.find(c => c.name === nameB)
+
+          if (charA && charB) {
+            const desc = item.ability ? simplifyToTraditional(item.ability) : ''
+
+            // 雙向新增相克規則
+            if (!charA.conflicts) charA.conflicts = []
+            if (!charA.conflicts.some((c: any) => (c.target || c.charB) === charB.id)) {
+              charA.conflicts.push({ target: charB.id, charB: charB.id, desc })
+              needSaveCharacters = true
+            }
+
+            if (!charB.conflicts) charB.conflicts = []
+            if (!charB.conflicts.some((c: any) => (c.target || c.charB) === charA.id)) {
+              charB.conflicts.push({ target: charA.id, charB: charA.id, desc })
+              needSaveCharacters = true
+            }
+          }
+        }
+      })
+
+      // 💡 4. 若有新增角色或修改了 conflicts，進行儲存
+      if (needSaveCharacters) {
+        await scriptStore.saveCharacters(currentList)
       }
 
       if (importedRoleIds.length === 0) {
@@ -444,6 +602,7 @@ async function handleJsonFileChange(e: Event) {
 
 const editionFilters = [
   { key: 'All', label: '全部' },
+  { key: 'Selected', label: '已勾選' },
   { key: 'tb', label: '暗流' },
   { key: 'bmr', label: '黯月' },
   { key: 'snv', label: '夢殞' },
@@ -580,7 +739,9 @@ const roleStats = computed(() => {
       if (c.role_type !== t.key) return false
 
       let matchesEdition = true
-      if (edition === 'tb') {
+      if (edition === 'Selected') {
+        matchesEdition = selectedRoleIds.value.includes(c.id)
+      } else if (edition === 'tb') {
         matchesEdition = TB_ROLES.has(c.id)
       } else if (edition === 'bmr') {
         matchesEdition = BMR_ROLES.has(c.id)
@@ -671,7 +832,9 @@ const filteredGroups = computed(() => {
 
       // 劇本版本過濾
       let matchesEdition = true
-      if (edition === 'tb') {
+      if (edition === 'Selected') {
+        matchesEdition = selectedRoleIds.value.includes(c.id)
+      } else if (edition === 'tb') {
         matchesEdition = TB_ROLES.has(c.id)
       } else if (edition === 'bmr') {
         matchesEdition = BMR_ROLES.has(c.id)
@@ -684,7 +847,7 @@ const filteredGroups = computed(() => {
       } else if (edition === 'experimental') {
         matchesEdition = EXP_ROLES.has(c.id)
       } else if (edition === 'custom') {
-        // 不屬於任何官方三大、國風劇本，且不屬於實驗劇本的角色
+        // 不屬於 any 官方三大、國風劇本，且不屬於實驗劇本的角色
         matchesEdition = !TB_ROLES.has(c.id) &&
           !BMR_ROLES.has(c.id) &&
           !SNV_ROLES.has(c.id) &&
@@ -716,6 +879,7 @@ async function handleCreateScript() {
     selectedRoleIds.value.includes(c.id)
   )
 
+  isSaving.value = true
   try {
     const newScript = await scriptStore.createCustomScript(
       newScriptName.value.trim(),
@@ -739,6 +903,8 @@ async function handleCreateScript() {
   } catch (err) {
     console.error('建立劇本失敗:', err)
     uiStore.showAlert('建立失敗', '建立劇本失敗，請確認資料是否正常。')
+  } finally {
+    isSaving.value = false
   }
 }
 
@@ -770,6 +936,7 @@ async function handleUpdateScript() {
     selectedRoleIds.value.includes(c.id)
   )
   
+  isSaving.value = true
   try {
     const success = await scriptStore.updateCustomScript(
       editingScriptId.value,
@@ -790,6 +957,8 @@ async function handleUpdateScript() {
   } catch (err) {
     console.error('更新劇本失敗:', err)
     uiStore.showAlert('更新失敗', '更新劇本失敗，請確認資料是否正常。')
+  } finally {
+    isSaving.value = false
   }
 }
 
@@ -1189,15 +1358,32 @@ function moveCategory(index: number, direction: number) {
 }
 
 .edition-scroll-wrapper {
-  width: 100%;
+  width: auto;
+  margin: 0 -16px;
+  padding: 0 16px 6px;
   overflow-x: auto;
-  scrollbar-width: none;
-  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 168, 76, 0.3) transparent;
 }
 
 .edition-scroll-wrapper::-webkit-scrollbar {
-  display: none;
-  /* Chrome, Safari, Opera */
+  height: 4px;
+  display: block;
+}
+
+.edition-scroll-wrapper::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 2px;
+}
+
+.edition-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(201, 168, 76, 0.3);
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+
+.edition-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 168, 76, 0.6);
 }
 
 .edition-filters-row {
@@ -1770,5 +1956,49 @@ function moveCategory(index: number, direction: number) {
   height: 18px;
   object-fit: contain;
   vertical-align: middle;
+}
+
+.saving-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.saving-modal {
+  background: rgba(30, 30, 30, 0.85);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  border-radius: 16px;
+  padding: 32px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(201, 168, 76, 0.1);
+  border-top-color: var(--color-gold);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.saving-text {
+  color: var(--color-gold);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

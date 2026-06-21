@@ -9,6 +9,7 @@ import sys
 import re
 import os
 from pathlib import Path
+# pyrefly: ignore [missing-import]
 from markdown_pdf import MarkdownPdf, Section
 
 def resolve_image_paths(text: str, base_dir: Path, project_root: Path) -> str:
