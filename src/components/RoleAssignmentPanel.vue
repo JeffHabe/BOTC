@@ -310,9 +310,7 @@
                      class="role-card"
                      :class="{ 'is-selected': isRoleSelected(role.id) }"
                      @click="toggleRoleSelection(role)"
-                     @pointerdown="handlePressStart($event, role)"
-                     @pointerup="handlePressEnd"
-                     @pointercancel="handlePressEnd"
+                     @contextmenu.prevent="showDetails(role)"
                      >
                   <div class="role-card-icon" :class="role.role_type.toLowerCase()">
                     <img v-if="role.image" :src="role.image" class="r-img" />
@@ -544,9 +542,7 @@
                      class="role-card"
                      :class="{ 'is-selected': isBluffSelected(role.id) }"
                      @click="toggleBluffSelection(role.id)"
-                     @pointerdown="handlePressStart($event, role)"
-                     @pointerup="handlePressEnd"
-                     @pointercancel="handlePressEnd"
+                     @contextmenu.prevent="showDetails(role)"
                      >
                   <div class="role-card-icon" :class="role.role_type.toLowerCase()">
                     <img v-if="role.image" :src="role.image" class="r-img" />
@@ -717,7 +713,7 @@
     <CharacterDetailOverlay 
       v-if="longPressChar" 
       :character="longPressChar" 
-      @close="longPressChar = null" 
+      @close="closeDetails" 
       @click.stop
     />
   </div>
@@ -742,7 +738,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
-  clearTimeout(pressTimer)
 })
 
 function handleKeydown(e: KeyboardEvent) {
@@ -1146,36 +1141,21 @@ watch(() => similarScriptNotice.value, (newNotice) => {
 }, { deep: true })
 // 長按顯示詳情邏輯
 const longPressChar = ref<CharacterDef | null>(null)
-let pressTimer: any = null
 let hasTriggeredLongPress = false
 
-function handlePressStart(e: PointerEvent, char: CharacterDef) {
-  const target = e.currentTarget as HTMLElement
-  try {
-    target.setPointerCapture(e.pointerId)
-  } catch (err) {}
-
-  clearTimeout(pressTimer)
-  hasTriggeredLongPress = false
-  pressTimer = setTimeout(() => {
-    longPressChar.value = char
-    hasTriggeredLongPress = true
-    try {
-      target.releasePointerCapture(e.pointerId)
-    } catch (err) {}
-  }, 500) // 500ms 觸發長按
+function showDetails(char: CharacterDef) {
+  longPressChar.value = char
+  hasTriggeredLongPress = true
 }
 
-function handlePressEnd(e: PointerEvent) {
-  clearTimeout(pressTimer)
-  const target = e.currentTarget as HTMLElement
-  try {
-    target.releasePointerCapture(e.pointerId)
-  } catch (err) {}
-
+function closeDetails() {
+  hasTriggeredLongPress = true
   setTimeout(() => {
-    hasTriggeredLongPress = false
-  }, 100)
+    longPressChar.value = null
+    setTimeout(() => {
+      hasTriggeredLongPress = false
+    }, 200)
+  }, 50)
 }
 // 基礎映射
 const roleTypes = [
@@ -2074,7 +2054,7 @@ function isBluffSelected(id: string) {
 }
 
 function toggleRoleSelection(role: CharacterDef) {
-  if (hasTriggeredLongPress) return
+  if (longPressChar.value || hasTriggeredLongPress) return
   const idx = selectedRoleIds.value.indexOf(role.id)
   if (idx > -1) {
     selectedRoleIds.value.splice(idx, 1)
@@ -2107,7 +2087,7 @@ function excludeAllRoles() {
 }
 
 function toggleBluffSelection(id: string) {
-  if (hasTriggeredLongPress) return
+  if (longPressChar.value || hasTriggeredLongPress) return
   const idx = selectedBluffIds.value.indexOf(id)
   if (idx > -1) {
     selectedBluffIds.value.splice(idx, 1)
@@ -3660,4 +3640,9 @@ input:checked + .slider:before {
 .role-card-icon.traveler,
 .flicker-item .role-text-fallback.traveler,
 .result-token-wrapper .role-text-fallback.traveler { color: var(--color-traveler); }
+
+.role-card-icon img,
+.r-img {
+  pointer-events: none !important;
+}
 </style>

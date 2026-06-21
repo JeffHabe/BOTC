@@ -292,11 +292,19 @@
       </div>
     </div>
 
+    <!-- 刪除中提示視窗 (Overlay Modal) -->
+    <div v-if="isDeleting" class="saving-overlay">
+      <div class="saving-modal">
+        <div class="spinner"></div>
+        <div class="saving-text">刪除中，請稍候...</div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
 import type { Script, RoleType } from '../types'
@@ -310,6 +318,46 @@ const scriptStore = useScriptStore()
 const activeTab = ref<'create' | 'categories'>('create')
 
 const isSaving = ref(false)
+const isDeleting = ref(false)
+
+/**
+ * 劇本大圖優化：限制最大邊長為 2048px，並使用 0.85 品質的 JPEG 壓縮
+ */
+async function compressImage(dataUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      let width = img.width
+      let height = img.height
+      const MAX_SIZE = 2048 // 2K 高解析度上限
+
+      if (width > height) {
+        if (width > MAX_SIZE) {
+          height *= MAX_SIZE / width
+          width = MAX_SIZE
+        }
+      } else {
+        if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height
+          height = MAX_SIZE
+        }
+      }
+
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return reject(new Error('無法獲取 Canvas Context'))
+
+      ctx.drawImage(img, 0, 0, width, height)
+
+      const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.85)
+      resolve(optimizedDataUrl)
+    }
+    img.onerror = (err) => reject(err)
+    img.src = dataUrl
+  })
+}
 
 // 編輯與建立劇本相關狀態
 const editingScriptId = ref<string | null>(null)
@@ -348,7 +396,8 @@ async function triggerImageUpload() {
       for (let i = 0; i < len; i++) {
         binary += String.fromCharCode(fileBytes[i])
       }
-      newScriptPhysicalImage.value = `data:${mimeType};base64,${btoa(binary)}`
+      const rawDataUrl = `data:${mimeType};base64,${btoa(binary)}`
+      newScriptPhysicalImage.value = await compressImage(rawDataUrl).catch(() => rawDataUrl)
     }
   } catch (e) {
     console.warn('Tauri open dialog failed, falling back to browser picker', e)
@@ -361,8 +410,9 @@ function handleImageFileChange(e: Event) {
   if (!file) return
 
   const reader = new FileReader()
-  reader.onload = (event) => {
-    newScriptPhysicalImage.value = event.target?.result as string
+  reader.onload = async (event) => {
+    const rawDataUrl = event.target?.result as string
+    newScriptPhysicalImage.value = await compressImage(rawDataUrl).catch(() => rawDataUrl)
   }
   reader.readAsDataURL(file)
 }
@@ -391,7 +441,8 @@ async function triggerImageUploadBack() {
       for (let i = 0; i < len; i++) {
         binary += String.fromCharCode(fileBytes[i])
       }
-      newScriptPhysicalImageBack.value = `data:${mimeType};base64,${btoa(binary)}`
+      const rawDataUrl = `data:${mimeType};base64,${btoa(binary)}`
+      newScriptPhysicalImageBack.value = await compressImage(rawDataUrl).catch(() => rawDataUrl)
     }
   } catch (e) {
     console.warn('Tauri open dialog failed, falling back to browser picker', e)
@@ -404,8 +455,9 @@ function handleImageFileChangeBack(e: Event) {
   if (!file) return
 
   const reader = new FileReader()
-  reader.onload = (event) => {
-    newScriptPhysicalImageBack.value = event.target?.result as string
+  reader.onload = async (event) => {
+    const rawDataUrl = event.target?.result as string
+    newScriptPhysicalImageBack.value = await compressImage(rawDataUrl).catch(() => rawDataUrl)
   }
   reader.readAsDataURL(file)
 }
@@ -434,10 +486,26 @@ async function handleJsonFileChange(e: Event) {
       } else if (data && typeof data === 'object') {
         if (data.name) importedScriptName = simplifyToTraditional(data.name)
         if (data.physical_image) {
-          newScriptPhysicalImage.value = data.physical_image
+          if (data.physical_image.startsWith('data:image/')) {
+            compressImage(data.physical_image).then(res => {
+              newScriptPhysicalImage.value = res
+            }).catch(() => {
+              newScriptPhysicalImage.value = data.physical_image
+            })
+          } else {
+            newScriptPhysicalImage.value = data.physical_image
+          }
         }
         if (data.physical_image_back) {
-          newScriptPhysicalImageBack.value = data.physical_image_back
+          if (data.physical_image_back.startsWith('data:image/')) {
+            compressImage(data.physical_image_back).then(res => {
+              newScriptPhysicalImageBack.value = res
+            }).catch(() => {
+              newScriptPhysicalImageBack.value = data.physical_image_back
+            })
+          } else {
+            newScriptPhysicalImageBack.value = data.physical_image_back
+          }
         }
         if (Array.isArray(data.characters)) {
           items.push(...data.characters)
@@ -454,10 +522,26 @@ async function handleJsonFileChange(e: Event) {
           importedScriptName = simplifyToTraditional(metaItem.name)
         }
         if (metaItem.physical_image) {
-          newScriptPhysicalImage.value = metaItem.physical_image
+          if (metaItem.physical_image.startsWith('data:image/')) {
+            compressImage(metaItem.physical_image).then(res => {
+              newScriptPhysicalImage.value = res
+            }).catch(() => {
+              newScriptPhysicalImage.value = metaItem.physical_image
+            })
+          } else {
+            newScriptPhysicalImage.value = metaItem.physical_image
+          }
         }
         if (metaItem.physical_image_back) {
-          newScriptPhysicalImageBack.value = metaItem.physical_image_back
+          if (metaItem.physical_image_back.startsWith('data:image/')) {
+            compressImage(metaItem.physical_image_back).then(res => {
+              newScriptPhysicalImageBack.value = res
+            }).catch(() => {
+              newScriptPhysicalImageBack.value = metaItem.physical_image_back
+            })
+          } else {
+            newScriptPhysicalImageBack.value = metaItem.physical_image_back
+          }
         }
       }
 
@@ -880,6 +964,8 @@ async function handleCreateScript() {
   )
 
   isSaving.value = true
+  await nextTick()
+  await new Promise(resolve => setTimeout(resolve, 150))
   try {
     const newScript = await scriptStore.createCustomScript(
       newScriptName.value.trim(),
@@ -937,6 +1023,8 @@ async function handleUpdateScript() {
   )
   
   isSaving.value = true
+  await nextTick()
+  await new Promise(resolve => setTimeout(resolve, 150))
   try {
     const success = await scriptStore.updateCustomScript(
       editingScriptId.value,
@@ -967,6 +1055,9 @@ function handleDeleteScript(script: Script) {
     '刪除劇本',
     `確認要刪除自訂劇本「${script.name}」嗎？此操作無法復原。`,
     async () => {
+      isDeleting.value = true
+      await nextTick()
+      await new Promise(resolve => setTimeout(resolve, 150))
       try {
         const success = await scriptStore.deleteCustomScript(script.id)
         if (success) {
@@ -980,6 +1071,8 @@ function handleDeleteScript(script: Script) {
       } catch (err) {
         console.error('刪除劇本失敗:', err)
         uiStore.showAlert('刪除失敗', '刪除劇本失敗，請確認系統是否正常。')
+      } finally {
+        isDeleting.value = false
       }
     },
     true
@@ -1060,8 +1153,17 @@ function handleDeleteCategory(name: string) {
   uiStore.showConfirm(
     '刪除類別',
     `確認要刪除類別「${name}」嗎？屬於該類別的劇本將被歸類到預設分類中。`,
-    () => {
-      scriptStore.deleteCategory(name)
+    async () => {
+      isDeleting.value = true
+      await nextTick()
+      await new Promise(resolve => setTimeout(resolve, 150))
+      try {
+        await scriptStore.deleteCategory(name)
+      } catch (err) {
+        console.error('刪除類別失敗:', err)
+      } finally {
+        isDeleting.value = false
+      }
     },
     true
   )

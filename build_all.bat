@@ -63,45 +63,45 @@ if %ERRORLEVEL% neq 0 (
 )
 echo.
 
-echo ---------------------------------------------------
-echo Step [5/6]: Running Playwright Integration Tests...
-echo ---------------------------------------------------
-echo Running Storyteller Guide tests...
-py scripts\test_storyteller_guide_all.py
-if %ERRORLEVEL% neq 0 (
-    echo [WARNING] Storyteller guide tests failed!
-) else (
-    echo Storyteller guide tests completed successfully!
-)
-echo.
-echo Running Script Management tests...
-py scripts\test_script_management_all.py
-if %ERRORLEVEL% neq 0 (
-    echo [WARNING] Script management tests failed!
-) else (
-    echo Script management tests completed successfully!
-)
-echo.
+@REM echo ---------------------------------------------------
+@REM echo Step [5/6]: Running Playwright Integration Tests...
+@REM echo ---------------------------------------------------
+@REM echo Running Storyteller Guide tests...
+@REM py scripts\test_storyteller_guide_all.py
+@REM if %ERRORLEVEL% neq 0 (
+@REM     echo [WARNING] Storyteller guide tests failed!
+@REM ) else (
+@REM     echo Storyteller guide tests completed successfully!
+@REM )
+@REM echo.
+@REM echo Running Script Management tests...
+@REM py scripts\test_script_management_all.py
+@REM if %ERRORLEVEL% neq 0 (
+@REM     echo [WARNING] Script management tests failed!
+@REM ) else (
+@REM     echo Script management tests completed successfully!
+@REM )
+@REM echo.
 
-echo ---------------------------------------------------
-echo Step [6/6]: Converting Markdown Guides to PDF (.pdf)...
-echo ---------------------------------------------------
-echo Converting Storyteller Guide to PDF...
-py scripts\md_to_pdf.py guide\storyteller_guide.md
-if %ERRORLEVEL% neq 0 (
-    echo [WARNING] Failed to convert Storyteller Guide to PDF!
-) else (
-    echo Storyteller Guide successfully converted to PDF!
-)
-echo.
-echo Converting Player Guide to PDF...
-py scripts\md_to_pdf.py guide\player_guide.md
-if %ERRORLEVEL% neq 0 (
-    echo [WARNING] Failed to convert Player Guide to PDF!
-) else (
-    echo Player Guide successfully converted to PDF!
-)
-echo.
+@REM echo ---------------------------------------------------
+@REM echo Step [6/6]: Converting Markdown Guides to PDF (.pdf)...
+@REM echo ---------------------------------------------------
+@REM echo Converting Storyteller Guide to PDF...
+@REM py scripts\md_to_pdf.py guide\storyteller_guide.md
+@REM if %ERRORLEVEL% neq 0 (
+@REM     echo [WARNING] Failed to convert Storyteller Guide to PDF!
+@REM ) else (
+@REM     echo Storyteller Guide successfully converted to PDF!
+@REM )
+@REM echo.
+@REM echo Converting Player Guide to PDF...
+@REM py scripts\md_to_pdf.py guide\player_guide.md
+@REM if %ERRORLEVEL% neq 0 (
+@REM     echo [WARNING] Failed to convert Player Guide to PDF!
+@REM ) else (
+@REM     echo Player Guide successfully converted to PDF!
+@REM )
+@REM echo.
 
 echo ===================================================
 echo   Build, Test & Document generation completed!

@@ -523,13 +523,6 @@ input[type="search"]:focus {
   align-items: flex-end;
 }
 
-@media (max-width: 360px) {
-  .form-image-row {
-    flex-direction: column;
-    gap: 12px;
-  }
-}
-
 .form-section-container {
   display: flex;
   flex-direction: column;

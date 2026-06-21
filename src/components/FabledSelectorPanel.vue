@@ -18,9 +18,7 @@
             class="role-item" 
             :class="[char.role_type.toLowerCase(), { 'is-selected': isFabledActive(char.id) }]"
             @click="toggleFabled(char.id)"
-            @pointerdown="handlePressStart($event, char)"
-            @pointerup="handlePressEnd"
-            @pointercancel="handlePressEnd"
+            @contextmenu.prevent="showDetails(char)"
           >
             <div class="role-icon">
               <img v-if="char.image" :src="char.image" :alt="char.name" />
@@ -40,7 +38,7 @@
     <CharacterDetailOverlay 
       v-if="longPressChar" 
       :character="longPressChar" 
-      @close="longPressChar = null" 
+      @close="closeDetails" 
       @click.stop
     />
   </div>
@@ -64,7 +62,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
-  clearTimeout(pressTimer)
 })
 
 function handleKeydown(e: KeyboardEvent) {
@@ -92,41 +89,26 @@ function isFabledActive(id: string) {
 let hasTriggeredLongPress = false
 
 function toggleFabled(id: string) {
-  if (hasTriggeredLongPress) return
+  if (longPressChar.value || hasTriggeredLongPress) return
   gameStore.toggleFabled(id)
 }
 
 // 顯示詳情邏輯
 const longPressChar = ref<CharacterDef | null>(null)
-let pressTimer: any = null
 
-function handlePressStart(e: PointerEvent, char: CharacterDef) {
-  const target = e.currentTarget as HTMLElement
-  try {
-    target.setPointerCapture(e.pointerId)
-  } catch (err) {}
-
-  clearTimeout(pressTimer)
-  hasTriggeredLongPress = false
-  pressTimer = setTimeout(() => {
-    longPressChar.value = char
-    hasTriggeredLongPress = true
-    try {
-      target.releasePointerCapture(e.pointerId)
-    } catch (err) {}
-  }, 500)
+function showDetails(char: CharacterDef) {
+  longPressChar.value = char
+  hasTriggeredLongPress = true
 }
 
-function handlePressEnd(e: PointerEvent) {
-  clearTimeout(pressTimer)
-  const target = e.currentTarget as HTMLElement
-  try {
-    target.releasePointerCapture(e.pointerId)
-  } catch (err) {}
-  
+function closeDetails() {
+  hasTriggeredLongPress = true
   setTimeout(() => {
-    hasTriggeredLongPress = false
-  }, 100)
+    longPressChar.value = null
+    setTimeout(() => {
+      hasTriggeredLongPress = false
+    }, 200)
+  }, 50)
 }
 </script>
 
@@ -223,7 +205,7 @@ function handlePressEnd(e: PointerEvent) {
 }
 
 .role-icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2); border-radius: 50%; }
-.role-icon img { width: 36px; height: 36px; object-fit: contain; }
+.role-icon img { width: 36px; height: 36px; object-fit: contain; pointer-events: none; }
 .emoji { font-size: 24px; }
 
 .role-name { font-size: 11px; font-weight: 600; text-align: center; color: var(--color-text-primary); }
