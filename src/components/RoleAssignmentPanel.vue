@@ -139,7 +139,7 @@
                      class="role-card"
                      :class="{ 'is-excluded': excludedPoolIds.includes(role.id) }"
                      @click="togglePoolInclusion(role.id)">
-                  <div class="role-card-icon" :class="role.role_type.toLowerCase()">
+                  <div class="role-card-icon" :class="(role.role_type || '').toLowerCase()">
                     <img v-if="role.image" :src="role.image" class="r-img" />
                     <span v-else class="role-text-fallback">{{ role.name.charAt(0) }}</span>
                   </div>
@@ -312,7 +312,7 @@
                      @click="toggleRoleSelection(role)"
                      @contextmenu.prevent="showDetails(role)"
                      >
-                  <div class="role-card-icon" :class="role.role_type.toLowerCase()">
+                  <div class="role-card-icon" :class="(role.role_type || '').toLowerCase()">
                     <img v-if="role.image" :src="role.image" class="r-img" />
                     <span v-else class="role-text-fallback">{{ role.name.charAt(0) }}</span>
                   </div>
@@ -488,7 +488,7 @@
                      class="role-card"
                      :class="{ 'is-selected': marionetteFakeRoleId === role.id }"
                      @click="selectMarionetteFake(role.id)">
-                  <div class="role-card-icon" :class="role.role_type.toLowerCase()">
+                  <div class="role-card-icon" :class="(role.role_type || '').toLowerCase()">
                     <img v-if="role.image" :src="role.image" class="r-img" />
                     <span v-else class="role-text-fallback">{{ role.name.charAt(0) }}</span>
                   </div>
@@ -544,7 +544,7 @@
                      @click="toggleBluffSelection(role.id)"
                      @contextmenu.prevent="showDetails(role)"
                      >
-                  <div class="role-card-icon" :class="role.role_type.toLowerCase()">
+                  <div class="role-card-icon" :class="(role.role_type || '').toLowerCase()">
                     <img v-if="role.image" :src="role.image" class="r-img" />
                     <span v-else class="role-text-fallback">{{ role.name.charAt(0) }}</span>
                   </div>
@@ -566,7 +566,7 @@
             <div v-for="item in previewAssignments" :key="item.player_id" class="preview-item">
               <span class="p-name">{{ playerName(item.player_id) }}</span>
               <span class="p-divider">→</span>
-              <span v-if="item.role" class="p-role" :class="item.role.role_type.toLowerCase()">
+              <span v-if="item.role" class="p-role" :class="(item.role.role_type || '').toLowerCase()">
                 {{ item.role.name }}
               </span>
               <span v-else class="p-role none">未分配</span>
@@ -678,7 +678,7 @@
                      class="flicker-item"
                      :class="{ 'is-highlighted': isIdMatch(activeFlickerId, role.id) }">
                   <img v-if="role.image" :src="role.image || undefined" class="flicker-token" />
-                  <span v-else class="role-text-fallback flicker-placeholder" :class="role.role_type.toLowerCase()">{{ role.name.charAt(0) }}</span>
+                  <span v-else class="role-text-fallback flicker-placeholder" :class="(role.role_type || '').toLowerCase()">{{ role.name.charAt(0) }}</span>
                 </div>
               </div>
               <div class="flicker-scanline"></div>
@@ -696,7 +696,7 @@
                   <img v-if="getCharacterById(spinningResultId!)?.image" 
                        :src="getCharacterById(spinningResultId!)?.image || undefined" 
                        class="result-token-img" />
-                  <span v-else-if="getCharacterById(spinningResultId!)" class="role-text-fallback result-token-placeholder" :class="getCharacterById(spinningResultId!)?.role_type.toLowerCase()">{{ getCharacterById(spinningResultId!)?.name.charAt(0) }}</span>
+                  <span v-else-if="getCharacterById(spinningResultId!)" class="role-text-fallback result-token-placeholder" :class="(getCharacterById(spinningResultId!)?.role_type || '').toLowerCase()">{{ getCharacterById(spinningResultId!)?.name.charAt(0) }}</span>
                   <span v-else class="result-token-placeholder">👤</span>
                 </div>
                 <div class="result-role-name">{{ getRoleName(spinningResultId!) }}</div>
@@ -922,12 +922,39 @@ watch([
   newbiePlayerIds
 ], () => syncToStore(), { deep: true })
 
+/**
+ * 檢測劇本中的角色資料是否合規
+ */
+function checkScriptValidity(script: any) {
+  if (!script || !script.characters) return
+  const invalidChars = script.characters.filter((c: any) => {
+    if (!c.role_type) return true
+    const t = c.role_type.trim().toLowerCase()
+    const valid = ['townsfolk', 'outsider', 'minion', 'demon', 'traveler', 'fabled', 'loric']
+    return !valid.includes(t)
+  })
+
+  if (invalidChars.length > 0) {
+    const names = invalidChars.map((c: any) => `「${c.name || c.id}」`).join('、')
+    uiStore.showAlert(
+      '劇本資料不合規',
+      `偵測到劇本中的角色 ${names} 角色類型 (role_type) 為空或無效。\n\n這會導致開局人數範本及角色分組無法正常顯示，請前往【劇本管理】編輯並修正這些角色的類型。`
+    )
+  }
+}
+
+watch(() => gameStore.script, (newScript) => {
+  if (newScript) {
+    checkScriptValidity(newScript)
+  }
+}, { immediate: true })
+
 const fullPoolCharacters = computed(() => {
   if (!gameStore.script) return []
   const excluded = new Set(excludedPoolIds.value)
   const validTypes = new Set(['townsfolk', 'outsider', 'minion', 'demon'])
   return gameStore.script.characters.filter(c => {
-    const cType = c.role_type.trim().toLowerCase()
+    const cType = (c.role_type || '').trim().toLowerCase()
     return validTypes.has(cType) && !excluded.has(c.id)
   })
 })
@@ -1494,7 +1521,7 @@ const fullGroupedCharacters = computed(() => {
     label: t.label,
     color: t.color,
     list: gameStore.script!.characters.filter(c => {
-      const cType = c.role_type.trim().toLowerCase()
+      const cType = (c.role_type || '').trim().toLowerCase()
       const tType = t.key.trim().toLowerCase()
       const matchesType = cType === tType
       const matchesQuery = !query || c.name.toLowerCase().includes(query)
@@ -1517,7 +1544,7 @@ const groupedCharacters = computed(() => {
     let list: any[] = []
     
     gameStore.script!.characters.forEach(c => {
-      const cType = c.role_type.trim().toLowerCase()
+      const cType = (c.role_type || '').trim().toLowerCase()
       const tType = t.key.trim().toLowerCase()
       const matchesType = cType === tType && !excluded.has(c.id)
       const matchesQuery = !query || c.name.toLowerCase().includes(query)
@@ -1614,7 +1641,7 @@ watch(validBluffIds, (validSet) => {
 
 function scriptTypeTotal(type: string) {
   const targetType = type.toLowerCase()
-  return gameStore.script?.characters.filter(c => c.role_type.toLowerCase() === targetType).length || 0
+  return gameStore.script?.characters.filter(c => (c.role_type || '').toLowerCase() === targetType).length || 0
 }
 
 function poolTypeCount(type: string) {
@@ -1622,7 +1649,7 @@ function poolTypeCount(type: string) {
   const targetType = type.toLowerCase()
   const excluded = new Set(excludedPoolIds.value)
   return gameStore.script.characters.filter(c => 
-    c.role_type.toLowerCase() === targetType && !excluded.has(c.id)
+    (c.role_type || '').toLowerCase() === targetType && !excluded.has(c.id)
   ).length
 }
 
@@ -1877,11 +1904,11 @@ function isValidDrawState(testResults: Record<string, string>, remaining: string
       mSeat = s
     } else {
       const char = getCharacterById(roleId)
-      if (char?.role_type.toLowerCase() === 'demon') dSeat = s
+      if (char?.role_type?.toLowerCase() === 'demon') dSeat = s
     }
   }
 
-  const hasDInRemaining = remaining.some(id => getCharacterById(id)?.role_type.toLowerCase() === 'demon')
+  const hasDInRemaining = remaining.some(id => getCharacterById(id)?.role_type?.toLowerCase() === 'demon')
   const hasMInRemaining = remaining.includes(mRoleId)
 
   const isAdj = (s1: number, s2: number) => (s1 === (s2 + 1) % N) || (s1 === (s2 - 1 + N) % N)
@@ -2041,7 +2068,7 @@ function currentTypeCount(type: string) {
   const targetType = type.trim().toLowerCase()
   return selectedRoleIds.value.filter(id => {
     const char = getCharacterById(id)
-    return char?.role_type.trim().toLowerCase() === targetType
+    return (char?.role_type || '').trim().toLowerCase() === targetType
   }).length
 }
 
@@ -2174,7 +2201,7 @@ function createAdjacencyPlan(baseRoleIds: string[]): string[] {
   const hasM = pool.includes(mRoleId)
   const demonId = pool.find(id => {
     const char = getCharacterById(id)
-    return char?.role_type.toLowerCase() === 'demon'
+    return char?.role_type?.toLowerCase() === 'demon'
   })
 
   // 若同時存在提線木偶與惡魔，強制綁定座位

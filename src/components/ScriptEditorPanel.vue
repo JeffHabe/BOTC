@@ -547,6 +547,7 @@ async function handleJsonFileChange(e: Event) {
 
       const currentList = [...scriptStore.rawCharacterList]
       let needSaveCharacters = false
+      const newImportedChars: any[] = []
 
       // 💡 2. 第一階段：處理所有普通角色
       const characterItems = items.filter(item => {
@@ -558,18 +559,25 @@ async function handleJsonFileChange(e: Event) {
       })
 
       characterItems.forEach(item => {
-        const id = typeof item === 'string' ? item : item.id
         let matchedChar = null
+        let importId = ''
+        let importName = ''
 
-        // 優先以繁體名稱進行比對
-        if (item && typeof item === 'object' && item.name) {
-          const tradName = simplifyToTraditional(item.name)
-          matchedChar = currentList.find(c => c.name === tradName)
+        if (item && typeof item === 'object') {
+          importId = item.id || ''
+          importName = item.name ? simplifyToTraditional(item.name) : ''
+        } else if (typeof item === 'string') {
+          const cleanStr = simplifyToTraditional(item.trim())
+          importId = item.trim()
+          importName = cleanStr
         }
 
-        // ID 模糊比對
-        if (!matchedChar && id) {
-          const cleanImportedId = id.replace(/[-_]/g, '').toLowerCase()
+        if (importName) {
+          matchedChar = currentList.find(c => c.name === importName)
+        }
+
+        if (!matchedChar && importId) {
+          const cleanImportedId = importId.replace(/[-_]/g, '').toLowerCase()
           matchedChar = currentList.find(
             c => c.id.replace(/[-_]/g, '').toLowerCase() === cleanImportedId
           )
@@ -577,10 +585,11 @@ async function handleJsonFileChange(e: Event) {
 
         if (matchedChar) {
           importedRoleIds.push(matchedChar.id)
-        } else if (item && typeof item === 'object' && item.id) {
+        } else {
           // 找不到匹配角色，說明是未登錄的自創角色，自動將其新增為自定義角色
-          const tradName = item.name ? simplifyToTraditional(item.name) : '未命名角色'
-          const cleanId = item.id.replace('button', '') // 清理 button 後綴
+          const finalId = importId || `custom_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+          const finalName = importName || finalId
+          
           const roleTypeMap: Record<string, string> = {
             'townsfolk': 'Townsfolk',
             'outsider': 'Outsider',
@@ -589,28 +598,32 @@ async function handleJsonFileChange(e: Event) {
             'traveler': 'Traveler',
             'fabled': 'Fabled'
           }
-          const t = (item.team || '').toLowerCase()
-          const mappedType = roleTypeMap[t] || 'Townsfolk'
+          let mappedType = 'Townsfolk'
+          if (item && typeof item === 'object') {
+            const t = (item.team || '').toLowerCase()
+            mappedType = roleTypeMap[t] || 'Townsfolk'
+          }
 
           const newChar: any = {
-            id: cleanId,
-            name: tradName,
-            name_en: item.name_eng || cleanId,
+            id: finalId.replace('button', ''), // 清理 button 後綴
+            name: finalName,
+            name_en: (item && typeof item === 'object' && item.name_eng) ? item.name_eng : finalId,
             role_type: mappedType,
-            ability: item.ability ? simplifyToTraditional(item.ability) : '',
-            firstNight: item.firstNight ? Math.floor(Number(item.firstNight)) : undefined,
-            otherNight: item.otherNight ? Math.floor(Number(item.otherNight)) : undefined,
-            reminders: (item.reminders || []).map((r: string) => simplifyToTraditional(r)),
-            setup: item.setup || false,
-            image: item.image ? item.image.replace(/\\/g, '') : null,
-            firstNightReminder: item.firstNightReminder ? simplifyToTraditional(item.firstNightReminder) : undefined,
-            otherNightReminder: item.otherNightReminder ? simplifyToTraditional(item.otherNightReminder) : undefined,
+            ability: (item && typeof item === 'object' && item.ability) ? simplifyToTraditional(item.ability) : '',
+            firstNight: (item && typeof item === 'object' && item.firstNight) ? Math.floor(Number(item.firstNight)) : undefined,
+            otherNight: (item && typeof item === 'object' && item.otherNight) ? Math.floor(Number(item.otherNight)) : undefined,
+            reminders: (item && typeof item === 'object' && Array.isArray(item.reminders)) ? item.reminders.map((r: string) => simplifyToTraditional(r)) : [],
+            setup: (item && typeof item === 'object' && item.setup) || false,
+            image: (item && typeof item === 'object' && item.image) ? item.image.replace(/\\/g, '') : null,
+            firstNightReminder: (item && typeof item === 'object' && item.firstNightReminder) ? simplifyToTraditional(item.firstNightReminder) : undefined,
+            otherNightReminder: (item && typeof item === 'object' && item.otherNightReminder) ? simplifyToTraditional(item.otherNightReminder) : undefined,
             conflicts: [],
             is_custom: true
           }
 
           currentList.push(newChar)
           importedRoleIds.push(newChar.id)
+          newImportedChars.push(newChar)
           needSaveCharacters = true
         }
       })
@@ -671,7 +684,15 @@ async function handleJsonFileChange(e: Event) {
       }
 
       selectedRoleIds.value = importedRoleIds
-      uiStore.showAlert('匯入成功', `成功載入劇本 JSON！已自動為您勾選 ${importedRoleIds.length} 個角色。`)
+      if (newImportedChars.length > 0) {
+        const charNames = newImportedChars.map(c => `「${c.name}」`).join('、')
+        uiStore.showAlert(
+          '匯入成功',
+          `成功載入劇本 JSON！已自動為您勾選 ${importedRoleIds.length} 個角色。\n\n💡 偵測到有新角色匯入系統：\n${charNames}`
+        )
+      } else {
+        uiStore.showAlert('匯入成功', `成功載入劇本 JSON！已自動為您勾選 ${importedRoleIds.length} 個角色。`)
+      }
     } catch (err) {
       console.error(err)
       uiStore.showAlert('解析失敗', '解析 JSON 檔案失敗，請確保是合法的 JSON 格式。')
