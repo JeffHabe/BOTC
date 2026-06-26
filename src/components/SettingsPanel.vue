@@ -22,7 +22,7 @@
           <div class="stat-card" title="處決門檻">
             <!-- <span class="stat-card-icon">⚔️</span> -->
             <span class="stat-icon">
-              <img src="/pic/guillotine.png" alt="處決門檻" class="stat-img img-guillotine" />
+              <img src="/pic/suicide.png" alt="處決門檻" class="stat-img img-guillotine" />
             </span>
             <span class="stat-card-val">{{ gameStore.threshold }}</span>
             <span class="stat-card-label">處決門檻</span>
@@ -261,6 +261,18 @@
         <!-- 自訂角色技能音效 -->
         <div class="section-title">自訂角色技能音效</div>
         <div class="sound-manager-box">
+          <!-- 隱藏主介面技能音效按鈕選項 -->
+          <div class="sound-toggle-row" @click="uiStore.setCustomSoundButtonHidden(!uiStore.isCustomSoundButtonHidden)">
+            <input 
+              type="checkbox" 
+              :checked="uiStore.isCustomSoundButtonHidden" 
+              @click.stop
+              @change="uiStore.setCustomSoundButtonHidden(($event.target as HTMLInputElement).checked)"
+              class="sound-toggle-checkbox"
+            />
+            <span class="sound-toggle-label">🔒 隱藏主畫面技能音效按鈕</span>
+          </div>
+
           <button class="import-sound-btn" @click="triggerSoundUpload">
             ➕ 匯入角色技能音效
           </button>
@@ -315,6 +327,35 @@
             <span class="grid-label">重置遊戲</span>
           </button>
         </div>
+
+        <div class="divider" />
+
+        <!-- 軟體使用授權 -->
+        <div class="section-title">軟體使用授權</div>
+        <div class="license-settings-box">
+          <div class="license-info-row">
+            <span class="info-label">裝置識別碼：</span>
+            <div class="device-id-wrapper">
+              <span class="device-id-text" :title="licenseDeviceId">{{ licenseDeviceId || '載入中...' }}</span>
+              <button class="copy-btn-small" @click="copyLicenseDeviceId">複製</button>
+            </div>
+          </div>
+          <div class="license-info-row">
+            <span class="info-label">授權截止：</span>
+            <span class="info-value" :class="{ 'text-gold': licenseRemainingDays !== null && licenseRemainingDays >= 0, 'text-danger': licenseRemainingDays !== null && licenseRemainingDays < 0 }">
+              {{ licenseExpiryDate || '未載入' }} ({{ remainingText }})
+            </span>
+          </div>
+          
+          <div class="license-action-form">
+            <div class="form-row-compact">
+              <input v-model="licenseInputKey" type="text" class="license-input-compact" placeholder="請貼上 24 位授權金鑰" />
+              <button class="license-btn-compact" :disabled="isActivatingLicense" @click="handleActivateLicense">
+                {{ isActivatingLicense ? '啟用中' : '啟用' }}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -327,6 +368,7 @@ import { useGameStore } from '../stores/gameStore'
 import { useScriptStore } from '../stores/scriptStore'
 import { save, open } from '@tauri-apps/plugin-dialog'
 import { writeTextFile, readTextFile, readFile } from '@tauri-apps/plugin-fs'
+import { invoke } from '@tauri-apps/api/core'
 
 const uiStore = useUIStore()
 const gameStore = useGameStore()
@@ -342,6 +384,7 @@ const totalVotes = computed(() => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
+  loadLicenseStatus()
 })
 
 onBeforeUnmount(() => {
@@ -362,6 +405,13 @@ const uploadTarget = ref<'day' | 'night'>('day')
 const soundFileInput = ref<HTMLInputElement | null>(null)
 
 function triggerSoundUpload() {
+  if (!uiStore.licenseIsActivated) {
+    uiStore.showAlert(
+      '功能已鎖定',
+      `匯入角色技能音效功能需要啟用正式授權金鑰。\n\n試用期內僅開放播放內建預設音效，不支援自訂音效上傳。\n\n您的裝置識別碼：\n${licenseDeviceId.value}\n(可前往下方複製此識別碼並發送給管理員)`
+    )
+    return
+  }
   soundFileInput.value?.click()
 }
 
@@ -717,6 +767,83 @@ function resetGame() {
     },
     true
   )
+}
+
+// 授權管理狀態與邏輯
+const licenseDeviceId = ref('')
+const licenseExpiryDate = ref('')
+const licenseRemainingDays = ref<number | null>(null)
+const licenseIsActivated = ref(false)
+const licenseInputKey = ref('')
+const isActivatingLicense = ref(false)
+
+const remainingText = computed(() => {
+  if (licenseRemainingDays.value === null) return '未載入'
+  if (licenseRemainingDays.value < 0) return '已過期'
+  if (!licenseIsActivated.value) {
+    return `試用期剩餘 ${licenseRemainingDays.value} 天`
+  }
+  return `正式版剩餘 ${licenseRemainingDays.value} 天`
+})
+
+async function loadLicenseStatus() {
+  try {
+    const res = await invoke<any>('check_license')
+    if (res.status === 'Valid') {
+      licenseRemainingDays.value = res.data.remaining_days
+      licenseExpiryDate.value = res.data.expiry_date
+      licenseDeviceId.value = res.data.device_id
+      licenseIsActivated.value = res.data.is_activated
+    } else if (res.status === 'Expired') {
+      licenseRemainingDays.value = -1
+      licenseExpiryDate.value = res.data.expiry_date
+      licenseDeviceId.value = res.data.device_id
+      licenseIsActivated.value = res.data.is_activated
+    } else if (res.status === 'TimeTampered') {
+      licenseRemainingDays.value = -1
+      licenseDeviceId.value = res.data.device_id
+      licenseExpiryDate.value = '時間異常'
+      licenseIsActivated.value = false
+    }
+  } catch (err) {
+    console.error('Failed to load license status:', err)
+  }
+}
+
+async function copyLicenseDeviceId() {
+  try {
+    await navigator.clipboard.writeText(licenseDeviceId.value)
+    alert('裝置識別碼已複製到剪貼簿！')
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+async function handleActivateLicense() {
+  const key = licenseInputKey.value.trim()
+  if (!key) {
+    alert('請輸入授權金鑰！')
+    return
+  }
+  
+  isActivatingLicense.value = true
+  try {
+    const res = await invoke<any>('activate_license', { key })
+    if (res.status === 'Valid') {
+      licenseRemainingDays.value = res.data.remaining_days
+      licenseExpiryDate.value = res.data.expiry_date
+      licenseDeviceId.value = res.data.device_id
+      licenseInputKey.value = ''
+      alert('授權啟用成功！歡迎使用魔典。')
+      window.location.reload()
+    } else {
+      alert('啟用失敗，請確認金鑰是否正確。')
+    }
+  } catch (err: any) {
+    alert(err.toString())
+  } finally {
+    isActivatingLicense.value = false
+  }
 }
 
 </script>
@@ -1546,5 +1673,153 @@ function resetGame() {
   background: rgba(231, 76, 60, 0.15);
   border-color: rgba(231, 76, 60, 0.3);
   color: #ff6b6b;
+}
+
+/* 軟體授權管理樣式 */
+.license-settings-box {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.license-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.info-label {
+  color: #8c92a4;
+}
+
+.device-id-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 70%;
+}
+
+.device-id-text {
+  font-family: monospace;
+  color: #c9a84c;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.copy-btn-small {
+  background: rgba(201, 168, 76, 0.15);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: #fce8b2;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-btn-small:hover {
+  background: rgba(201, 168, 76, 0.25);
+  border-color: #c9a84c;
+}
+
+.text-gold {
+  color: #c9a84c;
+  font-weight: 600;
+}
+
+.text-danger {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.license-action-form {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.form-row-compact {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.license-input-compact {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 8px 12px;
+  color: white;
+  font-size: 13px;
+  outline: none;
+}
+
+.license-input-compact:focus {
+  border-color: rgba(201, 168, 76, 0.4);
+}
+
+.license-btn-compact {
+  background: linear-gradient(135deg, #a88530 0%, #856520 100%);
+  border: 1px solid #c9a84c;
+  color: white;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.license-btn-compact:hover {
+  opacity: 0.9;
+}
+
+.license-btn-compact:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sound-toggle-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.sound-toggle-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(201, 168, 76, 0.2);
+}
+
+.sound-toggle-checkbox {
+  margin: 0 10px 0 0;
+  cursor: pointer;
+  accent-color: #c9a84c;
+  width: 15px;
+  height: 15px;
+}
+
+.sound-toggle-label {
+  font-size: 13px;
+  color: #e0e0e0;
+  cursor: pointer;
+  letter-spacing: 0.5px;
 }
 </style>

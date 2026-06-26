@@ -231,8 +231,19 @@
           <!-- 2. 劇本歸類管理區塊 -->
           <div class="section-title">劇本快速歸類</div>
 
+          <!-- 劇本搜尋欄 -->
+          <div class="categorize-search-wrapper">
+            <input 
+              v-model="scriptCategorizeSearch" 
+              type="text" 
+              placeholder="🔍 搜尋劇本名稱進行快速歸類..." 
+              class="categorize-search-input" 
+            />
+            <button v-if="scriptCategorizeSearch" class="search-clear-btn" @click="scriptCategorizeSearch = ''">✕</button>
+          </div>
+
           <div class="scripts-categorize-list">
-            <div v-for="script in allEditableScripts" :key="script.id" class="script-cat-item">
+            <div v-for="script in filteredCategorizeScripts" :key="script.id" class="script-cat-item">
               <div class="script-info">
                 <img src="/pic/book.png" class="script-icon-img" />
                 <div class="script-details">
@@ -463,6 +474,13 @@ function handleImageFileChangeBack(e: Event) {
 }
 
 function triggerJsonImport() {
+  if (!uiStore.licenseIsActivated && scriptStore.customScripts.length >= 10) {
+    uiStore.showAlert(
+      '劇本管理受限',
+      `試用期/未授權狀態下，最多只能建立或匯入 1 個自訂劇本。\n\n請啟用正式授權金鑰以解鎖無限劇本管理功能。\n\n您的裝置識別碼：\n${uiStore.licenseDeviceId}`
+    )
+    return
+  }
   jsonFileInput.value?.click()
 }
 
@@ -889,6 +907,14 @@ const allEditableScripts = computed(() => {
   return scriptStore.allScripts
 })
 
+// 劇本歸類搜尋關鍵字與過濾屬性
+const scriptCategorizeSearch = ref('')
+const filteredCategorizeScripts = computed(() => {
+  const query = scriptCategorizeSearch.value.trim().toLowerCase()
+  if (!query) return allEditableScripts.value
+  return allEditableScripts.value.filter(s => s.name.toLowerCase().includes(query))
+})
+
 // 點選角色 checkbox 切換
 function toggleRole(id: string) {
   const idx = selectedRoleIds.value.indexOf(id)
@@ -978,6 +1004,14 @@ const filteredGroups = computed(() => {
 async function handleCreateScript() {
   if (!newScriptName.value.trim()) return
   if (selectedRoleIds.value.length === 0) return
+
+  if (!uiStore.licenseIsActivated && scriptStore.customScripts.length >= 10) {
+    uiStore.showAlert(
+      '劇本管理受限',
+      `試用期/未授權狀態下，最多只能建立或匯入 1 個自訂劇本。\n\n請啟用正式授權金鑰以解鎖無限劇本管理功能。\n\n您的裝置識別碼：\n${uiStore.licenseDeviceId}`
+    )
+    return
+  }
 
   // 取得完整角色物件
   const characters = scriptStore.masterScript.characters.filter(c =>
@@ -1076,6 +1110,7 @@ function handleDeleteScript(script: Script) {
     '刪除劇本',
     `確認要刪除自訂劇本「${script.name}」嗎？此操作無法復原。`,
     async () => {
+      uiStore.closeConfirm()
       isDeleting.value = true
       await nextTick()
       await new Promise(resolve => setTimeout(resolve, 150))
@@ -1157,6 +1192,14 @@ async function exportSingleScript(script: Script) {
 function handleCreateCategory() {
   const val = newCategoryName.value.trim()
   if (!val) return
+
+  if (!uiStore.licenseIsActivated) {
+    uiStore.showAlert(
+      '功能已鎖定',
+      `自訂劇本分類功能需要啟用正式授權金鑰。\n\n試用期內不支援建立新分類。\n\n您的裝置識別碼：\n${uiStore.licenseDeviceId}`
+    )
+    return
+  }
   if (scriptStore.categories.includes(val)) {
     uiStore.showAlert('已存在', '該類別已經存在！')
     return
@@ -1175,6 +1218,7 @@ function handleDeleteCategory(name: string) {
     '刪除類別',
     `確認要刪除類別「${name}」嗎？屬於該類別的劇本將被歸類到預設分類中。`,
     async () => {
+      uiStore.closeConfirm()
       isDeleting.value = true
       await nextTick()
       await new Promise(resolve => setTimeout(resolve, 150))
@@ -1204,11 +1248,16 @@ function handleRenameCategory(oldName: string, newName: string) {
 
 // 劇本指派分類
 async function handleAssignScriptCategory(script: Script, category: string) {
+  isSaving.value = true
+  await nextTick()
+  await new Promise(resolve => setTimeout(resolve, 150))
   try {
     await scriptStore.renameScript(script.id, script.name, category)
   } catch (err) {
     console.error('歸類失敗:', err)
     uiStore.showAlert('歸類失敗', '劇本歸類失敗')
+  } finally {
+    isSaving.value = false
   }
 }
 
@@ -1823,12 +1872,51 @@ function moveCategory(index: number, direction: number) {
 }
 
 /* 劇本列表歸類 */
+.categorize-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 4px 16px 10px;
+}
+
+.categorize-search-input {
+  width: 100%;
+  padding: 8px 30px 8px 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: white;
+  border-radius: 8px;
+  outline: none;
+  font-size: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.categorize-search-input:focus {
+  border-color: #c9a84c;
+  box-shadow: 0 0 8px rgba(201, 168, 76, 0.2);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 24px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px;
+}
+
+.search-clear-btn:hover {
+  color: white;
+}
+
 .scripts-categorize-list {
   padding: 4px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 32vh;
+  flex: 1; /* 自動撐滿下半部剩餘空間 */
   overflow-y: auto;
 }
 

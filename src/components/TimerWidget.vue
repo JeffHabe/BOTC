@@ -21,7 +21,7 @@
 
       <!-- 播放釘選自訂音效的按鈕 (並排在碼錶右側) -->
       <button 
-        v-if="uiStore.pinnedSound"
+        v-if="uiStore.pinnedSound && !uiStore.isCustomSoundButtonHidden"
         class="main-custom-sound-btn" 
         :class="{ 
           'is-playing': uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === uiStore.pinnedSoundId,
@@ -57,11 +57,30 @@
         </div>
 
         <div class="timer-adjust">
-          <button class="adjust-btn" @click="uiStore.addTimerSeconds(-10)">-10秒</button>
-          <button class="adjust-btn" @click="uiStore.addTimerSeconds(+10)">+10秒</button>
-          <!-- <button class="adjust-btn" @click="uiStore.addTimerSeconds(-60)">-1分</button> -->
-          <!-- <button class="adjust-btn" @click="uiStore.addTimerSeconds(60)">+1分</button> -->
-          <button class="adjust-btn" @click="uiStore.addTimerSeconds(300)">+5分</button>
+          <div class="time-input-group">
+            <input 
+              type="number" 
+              v-model.number="inputMinutes" 
+              min="0" 
+              max="99" 
+              class="time-input" 
+              placeholder="00"
+              :disabled="uiStore.isTimerRunning"
+            />
+            <span class="time-label">分</span>
+          </div>
+          <div class="time-input-group">
+            <input 
+              type="number" 
+              v-model.number="inputSeconds" 
+              min="0" 
+              max="59" 
+              class="time-input" 
+              placeholder="00"
+              :disabled="uiStore.isTimerRunning"
+            />
+            <span class="time-label">秒</span>
+          </div>
         </div>
 
         <div class="timer-controls">
@@ -96,6 +115,26 @@ const formattedTime = computed(() => {
 })
 
 const isUrgent = computed(() => uiStore.timerRemaining > 0 && uiStore.timerRemaining <= 30)
+
+const inputMinutes = computed({
+  get: () => Math.floor(uiStore.timerRemaining / 60),
+  set: (val: number) => {
+    const mins = Math.max(0, Math.min(99, isNaN(val) ? 0 : val))
+    const secs = uiStore.timerRemaining % 60
+    uiStore.timerRemaining = mins * 60 + secs
+    uiStore.timerTotal = uiStore.timerRemaining
+  }
+})
+
+const inputSeconds = computed({
+  get: () => uiStore.timerRemaining % 60,
+  set: (val: number) => {
+    const secs = Math.max(0, Math.min(59, isNaN(val) ? 0 : val))
+    const mins = Math.floor(uiStore.timerRemaining / 60)
+    uiStore.timerRemaining = mins * 60 + secs
+    uiStore.timerTotal = uiStore.timerRemaining
+  }
+})
 
 function handleMiniClick() {
   if (uiStore.isBellPlaying) {
@@ -258,25 +297,54 @@ function handleMiniClick() {
 
 .timer-adjust {
   display: flex;
-  gap: 8px;
-  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  margin: 6px 0;
 }
 
-.adjust-btn {
-  flex: 1;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #ccc;
+.time-input-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-input {
+  width: 50px;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: white;
   border-radius: 8px;
-  padding: 6px 0;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
+  outline: none;
+  font-size: 13px;
+  text-align: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  /* 移除數字輸入框的上下小箭頭 */
+  -moz-appearance: textfield;
 }
 
-.adjust-btn:hover {
-  background: rgba(255,255,255,0.1);
-  color: #fff;
+.time-input::-webkit-outer-spin-button,
+.time-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.time-input:focus {
+  border-color: #c9a84c;
+  box-shadow: 0 0 6px rgba(201, 168, 76, 0.3);
+}
+
+.time-input:disabled {
+  opacity: 0.4;
+  border-color: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.15);
+  cursor: not-allowed;
+}
+
+.time-label {
+  font-size: 12px;
+  color: #ccc;
 }
 
 .timer-controls {

@@ -42,6 +42,42 @@ export interface SetupWizardState {
 }
 
 export const useUIStore = defineStore('ui', () => {
+  // --- 授權管理狀態 ---
+  const licenseStatus = ref<'Loading' | 'Valid' | 'Expired' | 'TimeTampered'>('Loading')
+  const licenseDeviceId = ref('')
+  const licenseExpiryDate = ref('')
+  const licenseRemainingDays = ref<number | null>(null)
+  const licenseIsActivated = ref(false)
+
+  async function updateLicenseStatusFromBackend() {
+    try {
+      const res = await invoke<any>('check_license')
+      if (res.status === 'Valid') {
+        licenseRemainingDays.value = res.data.remaining_days
+        licenseExpiryDate.value = res.data.expiry_date
+        licenseDeviceId.value = res.data.device_id
+        licenseIsActivated.value = res.data.is_activated
+        licenseStatus.value = 'Valid'
+      } else if (res.status === 'Expired') {
+        licenseRemainingDays.value = -1
+        licenseExpiryDate.value = res.data.expiry_date
+        licenseDeviceId.value = res.data.device_id
+        licenseIsActivated.value = res.data.is_activated
+        licenseStatus.value = 'Expired'
+      } else if (res.status === 'TimeTampered') {
+        licenseRemainingDays.value = -1
+        licenseDeviceId.value = res.data.device_id
+        licenseExpiryDate.value = '時間異常'
+        licenseIsActivated.value = false
+        licenseStatus.value = 'TimeTampered'
+      }
+    } catch (err) {
+      console.error('Failed to query license status:', err)
+      licenseStatus.value = 'Expired'
+      licenseIsActivated.value = false
+    }
+  }
+
   // --- 面板控制 ---
   const activePanel = ref<Panel>('none')
   // 記錄夜晚行動順序的捲動位置
@@ -364,6 +400,12 @@ export const useUIStore = defineStore('ui', () => {
     { id: 'default-scream-horror', name: '報喪女妖技能 (scream-horror)' },
     { id: 'default-bomb', name: '炸彈人技能 (bomb)' }
   ]
+
+  const isCustomSoundButtonHidden = ref(localStorage.getItem('botc-hide-custom-sound-btn') === 'true')
+  function setCustomSoundButtonHidden(hidden: boolean) {
+    isCustomSoundButtonHidden.value = hidden
+    localStorage.setItem('botc-hide-custom-sound-btn', String(hidden))
+  }
 
   const customSounds = ref<{ id: string; name: string }[]>([])
   const pinnedSoundId = ref<string | null>(localStorage.getItem('botc-pinned-sound-id'))
@@ -849,6 +891,7 @@ export const useUIStore = defineStore('ui', () => {
     startTimer, pauseTimer, resetTimer, addTimerSeconds, calibrateTimer, stopBell,
     // 自訂音效
     customSounds, pinnedSoundId, isCustomSoundPlaying, playingCustomSoundId, pinnedSound, pinnedSoundShortName,
+    isCustomSoundButtonHidden, setCustomSoundButtonHidden,
     loadCustomSounds, addCustomSound, removeCustomSound, pinSound,
     playSpecificSound, stopSpecificSound, togglePinnedSound,
     // 縮放與平移控制
@@ -862,6 +905,8 @@ export const useUIStore = defineStore('ui', () => {
     // 夜晚捲動位置
     nightOrderScrollPos, setNightOrderScroll,
     // 設置嚮導暫存
-    setupWizardState, resetSetupWizard
+    setupWizardState, resetSetupWizard,
+    // 授權管理
+    licenseStatus, licenseDeviceId, licenseExpiryDate, licenseRemainingDays, licenseIsActivated, updateLicenseStatusFromBackend
   }
 })

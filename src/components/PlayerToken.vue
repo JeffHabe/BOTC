@@ -104,6 +104,27 @@
                  :src="getSourceChar(rem.source_role)!.image!" 
                  class="rem-role-img" />
             <span v-else class="rem-emoji-icon">{{ getReminderIcon(rem.text) }}</span>
+
+            <!-- 小 token 內部弧形文字 -->
+            <svg viewBox="0 0 100 100" class="rem-name-svg">
+              <path 
+                :id="'remCurve-' + rem.id" 
+                d="M 12 72 A 42 32 0 0 0 88 72"  
+                fill="transparent" 
+              />
+              <text>
+                <textPath 
+                  :href="'#remCurve-' + rem.id" 
+                  startOffset="52%"
+                  text-anchor="middle"
+                  dominant-baseline="middle"
+                  class="rem-curved-name-text"
+                  :style="{ fontSize: rem.text.length > 3 ? '20px' : '24px' }"
+                >
+                  {{ rem.text }}
+                </textPath>
+              </text>
+            </svg>
           </div>
         </div>
 
@@ -117,6 +138,25 @@
         >
           <div class="rem-inner">
             <span class="expand-icon">🔓</span>
+            <!-- 🔓 內置解鎖數字弧形文字 -->
+            <svg viewBox="0 0 100 100" class="rem-name-svg">
+              <path 
+                :id="'remCurve-unlock-' + player.id" 
+                d="M 12 72 A 42 32 0 0 0 88 72"  
+                fill="transparent" 
+              />
+              <text>
+                <textPath 
+                  :href="'#remCurve-unlock-' + player.id" 
+                  startOffset="52%"
+                  text-anchor="middle"
+                  dominant-baseline="middle"
+                  class="rem-curved-name-text"
+                >
+                  {{ `+${player.reminders.length}` }}
+                </textPath>
+              </text>
+            </svg>
           </div>
         </div>
 
@@ -133,46 +173,26 @@
         >
           <div class="rem-inner">
             <span class="expand-icon">🔒</span>
+            <!-- 🔒 內置收起弧形文字 -->
+            <svg viewBox="0 0 100 100" class="rem-name-svg">
+              <path 
+                :id="'remCurve-lock-' + player.id" 
+                d="M 12 72 A 42 32 0 0 0 88 72"  
+                fill="transparent" 
+              />
+              <text>
+                <textPath 
+                  :href="'#remCurve-lock-' + player.id" 
+                  startOffset="52%"
+                  text-anchor="middle"
+                  dominant-baseline="middle"
+                  class="rem-curved-name-text"
+                >
+                  收起
+                </textPath>
+              </text>
+            </svg>
           </div>
-        </div>
-
-        <!-- 第二層：所有的文字標籤 (置頂) -->
-        <div 
-          v-for="(rem, rIdx) in displayReminders" 
-          :key="'label-' + rem.id" 
-          class="rem-label-container"
-          :style="getReminderStyle(rIdx + 1)"
-        >
-          <span class="rem-text-label">
-            {{ rem.text }}
-          </span>
-        </div>
-
-        <!-- 🔓 展開數字標籤 (只在收起狀態顯示，點擊後立刻消失) -->
-        <div 
-          v-if="player.reminders.length > uiStore.reminderCollapseThreshold && !isExpanded"
-          key="expand-unlock-label-btn"
-          class="rem-label-container"
-          :style="getReminderStyle(1)"
-        >
-          <span class="rem-text-label expand-label">
-            {{ `+${player.reminders.length}` }}
-          </span>
-        </div>
-
-        <!-- 🔒 收起文字標籤 (只在展開狀態顯示，完全展開後延遲出現在提示標誌尾端) -->
-        <div 
-          v-if="player.reminders.length > uiStore.reminderCollapseThreshold && isExpanded"
-          key="expand-lock-label-btn"
-          class="rem-label-container lock-label"
-          :style="{
-            ...getReminderStyle(player.reminders.length + 1),
-            '--lock-delay': `${(player.reminders.length + 1) * 0.04 + 0.1}s`
-          }"
-        >
-          <span class="rem-text-label expand-label">
-            收起
-          </span>
         </div>
 
         <!-- 新增/編輯提示標記的加號按鈕 -->
@@ -367,8 +387,8 @@ function getReminderStyle(rIdx: number, isPlus = false) {
 
   // --- 全局標記間距配置 ---
   // 優化間距以容納小 token 圓圈本身 (直徑 30px) 與下方的文字標籤 (偏移 12px + 文字高度約 10px)，確保在任何角度下圖示與文字均不會重疊擠壓
-  const unitHeight = 35 * uiStore.grimoireScale // 1️⃣ 一個小令片本身所占用的實體高度 (px)
-  const spacing = 15 * uiStore.grimoireScale   // 2️⃣ 小令片與小令片之間的額外空白安全間隔 (px)
+  const unitHeight = 15 * uiStore.grimoireScale // 1️⃣ 一個小令片本身所占用的實體高度 (px)
+  const spacing = 25 * uiStore.grimoireScale   // 2️⃣ 小令片與小令片之間的額外空白安全間隔 (px)
   const tokenPxSize = 100 * uiStore.grimoireScale * (autoScaleFactor.value || 1)
   const gap = ((unitHeight + spacing) / tokenPxSize) * 90 // 3️⃣ 換算後的百分比軌道間距
   // -----------------------
@@ -382,7 +402,15 @@ function getReminderStyle(rIdx: number, isPlus = false) {
     // 🚀 優化：將起始軌道拉回貼近令片的 10px 黃金間距軌道 (底部 75%，其餘 70%)
     const effectiveBaseDist = isBottomHalf ? 75 : 70
 
-    const distV = effectiveBaseDist + rIdx * gap
+    // const distV = effectiveBaseDist + rIdx * gap
+    // 基礎起點 (rIdx = 0，也就是加號的位置)
+    let distV = effectiveBaseDist
+    if (rIdx > 0) {
+      const firstGap = gap * 1       // 1️⃣ 第一個小 token 離加號的距離 (可調小，讓它貼近加號)
+      const subsequentGap = gap * 1.6  // 2️⃣ 後續小令片彼此之間的距離 (可調大，拉開小令片間距)
+      
+      distV += firstGap + (rIdx - 1) * subsequentGap
+    }
 
     const top = 50 - (distV * Math.sin(radialAngle))
     const left = 50 - (distV * Math.cos(radialAngle))
@@ -390,8 +418,8 @@ function getReminderStyle(rIdx: number, isPlus = false) {
     styleObj = {
       top: `${top}%`,
       left: `${left}%`,
-      width: `${30 * uiStore.grimoireScale}px`,
-      height: `${30 * uiStore.grimoireScale}px`,
+      width: `${45 * uiStore.grimoireScale}px`,
+      height: `${45 * uiStore.grimoireScale}px`,
       fontSize: `${9 * uiStore.grimoireScale}px`,
       position: 'absolute',
       transform: 'translate(-50%, -50%)'
@@ -415,8 +443,8 @@ function getReminderStyle(rIdx: number, isPlus = false) {
     styleObj = {
       top: `${top}%`,
       left: `${left}%`,
-      width: `${28 * uiStore.grimoireScale}px`,
-      height: `${28 * uiStore.grimoireScale}px`,
+      width: `${36 * uiStore.grimoireScale}px`,
+      height: `${36 * uiStore.grimoireScale}px`,
       fontSize: `${8.5 * uiStore.grimoireScale}px`,
       position: 'absolute',
       transform: 'translate(-50%, -50%)',
@@ -442,8 +470,8 @@ function getReminderStyle(rIdx: number, isPlus = false) {
     styleObj = {
       top: `${rIdx * (50 * uiStore.grimoireScale) + topOffset}px`, 
       [side]: sideDist,
-      width: `${28 * uiStore.grimoireScale}px`,
-      height: `${28 * uiStore.grimoireScale}px`,
+      width: `${36 * uiStore.grimoireScale}px`,
+      height: `${36 * uiStore.grimoireScale}px`,
       fontSize: `${8.5 * uiStore.grimoireScale}px`,
       position: 'absolute',
       zIndex: 2000,
@@ -835,13 +863,13 @@ const deathTypeClass = computed(() => {
   justify-content: flex-end;
   align-content: flex-end;
   padding: 4px;
-  width: 70px; /* 限制寬度：20px*3 + 間距，強制每 3 個換行 */
+  width: 94px; /* 放大寬度以容納放大後的 token */
 }
 .layout-grid .rem-dot-classic {
   position: static;
   transform: none;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   margin: 1px;
   font-size: 11px;
 }
@@ -849,8 +877,8 @@ const deathTypeClass = computed(() => {
 /* 側面堆疊 (Stack) - JS 已處理方位 */
 .layout-stack .rem-dot-classic {
   transform: none;
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
 }
 
 /* 內圈向心 (Inner) - JS 已計算座標 */
@@ -1101,5 +1129,24 @@ const deathTypeClass = computed(() => {
 .layout-grid .add-reminder-btn {
   transform: none;
   --rem-transform: none;
+}
+
+/* 提示標記內置弧形文字樣式 */
+.rem-name-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.rem-curved-name-text {
+  font-family: 'ChineseFont', 'NewsFont', var(--font-title), sans-serif;
+  font-weight: 900;
+  fill: #fff;
+  font-size: 24px;
+  text-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.95), 0 0 2.5px rgba(0, 0, 0, 0.95);
+  letter-spacing: 0.5px;
 }
 </style>

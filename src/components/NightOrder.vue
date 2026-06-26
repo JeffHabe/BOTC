@@ -31,23 +31,28 @@
 
         <div
           v-for="(char, i) in currentOrder"
-          :key="char.id"
+          :key="char.uniqueKey"
           class="order-item"
           :class="{
             'order-item-active': isActiveInGame(char),
             'order-item-evil': isEvilRole(char),
-            'order-item-pressable': getPlayerByRole(char.id)
+            'order-item-pressable': char.player
           }"
-          @mousedown="getPlayerByRole(char.id) && startLongPress(getPlayerByRole(char.id)!.id)"
+          @mousedown="char.player && startLongPress(char.player.id)"
           @mouseup="cancelLongPress"
           @mouseleave="cancelLongPress"
-          @touchstart.passive="getPlayerByRole(char.id) && startLongPress(getPlayerByRole(char.id)!.id)"
+          @touchstart.passive="char.player && startLongPress(char.player.id)"
           @touchend.passive="cancelLongPress"
           @touchmove.passive="cancelLongPress"
         >
           <!-- 序號 -->
           <div class="order-index">{{ i + 1 }}</div>
-
+          <img
+              v-if="!char.player.is_alive"
+              src="/pic/grave.png"
+              class="order-player-dead-img"
+              alt="死亡"
+            />
           <!-- 角色圖示 -->
           <div class="order-role-icon" :class="char.role_type?.toLowerCase()">
             <img v-if="char.image" :src="char.image" :alt="char.name" />
@@ -76,12 +81,8 @@
           </div>
 
           <!-- 玩家名稱 (若已指派角色) -->
-          <div class="order-player" v-if="getPlayerByRole(char.id)">
-            <span class="order-player-name">{{ getPlayerByRole(char.id)!.name }}</span>
-            <span
-              v-if="!getPlayerByRole(char.id)!.is_alive"
-              class="order-player-dead"
-            >💀</span>
+          <div class="order-player" v-if="char.player">
+            <span class="order-player-name">{{ char.player.name }}</span>
           </div>
         </div>
       </div>
@@ -156,12 +157,20 @@ const SYSTEM_ACTIONS: any[] = [
 const currentOrder = computed(() => {
   const isFirst = activeTab.value === 'first'
   
-  // 2. 過濾已上場的角色
-  const inPlayRoleIds = new Set(gameStore.players.map(p => p.role?.id).filter(Boolean))
-  let baseOrder = [...(isFirst ? gameStore.firstNightOrder : gameStore.otherNightOrder)]
-  baseOrder = baseOrder.filter(char => inPlayRoleIds.has(char.id))
+  // 1. 建立以角色 ID 為鍵的場上玩家對照表 (一個角色可能對應多個玩家)
+  const rolePlayersMap = new Map<string, any[]>()
+  gameStore.players.forEach(p => {
+    if (p.role?.id) {
+      if (!rolePlayersMap.has(p.role.id)) {
+        rolePlayersMap.set(p.role.id, [])
+      }
+      rolePlayersMap.get(p.role.id)!.push(p)
+    }
+  })
 
-  // 3. 首夜添加系統步驟 (任何劇本首夜皆顯示)
+  const expandedOrder: any[] = []
+
+  // 2. 首夜添加系統步驟 (任何劇本首夜皆顯示，不繫結玩家)
   if (isFirst) {
     const isTeensy = gameStore.players.length === 5 || gameStore.players.length === 6
     let systemActions = [...SYSTEM_ACTIONS]
@@ -180,23 +189,40 @@ const currentOrder = computed(() => {
         })
     }
     
-    return [...systemActions, ...baseOrder]
+    systemActions.forEach((act, idx) => {
+      expandedOrder.push({
+        ...act,
+        uniqueKey: `sys_${act.id}_${idx}`,
+        player: null
+      })
+    })
   }
+
+  // 3. 處理劇本夜晚行動順序，若同一個角色有多個玩家，則展開為多個項目
+  let baseOrder = [...(isFirst ? gameStore.firstNightOrder : gameStore.otherNightOrder)]
+  baseOrder.forEach(char => {
+    const playersWithThisRole = rolePlayersMap.get(char.id) || []
+    if (playersWithThisRole.length > 0) {
+      playersWithThisRole.forEach((player, pIdx) => {
+        expandedOrder.push({
+          ...char,
+          uniqueKey: `${char.id}_${player.id}_${pIdx}`,
+          player: player
+        })
+      })
+    }
+  })
   
-  return baseOrder
+  return expandedOrder
 })
 
 function isActiveInGame(char: any) {
   if (char.is_system) return true
-  return gameStore.players.some(p => p.role?.id === char.id && p.is_alive)
+  return char.player ? char.player.is_alive : false
 }
 
 function isEvilRole(char: any) {
   return char.role_type === 'Minion' || char.role_type === 'Demon'
-}
-
-function getPlayerByRole(roleId: string) {
-  return gameStore.players.find(p => p.role?.id === roleId) ?? null
 }
 
 function roleEmoji(char: any) {
@@ -445,7 +471,13 @@ function cancelLongPress() {
   font-weight: 600;
 }
 
-.order-player-dead { font-size: 12px; }
+.order-player-dead-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  vertical-align: middle;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
 .role-text-fallback {
   font-size: 20px;
   font-weight: 900;

@@ -1128,3 +1128,259 @@ pub fn remove_nomination(
     Ok(gs.clone())
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct LicenseState {
+    pub last_run_date: String,
+    #[serde(default = "generate_new_device_id")]
+    pub device_id: String,
+    #[serde(default = "default_expiry_date")]
+    pub expiry_date: String,
+    #[serde(default = "default_is_activated")]
+    pub is_activated: bool,
+}
+
+fn generate_new_device_id() -> String {
+    uuid::Uuid::new_v4().to_string()
+}
+
+fn default_is_activated() -> bool {
+    false
+}
+
+fn add_two_months(date: chrono::NaiveDate) -> chrono::NaiveDate {
+    use chrono::Datelike;
+    let mut year = date.year();
+    let mut month = date.month() + 2;
+    if month > 12 {
+        month -= 12;
+        year += 1;
+    }
+    let mut day = date.day();
+    loop {
+        if let Some(d) = chrono::NaiveDate::from_ymd_opt(year, month, day) {
+            return d;
+        }
+        if day <= 28 {
+            break;
+        }
+        day -= 1;
+    }
+    date
+}
+
+fn default_expiry_date() -> String {
+    let now = chrono::Local::now().naive_local().date();
+    add_two_months(now).format("%Y-%m-%d").to_string()
+}
+
+#[derive(serde::Serialize, Clone, Debug)]
+#[serde(tag = "status", content = "data")]
+pub enum LicenseStatus {
+    Valid { remaining_days: i64, expiry_date: String, device_id: String, is_activated: bool },
+    Expired { expiry_date: String, device_id: String, is_activated: bool },
+    TimeTampered { device_id: String },
+}
+
+/// 使用 FNV-1a (64-bit) 搭配密碼鹽值計算金鑰簽名 (16位大寫十六進位)
+fn compute_license_key(device_id: &str, expiry_date: &str) -> String {
+    let salt = "BOTC_GRIMOIRE_SALT_2026_SECRET_KEY_#@!$";
+    let input = format!("{}:{}:{}", device_id, expiry_date, salt);
+    
+    let mut hash: u64 = 0xcbf29ce484222325;
+    for byte in input.bytes() {
+        hash ^= byte as u64;
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    
+    format!("{:016X}", hash)
+}
+
+/// 將日期 (8字元) 與 16位簽名進行錯位交錯，生成 24位金鑰
+fn interleave_key(date_str: &str, signature_hex: &str) -> String {
+    let date_bytes = date_str.as_bytes();
+    let sig_bytes = signature_hex.as_bytes();
+    
+    let mut result = Vec::with_capacity(24);
+    let mut d_idx = 0;
+    let mut s_idx = 0;
+    
+    for _ in 0..8 {
+        result.push(date_bytes[d_idx]);
+        d_idx += 1;
+        result.push(sig_bytes[s_idx]);
+        s_idx += 1;
+        result.push(sig_bytes[s_idx]);
+        s_idx += 1;
+    }
+    
+    String::from_utf8(result).unwrap_or_default()
+}
+
+/// 解碼 24位交錯金鑰，還原出 (日期, 簽名)
+fn de_interleave_key(key: &str) -> Option<(String, String)> {
+    let clean_key = key.trim().replace("-", "");
+    if clean_key.len() != 24 {
+        return None;
+    }
+    
+    let key_bytes = clean_key.as_bytes();
+    let mut date_bytes = Vec::with_capacity(8);
+    let mut sig_bytes = Vec::with_capacity(16);
+    
+    for chunk in key_bytes.chunks_exact(3) {
+        date_bytes.push(chunk[0]);
+        sig_bytes.push(chunk[1]);
+        sig_bytes.push(chunk[2]);
+    }
+    
+    let date_str = String::from_utf8(date_bytes).ok()?;
+    let sig_str = String::from_utf8(sig_bytes).ok()?;
+    Some((date_str, sig_str))
+}
+
+/// 檢查離線授權狀態 (防倒改系統時間與檢查過期)
+#[tauri::command]
+pub fn check_license(app: tauri::AppHandle) -> Result<LicenseStatus, String> {
+    let now = chrono::Local::now().naive_local().date();
+    let mut path = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    if !path.exists() {
+        std::fs::create_dir_all(&path).map_err(|e| e.to_string())?;
+    }
+    path.push("license_state.json");
+    
+    let mut state = if path.exists() {
+        let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        serde_json::from_str::<LicenseState>(&content).unwrap_or_else(|_| LicenseState {
+            last_run_date: now.format("%Y-%m-%d").to_string(),
+            device_id: generate_new_device_id(),
+            expiry_date: default_expiry_date(),
+            is_activated: false,
+        })
+    } else {
+        LicenseState {
+            last_run_date: now.format("%Y-%m-%d").to_string(),
+            device_id: generate_new_device_id(),
+            expiry_date: default_expiry_date(),
+            is_activated: false,
+        }
+    };
+    
+    let last_run = chrono::NaiveDate::parse_from_str(&state.last_run_date, "%Y-%m-%d")
+        .unwrap_or(now);
+    
+    let expiry_date = chrono::NaiveDate::parse_from_str(&state.expiry_date, "%Y-%m-%d")
+        .unwrap_or_else(|_| chrono::NaiveDate::parse_from_str(&default_expiry_date(), "%Y-%m-%d").unwrap());
+        
+    // 1. 檢查是否倒改時間 (防作弊)
+    if now < last_run {
+        error!("偵測到系統時間異常！當前時間 {} 早於歷史執行時間 {}", now, last_run);
+        return Ok(LicenseStatus::TimeTampered {
+            device_id: state.device_id,
+        });
+    }
+    
+    // 2. 檢查是否已過期
+    if now > expiry_date {
+        warn!("試用授權已過期！截止日期: {}, 當前日期: {}", expiry_date, now);
+        return Ok(LicenseStatus::Expired {
+            expiry_date: state.expiry_date.clone(),
+            device_id: state.device_id,
+            is_activated: state.is_activated,
+        });
+    }
+    
+    // 3. 更新歷史執行日期並保存
+    let mut modified = false;
+    if now > last_run {
+        state.last_run_date = now.format("%Y-%m-%d").to_string();
+        modified = true;
+    }
+    if !path.exists() {
+        modified = true;
+    }
+    
+    if modified {
+        let json = serde_json::to_string_pretty(&state).map_err(|e| e.to_string())?;
+        std::fs::write(&path, json).map_err(|e| e.to_string())?;
+    }
+    
+    let remaining_days = (expiry_date - now).num_days();
+    Ok(LicenseStatus::Valid {
+        remaining_days,
+        expiry_date: state.expiry_date,
+        device_id: state.device_id,
+        is_activated: state.is_activated,
+    })
+}
+
+/// 啟用授權金鑰 (自動解密錯位金鑰並驗證)
+#[tauri::command]
+pub fn activate_license(app: tauri::AppHandle, key: String) -> Result<LicenseStatus, String> {
+    let now = chrono::Local::now().naive_local().date();
+    let mut path = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    path.push("license_state.json");
+    
+    if !path.exists() {
+        return Err("授權檔案不存在，請先啟動 App 進行初始化！".to_string());
+    }
+    
+    let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let mut state = serde_json::from_str::<LicenseState>(&content).map_err(|e| e.to_string())?;
+    
+    // 1. 解碼錯位金鑰
+    let (date_str, sig_hex) = de_interleave_key(&key)
+        .ok_or_else(|| "金鑰格式錯誤，請確認輸入是否完整！(應為 24 位字元)".to_string())?;
+        
+    // 格式化 YYYYMMDD 為 YYYY-MM-DD
+    if date_str.len() != 8 {
+        return Err("金鑰日期解析失敗！".to_string());
+    }
+    let expiry_date_formatted = format!(
+        "{}-{}-{}",
+        &date_str[0..4],
+        &date_str[4..6],
+        &date_str[6..8]
+    );
+    
+    // 驗證日期合法性
+    let target_expiry_date = chrono::NaiveDate::parse_from_str(&expiry_date_formatted, "%Y-%m-%d")
+        .map_err(|_| "金鑰中的到期日不合法！".to_string())?;
+        
+    if target_expiry_date < now {
+        return Err("該金鑰的授權日期已過期，無法啟用！".to_string());
+    }
+    
+    // 2. 計算預期的簽名金鑰
+    let expected_sig = compute_license_key(&state.device_id, &expiry_date_formatted);
+    
+    if sig_hex.to_uppercase() != expected_sig {
+        return Err("授權金鑰不正確，請確認此金鑰是否與您的裝置識別碼綁定！".to_string());
+    }
+    
+    // 3. 驗證成功，寫入新的到期日期，並重置最後運行時間為今日
+    state.expiry_date = expiry_date_formatted;
+    state.last_run_date = now.format("%Y-%m-%d").to_string(); // 重置時間鎖以防止之前改時間產生的異常阻擋
+    state.is_activated = true;
+    
+    let json = serde_json::to_string_pretty(&state).map_err(|e| e.to_string())?;
+    std::fs::write(&path, json).map_err(|e| e.to_string())?;
+    
+    info!("授權成功延長至：{}", state.expiry_date);
+    
+    // 返回最新的驗證狀態
+    check_license(app)
+}
+
+/// 提供後端獨立金鑰生成函數 (雖然不用暴露給 App，但保留以供未來輔助)
+pub fn generate_key_backend(device_id: &str, expiry_date: &str) -> Result<String, String> {
+    // expiry_date 應為 YYYY-MM-DD
+    let clean_date = expiry_date.replace("-", "");
+    if clean_date.len() != 8 {
+        return Err("日期格式錯誤，應為 YYYY-MM-DD".to_string());
+    }
+    let sig = compute_license_key(device_id, expiry_date);
+    Ok(interleave_key(&clean_date, &sig))
+}
+
+
+

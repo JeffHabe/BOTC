@@ -50,18 +50,55 @@
             <div class="preset-manager">
               <div class="preset-label">劇本：</div>
               <div class="preset-controls">
-                <select v-model="selectedCombinedId" class="preset-select">
-                  <optgroup v-for="g in groupedScripts" :key="g.category" :label="g.category">
-                    <option v-for="s in g.list" :key="'script::'+s.id" :value="'script::'+s.id">
-                      {{ s.name }}
-                    </option>
-                  </optgroup>
-                  <optgroup v-if="poolPresets.length > 0" label="自訂劇本 (暫存配置)">
-                    <option v-for="p in poolPresets" :key="'preset::'+p.id" :value="'preset::'+p.id">
-                      {{ p.name }}
-                    </option>
-                  </optgroup>
-                </select>
+                <div class="searchable-select-container" @focusout="closeDropdown">
+                  <div class="select-trigger">
+                    <input
+                      type="text"
+                      class="select-input"
+                      :placeholder="currentScriptName"
+                      v-model="scriptSearchQuery"
+                      @focus="openDropdown"
+                      @click="openDropdown"
+                      ref="searchInputRef"
+                    />
+                    <span class="select-arrow" :class="{ 'is-open': isDropdownOpen }" @click.stop="toggleDropdown">▼</span>
+                  </div>
+                  
+                  <div v-if="isDropdownOpen" class="select-dropdown animate-fade-in">
+                    <div class="dropdown-scroll">
+                      <!-- 官方劇本 -->
+                      <div v-for="g in groupedScripts" :key="g.category" class="dropdown-group">
+                        <div class="dropdown-group-header">{{ g.category }}</div>
+                        <div 
+                          v-for="s in g.list" 
+                          :key="'script::'+s.id" 
+                          class="dropdown-option"
+                          :class="{ 'is-active': selectedCombinedId === 'script::'+s.id }"
+                          @mousedown="selectOption('script::'+s.id)"
+                        >
+                          {{ s.name }}
+                        </div>
+                      </div>
+                      <!-- 自訂劇本 -->
+                      <div v-if="filteredPoolPresets.length > 0" class="dropdown-group">
+                        <div class="dropdown-group-header">自訂劇本 (暫存配置)</div>
+                        <div 
+                          v-for="p in filteredPoolPresets" 
+                          :key="'preset::'+p.id" 
+                          class="dropdown-option"
+                          :class="{ 'is-active': selectedCombinedId === 'preset::'+p.id }"
+                          @mousedown="selectOption('preset::'+p.id)"
+                        >
+                          {{ p.name }}
+                        </div>
+                      </div>
+                      <!-- 無匹配結果 -->
+                      <div v-if="groupedScripts.length === 0 && filteredPoolPresets.length === 0" class="no-options">
+                        無符合的劇本
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div class="preset-actions">
                   <button v-if="activePresetId" class="btn-icon" @click="updatePreset" title="儲存變更">💾</button>
                   <button class="btn-icon" @click="showSaveModal = true" title="另存新檔">📁</button>
@@ -770,6 +807,17 @@ const savedState = uiStore.setupWizardState as any
 const step = ref<Step>(savedState.step || 'pool')
 const totalPlayers = computed(() => gameStore.players.length)
 
+// 限制未正式啟用授權的用戶（包括試用期內）僅能使用 Step 1 (篩選角色池)
+watch(step, (newStep) => {
+  if (newStep !== 'pool' && !uiStore.licenseIsActivated) {
+    step.value = 'pool'
+    uiStore.showAlert(
+      '開局功能已鎖定',
+      `完整開局功能（Step 2-6）需要啟用正式授權金鑰。\n\n試用期內僅開放 Step 1 角色池篩選與魔典瀏覽。請前往「設置選項」->「軟體使用授權」貼上金鑰啟用。\n\n您的裝置識別碼：\n${uiStore.licenseDeviceId}\n(可前往設定選單複製此識別碼並發送給管理員)`
+    )
+  }
+}, { immediate: true })
+
 // 深度監聽所有變數並同步回 UI Store
 watch([step], () => syncToStore())
 
@@ -835,9 +883,45 @@ const selectedCombinedId = computed({
   }
 })
 
+const scriptSearchQuery = ref('')
+const isDropdownOpen = ref(false)
+const searchInputRef = ref<HTMLInputElement | null>(null)
+
+function openDropdown() {
+  isDropdownOpen.value = true
+}
+
+function closeDropdown() {
+  // 延遲關閉，防止 mousedown 來不及觸發就被關閉
+  setTimeout(() => {
+    isDropdownOpen.value = false
+    scriptSearchQuery.value = ''
+  }, 200)
+}
+
+function toggleDropdown() {
+  if (isDropdownOpen.value) {
+    searchInputRef.value?.blur()
+  } else {
+    searchInputRef.value?.focus()
+  }
+}
+
+function selectOption(combinedId: string) {
+  selectedCombinedId.value = combinedId
+  scriptSearchQuery.value = ''
+  isDropdownOpen.value = false
+  searchInputRef.value?.blur()
+}
+
 const groupedScripts = computed(() => {
   const groups: Record<string, Script[]> = {}
+  const query = scriptSearchQuery.value.trim().toLowerCase()
+  
   scriptStore.allScripts.forEach(s => {
+    if (query && !s.name.toLowerCase().includes(query)) {
+      return
+    }
     const cat = s.category || '標準劇本'
     if (!groups[cat]) {
       groups[cat] = []
@@ -867,6 +951,11 @@ interface PoolPreset {
   excluded_ids: string[]
 }
 const poolPresets = ref<PoolPreset[]>([])
+const filteredPoolPresets = computed(() => {
+  const query = scriptSearchQuery.value.trim().toLowerCase()
+  if (!query) return poolPresets.value
+  return poolPresets.value.filter(p => p.name.toLowerCase().includes(query))
+})
 const presetNameInput = ref('')
 const showSaveModal = ref(false)
 const showImportModal = ref(false)
@@ -2699,15 +2788,118 @@ function scrollToGroup(typeKey: string) {
   gap: 8px;
 }
 
-.preset-select {
+.searchable-select-container {
+  position: relative;
   flex: 1;
-  padding: 8px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.select-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  cursor: pointer;
+}
+
+.select-input {
+  width: 100%;
+  padding: 8px 30px 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(201, 168, 76, 0.3);
   color: white;
   border-radius: 6px;
   outline: none;
   font-size: 13px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.select-input:focus {
+  border-color: #c9a84c;
+  box-shadow: 0 0 8px rgba(201, 168, 76, 0.2);
+  cursor: text;
+}
+
+.select-input::placeholder {
+  color: #e0e0e0;
+  opacity: 1;
+}
+
+.select-arrow {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  transition: transform 0.2s;
+}
+
+.select-arrow.is-open {
+  transform: rotate(180deg);
+  color: #c9a84c;
+}
+
+.select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  background: #15171e;
+  border: 1px solid rgba(201, 168, 76, 0.4);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  z-index: 200;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.dropdown-scroll {
+  padding: 4px 0;
+}
+
+.dropdown-group-header {
+  padding: 6px 12px;
+  font-size: 11px;
+  color: #c9a84c;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: rgba(201, 168, 76, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.dropdown-group:first-child .dropdown-group-header {
+  border-top: none;
+}
+
+.dropdown-option {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #e0e0e0;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+
+.dropdown-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.dropdown-option.is-active {
+  background: rgba(201, 168, 76, 0.2);
+  color: #ffd875;
+  font-weight: 600;
+  border-left: 3px solid #c9a84c;
+  padding-left: 13px;
+}
+
+.no-options {
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .btn-icon {

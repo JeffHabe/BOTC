@@ -17,6 +17,9 @@ pub fn run() {
         .plugin(tauri_plugin_sharekit::init())
         .manage(AppState(Mutex::new(GameState::default())))
         .invoke_handler(tauri::generate_handler![
+            // 授權管理
+            commands::check_license,
+            commands::activate_license,
             // 遊戲管理
             commands::get_game_state,
             commands::new_game,
