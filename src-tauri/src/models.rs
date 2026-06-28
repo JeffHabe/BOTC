@@ -96,6 +96,10 @@ pub struct Player {
     pub reminders: Vec<ReminderToken>, // 附加的提醒令牌
     pub is_nominated: bool,            // 本輪是否被提名
     pub can_nominate: bool,            // 本日是否可提名
+    #[serde(default)]
+    pub extra_nominations: u32,        // 額外提名次數
+    #[serde(default)]
+    pub extra_votes: u32,              // 額外投票次數
 }
 
 impl Player {
@@ -110,6 +114,8 @@ impl Player {
             reminders: Vec::new(),
             is_nominated: false,
             can_nominate: true,
+            extra_nominations: 0,
+            extra_votes: 0,
         }
     }
 }
@@ -203,6 +209,8 @@ pub struct Nomination {
     pub executed: bool,
     #[serde(default)]
     pub round: u32, // 哪一輪 (Day N) 發起的
+    #[serde(default)]
+    pub extra_votes: i32, // 額外調整票數（加減票數）
 }
 
 // ─── 遊戲日誌 ─────────────────────────────────────────────────

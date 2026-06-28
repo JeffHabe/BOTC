@@ -40,3 +40,7 @@ log.txt
 key/my-release-key.jks
 guide/storyteller_guide.docx
 guide/player_guide.docx
+
+# Sub-projects
+license_app/
+

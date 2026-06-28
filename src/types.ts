@@ -64,6 +64,8 @@ export interface Player {
   reminders: ReminderToken[]
   is_nominated: boolean
   can_nominate: boolean
+  extra_nominations?: number
+  extra_votes?: number
 }
 
 export interface Script {
@@ -94,6 +96,7 @@ export interface Nomination {
   threshold: number
   executed: boolean
   round: number
+  extra_votes?: number
 }
 
 export interface GameState {

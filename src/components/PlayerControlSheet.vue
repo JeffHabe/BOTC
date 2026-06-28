@@ -71,7 +71,9 @@
                 <img src="/pic/grave.png" class="toggle-icon-img" />
                 <div>
                   <div class="t-title">靈魂投票權</div>
-                  <div class="t-sub">{{ player.has_ghost_vote ? '尚未使用' : '已使用' }}</div>
+                  <div class="t-sub">
+                    {{ player.has_ghost_vote || (player.extra_votes && player.extra_votes > 0) ? (player.extra_votes ? `剩餘 ${player.extra_votes + 1} 次` : '尚未使用') : '已使用' }}
+                  </div>
                 </div>
               </div>
               <button 
@@ -88,7 +90,9 @@
                 <img src="/pic/nomination.png" class="toggle-icon-img" />
                 <div>
                   <div class="t-title">今日可提名</div>
-                  <div class="t-sub">{{ player.can_nominate ? '可以提名' : '不可提名' }}</div>
+                  <div class="t-sub">
+                    {{ player.can_nominate || (player.extra_nominations && player.extra_nominations > 0) ? (player.extra_nominations ? `剩餘 ${player.extra_nominations + 1} 次` : '可以提名') : '不可提名' }}
+                  </div>
                 </div>
               </div>
               <button 
@@ -108,7 +112,7 @@
               <button 
                 class="action-btn nom-btn" 
                 @click="handleStartNominationAs"
-                :disabled="!player.is_alive || !player.can_nominate"
+                 :disabled="isNominatorDisabled"
               >
                 <img src="/pic/vote.png" class="action-btn-img" />
                 <span class="label">由他發起提名</span>
@@ -164,6 +168,16 @@ function handleKeydown(e: KeyboardEvent) {
 
 const player = computed(() => {
   return gameStore.players.find(p => p.id === uiStore.selectedPlayerId)
+})
+
+const isNominatorDisabled = computed(() => {
+  const p = player.value
+  if (!p) return true
+  if (p.is_alive) return !p.can_nominate
+  if (p.role?.id === 'banshee') {
+    return !p.can_nominate && !(p.extra_nominations && p.extra_nominations > 0)
+  }
+  return true
 })
 
 // 偵測玩家是否處於保護狀態 (僅偵測當晚/當輪設定的標記，且發動者必須狀態正常)

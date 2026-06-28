@@ -52,8 +52,9 @@
     <div 
       class="tokens-fixed-area"
       :style="{ 
-        transform: `translate(${uiStore.grimoireTranslateX}px, ${uiStore.grimoireTranslateY}px) scale(${uiStore.viewScale})`,
-        transformOrigin: uiStore.zoomOrigin
+        transform: `translate3d(${uiStore.grimoireTranslateX}px, ${uiStore.grimoireTranslateY}px, 0) scale(${uiStore.viewScale})`,
+        transformOrigin: uiStore.zoomOrigin,
+        transition: (isDragging || isPinching) ? 'none' : 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
       }"
     >
       <!-- 中央劇本標誌 -->
@@ -977,12 +978,18 @@ function handleMouseDown(e: MouseEvent | TouchEvent) {
   window.addEventListener('touchend', handleMouseUp)
 }
 
+let panZoomUpdatePending = false
+let latestDx = 0
+let latestDy = 0
+
 function handleMouseMove(e: MouseEvent | TouchEvent) {
   if (isPinching.value && 'touches' in e && e.touches.length === 2) {
     // 執行雙指縮放
     const currentDist = getDistance(e.touches)
     const ratio = currentDist / startPinchDist.value
     const newScale = Math.min(Math.max(startScale.value * ratio, 0.5), 3.0)
+    
+    // 直接更新 scale (scale 的計算比較輕，且縮放需要即時)
     uiStore.setViewScale(newScale)
     if (e.cancelable) e.preventDefault()
     return
@@ -993,13 +1000,20 @@ function handleMouseMove(e: MouseEvent | TouchEvent) {
   const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
   const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
   
-  const dx = clientX - startPos.x
-  const dy = clientY - startPos.y
+  // 更新最新的位移，不丟棄最新手勢！
+  latestDx = clientX - startPos.x
+  latestDy = clientY - startPos.y
   
-  uiStore.setGrimoireTranslate(
-    startTranslate.x + dx,
-    startTranslate.y + dy
-  )
+  if (!panZoomUpdatePending) {
+    panZoomUpdatePending = true
+    requestAnimationFrame(() => {
+      uiStore.setGrimoireTranslate(
+        startTranslate.x + latestDx,
+        startTranslate.y + latestDy
+      )
+      panZoomUpdatePending = false
+    })
+  }
   
   if (e.cancelable) e.preventDefault()
 }
@@ -1023,6 +1037,9 @@ const dragState = reactive({
   clientX: 0,
   clientY: 0
 })
+
+let cachedContainerRect: DOMRect | null = null
+let cachedTrashZoneRect: DOMRect | null = null
 
 const trashZoneRef = ref<HTMLElement | null>(null)
 const isHoveringTrash = ref(false)
@@ -1059,6 +1076,15 @@ function onTokenMouseDown(e: MouseEvent | TouchEvent, player: any, index: number
   dragState.playerId = player.id
   dragState.index = index
 
+  // 一次性獲取並緩存 Rect，消除 Forced Reflow
+  const container = document.querySelector('.tokens-fixed-area')
+  if (container) {
+    cachedContainerRect = container.getBoundingClientRect()
+  }
+  if (trashZoneRef.value) {
+    cachedTrashZoneRect = trashZoneRef.value.getBoundingClientRect()
+  }
+
   updateDragPos(e)
 
   window.addEventListener('mousemove', onTokenMouseMove)
@@ -1068,34 +1094,45 @@ function onTokenMouseDown(e: MouseEvent | TouchEvent, player: any, index: number
 }
 
 function updateDragPos(e: MouseEvent | TouchEvent) {
-  const container = document.querySelector('.tokens-fixed-area')
-  if (!container) return
-  const rect = container.getBoundingClientRect()
+  if (!cachedContainerRect) return
   const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
   const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
   
   dragState.clientX = clientX
   dragState.clientY = clientY
   
-  dragState.xPercent = ((clientX - rect.left) / rect.width) * 100
-  dragState.yPercent = ((clientY - rect.top) / rect.height) * 100
+  dragState.xPercent = ((clientX - cachedContainerRect.left) / cachedContainerRect.width) * 100
+  dragState.yPercent = ((clientY - cachedContainerRect.top) / cachedContainerRect.height) * 100
 }
+
+let tokenDragUpdatePending = false
+let latestTokenDragEvent: MouseEvent | TouchEvent | null = null
 
 function onTokenMouseMove(e: MouseEvent | TouchEvent) {
   if (!dragState.isDragging) return
-  e.preventDefault()
-  updateDragPos(e)
-  checkDragSwap()
+  if (e.cancelable) e.preventDefault()
+  
+  latestTokenDragEvent = e // 存下最新的 Event
+  
+  if (!tokenDragUpdatePending) {
+    tokenDragUpdatePending = true
+    requestAnimationFrame(() => {
+      if (latestTokenDragEvent) {
+        updateDragPos(latestTokenDragEvent)
+        checkDragSwap()
+      }
+      tokenDragUpdatePending = false
+    })
+  }
 }
 
 function checkDragSwap() {
   // 檢查是否拖曳到垃圾桶上方
-  if (trashZoneRef.value) {
-    const rect = trashZoneRef.value.getBoundingClientRect()
+  if (cachedTrashZoneRect) {
     // 加入一點緩衝區域，讓判定更寬容
     if (
-      dragState.clientX >= rect.left - 20 && dragState.clientX <= rect.right + 20 &&
-      dragState.clientY >= rect.top - 20 && dragState.clientY <= rect.bottom + 20
+      dragState.clientX >= cachedTrashZoneRect.left - 20 && dragState.clientX <= cachedTrashZoneRect.right + 20 &&
+      dragState.clientY >= cachedTrashZoneRect.top - 20 && dragState.clientY <= cachedTrashZoneRect.bottom + 20
     ) {
       isHoveringTrash.value = true
       return // 在垃圾桶上方時，不觸發座位交換
@@ -1162,6 +1199,12 @@ function onTokenMouseUp() {
     dragState.index = -1
     dragState.playerId = ''
     isHoveringTrash.value = false
+
+    // 清空 Rect 快取
+    cachedContainerRect = null
+    cachedTrashZoneRect = null
+    tokenDragUpdatePending = false
+    latestTokenDragEvent = null
   }
   window.removeEventListener('mousemove', onTokenMouseMove)
   window.removeEventListener('touchmove', onTokenMouseMove)
@@ -1337,7 +1380,7 @@ function getPlayerPosStyle(index: number): CSSProperties {
     width: `${baseSize}px`,
     height: `${baseSize}px`,
     zIndex: Math.floor(y * 10) + reminderBoost,
-    transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)'
+    transition: 'left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.2s, height 0.2s'
   }
 }
 
@@ -1381,6 +1424,7 @@ const activePanelComponent = computed(() => {
   height: 100%;
   overflow: hidden;
   background: #0b0c10;
+  touch-action: none; /* 徹底停用原生的滾動與捏合縮放，改由我們的 JS 完全接管 */
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -1480,6 +1524,15 @@ const activePanelComponent = computed(() => {
   animation: fogDrift 10s ease-in-out infinite alternate;
   filter: blur(20px);
   z-index: 2;
+}
+
+/* 觸控手機端優化：停用耗能的動畫與高模糊濾鏡，防止手機發熱與卡頓 */
+@media (pointer: coarse) {
+  .fog {
+    animation: none;
+    filter: none; /* 移除高斯模糊，因為高斯模糊極耗 GPU */
+    background: linear-gradient(to top, rgba(93, 64, 55, 0.35), transparent); /* 調整漸層以保持視覺渲染效果 */
+  }
 }
 
 /* 移除星星動畫 */

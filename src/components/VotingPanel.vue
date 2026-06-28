@@ -16,7 +16,7 @@
             <select v-model="nominatorId" class="player-select">
               <option value="" disabled>選擇玩家...</option>
               <option v-for="p in canNominate" :key="p.id" :value="p.id">
-                {{ gameStore.players.findIndex(pl => pl.id === p.id) + 1 }}. {{ p.name }}
+                {{ !p.is_alive ? '💀 ' : '' }}{{ gameStore.players.findIndex(pl => pl.id === p.id) + 1 }}. {{ p.name }}
               </option>
             </select>
           </div>
@@ -26,7 +26,7 @@
             <select v-model="nomineeId" class="player-select">
               <option value="" disabled>選擇玩家...</option>
               <option v-for="p in notYetNominated" :key="p.id" :value="p.id">
-                {{ gameStore.players.findIndex(pl => pl.id === p.id) + 1 }}. {{ p.name }}
+                {{ !p.is_alive ? '💀 ' : '' }}{{ gameStore.players.findIndex(pl => pl.id === p.id) + 1 }}. {{ p.name }}
               </option>
             </select>
           </div>
@@ -86,23 +86,23 @@
                   <img src="/pic/edit.png" class="edit-icon" />
                 </button>
               </div>
-              <div class="nom-score" :class="{ 'score-pass': nom.votes_for.length >= (nom.round === currentRound && !nom.executed ? gameStore.threshold : nom.threshold) }">
-                {{ nom.votes_for.length }} / {{ nom.round === currentRound && !nom.executed ? gameStore.threshold : nom.threshold }} 票
+              <div class="nom-score" :class="{ 'score-pass': Math.max(0, nom.votes_for.length + (nom.extra_votes || 0)) >= (nom.round === currentRound && !nom.executed ? gameStore.threshold : nom.threshold) }">
+                {{ Math.max(0, nom.votes_for.length + (nom.extra_votes || 0)) }} / {{ nom.round === currentRound && !nom.executed ? gameStore.threshold : nom.threshold }} 票
               </div>
             </template>
 
             <!-- 編輯模式 -->
             <div class="nom-edit-form" v-else @click.stop>
               <div class="edit-row">
-                <select v-model="editNominatorId" class="player-select mini">
+                 <select v-model="editNominatorId" class="player-select mini">
                   <option v-for="p in availableNominatorsForEdit" :key="p.id" :value="p.id">
-                    {{ pIndex(p.id) }}. {{ p.name }}
+                    {{ !p.is_alive ? '💀 ' : '' }}{{ pIndex(p.id) }}. {{ p.name }}
                   </option>
                 </select>
                 <span class="nominate-arrow">提名</span>
                 <select v-model="editNomineeId" class="player-select mini">
                   <option v-for="p in availableNomineesForEdit" :key="p.id" :value="p.id">
-                    {{ pIndex(p.id) }}. {{ p.name }}
+                    {{ !p.is_alive ? '💀 ' : '' }}{{ pIndex(p.id) }}. {{ p.name }}
                   </option>
                 </select>
               </div>
@@ -137,27 +137,39 @@
               </button>
             </div>
 
-            <div class="nom-actions" style="gap: 8px;">
-              <button 
-                class="btn-secondary" 
-                @click.stop="doRemoveNomination(index)"
-              >
-                取消提名
-              </button>
-              <button 
-                class="btn-danger" 
-                :disabled="getExecutionStatus(index).disabled"
-                @click.stop="doExecute(index)"
-              >
-                {{ getExecutionStatus(index).label }}
-              </button>
+            <div class="nom-actions">
+              <!-- 自由調整當下票數控制項 -->
+              <div class="extra-votes-control" @click.stop>
+                <span class="control-label">額外票數:</span>
+                <button class="btn-vote-adjust" @click="changeExtraVotes(index, -1)">-</button>
+                <span class="extra-votes-val" :class="{ 'val-positive': (nom.extra_votes || 0) > 0, 'val-negative': (nom.extra_votes || 0) < 0 }">
+                  {{ (nom.extra_votes || 0) > 0 ? '+' : '' }}{{ nom.extra_votes || 0 }}
+                </span>
+                <button class="btn-vote-adjust" @click="changeExtraVotes(index, 1)">+</button>
+              </div>
+
+              <div class="action-buttons" style="display: flex; gap: 8px;">
+                <button 
+                  class="btn-secondary" 
+                  @click.stop="doRemoveNomination(index)"
+                >
+                  取消提名
+                </button>
+                <button 
+                  class="btn-danger" 
+                  :disabled="getExecutionStatus(index).disabled"
+                  @click.stop="doExecute(index)"
+                >
+                  {{ getExecutionStatus(index).label }}
+                </button>
+              </div>
             </div>
           </div>
 
           <!-- 已執行或歷史記錄的樣式 -->
           <div class="nom-executed-badge" v-else-if="nom.executed">
             <span class="status"><img src="/pic/suicide.png" class="executed-img" /> 已處決</span>
-            <span class="final-score">(今日最終票數: {{ nom.votes_for.length }})</span>
+            <span class="final-score">(今日最終票數: {{ Math.max(0, nom.votes_for.length + (nom.extra_votes || 0)) }})</span>
             <button class="btn-undo" @click.stop="doUndoExecute(index)">撤銷</button>
           </div>
           
@@ -245,7 +257,7 @@ const maxVotesInfo = computed(() => {
   const todayNoms = nominations.value.filter(n => n.round === currentRound.value && !n.executed)
   
   todayNoms.forEach(n => {
-    const v = n.votes_for.length
+    const v = Math.max(0, n.votes_for.length + (n.extra_votes || 0))
     if (v > max) {
       max = v
       count = 1
@@ -259,7 +271,7 @@ const maxVotesInfo = computed(() => {
 
 function getExecutionStatus(nomIndex: number) {
   const nom = nominations.value[nomIndex]
-  const votes = nom.votes_for.length
+  const votes = Math.max(0, nom.votes_for.length + (nom.extra_votes || 0))
   const currentThreshold = nom.round === currentRound.value && !nom.executed ? gameStore.threshold : nom.threshold
   const thresholdReached = votes >= currentThreshold
   
@@ -274,7 +286,7 @@ function getExecutionStatus(nomIndex: number) {
 }
 
 const canNominate = computed(() =>
-  gameStore.players.filter(p => p.can_nominate && p.is_alive)
+  gameStore.players.filter(p => p.can_nominate)
 )
 const notYetNominated = computed(() =>
   gameStore.players.filter(p => !p.is_nominated)
@@ -330,7 +342,7 @@ const availableNominatorsForEdit = computed(() => {
   if (editingNomIndex.value === null) return []
   const currentNom = nominations.value[editingNomIndex.value]
   return gameStore.players.filter(p => 
-    p.is_alive && (p.can_nominate || p.id === currentNom.nominator_id)
+    p.can_nominate || p.id === currentNom.nominator_id
   )
 })
 
@@ -411,6 +423,13 @@ async function doRemoveNomination(nomIndex: number) {
     },
     true
   )
+}
+
+async function changeExtraVotes(index: number, diff: number) {
+  const nom = nominations.value[index]
+  const current = nom.extra_votes || 0
+  const newVal = current + diff
+  await gameStore.adjustExtraVotes(index, newVal)
 }
 
 function getOrderedPlayers(nom: any) {
@@ -761,8 +780,63 @@ function getOrderedPlayers(nom: any) {
 
 .nom-actions { 
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 8px;
+}
+
+.extra-votes-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 2px 6px;
+}
+
+.control-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.btn-vote-adjust {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-text-primary);
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.btn-vote-adjust:hover {
+  background: rgba(201, 168, 76, 0.2);
+  border-color: var(--color-gold);
+  color: var(--color-gold-bright);
+}
+
+.extra-votes-val {
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 22px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.extra-votes-val.val-positive {
+  color: #2ecc71;
+}
+
+.extra-votes-val.val-negative {
+  color: #e74c3c;
 }
 
 .nom-executed-badge {

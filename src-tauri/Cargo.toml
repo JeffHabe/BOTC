@@ -26,3 +26,6 @@ chrono = { version = "0.4", features = ["serde"] }
 log = "0.4"
 tauri-plugin-log = "2"
 shared = { path = "../shared" }
+
+[profile.dev.package."*"]
+opt-level = 3 # 讓引用的第三方庫（如 tauri 等）運行更快，減少開發時的發熱與卡頓

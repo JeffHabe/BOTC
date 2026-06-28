@@ -342,12 +342,23 @@ pub fn remove_reminder(
 
 // ─── 死亡/存活指令 ───────────────────────────────────────────
 
+fn make_player_dead(p: &mut Player) {
+    p.is_alive = false;
+    if let Some(ref r) = p.role {
+        if r.id == "banshee" {
+            p.can_nominate = true;
+            p.extra_nominations = 1;
+            p.extra_votes = 1;
+        }
+    }
+}
+
 /// 標記玩家死亡
 #[tauri::command]
 pub fn kill_player(player_id: String, state: State<AppState>) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
     if let Some(p) = gs.players.iter_mut().find(|p| p.id == player_id) {
-        p.is_alive = false;
+        make_player_dead(p);
         gs.touch();
         Ok(gs.clone())
     } else {
@@ -362,6 +373,8 @@ pub fn revive_player(player_id: String, state: State<AppState>) -> Result<GameSt
     if let Some(p) = gs.players.iter_mut().find(|p| p.id == player_id) {
         p.is_alive = true;
         p.has_ghost_vote = true;
+        p.extra_nominations = 0;
+        p.extra_votes = 0;
         gs.touch();
         Ok(gs.clone())
     } else {
@@ -493,10 +506,7 @@ pub fn nominate(
         .iter()
         .find(|p| p.id == nominator_id)
         .ok_or("找不到提名者")?;
-    if !nominator.is_alive {
-        return Err("死亡玩家無法發起提名".into());
-    }
-    if !nominator.can_nominate {
+    if !nominator.can_nominate && nominator.extra_nominations == 0 {
         return Err("該玩家今日已使用提名".into());
     }
 
@@ -519,11 +529,16 @@ pub fn nominate(
         threshold,
         executed: false,
         round: current_round,
+        extra_votes: 0,
     });
 
     // 標記提名者已使用提名，被提名者已被提名
     if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominator_id) {
-        p.can_nominate = false;
+        if p.extra_nominations > 0 {
+            p.extra_nominations -= 1;
+        } else {
+            p.can_nominate = false;
+        }
     }
     if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominee_id) {
         p.is_nominated = true;
@@ -578,10 +593,7 @@ pub fn edit_nomination(
 
     // 1. 驗證提名者
     if let Some(nominator) = gs.players.iter().find(|p| p.id == new_nominator_id) {
-        if !nominator.is_alive {
-            valid = false;
-            err_msg = "死亡玩家無法發起提名";
-        } else if !nominator.can_nominate {
+        if !nominator.can_nominate {
             valid = false;
             err_msg = "該提名者今日已發起過提名";
         }
@@ -631,6 +643,23 @@ pub fn edit_nomination(
     Ok(gs.clone())
 }
 
+/// 調整提名的額外票數
+#[tauri::command]
+pub fn adjust_extra_votes(
+    nomination_index: usize,
+    extra_votes: i32,
+    state: State<AppState>,
+) -> Result<GameState, String> {
+    let mut gs = state.0.lock().unwrap();
+    if let Some(nom) = gs.nominations.get_mut(nomination_index) {
+        nom.extra_votes = extra_votes;
+        gs.touch();
+        Ok(gs.clone())
+    } else {
+        Err("找不到指定提名".into())
+    }
+}
+
 /// 記錄投票
 #[tauri::command]
 pub fn vote(
@@ -640,44 +669,62 @@ pub fn vote(
 ) -> Result<GameState, String> {
     let mut gs = state.0.lock().unwrap();
 
-    // 獲取投票者當前狀態
-    let (is_alive, has_ghost_vote) = gs
+    // 獲取投票者當前狀態 (一次性讀取)
+    let (is_alive, has_ghost_vote, voter_extra_votes) = gs
         .players
         .iter()
         .find(|p| p.id == voter_id)
-        .map(|p| (p.is_alive, p.has_ghost_vote))
-        .unwrap_or((true, false));
+        .map(|p| (p.is_alive, p.has_ghost_vote, p.extra_votes))
+        .unwrap_or((true, false, 0));
 
-    if let Some(nom) = gs.nominations.get_mut(nomination_index) {
-        if nom.votes_for.contains(&voter_id) {
-            nom.votes_for.retain(|id| id != &voter_id); // 取消投票
+    // 先讀取當前提名是否已包含該投票者，並在判斷後釋放唯讀借用
+    let is_voted = if let Some(nom) = gs.nominations.get(nomination_index) {
+        nom.votes_for.contains(&voter_id)
+    } else {
+        return Err("找不到指定提名".into());
+    };
 
-            // 如果是死亡玩家取消投票，恢復其鬼魂投票權
-            if !is_alive {
-                if let Some(p) = gs.players.iter_mut().find(|p| p.id == voter_id) {
+    if is_voted {
+        // 1. 取消投票
+        // 1-1. 還原死亡玩家的投票權
+        if !is_alive {
+            if let Some(p) = gs.players.iter_mut().find(|p| p.id == voter_id) {
+                if !p.has_ghost_vote {
                     p.has_ghost_vote = true;
+                } else {
+                    p.extra_votes += 1;
                 }
             }
-        } else {
-            // 如果是死亡玩家投新票，檢查是否有權利
-            if !is_alive && !has_ghost_vote {
-                return Err("該死亡玩家已無投票權".into());
-            }
-
-            nom.votes_for.push(voter_id.clone());
-
-            // 如果是死亡玩家投票，扣除其鬼魂投票權
-            if !is_alive {
-                if let Some(p) = gs.players.iter_mut().find(|p| p.id == voter_id) {
+        }
+        // 1-2. 在提名中移出投票者 (此時 gs.players 借用已釋放，可以安全 mutable 借用 nominations)
+        if let Some(nom) = gs.nominations.get_mut(nomination_index) {
+            nom.votes_for.retain(|id| id != &voter_id);
+        }
+    } else {
+        // 2. 投新票
+        // 2-1. 檢查是否有權利
+        let has_any_vote = has_ghost_vote || voter_extra_votes > 0;
+        if !is_alive && !has_any_vote {
+            return Err("該死亡玩家已無投票權".into());
+        }
+        // 2-2. 扣除死亡玩家投票權
+        if !is_alive {
+            if let Some(p) = gs.players.iter_mut().find(|p| p.id == voter_id) {
+                if p.extra_votes > 0 {
+                    p.extra_votes -= 1;
+                } else {
                     p.has_ghost_vote = false;
                 }
             }
         }
-        gs.touch();
-        Ok(gs.clone())
-    } else {
-        Err("找不到指定提名".into())
+        // 2-3. 在提名中加入投票者 (此時 gs.players 借用已釋放，可以安全 mutable 借用 nominations)
+        if let Some(nom) = gs.nominations.get_mut(nomination_index) {
+            nom.votes_for.push(voter_id.clone());
+        }
     }
+
+    gs.touch();
+    Ok(gs.clone())
 }
 
 /// 執行行刑
@@ -693,7 +740,7 @@ pub fn execute(nomination_index: usize, state: State<AppState>) -> Result<GameSt
             .nominations
             .get(nomination_index)
             .ok_or("找不到指定提名")?;
-        (nom.votes_for.len(), gs.execution_threshold())
+        ((nom.votes_for.len() as i32 + nom.extra_votes).max(0) as usize, gs.execution_threshold())
     };
 
     if target_votes < target_threshold as usize {
@@ -705,7 +752,7 @@ pub fn execute(nomination_index: usize, state: State<AppState>) -> Result<GameSt
     let mut tie_detected = false;
 
     for nom in gs.nominations.iter().filter(|n| n.round == current_round) {
-        let v_count = nom.votes_for.len();
+        let v_count = (nom.votes_for.len() as i32 + nom.extra_votes).max(0) as usize;
         if v_count > max_votes {
             max_votes = v_count;
             tie_detected = false;
@@ -729,7 +776,7 @@ pub fn execute(nomination_index: usize, state: State<AppState>) -> Result<GameSt
         if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominee_id) {
             // 只有當玩家原本是存活狀態時，被處決才會被標記死亡並掛上「處決」提醒
             if p.is_alive {
-                p.is_alive = false;
+                make_player_dead(p);
                 p.reminders.push(ReminderToken::new("處決", "系統", current_round));
             }
         }

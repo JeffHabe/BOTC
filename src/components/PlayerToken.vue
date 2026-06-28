@@ -35,7 +35,7 @@
           <span v-if="!player.is_alive && player.has_ghost_vote" class="ghost-vote" title="擁有靈魂投票權">
             <img src="/pic/grave.png" class="ghost-vote-img" />
           </span>
-          <span v-if="!player.can_nominate" class="nominate-lock" title="今日已不能提名">
+          <span v-if="!player.can_nominate && !(player.extra_nominations && player.extra_nominations > 0)" class="nominate-lock" title="今日已不能提名">
             <img src="/pic/nomination.png" class="nominate-lock-img" />
           </span>
         </div>

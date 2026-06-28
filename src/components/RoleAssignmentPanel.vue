@@ -1093,9 +1093,15 @@ const lotteryPool = computed(() => {
     }
   }
   
-  // 排除已經被抽走的 ID
+  // 排除已經被抽走的 ID (採用多重集減法，防止相同 ID 被一次性過濾光)
   const drawnRoleIds = Object.values(drawingResults)
-  return ids.filter(id => !drawnRoleIds.includes(id))
+  for (const drawnId of drawnRoleIds) {
+    const idx = ids.indexOf(drawnId)
+    if (idx > -1) {
+      ids.splice(idx, 1) // 僅移除第一個匹配的 ID，保留其他重複的 ID
+    }
+  }
+  return ids
 })
 
 const counts = reactive<Record<string, number>>(
@@ -2119,31 +2125,79 @@ function isIdMatch(id1: string | null, id2: string | null) {
 
 async function finishLottery() {
   // 將抽獎結果轉換為實際指派
-  // 注意：如果抽中酒鬼的認知角色，實際要指派「酒鬼」給該玩家
-  const finalPlan = gameStore.players.map(p => {
-    let roleId = drawingResults[p.id]
-    
-    // 酒鬼邏輯：如果抽中認知角色，則該玩家實際是酒鬼
-    if (hasDrunk.value && roleId === drunkFakeRoleId.value) {
-      roleId = 'drunk'
+  // 由於酒鬼、瘋子、提線木偶、悟道者的認知角色可能與當局真實的角色重複，
+  // 我們需要採用「多重集配對還原」演算法，避免誤殺/重複覆寫真實的角色。
+
+  // 1. 複製一份本局真實選定的角色 pool 作為待配對池
+  const remainingRealRoles = [...selectedRoleIds.value]
+
+  // 2. 建立第一輪分配 (優先分配完全相等的角色)
+  const matchedPlan: Record<string, string> = {}
+  
+  // 先把已經抽出的所有 roleId 與玩家 ID 對齊
+  const rawResults = gameStore.players.map(p => ({
+    playerId: p.id,
+    drawnId: drawingResults[p.id]
+  }))
+
+  // 第一輪：優先匹配完全相同的角色 (例如真實的 'imp' 給抽到 'imp' 且為真實惡魔的人)
+  for (const item of rawResults) {
+    if (!item.drawnId) continue
+    const idx = remainingRealRoles.indexOf(item.drawnId)
+    if (idx > -1) {
+      matchedPlan[item.playerId] = item.drawnId
+      remainingRealRoles.splice(idx, 1) // 拿掉已分配的角色
+    }
+  }
+
+  // 第二輪：針對未配對成功的玩家，尋找其偽裝角色的來源角色 (如 'drunk', 'lunatic' 等)
+  for (const item of rawResults) {
+    if (matchedPlan[item.playerId]) continue // 已經配對成功的跳過
+    if (!item.drawnId) continue
+
+    let matchedRealId: string | null = null
+
+    // 檢查是否是酒鬼的偽裝角色，且池子裡還有酒鬼
+    if (hasDrunk.value && item.drawnId === drunkFakeRoleId.value) {
+      const idx = remainingRealRoles.indexOf('drunk')
+      if (idx > -1) {
+        matchedRealId = 'drunk'
+        remainingRealRoles.splice(idx, 1)
+      }
+    }
+    // 檢查是否是悟道者的偽裝角色，且池子裡還有悟道者
+    if (!matchedRealId && hasWudaozhe.value && item.drawnId === wudaozheFakeRoleId.value) {
+      const idx = remainingRealRoles.indexOf('wudaozhe')
+      if (idx > -1) {
+        matchedRealId = 'wudaozhe'
+        remainingRealRoles.splice(idx, 1)
+      }
+    }
+    // 檢查是否是瘋子的認知角色，且池子裡還有瘋子
+    if (!matchedRealId && hasLunatic.value && item.drawnId === lunaticFakeRoleId.value) {
+      const idx = remainingRealRoles.indexOf('lunatic')
+      if (idx > -1) {
+        matchedRealId = 'lunatic'
+        remainingRealRoles.splice(idx, 1)
+      }
+    }
+    // 檢查是否是提線木偶的認知角色，且池子裡還有提線木偶
+    if (!matchedRealId && hasMarionette.value && item.drawnId === marionetteFakeRoleId.value) {
+      const idx = remainingRealRoles.indexOf('marionette')
+      if (idx > -1) {
+        matchedRealId = 'marionette'
+        remainingRealRoles.splice(idx, 1)
+      }
     }
 
-    // 悟道者邏輯：如果抽中認知角色，則該玩家實際是悟道者
-    if (hasWudaozhe.value && roleId === wudaozheFakeRoleId.value) {
-      roleId = 'wudaozhe'
-    }
-    
-    // 瘋子邏輯：如果抽中認知角色，則該玩家實際是瘋子
-    if (hasLunatic.value && roleId === lunaticFakeRoleId.value) {
-      roleId = 'lunatic'
-    }
-    
-    // 提線木偶邏輯：如果抽中認知角色，則該玩家實際是提線木偶
-    if (hasMarionette.value && roleId === marionetteFakeRoleId.value) {
-      roleId = 'marionette'
-    }
-    
-    const char = getCharacterById(roleId)
+    // 將配對結果寫入
+    matchedPlan[item.playerId] = matchedRealId || item.drawnId
+  }
+
+  // 3. 組裝 finalPlan
+  const finalPlan = gameStore.players.map(p => {
+    const finalRoleId = matchedPlan[p.id] || drawingResults[p.id]
+    const char = getCharacterById(finalRoleId)
     return { player_id: p.id, role: char || null }
   })
 

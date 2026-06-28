@@ -55,6 +55,7 @@ pub fn run() {
             // 投票
             commands::nominate,
             commands::edit_nomination,
+            commands::adjust_extra_votes,
             commands::vote,
             commands::execute,
             commands::undo_execution,

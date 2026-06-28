@@ -419,6 +419,11 @@ export const useGameStore = defineStore('game', () => {
     await syncState(gs)
   }
 
+  async function adjustExtraVotes(nominationIndex: number, extraVotes: number) {
+    const gs = await callCommand<GameState>('adjust_extra_votes', { nominationIndex, extraVotes })
+    await syncState(gs)
+  }
+
   async function execute(nominationIndex: number) {
     const gs = await callCommand<GameState>('execute', { nominationIndex })
     await syncState(gs)
@@ -558,7 +563,7 @@ export const useGameStore = defineStore('game', () => {
     addReminder, removeReminder, updateReminder,
     killPlayer, revivePlayer, toggleAlive, toggleGhostVote, toggleCanNominate, useGhostVote,
     advancePhase, revertPhase, setPhase,
-    nominate, editNomination, vote, execute, undoExecution, removeNomination,
+    nominate, editNomination, vote, adjustExtraVotes, execute, undoExecution, removeNomination,
     exportState, importState, importCustomScript, updateScriptName,
     logs, addLog, relativeNightOrder,
     nightNotes, setNightNotes,

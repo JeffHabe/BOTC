@@ -1,11 +1,12 @@
 {
   "name": "tauri-app",
   "private": true,
-  "version": "0.1.239",
+  "version": "0.1.247",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
+    "build": "vite build",
+    "type-check": "vue-tsc --noEmit",
     "preview": "vite preview",
     "tauri": "tauri",
     "build:android": "npm run build:android:release",
