@@ -1051,6 +1051,38 @@ pub fn import_custom_script(json_str: String, state: State<AppState>) -> Result<
         script.characters = characters;
     }
 
+    // 對所有已解析角色的夜晚順序進行防重調整（若有相同則持續遞增 +0.1 直至不重複）
+    let mut adjusted_characters = Vec::new();
+    for mut char_def in script.characters {
+        if let Some(mut val) = char_def.night_order_first {
+            while adjusted_characters.iter().any(|other: &CharacterDef| {
+                if let Some(other_val) = other.night_order_first {
+                    (val - other_val).abs() < 1e-9
+                } else {
+                    false
+                }
+            }) {
+                val += 0.1;
+            }
+            char_def.night_order_first = Some(val);
+        }
+
+        if let Some(mut val) = char_def.night_order_other {
+            while adjusted_characters.iter().any(|other: &CharacterDef| {
+                if let Some(other_val) = other.night_order_other {
+                    (val - other_val).abs() < 1e-9
+                } else {
+                    false
+                }
+            }) {
+                val += 0.1;
+            }
+            char_def.night_order_other = Some(val);
+        }
+        adjusted_characters.push(char_def);
+    }
+    script.characters = adjusted_characters;
+
     let mut gs = state.0.lock().unwrap();
     gs.script = script;
     gs.touch();
