@@ -568,8 +568,8 @@ const deathTypeClass = computed(() => {
   background-size: cover;
   border-radius: 50%;
   box-shadow: 
-    0 8px 20px rgba(0,0,0,0.5), 
-    inset 0 0 15px rgba(0, 0, 0, 0.3);
+    0 4px 10px rgba(0,0,0,0.5), 
+    inset 0 0 8px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -580,7 +580,7 @@ const deathTypeClass = computed(() => {
 
 .is-selected .token-body.classic {
   border-color: #f1c40f;
-  box-shadow: 0 0 25px rgba(241, 196, 15, 0.4), 0 10px 30px rgba(0,0,0,0.6);
+  box-shadow: 0 0 12px rgba(241, 196, 15, 0.4), 0 6px 15px rgba(0,0,0,0.6);
   transform: scale(1.04);
 }
 
@@ -602,7 +602,7 @@ const deathTypeClass = computed(() => {
   font-weight: 800;
   white-space: nowrap;
   border: 1px solid rgba(255,255,255,0.15);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.6);
   z-index: 50; /* 提高層級，確保在標記之上 */
   max-width: 140%;
   display: flex;

@@ -190,7 +190,8 @@ export const useScriptStore = defineStore('script', () => {
     characters: CharacterDef[],
     category: string,
     physicalImage?: string | null,
-    physicalImageBack?: string | null
+    physicalImageBack?: string | null,
+    logo?: string | null
   ) {
     const scriptId = 'custom_' + Date.now()
 
@@ -200,7 +201,8 @@ export const useScriptStore = defineStore('script', () => {
       characters,
       category: category || categories.value[0] || '縫合劇本',
       physical_image: physicalImage || null,
-      physical_image_back: physicalImageBack || null
+      physical_image_back: physicalImageBack || null,
+      logo: logo || null
     }
     customScripts.value.push(newScript)
     await saveCustomScripts()
@@ -213,7 +215,8 @@ export const useScriptStore = defineStore('script', () => {
     characters: CharacterDef[],
     category: string,
     physicalImage?: string | null,
-    physicalImageBack?: string | null
+    physicalImageBack?: string | null,
+    logo?: string | null
   ) {
     const script = customScripts.value.find(s => s.id === id)
     if (script) {
@@ -222,6 +225,7 @@ export const useScriptStore = defineStore('script', () => {
       script.category = category || categories.value[0] || '縫合劇本'
       script.physical_image = physicalImage || null
       script.physical_image_back = physicalImageBack || null
+      script.logo = logo || null
       await saveCustomScripts()
 
       if (gameStore.script && gameStore.script.id === id) {
@@ -230,6 +234,7 @@ export const useScriptStore = defineStore('script', () => {
         gameStore.script.category = category
         gameStore.script.physical_image = physicalImage || null
         gameStore.script.physical_image_back = physicalImageBack || null
+        gameStore.script.logo = logo || null
         await gameStore.setScript({ ...gameStore.script })
       }
       return true

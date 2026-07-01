@@ -60,7 +60,13 @@
       <!-- 中央劇本標誌 -->
       <div class="center-logo-box">
         <div class="center-logo-inner">
-          <img v-if="gameStore.script?.logo" :src="gameStore.script.logo" class="center-logo-img" />
+          <img 
+            v-if="gameStore.script?.logo && !logoLoadFailed" 
+            :src="gameStore.script.logo" 
+            referrerpolicy="no-referrer"
+            @error="handleLogoError"
+            class="center-logo-img" 
+          />
           <div v-else class="empty-icon">
             <img src="/pic/app-icon.png" class="empty-logo" />
           </div>
@@ -430,7 +436,7 @@
 <script setup lang="ts">
 
 
-import { computed, onMounted, onUnmounted, ref, reactive, defineAsyncComponent } from 'vue'
+import { computed, onMounted, onUnmounted, ref, reactive, defineAsyncComponent, watch } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
@@ -473,6 +479,15 @@ import PlayerControlSheet from './PlayerControlSheet.vue'
 const gameStore = useGameStore()
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
+
+// --- 劇本 Logo 載入出錯 Fallback 處理 ───
+const logoLoadFailed = ref(false)
+watch(() => gameStore.script?.logo, () => {
+  logoLoadFailed.value = false
+})
+function handleLogoError() {
+  logoLoadFailed.value = true
+}
 
 // --- 實體劇本大圖檢視狀態 ───
 const showPhysicalImageOverlay = ref(false)

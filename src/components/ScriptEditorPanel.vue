@@ -44,6 +44,10 @@
                 </select>
               </div>
               <div class="form-group">
+                <label class="form-label">劇本圖示 (Logo) 網址</label>
+                <input type="text" v-model="newScriptLogo" placeholder="輸入圖片 URL 連結，例如 https://..." class="form-input" />
+              </div>
+              <div class="form-group">
                 <label class="form-label">官方劇本</label>
                 <button class="import-json-btn" @click="triggerJsonImport">
                   <img src="/pic/import.png" class="btn-icon-img" />匯入 JSON
@@ -373,6 +377,7 @@ async function compressImage(dataUrl: string): Promise<string> {
 // 編輯與建立劇本相關狀態
 const editingScriptId = ref<string | null>(null)
 const newScriptName = ref('')
+const newScriptLogo = ref('')
 const newScriptCategory = ref('縫合劇本')
 const selectedRoleIds = ref<string[]>([])
 const characterSearch = ref('')
@@ -1027,7 +1032,8 @@ async function handleCreateScript() {
       characters,
       newScriptCategory.value,
       newScriptPhysicalImage.value,
-      newScriptPhysicalImageBack.value
+      newScriptPhysicalImageBack.value,
+      newScriptLogo.value.trim() || null
     )
 
     // 預設將當前載入劇本切換為這個新建立的劇本
@@ -1037,6 +1043,7 @@ async function handleCreateScript() {
 
     // 重設狀態
     newScriptName.value = ''
+    newScriptLogo.value = ''
     selectedRoleIds.value = []
     newScriptPhysicalImage.value = null
     newScriptPhysicalImageBack.value = null
@@ -1055,6 +1062,7 @@ function startEditingScript(script: Script) {
   newScriptCategory.value = script.category || '標準劇本'
   newScriptPhysicalImage.value = script.physical_image || null
   newScriptPhysicalImageBack.value = script.physical_image_back || null
+  newScriptLogo.value = script.logo || ''
   selectedRoleIds.value = script.characters.map(c => c.id)
   activeTab.value = 'create'
 }
@@ -1062,6 +1070,7 @@ function startEditingScript(script: Script) {
 function cancelEditingScript() {
   editingScriptId.value = null
   newScriptName.value = ''
+  newScriptLogo.value = ''
   selectedRoleIds.value = []
   newScriptPhysicalImage.value = null
   newScriptPhysicalImageBack.value = null
@@ -1087,7 +1096,8 @@ async function handleUpdateScript() {
       characters,
       newScriptCategory.value,
       newScriptPhysicalImage.value,
-      newScriptPhysicalImageBack.value
+      newScriptPhysicalImageBack.value,
+      newScriptLogo.value.trim() || null
     )
     
     if (success) {
@@ -1411,8 +1421,9 @@ function moveCategory(index: number, direction: number) {
 /* 建立劇本表單 */
 .form-section {
   padding: 14px 16px 4px;
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 8px;
 }
 
 .form-group {
