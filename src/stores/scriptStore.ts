@@ -6,6 +6,7 @@ import { useGameStore } from './gameStore'
 import { useUIStore } from './uiStore'
 
 import allCharacterRaw from '../../src-tauri/data/all_character_sort.json'
+import { simplifyToTraditional } from '../utils/chineseConverter'
 
 import { BaseDirectory, exists, readTextFile, writeTextFile, mkdir } from '@tauri-apps/plugin-fs'
 import { convertFileSrc } from '@tauri-apps/api/core'
@@ -332,9 +333,23 @@ export const useScriptStore = defineStore('script', () => {
           mergedList.push(newChar)
         }
 
+        // 對合併後的角色清單進行繁體化清洗，消除任何歷史簡體字殘留
+        const cleanedMergedList = mergedList.map(c => {
+          if (!c) return c
+          const copy = { ...c }
+          if (copy.name) copy.name = simplifyToTraditional(copy.name)
+          if (copy.ability) copy.ability = simplifyToTraditional(copy.ability)
+          if (copy.firstNightReminder) copy.firstNightReminder = simplifyToTraditional(copy.firstNightReminder)
+          if (copy.otherNightReminder) copy.otherNightReminder = simplifyToTraditional(copy.otherNightReminder)
+          if (Array.isArray(copy.reminders)) {
+            copy.reminders = copy.reminders.map((r: string) => simplifyToTraditional(r))
+          }
+          return copy
+        })
+
         // 將合併後的安全清單寫回本機
-        await writeTextFile('all_character_sort.json', JSON.stringify(mergedList, null, 2), { baseDir: BaseDirectory.AppData })
-        rawCharacterList.value = mergedList
+        await writeTextFile('all_character_sort.json', JSON.stringify(cleanedMergedList, null, 2), { baseDir: BaseDirectory.AppData })
+        rawCharacterList.value = cleanedMergedList
       }
       masterScript.value = parseRawArray(rawCharacterList.value, 'all_character_sort', '全角色大全')
 
@@ -413,13 +428,27 @@ export const useScriptStore = defineStore('script', () => {
   }
 
   async function saveCharacters(newRawList: any[]) {
+    // 儲存前對所有角色的字串欄位進行繁體化清洗
+    const processedList = newRawList.map(c => {
+      if (!c) return c
+      const copy = { ...c }
+      if (copy.name) copy.name = simplifyToTraditional(copy.name)
+      if (copy.ability) copy.ability = simplifyToTraditional(copy.ability)
+      if (copy.firstNightReminder) copy.firstNightReminder = simplifyToTraditional(copy.firstNightReminder)
+      if (copy.otherNightReminder) copy.otherNightReminder = simplifyToTraditional(copy.otherNightReminder)
+      if (Array.isArray(copy.reminders)) {
+        copy.reminders = copy.reminders.map((r: string) => simplifyToTraditional(r))
+      }
+      return copy
+    })
+
     try {
-      await writeTextFile('all_character_sort.json', JSON.stringify(newRawList, null, 2), { baseDir: BaseDirectory.AppData })
+      await writeTextFile('all_character_sort.json', JSON.stringify(processedList, null, 2), { baseDir: BaseDirectory.AppData })
     } catch (e) {
       console.warn('Failed to save characters to filesystem', e)
     }
 
-    rawCharacterList.value = newRawList
+    rawCharacterList.value = processedList
     masterScript.value = parseRawArray(rawCharacterList.value, 'all_character_sort', '全角色大全')
 
     if (gameStore.script && gameStore.script.id === 'all_character_sort') {
@@ -443,6 +472,24 @@ export const useScriptStore = defineStore('script', () => {
   }
 
   async function selectScript(script: Script) {
+    // 垃圾回收：自動清理未在當前新劇本中被使用的暫存角色
+    const activeRoleIds = new Set(script.characters.map(c => c.id))
+    let tempCharsRemoved = false
+
+    const filteredCharacters = rawCharacterList.value.filter(c => {
+      if (c.is_temp) {
+        if (!activeRoleIds.has(c.id)) {
+          tempCharsRemoved = true
+          return false
+        }
+      }
+      return true
+    })
+
+    if (tempCharsRemoved) {
+      await saveCharacters(filteredCharacters)
+    }
+
     await gameStore.setScript(script)
   }
 

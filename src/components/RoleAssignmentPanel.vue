@@ -809,7 +809,7 @@ const totalPlayers = computed(() => gameStore.players.length)
 
 // 限制未正式啟用授權的用戶（包括試用期內）僅能使用 Step 1 (篩選角色池)
 watch(step, (newStep) => {
-  if (newStep !== 'pool' && !uiStore.licenseIsActivated) {
+  if (newStep !== 'pool' && (uiStore.licenseStatus !== 'Valid' || !uiStore.licenseIsActivated)) {
     step.value = 'pool'
     uiStore.showAlert(
       '開局功能已鎖定',

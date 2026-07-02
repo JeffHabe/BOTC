@@ -71,7 +71,12 @@
             <img src="/pic/app-icon.png" class="empty-logo" />
           </div>
         </div>
-        <div class="center-script-name">{{ uiStore.activePoolPresetName || gameStore.script?.name || '選擇劇本' }}</div>
+        <div 
+          v-if="!gameStore.script?.logo || logoLoadFailed" 
+          class="center-script-name"
+        >
+          {{ uiStore.activePoolPresetName || gameStore.script?.name || '選擇劇本' }}
+        </div>
       </div>
 
       <!-- 玩家令片 (絕對定位) -->

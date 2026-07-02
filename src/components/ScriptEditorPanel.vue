@@ -315,6 +315,41 @@
       </div>
     </div>
 
+    <!-- 偵測到新角色確認視窗 (Overlay Modal) -->
+    <div v-if="showNewCharsModal" class="saving-overlay custom-chars-overlay">
+      <div class="saving-modal custom-chars-modal">
+        <h3 class="modal-title">🔍 偵測到未登錄的新角色</h3>
+        <p class="modal-desc">此劇本包含以下自創角色。請勾選需要永久登錄至角色庫的角色；未勾選的角色將作為「本局暫存」，在您切換至其他劇本時自動清理。</p>
+        
+        <div class="new-chars-list">
+          <div v-for="(item, idx) in pendingNewChars" :key="idx" class="new-char-row">
+            <div class="new-char-info">
+              <div class="new-char-avatar" :class="item.char.role_type.toLowerCase()">
+                <img v-if="item.char.image" :src="item.char.image" class="new-char-img" />
+                <span v-else class="new-char-fallback">{{ item.char.name.charAt(0) }}</span>
+              </div>
+              <div class="new-char-meta">
+                <div class="new-char-name-row">
+                  <span class="new-char-name">{{ item.char.name }}</span>
+                  <span class="new-char-type">{{ item.char.role_type }}</span>
+                </div>
+                <div class="new-char-ability">{{ item.char.ability || '無能力敘述' }}</div>
+              </div>
+            </div>
+            <label class="new-char-checkbox-label">
+              <input type="checkbox" v-model="item.permanent" class="new-char-checkbox" />
+              <span>永久登錄</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="modal-btn cancel-btn" @click="cancelImportNewCharacters">取消匯入</button>
+          <button class="modal-btn confirm-btn" @click="confirmImportNewCharacters">確定匯入</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -479,14 +514,128 @@ function handleImageFileChangeBack(e: Event) {
 }
 
 function triggerJsonImport() {
-  if (!uiStore.licenseIsActivated && scriptStore.customScripts.length >= 10) {
+  if ((uiStore.licenseStatus !== 'Valid' || !uiStore.licenseIsActivated) && scriptStore.customScripts.length >= 10) {
     uiStore.showAlert(
       '劇本管理受限',
-      `試用期/未授權狀態下，最多只能建立或匯入 1 個自訂劇本。\n\n請啟用正式授權金鑰以解鎖無限劇本管理功能。\n\n您的裝置識別碼：\n${uiStore.licenseDeviceId}`
+      `試用期/未授權狀態下，最多只能建立或匯入 10 個自訂劇本。\n\n請啟用正式授權金鑰以解鎖無限劇本管理功能。\n\n您的裝置識別碼：\n${uiStore.licenseDeviceId}`
     )
     return
   }
   jsonFileInput.value?.click()
+}
+
+const showNewCharsModal = ref(false)
+const pendingNewChars = ref<Array<{ char: any; permanent: boolean }>>([])
+const pendingJsonImportData = ref<{
+  items: any[]
+  currentList: any[]
+  importedRoleIds: string[]
+  importedScriptName: string
+  fileName: string
+} | null>(null)
+
+function cancelImportNewCharacters() {
+  showNewCharsModal.value = false
+  pendingNewChars.value = []
+  pendingJsonImportData.value = null
+  if (jsonFileInput.value) {
+    jsonFileInput.value.value = ''
+  }
+}
+
+async function confirmImportNewCharacters() {
+  if (!pendingJsonImportData.value) return
+  
+  const { items, currentList, importedRoleIds, importedScriptName, fileName } = pendingJsonImportData.value
+  let needSaveCharacters = false
+  const permanentNames: string[] = []
+  const tempNames: string[] = []
+
+  pendingNewChars.value.forEach(item => {
+    const char = item.char
+    if (item.permanent) {
+      char.is_custom = true
+      char.is_temp = false
+      permanentNames.push(`「${char.name}」`)
+    } else {
+      char.is_custom = true
+      char.is_temp = true
+      tempNames.push(`「${char.name}」`)
+    }
+    currentList.push(char)
+    needSaveCharacters = true
+  })
+
+  // 第二階段：處理 Jinx 相克規則
+  const jinxItems = items.filter(item => {
+    if (!item || typeof item !== 'object') return false
+    const t = (item.team || '').toLowerCase()
+    return t.includes('jinx') && item.name && item.name.includes('&')
+  })
+
+  jinxItems.forEach(item => {
+    const parts = item.name.split('&')
+    if (parts.length === 2) {
+      const nameA = simplifyToTraditional(parts[0].trim())
+      const nameB = simplifyToTraditional(parts[1].trim())
+
+      const charA = currentList.find(c => c.name === nameA)
+      const charB = currentList.find(c => c.name === nameB)
+
+      if (charA && charB) {
+        const desc = item.ability ? simplifyToTraditional(item.ability) : ''
+
+        if (!charA.conflicts) charA.conflicts = []
+        if (!charA.conflicts.some((c: any) => (c.target || c.charB) === charB.id)) {
+          charA.conflicts.push({ target: charB.id, charB: charB.id, desc })
+          needSaveCharacters = true
+        }
+
+        if (!charB.conflicts) charB.conflicts = []
+        if (!charB.conflicts.some((c: any) => (c.target || c.charB) === charA.id)) {
+          charB.conflicts.push({ target: charA.id, charB: charA.id, desc })
+          needSaveCharacters = true
+        }
+      }
+    }
+  })
+
+  if (needSaveCharacters) {
+    await scriptStore.saveCharacters(currentList)
+  }
+
+  if (importedScriptName) {
+    newScriptName.value = importedScriptName
+  } else {
+    let nameWithoutExt = fileName
+    if (nameWithoutExt.toLowerCase().endsWith('.json')) {
+      nameWithoutExt = nameWithoutExt.substring(0, nameWithoutExt.length - 5)
+    }
+    newScriptName.value = nameWithoutExt
+  }
+
+  selectedRoleIds.value = importedRoleIds
+
+  let msg = `成功載入劇本 JSON！已自動為您勾選 ${importedRoleIds.length} 個角色。`
+  const lines = []
+  if (permanentNames.length > 0) {
+    lines.push(`✅ 永久登錄角色：\n${permanentNames.join('、')}`)
+  }
+  if (tempNames.length > 0) {
+    lines.push(`⏱️ 本局暫存角色（切換劇本後將自動清理）：\n${tempNames.join('、')}`)
+  }
+  if (lines.length > 0) {
+    msg += `\n\n${lines.join('\n\n')}`
+  }
+
+  uiStore.showAlert('匯入成功', msg)
+
+  showNewCharsModal.value = false
+  pendingNewChars.value = []
+  pendingJsonImportData.value = null
+  if (jsonFileInput.value) {
+    jsonFileInput.value.value = ''
+  }
 }
 
 async function handleJsonFileChange(e: Event) {
@@ -570,7 +719,7 @@ async function handleJsonFileChange(e: Event) {
 
       const currentList = [...scriptStore.rawCharacterList]
       let needSaveCharacters = false
-      const newImportedChars: any[] = []
+      pendingNewChars.value = []
 
       // 💡 2. 第一階段：處理所有普通角色
       const characterItems = items.filter(item => {
@@ -609,7 +758,7 @@ async function handleJsonFileChange(e: Event) {
         if (matchedChar) {
           importedRoleIds.push(matchedChar.id)
         } else {
-          // 找不到匹配角色，說明是未登錄的自創角色，自動將其新增為自定義角色
+          // 找不到匹配角色，說明是未登錄的自創角色，暫存於確認清單中
           const finalId = importId || `custom_${Date.now()}_${Math.floor(Math.random() * 1000)}`
           const finalName = importName || finalId
           
@@ -644,14 +793,29 @@ async function handleJsonFileChange(e: Event) {
             is_custom: true
           }
 
-          currentList.push(newChar)
           importedRoleIds.push(newChar.id)
-          newImportedChars.push(newChar)
-          needSaveCharacters = true
+          pendingNewChars.value.push({
+            char: newChar,
+            permanent: false // 預設為暫存模式
+          })
         }
       })
 
-      // 💡 3. 第二階段：處理 Jinx 相克規則
+      // 💡 3. 若有偵測到新角色，開確認彈窗，攔截直接儲存流程
+      if (pendingNewChars.value.length > 0) {
+        pendingJsonImportData.value = {
+          items,
+          currentList,
+          importedRoleIds,
+          importedScriptName,
+          fileName: file.name
+        }
+        showNewCharsModal.value = true
+        return;
+      }
+
+      // 💡 4. 若無新角色，則照常直接走完儲存流程
+      // 第二階段：處理 Jinx 相克規則
       const jinxItems = items.filter(item => {
         if (!item || typeof item !== 'object') return false
         const t = (item.team || '').toLowerCase()
@@ -707,15 +871,7 @@ async function handleJsonFileChange(e: Event) {
       }
 
       selectedRoleIds.value = importedRoleIds
-      if (newImportedChars.length > 0) {
-        const charNames = newImportedChars.map(c => `「${c.name}」`).join('、')
-        uiStore.showAlert(
-          '匯入成功',
-          `成功載入劇本 JSON！已自動為您勾選 ${importedRoleIds.length} 個角色。\n\n💡 偵測到有新角色匯入系統：\n${charNames}`
-        )
-      } else {
-        uiStore.showAlert('匯入成功', `成功載入劇本 JSON！已自動為您勾選 ${importedRoleIds.length} 個角色。`)
-      }
+      uiStore.showAlert('匯入成功', `成功載入劇本 JSON！已自動為您勾選 ${importedRoleIds.length} 個角色。`)
     } catch (err) {
       console.error(err)
       uiStore.showAlert('解析失敗', '解析 JSON 檔案失敗，請確保是合法的 JSON 格式。')
@@ -1010,10 +1166,10 @@ async function handleCreateScript() {
   if (!newScriptName.value.trim()) return
   if (selectedRoleIds.value.length === 0) return
 
-  if (!uiStore.licenseIsActivated && scriptStore.customScripts.length >= 10) {
+  if ((uiStore.licenseStatus !== 'Valid' || !uiStore.licenseIsActivated) && scriptStore.customScripts.length >= 10) {
     uiStore.showAlert(
       '劇本管理受限',
-      `試用期/未授權狀態下，最多只能建立或匯入 1 個自訂劇本。\n\n請啟用正式授權金鑰以解鎖無限劇本管理功能。\n\n您的裝置識別碼：\n${uiStore.licenseDeviceId}`
+      `試用期/未授權狀態下，最多只能建立或匯入 10 個自訂劇本。\n\n請啟用正式授權金鑰以解鎖無限劇本管理功能。\n\n您的裝置識別碼：\n${uiStore.licenseDeviceId}`
     )
     return
   }
@@ -1203,7 +1359,7 @@ function handleCreateCategory() {
   const val = newCategoryName.value.trim()
   if (!val) return
 
-  if (!uiStore.licenseIsActivated) {
+  if (uiStore.licenseStatus !== 'Valid' || !uiStore.licenseIsActivated) {
     uiStore.showAlert(
       '功能已鎖定',
       `自訂劇本分類功能需要啟用正式授權金鑰。\n\n試用期內不支援建立新分類。\n\n您的裝置識別碼：\n${uiStore.licenseDeviceId}`
@@ -2222,5 +2378,155 @@ function moveCategory(index: number, direction: number) {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* 新角色登錄確認彈窗 */
+.custom-chars-modal {
+  width: 480px;
+  max-width: 90vw;
+  padding: 24px;
+  align-items: stretch;
+}
+.custom-chars-modal .modal-title {
+  color: var(--color-gold);
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+}
+.custom-chars-modal .modal-desc {
+  color: var(--color-text-muted);
+  font-size: 11.5px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+.new-chars-list {
+  max-height: 280px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+.new-char-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+  gap: 12px;
+}
+.new-char-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.new-char-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255,255,255,0.2);
+}
+.new-char-avatar.townsfolk { border-color: var(--color-townsfolk); }
+.new-char-avatar.outsider { border-color: var(--color-outsider); }
+.new-char-avatar.minion { border-color: var(--color-minion); }
+.new-char-avatar.demon { border-color: var(--color-demon); }
+.new-char-avatar.traveler { border-color: var(--color-traveler); }
+.new-char-avatar.fabled { border-color: #dca938; }
+
+.new-char-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+}
+.new-char-fallback {
+  font-size: 14px;
+  font-weight: bold;
+}
+.new-char-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.new-char-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.new-char-name {
+  font-weight: bold;
+  font-size: 13px;
+  color: #fff;
+}
+.new-char-type {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  background: rgba(255,255,255,0.1);
+  padding: 0.5px 4px;
+  border-radius: 4px;
+}
+.new-char-ability {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.new-char-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.new-char-checkbox {
+  cursor: pointer;
+}
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+.modal-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+.modal-btn.cancel-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--color-text-muted);
+}
+.modal-btn.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.modal-btn.confirm-btn {
+  background: var(--color-gold);
+  color: #121218;
+}
+.modal-btn.confirm-btn:hover {
+  background: #ecd27d;
 }
 </style>

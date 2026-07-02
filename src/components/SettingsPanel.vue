@@ -405,7 +405,7 @@ const uploadTarget = ref<'day' | 'night'>('day')
 const soundFileInput = ref<HTMLInputElement | null>(null)
 
 function triggerSoundUpload() {
-  if (!uiStore.licenseIsActivated) {
+  if (uiStore.licenseStatus !== 'Valid' || !uiStore.licenseIsActivated) {
     uiStore.showAlert(
       '功能已鎖定',
       `匯入角色技能音效功能需要啟用正式授權金鑰。\n\n試用期內僅開放播放內建預設音效，不支援自訂音效上傳。\n\n您的裝置識別碼：\n${licenseDeviceId.value}\n(可前往下方複製此識別碼並發送給管理員)`
