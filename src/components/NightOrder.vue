@@ -48,7 +48,7 @@
           <!-- 序號 -->
           <div class="order-index">{{ i + 1 }}</div>
           <img
-              v-if="!char.player.is_alive"
+              v-if="char.player && !char.player.is_alive"
               src="/pic/grave.png"
               class="order-player-dead-img"
               alt="死亡"

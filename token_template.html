@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Token Generator Template (600 DPI HD)</title>
+  <style>
+    @font-face {
+      font-family: 'ChineseFont';
+      src: url('./public/fonts/genkai.ttf');
+    }
+
+    :root {
+      --color-townsfolk: #0398E5;
+      --color-outsider: #056498;
+      --color-minion: #7e0303;
+      --color-demon: #cd0000;
+      --color-traveler: #b46baf;
+      --color-fabled: #dca938;
+      --color-loric: #3c9438;
+    }
+
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      width: 750px;
+      height: 750px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    .token-container {
+      position: relative;
+      width: 660px;
+      height: 660px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 背景光暈 (列印版隱藏) */
+    .token-glow {
+      display: none;
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(45px);
+      opacity: 0.25;
+      z-index: 0;
+    }
+
+    .token-glow.townsfolk {
+      background: #4a9bd4;
+    }
+
+    .token-glow.outsider {
+      background: #49c5b6;
+    }
+
+    .token-glow.minion {
+      background: #e87070;
+    }
+
+    .token-glow.demon {
+      background: #8b1a1a;
+    }
+
+    .token-glow.traveler {
+      background: #b46baf;
+    }
+
+    .token-glow.fabled {
+      background: #dca938;
+    }
+
+    .token-glow.loric {
+      background: #3c9438;
+    }
+
+    .token-body {
+      position: relative;
+      width: 600px;
+      height: 600px;
+      background: url('./public/pic/token1.png') no-repeat center center;
+      background-size: 102% 102%;
+      /* 微微放大背景圖以推開原始圖片邊緣的黑邊 */
+      border-radius: 50%;
+      overflow: hidden;
+      /* 裁剪超出圓形框的邊緣像素 */
+      box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    /* 水晶立體高光遮罩 */
+    .token-body::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 50%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.2) 100%);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .token-inner-content {
+      width: 85%;
+      height: 85%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 0px;
+      position: relative;
+    }
+
+    .role-icon-inner {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+      margin-bottom: 24px;
+    }
+
+    .role-img {
+      width: 90%;
+      height: 90%;
+      object-fit: contain;
+      filter: contrast(1.05) brightness(0.95);
+    }
+
+    .role-text-fallback {
+      font-size: 240px;
+      font-weight: 900;
+      font-family: 'DFKai-SB', 'BiauKai', '標楷體', 'ChineseFont', sans-serif;
+      color: currentColor;
+      text-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .role-icon-inner.townsfolk {
+      color: var(--color-townsfolk);
+    }
+
+    .role-icon-inner.outsider {
+      color: var(--color-outsider);
+    }
+
+    .role-icon-inner.minion {
+      color: var(--color-minion);
+    }
+
+    .role-icon-inner.demon {
+      color: var(--color-demon);
+    }
+
+    .role-icon-inner.traveler {
+      color: var(--color-traveler);
+    }
+
+    .role-icon-inner.fabled {
+      color: var(--color-fabled);
+    }
+
+    .role-icon-inner.loric {
+      color: var(--color-loric);
+    }
+
+    .role-name-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .curved-name-text {
+      font-weight: 900;
+      fill: #000000;
+      /* 改為純黑，使字體更深色 */
+      font-family: 'DFKai-SB', 'BiauKai', '標楷體', 'ChineseFont', sans-serif;
+      text-rendering: optimizeLegibility;
+      paint-order: stroke fill;
+      /* 先畫描邊再畫填色，使邊緣白邊細化且精確 */
+      stroke: rgba(255, 255, 255, 0.5);
+      /* 降低透明度為 0.5，使白邊更淡、更不顯眼 */
+      stroke-width: 0.3px;
+      /* 白邊寬度降至 0.3px，顯著減少白邊 */
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      letter-spacing: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="token-container">
+    <div id="glow" class="token-glow"></div>
+    <div class="token-body">
+      <div class="token-inner-content">
+        <div id="icon-container" class="role-icon-inner">
+          <img id="role-img" class="role-img" src="" onerror="showFallback()" />
+          <span id="role-fallback" class="role-text-fallback" style="display: none;"></span>
+        </div>
+        <svg viewBox="0 0 100 100" class="role-name-svg">
+          <defs>
+            <filter id="vintage-ink" x="-10%" y="-10%" width="120%" height="120%">
+              <!-- 1. 產生自然分形噪點 (Fractal Noise) -->
+              <feTurbulence type="fractalNoise" baseFrequency="0.25" numOctaves="3" result="noise" />
+              <!-- 2. 利用噪點隨機位移扭曲文字邊緣，達到筆畫粗糙斑駁磨損效果。此處直接輸出，使內部保持 100% 純黑實心 -->
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G" />
+            </filter>
+          </defs>
+          <path id="nameCurve" d="M 10 70 A 45 35 0 0 0 90 70" fill="transparent" />
+          <text filter="url(#vintage-ink)">
+            <textPath id="name-path" href="#nameCurve" startOffset="52%" text-anchor="middle" dominant-baseline="middle"
+              class="curved-name-text">
+              角色名稱
+            </textPath>
+          </text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const name = urlParams.get('name') || '';
+    const team = urlParams.get('team') || 'townsfolk';
+    const img = urlParams.get('img') || '';
+
+    function showFallback() {
+      document.getElementById('role-img').style.display = 'none';
+      const fallbackSpan = document.getElementById('role-fallback');
+      fallbackSpan.textContent = name ? name.charAt(0) : '';
+      fallbackSpan.style.display = 'inline';
+    }
+
+    if (img) {
+      document.getElementById('role-img').src = img;
+    } else {
+      showFallback();
+    }
+
+    document.getElementById('glow').className = `token-glow ${team}`;
+    document.getElementById('icon-container').className = `role-icon-inner ${team}`;
+
+    const namePath = document.getElementById('name-path');
+    namePath.textContent = name;
+
+    let fontSize = '18px'; // 原本相對比例，由 SVG viewBox 自適應縮放
+    if (name.length > 4) {
+      if (name.length > 5) {
+        fontSize = '13px';
+      } else {
+        fontSize = '15px';
+      }
+    }
+    namePath.style.fontSize = fontSize;
+  </script>
+</body>
+
+</html>
