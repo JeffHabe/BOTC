@@ -6,7 +6,7 @@ import { useGameStore } from './gameStore'
 import { useUIStore } from './uiStore'
 
 import allCharacterRaw from '../../src-tauri/data/all_character_sort.json'
-import { simplifyToTraditional } from '../utils/chineseConverter'
+import { simplifyToTraditional, normalizeName } from '../utils/chineseConverter'
 
 import { BaseDirectory, exists, readTextFile, writeTextFile, mkdir } from '@tauri-apps/plugin-fs'
 import { convertFileSrc } from '@tauri-apps/api/core'
@@ -534,17 +534,34 @@ export const useScriptStore = defineStore('script', () => {
         // 官方 JSON 通常只包含 { "id": "角色ID" }，我們需要從全庫(rawCharacterList)中把完整資料補齊
         const enrichedData = data.map((item: any) => {
           let id = typeof item === 'string' ? item : item.id
-          if (!id) return item
+          let name = (item && typeof item === 'object') ? item.name : ''
+          if (!id && !name) return item
 
           if (id === '_meta') return item
 
-          // 如果只有 ID，沒有名稱或技能，就去全庫尋找
-          if (typeof item === 'string' || (!item.name && !item.ability)) {
-            const found = rawCharacterList.value.find(c => c.id === id)
-            if (found) {
-              return typeof item === 'string' ? found : { ...found, ...item }
+          let found = null
+
+          // 💡 1. 優先使用規格化後的中文名稱進行去重匹配
+          if (name) {
+            const cleanImportName = normalizeName(name)
+            if (cleanImportName) {
+              found = rawCharacterList.value.find(c => normalizeName(c.name) === cleanImportName)
             }
           }
+
+          // 💡 2. 若中文名稱找不到，再使用 ID 進行匹配
+          if (!found && id) {
+            const cleanId = id.replace(/[-_]/g, '').toLowerCase()
+            found = rawCharacterList.value.find(
+              c => c.id.replace(/[-_]/g, '').toLowerCase() === cleanId
+            )
+          }
+
+          if (found) {
+            // 💡 3. 自動將劇本中的 ID 映射為系統已有的 ID，並補齊其他屬性，防止引入重複角色
+            return typeof item === 'string' ? found : { ...found, ...item, id: found.id }
+          }
+
           return item
         })
 

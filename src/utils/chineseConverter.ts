@@ -87,3 +87,18 @@ export function simplifyToTraditional(str: string): string {
   if (!str) return ''
   return str.split('').map(char => s2tTable[char] || char).join('')
 }
+
+/**
+ * 規格化角色名稱，用於去重與自動 ID 映射
+ * 轉為繁體、去除所有空白、括號
+ */
+export function normalizeName(name: string): string {
+  if (!name) return ''
+  const traditional = simplifyToTraditional(name)
+  return traditional
+    .trim()
+    .toLowerCase()
+    .replace(/[\s\u200b-\u200d\ufeff]+/g, '') // 移除包含零寬度空格的所有空格
+    .replace(/[\(\)（）]/g, '')                // 移除中英文括號，避免如 "洗冤錄(Fabled)" 比對失敗
+}
+

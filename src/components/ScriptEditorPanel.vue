@@ -360,7 +360,7 @@ import { useScriptStore } from '../stores/scriptStore'
 import type { Script, RoleType } from '../types'
 import { save, open } from '@tauri-apps/plugin-dialog'
 import { writeTextFile, readFile } from '@tauri-apps/plugin-fs'
-import { simplifyToTraditional } from '../utils/chineseConverter'
+import { simplifyToTraditional, normalizeName } from '../utils/chineseConverter'
 
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
@@ -579,8 +579,10 @@ async function confirmImportNewCharacters() {
       const nameA = simplifyToTraditional(parts[0].trim())
       const nameB = simplifyToTraditional(parts[1].trim())
 
-      const charA = currentList.find(c => c.name === nameA)
-      const charB = currentList.find(c => c.name === nameB)
+      const cleanNameA = normalizeName(nameA)
+      const cleanNameB = normalizeName(nameB)
+      const charA = currentList.find(c => normalizeName(c.name) === cleanNameA)
+      const charB = currentList.find(c => normalizeName(c.name) === cleanNameB)
 
       if (charA && charB) {
         const desc = item.ability ? simplifyToTraditional(item.ability) : ''
@@ -739,15 +741,20 @@ async function handleJsonFileChange(e: Event) {
           importId = item.id || ''
           importName = item.name ? simplifyToTraditional(item.name) : ''
         } else if (typeof item === 'string') {
-          const cleanStr = simplifyToTraditional(item.trim())
           importId = item.trim()
-          importName = cleanStr
+          // 💡 說明：若 item 為字串表示其僅為 ID 標記，不應設為 importName，以防誤配成中文名
+          importName = ''
         }
 
+        // 💡 1. 優先使用規格化後的中文名稱進行去重匹配
         if (importName) {
-          matchedChar = currentList.find(c => c.name === importName)
+          const cleanImportName = normalizeName(importName)
+          if (cleanImportName) {
+            matchedChar = currentList.find(c => normalizeName(c.name) === cleanImportName)
+          }
         }
 
+        // 💡 2. 若中文名稱找不到，再使用英文 ID 進行模糊去重匹配
         if (!matchedChar && importId) {
           const cleanImportedId = importId.replace(/[-_]/g, '').toLowerCase()
           matchedChar = currentList.find(
