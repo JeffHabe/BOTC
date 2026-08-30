@@ -7,6 +7,32 @@
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
 
+      <!-- 頂部倒數計時器 -->
+      <div class="voting-timer-bar">
+        <div class="voting-timer-display" :class="{ 'is-urgent': isTimerUrgent, 'is-running': uiStore.isTimerRunning }">
+          <img src="/pic/hourglass.png" class="timer-icon" />
+          <span class="timer-time">{{ formattedTimerTime }}</span>
+        </div>
+        <div class="voting-timer-actions">
+          <button v-if="!uiStore.isTimerRunning" class="v-timer-btn play-btn" @click="uiStore.startTimer()" title="開始計時">
+            <img src="/pic/play.png" class="btn-img" />
+          </button>
+          <button v-else class="v-timer-btn pause-btn" @click="uiStore.pauseTimer()" title="暫停計時">
+            <img src="/pic/pause.png" class="btn-img" />
+          </button>
+          <button class="v-timer-btn reset-btn" @click="uiStore.resetTimer()" title="重置計時">
+            <img src="/pic/reset.png" class="btn-img" />
+          </button>
+          <div class="quick-add-group">
+            <button class="v-timer-btn add-btn" @click="uiStore.addTimerSeconds(30)">+30秒</button>
+            <button class="v-timer-btn add-btn" @click="uiStore.addTimerSeconds(60)">+1分</button>
+          </div>
+          <button v-if="uiStore.isBellPlaying" class="v-timer-btn stop-bell-btn" @click="uiStore.stopBell()" title="停止鐘聲">
+            🔕 靜音
+          </button>
+        </div>
+      </div>
+
       <!-- 發起提名 -->
       <div class="nominate-section" v-if="gameStore.phase === 'Day'">
         <div class="section-title">發起提名</div>
@@ -197,6 +223,13 @@ import { ROLE_TYPE_COLOR } from '../types'
 
 const gameStore = useGameStore()
 const uiStore = useUIStore()
+
+const formattedTimerTime = computed(() => {
+  const m = Math.floor(uiStore.timerRemaining / 60).toString().padStart(2, '0')
+  const s = (uiStore.timerRemaining % 60).toString().padStart(2, '0')
+  return `${m}:${s}`
+})
+const isTimerUrgent = computed(() => uiStore.timerRemaining > 0 && uiStore.timerRemaining <= 30)
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
@@ -485,6 +518,116 @@ function getOrderedPlayers(nom: any) {
   padding: 16px 16px 10px;
   border-bottom: 1px solid rgba(201,168,76,0.1);
   flex-shrink: 0;
+}
+
+.voting-timer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: rgba(201, 168, 76, 0.05);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.voting-timer-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  transition: all var(--transition-fast);
+}
+
+.voting-timer-display.is-running {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 8px rgba(201, 168, 76, 0.25);
+}
+
+.voting-timer-display.is-urgent {
+  border-color: #ff5252;
+  color: #ff5252;
+  animation: pulse-urgent 1s infinite alternate;
+}
+
+@keyframes pulse-urgent {
+  0% { box-shadow: 0 0 4px rgba(255, 82, 82, 0.3); }
+  100% { box-shadow: 0 0 12px rgba(255, 82, 82, 0.7); }
+}
+
+.timer-icon {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+}
+
+.timer-time {
+  font-family: monospace, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-gold-bright);
+}
+
+.voting-timer-display.is-urgent .timer-time {
+  color: #ff5252;
+}
+
+.voting-timer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.v-timer-btn {
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.v-timer-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.v-timer-btn .btn-img {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+}
+
+.quick-add-group {
+  display: flex;
+  gap: 4px;
+}
+
+.add-btn {
+  font-size: 11px;
+  color: var(--color-gold);
+  border-color: rgba(201, 168, 76, 0.3);
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.add-btn:hover {
+  background: rgba(201, 168, 76, 0.22);
+}
+
+.stop-bell-btn {
+  background: rgba(211, 47, 47, 0.2);
+  border-color: rgba(211, 47, 47, 0.5);
+  color: #ff8585;
 }
 
 .panel-icon { font-size: 18px; }

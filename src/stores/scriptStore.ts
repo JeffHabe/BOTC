@@ -674,6 +674,81 @@ export const useScriptStore = defineStore('script', () => {
     }
   }
 
+  async function updateScriptNightOrder(scriptId: string, tab: 'first' | 'other', orderedCharIds: string[]) {
+    const s = customScripts.value.find(sc => sc.id === scriptId) || (masterScript.value.id === scriptId ? masterScript.value : null)
+    if (!s) return
+
+    if (tab === 'first') {
+      s.custom_first_night_order = orderedCharIds
+    } else {
+      s.custom_other_night_order = orderedCharIds
+    }
+
+    if (scriptId === masterScript.value.id) {
+      const metaIndex = rawCharacterList.value.findIndex((r: any) => r.id === '_meta')
+      if (metaIndex >= 0) {
+        if (tab === 'first') rawCharacterList.value[metaIndex].custom_first_night_order = orderedCharIds
+        else rawCharacterList.value[metaIndex].custom_other_night_order = orderedCharIds
+      } else {
+        const metaObj: any = { id: '_meta', name: masterScript.value.name }
+        if (tab === 'first') metaObj.custom_first_night_order = orderedCharIds
+        else metaObj.custom_other_night_order = orderedCharIds
+        rawCharacterList.value.unshift(metaObj)
+      }
+      try {
+        await writeTextFile('all_character_sort.json', JSON.stringify(rawCharacterList.value, null, 2), { baseDir: BaseDirectory.AppData })
+      } catch (e) {
+        console.warn('Failed to save characters to filesystem', e)
+      }
+    } else {
+      await saveCustomScripts()
+    }
+
+    if (gameStore.script && gameStore.script.id === scriptId) {
+      if (tab === 'first') gameStore.script.custom_first_night_order = [...orderedCharIds]
+      else gameStore.script.custom_other_night_order = [...orderedCharIds]
+    }
+    if (gameStore.state?.script && gameStore.state.script.id === scriptId) {
+      if (tab === 'first') gameStore.state.script.custom_first_night_order = [...orderedCharIds]
+      else gameStore.state.script.custom_other_night_order = [...orderedCharIds]
+    }
+  }
+
+  async function resetScriptNightOrder(scriptId: string, tab: 'first' | 'other') {
+    const s = customScripts.value.find(sc => sc.id === scriptId) || (masterScript.value.id === scriptId ? masterScript.value : null)
+    if (!s) return
+
+    if (tab === 'first') {
+      delete s.custom_first_night_order
+    } else {
+      delete s.custom_other_night_order
+    }
+
+    if (scriptId === masterScript.value.id) {
+      const metaIndex = rawCharacterList.value.findIndex((r: any) => r.id === '_meta')
+      if (metaIndex >= 0) {
+        if (tab === 'first') delete rawCharacterList.value[metaIndex].custom_first_night_order
+        else delete rawCharacterList.value[metaIndex].custom_other_night_order
+      }
+      try {
+        await writeTextFile('all_character_sort.json', JSON.stringify(rawCharacterList.value, null, 2), { baseDir: BaseDirectory.AppData })
+      } catch (e) {
+        console.warn('Failed to save characters to filesystem', e)
+      }
+    } else {
+      await saveCustomScripts()
+    }
+
+    if (gameStore.script && gameStore.script.id === scriptId) {
+      if (tab === 'first') delete gameStore.script.custom_first_night_order
+      else delete gameStore.script.custom_other_night_order
+    }
+    if (gameStore.state?.script && gameStore.state.script.id === scriptId) {
+      if (tab === 'first') delete gameStore.state.script.custom_first_night_order
+      else delete gameStore.state.script.custom_other_night_order
+    }
+  }
+
   return {
     searchQuery,
     filterType,
@@ -700,6 +775,8 @@ export const useScriptStore = defineStore('script', () => {
     createCustomScript,
     updateCustomScript,
     reorderCurrentScriptCharacters,
+    updateScriptNightOrder,
+    resetScriptNightOrder,
     getScriptImageUrl,
   }
 })

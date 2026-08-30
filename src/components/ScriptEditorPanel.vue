@@ -20,6 +20,9 @@
             <img src="/pic/plus.png" class="btn-icon-img" />建立劇本
           </template>
         </button>
+        <button class="tab-btn" :class="{ active: activeTab === 'list' }" @click="activeTab = 'list'">
+          <img src="/pic/book.png" class="btn-icon-img" />劇本清單
+        </button>
         <button class="tab-btn" :class="{ active: activeTab === 'categories' }" @click="activeTab = 'categories'">
           <img src="/pic/category.png" class="btn-icon-img" />劇本分類
         </button>
@@ -187,60 +190,15 @@
           </div>
         </div>
 
-        <!-- 分頁 2: 劇本分類 -->
-        <div v-if="activeTab === 'categories'" class="tab-content categories-tab">
-          <!-- 1. 自訂分類區塊 (支援拖曳與排序) -->
-          <div class="section-title">自訂分類排序與管理</div>
-
-          <div class="categories-list">
-            <div v-for="(cat, index) in scriptStore.categories" :key="cat" class="category-item"
-              :class="{ 'is-dragging': dragIndex === index }" draggable="true" @dragstart="onDragStart(index)"
-              @dragover="onDragOver($event, index)" @drop="onDrop(index)" @dragend="dragIndex = null">
-              <!-- 拖曳手柄 -->
-              <span class="drag-handle" title="按住拖曳排序">☰</span>
-
-              <!-- 更名輸入框 -->
-              <input type="text" :value="cat"
-                @change="handleRenameCategory(cat, ($event.target as HTMLInputElement).value)"
-                class="category-name-input" title="修改名稱" />
-
-              <!-- 排序與刪除控制 -->
-              <div class="category-controls">
-                <button class="arrow-btn" :disabled="index === 0" @click="moveCategory(index, -1)" title="上移">
-                  ▲
-                </button>
-                <button class="arrow-btn" :disabled="index === scriptStore.categories.length - 1"
-                  @click="moveCategory(index, 1)" title="下移">
-                  ▼
-                </button>
-                <button class="delete-btn" :disabled="scriptStore.categories.length <= 1"
-                  @click="handleDeleteCategory(cat)" title="刪除分類">
-                  <img src="/pic/trash.png" class="btn-icon-img-no-margin" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 新增分類輸入區 -->
-          <div class="add-category-box">
-            <input type="text" v-model="newCategoryName" placeholder="新增自訂分類名稱..." class="add-input"
-              @keyup.enter="handleCreateCategory" />
-            <button class="btn-gold-outline add-btn" :disabled="!newCategoryName.trim()" @click="handleCreateCategory">
-              <img src="/pic/plus.png" class="btn-icon-img" />新增
-            </button>
-          </div>
-
-          <div class="divider" />
-
-          <!-- 2. 劇本歸類管理區塊 -->
-          <div class="section-title">劇本快速歸類</div>
-
+        <!-- 分頁 2: 劇本清單 -->
+        <div v-if="activeTab === 'list'" class="tab-content list-tab">
+          <div class="section-title">劇本管理與搜尋</div>
           <!-- 劇本搜尋欄 -->
           <div class="categorize-search-wrapper">
             <input 
               v-model="scriptCategorizeSearch" 
               type="text" 
-              placeholder="🔍 搜尋劇本名稱進行快速歸類..." 
+              placeholder="🔍 搜尋劇本名/作者/角色名稱/技能關鍵字..." 
               class="categorize-search-input" 
             />
             <button v-if="scriptCategorizeSearch" class="search-clear-btn" @click="scriptCategorizeSearch = ''">✕</button>
@@ -254,6 +212,10 @@
                   <div class="script-name">{{ script.name }}</div>
                   <div class="script-meta">{{ script.characters.length }} 個角色 | {{ script.id.startsWith('custom_') ?
                     '自訂' : '大全' }}</div>
+                  <!-- 搜尋匹配角色提示 -->
+                  <div v-if="scriptCategorizeSearch.trim() && getMatchedCharactersString(script)" class="script-match-tag">
+                    🔍 包含角色：{{ getMatchedCharactersString(script) }}
+                  </div>
                 </div>
               </div>
 
@@ -294,6 +256,50 @@
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- 分頁 3: 劇本分類 -->
+        <div v-if="activeTab === 'categories'" class="tab-content categories-tab">
+          <!-- 1. 自訂分類區塊 (支援拖曳與排序) -->
+          <div class="section-title">自訂分類排序與管理</div>
+
+          <div class="categories-list">
+            <div v-for="(cat, index) in scriptStore.categories" :key="cat" class="category-item"
+              :class="{ 'is-dragging': dragIndex === index }" draggable="true" @dragstart="onDragStart(index)"
+              @dragover="onDragOver($event, index)" @drop="onDrop(index)" @dragend="dragIndex = null">
+              <!-- 拖曳手柄 -->
+              <span class="drag-handle" title="按住拖曳排序">☰</span>
+
+              <!-- 更名輸入框 -->
+              <input type="text" :value="cat"
+                @change="handleRenameCategory(cat, ($event.target as HTMLInputElement).value)"
+                class="category-name-input" title="修改名稱" />
+
+              <!-- 排序與刪除控制 -->
+              <div class="category-controls">
+                <button class="arrow-btn" :disabled="index === 0" @click="moveCategory(index, -1)" title="上移">
+                  ▲
+                </button>
+                <button class="arrow-btn" :disabled="index === scriptStore.categories.length - 1"
+                  @click="moveCategory(index, 1)" title="下移">
+                  ▼
+                </button>
+                <button class="delete-btn" :disabled="scriptStore.categories.length <= 1"
+                  @click="handleDeleteCategory(cat)" title="刪除分類">
+                  <img src="/pic/trash.png" class="btn-icon-img-no-margin" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 新增分類輸入區 -->
+          <div class="add-category-box">
+            <input type="text" v-model="newCategoryName" placeholder="新增自訂分類名稱..." class="add-input"
+              @keyup.enter="handleCreateCategory" />
+            <button class="btn-gold-outline add-btn" :disabled="!newCategoryName.trim()" @click="handleCreateCategory">
+              <img src="/pic/plus.png" class="btn-icon-img" />新增
+            </button>
           </div>
         </div>
       </div>
@@ -365,7 +371,7 @@ import { simplifyToTraditional, normalizeName } from '../utils/chineseConverter'
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
 
-const activeTab = ref<'create' | 'categories'>('create')
+const activeTab = ref<'create' | 'list' | 'categories'>('create')
 
 const isSaving = ref(false)
 const isDeleting = ref(false)
@@ -1080,8 +1086,53 @@ const scriptCategorizeSearch = ref('')
 const filteredCategorizeScripts = computed(() => {
   const query = scriptCategorizeSearch.value.trim().toLowerCase()
   if (!query) return allEditableScripts.value
-  return allEditableScripts.value.filter(s => s.name.toLowerCase().includes(query))
+  const cleanQuery = query.replace(/\s+/g, '')
+
+  return allEditableScripts.value.filter(s => {
+    // 1. 匹配劇本名稱
+    if (s.name.toLowerCase().replace(/\s+/g, '').includes(cleanQuery)) {
+      return true
+    }
+    // 2. 匹配劇本作者
+    if (s.author && s.author.toLowerCase().replace(/\s+/g, '').includes(cleanQuery)) {
+      return true
+    }
+    // 3. 智慧匹配角色名稱或技能關鍵字
+    return s.characters.some(char => {
+      const cleanCharName = normalizeName(char.name)
+      const cleanQueryName = normalizeName(cleanQuery)
+      const nameMatch = 
+        cleanCharName.includes(cleanQueryName) ||
+        (char.name_en && char.name_en.toLowerCase().replace(/\s+/g, '').includes(cleanQuery)) ||
+        (char.id && char.id.toLowerCase().replace(/\s+/g, '').includes(cleanQuery))
+
+      const abilityMatch = char.ability && char.ability.toLowerCase().replace(/\s+/g, '').includes(cleanQuery)
+      return nameMatch || abilityMatch
+    })
+  })
 })
+
+// 計算劇本中符合搜尋條件的角色名稱字串，以在 UI 顯示提示
+function getMatchedCharactersString(script: Script): string {
+  const query = scriptCategorizeSearch.value.trim().toLowerCase()
+  if (!query) return ''
+  const cleanQuery = query.replace(/\s+/g, '')
+
+  const matchedNames = script.characters
+    .filter(char => {
+      const cleanCharName = normalizeName(char.name)
+      const cleanQueryName = normalizeName(cleanQuery)
+      const nameMatch = 
+        cleanCharName.includes(cleanQueryName) ||
+        (char.name_en && char.name_en.toLowerCase().replace(/\s+/g, '').includes(cleanQuery))
+      const abilityMatch = char.ability && char.ability.toLowerCase().replace(/\s+/g, '').includes(cleanQuery)
+      return nameMatch || abilityMatch
+    })
+    .map(char => char.name)
+
+  if (matchedNames.length === 0) return ''
+  return matchedNames.slice(0, 3).join('、') + (matchedNames.length > 3 ? '...' : '')
+}
 
 // 點選角色 checkbox 切換
 function toggleRole(id: string) {
@@ -1210,7 +1261,7 @@ async function handleCreateScript() {
     selectedRoleIds.value = []
     newScriptPhysicalImage.value = null
     newScriptPhysicalImageBack.value = null
-    activeTab.value = 'categories' // 切換到管理分類查看
+    activeTab.value = 'list' // 切換到劇本清單查看
   } catch (err) {
     console.error('建立劇本失敗:', err)
     uiStore.showAlert('建立失敗', '建立劇本失敗，請確認資料是否正常。')
@@ -1266,7 +1317,7 @@ async function handleUpdateScript() {
     if (success) {
       uiStore.showAlert('更新成功', `劇本「${newScriptName.value}」更新成功！`)
       cancelEditingScript()
-      activeTab.value = 'categories'
+      activeTab.value = 'list'
     } else {
       uiStore.showAlert('更新失敗', '更新劇本失敗：找不到該劇本。')
     }
@@ -1471,6 +1522,16 @@ function moveCategory(index: number, direction: number) {
 </script>
 
 <style scoped>
+.script-match-tag {
+  font-size: 11px;
+  color: #c9a054;
+  margin-top: 4px;
+  background: rgba(201, 160, 84, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
 .overlay {
   position: fixed;
   inset: 0;

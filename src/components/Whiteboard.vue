@@ -1,4 +1,4 @@
-<template>
+  <template>
   <div class="overlay" @click.self="uiStore.closePanel()">
     <div class="whiteboard-panel panel animate-slide-up">
       <div class="panel-header">
@@ -78,6 +78,24 @@
           </div>
         </div>
         
+        <!-- 劇本角色快捷填入區域 -->
+        <div v-if="scriptCharacters.length > 0" class="script-chars-section">
+          <div class="hint-cards-header">
+            <span class="hint-title">🎭 填入劇本角色 ({{ scriptCharacters.length }})</span>
+          </div>
+          <div class="hint-cards-scroll">
+            <button
+              v-for="char in scriptCharacters"
+              :key="char.id"
+              class="char-chip"
+              :class="char.role_type?.toLowerCase()"
+              @click="insertCharacterTag(char.name)"
+            >
+              {{ char.name }}
+            </button>
+          </div>
+        </div>
+
         <!-- 提示卡區域 -->
         <div class="hint-cards-section">
           <div class="hint-cards-header">
@@ -108,8 +126,9 @@
         </div>
 
         <textarea 
+          ref="textareaRef"
           class="whiteboard-input" 
-          placeholder="在此輸入要展示給玩家看的資訊...&#10;(例如：你的占卜結果為【是】)"
+          placeholder="在此輸入要展示給玩家看的資訊...&#10;(例如：你的角色為【廚師】)"
           v-model="gameStore.nightNotes"
           @input="gameStore.setNightNotes(gameStore.nightNotes)"
           :style="{ 
@@ -140,13 +159,47 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
 import ColorPicker from './ColorPicker.vue'
 
 const gameStore = useGameStore()
 const uiStore = useUIStore()
+
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
+
+const scriptCharacters = computed(() => {
+  if (!gameStore.script?.characters) return []
+  const typeOrder: Record<string, number> = {
+    Townsfolk: 1, Outsider: 2, Minion: 3, Demon: 4, Traveler: 5, Fabled: 6, Loric: 7
+  }
+  return [...gameStore.script.characters].sort((a, b) => {
+    const orderA = typeOrder[a.role_type] ?? 99
+    const orderB = typeOrder[b.role_type] ?? 99
+    return orderA - orderB
+  })
+})
+
+function insertCharacterTag(charName: string) {
+  const tag = `【${charName}】`
+  const el = textareaRef.value
+  if (el) {
+    const start = el.selectionStart || 0
+    const end = el.selectionEnd || 0
+    const text = gameStore.nightNotes || ''
+    const newText = text.substring(0, start) + tag + text.substring(end)
+    gameStore.setNightNotes(newText)
+    nextTick(() => {
+      el.focus()
+      const newPos = start + tag.length
+      el.setSelectionRange(newPos, newPos)
+    })
+  } else {
+    let currentNotes = gameStore.nightNotes || ''
+    gameStore.setNightNotes(currentNotes + tag)
+  }
+}
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
@@ -734,6 +787,35 @@ const copyToClipboard = async () => {
 }
 
 .copy-btn .icon, .clear-btn .icon { font-size: 14px; }
+
+.script-chars-section {
+  margin-bottom: 12px;
+}
+
+.char-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--color-text-primary);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.char-chip.townsfolk { border-color: rgba(3, 152, 229, 0.4); color: #70c4ff; }
+.char-chip.outsider  { border-color: rgba(5, 100, 152, 0.4); color: #6db1db; }
+.char-chip.minion    { border-color: rgba(126, 3, 3, 0.6); color: #ff8585; }
+.char-chip.demon     { border-color: rgba(205, 0, 0, 0.6); color: #ff5252; }
+.char-chip.traveler  { border-color: rgba(180, 107, 175, 0.5); color: #e5a3e0; }
+
+.char-chip:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.2);
+  background: rgba(255, 255, 255, 0.08);
+}
 
 .panel-header-icon {
   width: 18px;

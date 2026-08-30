@@ -249,14 +249,13 @@ const autoScaleFactor = computed(() => {
   return Math.max(0.7, 1 - (count - 14) * 0.045)
 })
 
-// 當前顯示的標記
+// 當前顯示的標記（最新加入的排序在前，使其離玩家令片最近）
 const displayReminders = computed(() => {
-  // 如果處於展開狀態，顯示全部
-  if (isExpanded.value) return props.player.reminders
+  let list = props.player.reminders
   // 如果標記多於設定的收納上限，收起狀態下一個都不顯示 (全部隱藏)
-  if (props.player.reminders.length > uiStore.reminderCollapseThreshold) return []
-  // 否則正常顯示
-  return props.player.reminders
+  if (!isExpanded.value && props.player.reminders.length > uiStore.reminderCollapseThreshold) return []
+  // 倒序排列：最新新增的標記排在陣列前面，獲得較小的 rIdx，從而離玩家令片最近
+  return [...list].reverse()
 })
 
 function toggleExpand() {

@@ -80,6 +80,8 @@ export interface Script {
   category?: string
   physical_image?: string | null
   physical_image_back?: string | null
+  custom_first_night_order?: string[]
+  custom_other_night_order?: string[]
 }
 
 export type GamePhase = 'Setup' | 'FirstNight' | 'Day' | 'Night'

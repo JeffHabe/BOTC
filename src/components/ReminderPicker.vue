@@ -126,6 +126,11 @@ const uiStore = useUIStore()
 const gameStore = useGameStore()
 const scriptStore = useScriptStore()
 
+const editingId = ref<string | null>(null)
+const customText = ref('')
+const inputRef = ref<HTMLInputElement | null>(null)
+const contentRef = ref<HTMLElement | null>(null)
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
 })
@@ -146,10 +151,6 @@ const player = computed(() => {
   return gameStore.players.find(p => p.id === id) || null
 })
 const existingReminders = computed(() => player.value?.reminders ?? [])
-const customText = ref('')
-const editingId = ref<string | null>(null)
-const inputRef = ref<HTMLInputElement | null>(null)
-const contentRef = ref<HTMLElement | null>(null)
 
 const commonReminders = ['善良','邪惡']
 /**
@@ -431,24 +432,37 @@ async function quickAdd(text: string, source: string = '劇本') {
   margin: 16px 0;
 }
 
-/* 標記分組樣式 */
+/* 標記分組網格方塊樣式 */
+.role-group-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
 .role-subgroup {
-  margin-bottom: 12px;
-  background: rgba(255, 255, 255, 0.02);
-  padding: 8px;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(201, 168, 76, 0.15);
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .role-tiny-label {
-  font-size: 10px;
-  color: var(--color-gold-muted);
-  margin-bottom: 6px;
-  font-weight: bold;
+  font-size: 12px;
+  color: var(--color-gold);
+  font-weight: 700;
+  margin-bottom: 2px;
+  letter-spacing: 0.5px;
 }
 
 .in-play-badge {
-  border-color: rgba(201, 168, 76, 0.5);
+  border-color: rgba(201, 168, 76, 0.4);
   background: rgba(201, 168, 76, 0.1);
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 12px;
 }
 
 .common-badge {

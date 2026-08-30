@@ -71,17 +71,33 @@ export const useGameStore = defineStore('game', () => {
   // 首夜順序
   const firstNightOrder = computed(() => {
     if (!script.value) return []
-    return [...script.value.characters]
-      .filter(c => c.night_order_first != null)
-      .sort((a, b) => (a.night_order_first ?? 999) - (b.night_order_first ?? 999))
+    const chars = [...script.value.characters].filter(c => c.night_order_first != null)
+    const customOrder = script.value.custom_first_night_order
+    if (customOrder && customOrder.length > 0) {
+      const orderMap = new Map(customOrder.map((id, idx) => [id, idx]))
+      return chars.sort((a, b) => {
+        const idxA = orderMap.has(a.id) ? orderMap.get(a.id)! : 9999 + (a.night_order_first ?? 999)
+        const idxB = orderMap.has(b.id) ? orderMap.get(b.id)! : 9999 + (b.night_order_first ?? 999)
+        return idxA - idxB
+      })
+    }
+    return chars.sort((a, b) => (a.night_order_first ?? 999) - (b.night_order_first ?? 999))
   })
 
   // 其他夜晚順序
   const otherNightOrder = computed(() => {
     if (!script.value) return []
-    return [...script.value.characters]
-      .filter(c => c.night_order_other != null)
-      .sort((a, b) => (a.night_order_other ?? 999) - (b.night_order_other ?? 999))
+    const chars = [...script.value.characters].filter(c => c.night_order_other != null)
+    const customOrder = script.value.custom_other_night_order
+    if (customOrder && customOrder.length > 0) {
+      const orderMap = new Map(customOrder.map((id, idx) => [id, idx]))
+      return chars.sort((a, b) => {
+        const idxA = orderMap.has(a.id) ? orderMap.get(a.id)! : 9999 + (a.night_order_other ?? 999)
+        const idxB = orderMap.has(b.id) ? orderMap.get(b.id)! : 9999 + (b.night_order_other ?? 999)
+        return idxA - idxB
+      })
+    }
+    return chars.sort((a, b) => (a.night_order_other ?? 999) - (b.night_order_other ?? 999))
   })
 
   // 場上角色的相對順序計算
@@ -128,6 +144,28 @@ export const useGameStore = defineStore('game', () => {
 
   async function syncState(newState: GameState | null) {
     if (newState) {
+      if (newState.script) {
+        // 從 currentScript 或 scriptStore 保留/還原自訂夜晚順序，防 Rust 清除
+        const { useScriptStore } = await import('./scriptStore')
+        const scriptStore = useScriptStore()
+        const found = scriptStore.customScripts.find(s => s.id === newState.script.id) ||
+                      (scriptStore.masterScript.id === newState.script.id ? scriptStore.masterScript : null)
+        if (found) {
+          if (found.custom_first_night_order) {
+            newState.script.custom_first_night_order = [...found.custom_first_night_order]
+          }
+          if (found.custom_other_night_order) {
+            newState.script.custom_other_night_order = [...found.custom_other_night_order]
+          }
+        } else if (state.value?.script?.id === newState.script.id) {
+          if (state.value.script.custom_first_night_order) {
+            newState.script.custom_first_night_order = [...state.value.script.custom_first_night_order]
+          }
+          if (state.value.script.custom_other_night_order) {
+            newState.script.custom_other_night_order = [...state.value.script.custom_other_night_order]
+          }
+        }
+      }
       // 自動記錄所有曾上場過的角色 ID
       newState.players.forEach(p => {
         if (p.role) historicalRoleIds.value.add(p.role.id)
@@ -550,6 +588,20 @@ export const useGameStore = defineStore('game', () => {
     localStorage.setItem('botc-hint-templates', JSON.stringify(hintTemplates.value))
   }
 
+  async function updateScriptCustomNightOrder(tab: 'first' | 'other', orderedCharIds: string[]) {
+    if (!script.value) return
+    const { useScriptStore } = await import('./scriptStore')
+    const scriptStore = useScriptStore()
+    await scriptStore.updateScriptNightOrder(script.value.id, tab, orderedCharIds)
+  }
+
+  async function resetScriptCustomNightOrder(tab: 'first' | 'other') {
+    if (!script.value) return
+    const { useScriptStore } = await import('./scriptStore')
+    const scriptStore = useScriptStore()
+    await scriptStore.resetScriptNightOrder(script.value.id, tab)
+  }
+
   return {
     state, loading, error, historicalRoleIds,
     players, script, phase, round, demonBluffs, lunaticBluffs, nominations,
@@ -569,6 +621,7 @@ export const useGameStore = defineStore('game', () => {
     nightNotes, setNightNotes,
     nightNotesFontSize, setNightNotesFontSize,
     nightNotesColor, setNightNotesColor,
-    hintTemplates, addHintTemplate, removeHintTemplate, resetHintTemplates
+    hintTemplates, addHintTemplate, removeHintTemplate, resetHintTemplates,
+    updateScriptCustomNightOrder, resetScriptCustomNightOrder
   }
 })
