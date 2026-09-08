@@ -28,8 +28,16 @@ def parse_args():
     )
     parser.add_argument(
         "--skip-existing", "--incremental",
+        dest="skip_existing",
         action="store_true",
-        help="Skip generating token images that already exist in Token_png"
+        default=True,
+        help="Skip generating token images that already exist in Token_png (default: True)"
+    )
+    parser.add_argument(
+        "--overwrite", "--clean", "--no-skip-existing",
+        dest="skip_existing",
+        action="store_false",
+        help="Force overwriting and regenerating existing token images in Token_png"
     )
     return parser.parse_args()
 
@@ -102,7 +110,7 @@ if not browser_path:
 print(f"Using browser: {browser_path}")
 
 # 4. 讀取 JSON 並下載圖片
-JSON_PATH = "botc-characters-1787841282696.json"
+JSON_PATH = "botc-characters-1788869425098.json"
 if not os.path.exists(JSON_PATH):
     print(f"Error: {JSON_PATH} not found.")
     exit(1)
