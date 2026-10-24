@@ -25,7 +25,8 @@ class Logger {
     }
 
     // 2. 實體日誌檔案寫入 (跨平台 Tauri 支援，含 Android)
-    if (isTauri) {
+    // 💡 生產環境過濾 debug 級別，避免頻繁喚醒快閃記憶體 I/O 導致發熱耗電
+    if (isTauri && (isDev || level !== 'debug')) {
       let paramStr = '';
       if (optionalParams.length > 0) {
         try {

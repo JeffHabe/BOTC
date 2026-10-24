@@ -1,6 +1,6 @@
 // 劇本 Store ：管理角色資料庫與劇本載入
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, shallowRef, triggerRef, computed } from 'vue'
 import type { CharacterDef, Script, RoleType } from '../types'
 import { useGameStore } from './gameStore'
 import { useUIStore } from './uiStore'
@@ -52,14 +52,19 @@ function parseRawArray(raw: any[], id: string, defaultName: string): Script {
     }
   })
 
+  const scriptName = id === 'all_character_sort'
+    ? (meta.name && meta.name.includes('全角色') ? '全角色大全' : meta.name || '全角色大全')
+    : (meta.name || defaultName)
+  const scriptCat = id === 'all_character_sort' ? '官方劇本' : (meta.category || '標準劇本')
+
   return {
     id,
-    name: meta.name || defaultName,
+    name: scriptName,
     name_en: meta.name_en || id,
     author: meta.author || '',
     logo: meta.logo || null,
     characters: chars,
-    category: meta.category || '標準劇本',
+    category: scriptCat,
     physical_image: meta.physical_image || null,
     physical_image_back: meta.physical_image_back || null
   }
@@ -69,7 +74,8 @@ export const useScriptStore = defineStore('script', () => {
   const gameStore = useGameStore()
   const searchQuery = ref('')
   const filterType = ref<RoleType | 'All'>('All')
-  const customScripts = ref<Script[]>([])
+  // 💡 記憶體與 GC 關鍵優化：改用 shallowRef，避免對 40MB 大型劇本陣列進行遞迴 Proxy 深度代理，大幅降低 RAM 與 V8 GC 耗電發燙
+  const customScripts = shallowRef<Script[]>([])
 
   // 劇本類別狀態管理
   const categories = ref<string[]>([])
@@ -205,7 +211,7 @@ export const useScriptStore = defineStore('script', () => {
       physical_image_back: physicalImageBack || null,
       logo: logo || null
     }
-    customScripts.value.push(newScript)
+    customScripts.value = [...customScripts.value, newScript]
     await saveCustomScripts()
     return newScript
   }
@@ -227,6 +233,7 @@ export const useScriptStore = defineStore('script', () => {
       script.physical_image = physicalImage || null
       script.physical_image_back = physicalImageBack || null
       script.logo = logo || null
+      triggerRef(customScripts)
       await saveCustomScripts()
 
       if (gameStore.script && gameStore.script.id === id) {
@@ -421,6 +428,7 @@ export const useScriptStore = defineStore('script', () => {
     if (script) {
       script.name = newName
       if (category) script.category = category
+      triggerRef(customScripts)
       await saveCustomScripts()
       if (gameStore.script && gameStore.script.id === id) {
         // Trigger reactivity for game store
@@ -438,6 +446,7 @@ export const useScriptStore = defineStore('script', () => {
     const idx = customScripts.value.findIndex(s => s.id === id)
     if (idx !== -1) {
       customScripts.value.splice(idx, 1)
+      triggerRef(customScripts)
       await saveCustomScripts()
       if (gameStore.script?.id === id) {
         await selectScript(masterScript.value)
@@ -601,7 +610,7 @@ export const useScriptStore = defineStore('script', () => {
         const newScript = parseRawArray(enrichedData, scriptId, scriptName)
 
         // 加入自定義清單
-        customScripts.value.push(newScript)
+        customScripts.value = [...customScripts.value, newScript]
         await selectScript(newScript)
         await saveCustomScripts()
         return true
@@ -619,7 +628,7 @@ export const useScriptStore = defineStore('script', () => {
     if (gameStore.script && gameStore.script.id !== 'all_character_sort') {
       const exists = customScripts.value.some(s => s.id === gameStore.script!.id)
       if (!exists) {
-        customScripts.value.push(gameStore.script)
+        customScripts.value = [...customScripts.value, gameStore.script]
         await saveCustomScripts()
       }
     }
@@ -703,6 +712,8 @@ export const useScriptStore = defineStore('script', () => {
     } else {
       s.custom_other_night_order = orderedCharIds
     }
+    triggerRef(customScripts)
+    triggerRef(masterScript)
 
     // 💡 輕量化儲存：僅寫入獨立的小檔 custom_night_orders.json，避免在每次微調順序時重複序列化 40MB 劇本包
     try {
@@ -744,6 +755,8 @@ export const useScriptStore = defineStore('script', () => {
     } else {
       delete s.custom_other_night_order
     }
+    triggerRef(customScripts)
+    triggerRef(masterScript)
 
     // 💡 從獨立小檔中移除對應項
     try {

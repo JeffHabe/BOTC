@@ -74,9 +74,10 @@
                           :key="'script::'+s.id" 
                           class="dropdown-option"
                           :class="{ 'is-active': selectedCombinedId === 'script::'+s.id }"
+                          @pointerdown.prevent="selectOption('script::'+s.id)"
                           @mousedown="selectOption('script::'+s.id)"
                         >
-                          {{ s.name }}
+                          {{ s.id === 'all_character_sort' ? '全角色大全 (所有角色)' : s.name }}
                         </div>
                       </div>
                       <!-- 自訂劇本 -->
@@ -87,6 +88,7 @@
                           :key="'preset::'+p.id" 
                           class="dropdown-option"
                           :class="{ 'is-active': selectedCombinedId === 'preset::'+p.id }"
+                          @pointerdown.prevent="selectOption('preset::'+p.id)"
                           @mousedown="selectOption('preset::'+p.id)"
                         >
                           {{ p.name }}
@@ -919,14 +921,32 @@ const groupedScripts = computed(() => {
   const query = scriptSearchQuery.value.trim().toLowerCase()
   
   scriptStore.allScripts.forEach(s => {
-    if (query && !s.name.toLowerCase().includes(query)) {
+    // 💡 關鍵修復：名稱智慧模糊搜尋，支援「全角色」、「全角色劇本」、「全角色大全」、「大全」
+    const isMaster = s.id === 'all_character_sort'
+    const matchesQuery = !query || 
+      s.name.toLowerCase().includes(query) ||
+      (isMaster && (
+        query.includes('全角色') ||
+        query.includes('大全') ||
+        '全角色全角色劇本全角色大全'.includes(query) ||
+        query === 'all'
+      ))
+
+    if (!matchesQuery) {
       return
     }
-    const cat = s.category || '標準劇本'
+
+    // 💡 全角色大全統一歸入「官方劇本」，避免被丟到未排名的分類沉入底部
+    const cat = isMaster ? '官方劇本' : (s.category || '官方劇本')
     if (!groups[cat]) {
       groups[cat] = []
     }
-    groups[cat].push(s)
+    // 💡 全角色大全置頂在官方劇本第 1 位，方便使用者一開局立刻點選
+    if (isMaster) {
+      groups[cat].unshift(s)
+    } else {
+      groups[cat].push(s)
+    }
   })
   
   // 依據 categories 排序，未定義的排在最後

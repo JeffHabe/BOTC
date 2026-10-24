@@ -1537,22 +1537,12 @@ const activePanelComponent = computed(() => {
 .fog {
   position: absolute;
   bottom: -20px;
-  width: 200%;
+  width: 100%;
   height: 120px;
-  background: linear-gradient(to top, rgba(93, 64, 55, 0.4), transparent);
+  background: linear-gradient(to top, rgba(93, 64, 55, 0.35), transparent);
   border-radius: 50%;
-  animation: fogDrift 10s ease-in-out infinite alternate;
-  filter: blur(20px);
+  pointer-events: none;
   z-index: 2;
-}
-
-/* 觸控手機端優化：停用耗能的動畫與高模糊濾鏡，防止手機發熱與卡頓 */
-@media (pointer: coarse) {
-  .fog {
-    animation: none;
-    filter: none; /* 移除高斯模糊，因為高斯模糊極耗 GPU */
-    background: linear-gradient(to top, rgba(93, 64, 55, 0.35), transparent); /* 調整漸層以保持視覺渲染效果 */
-  }
 }
 
 /* 移除星星動畫 */
@@ -2128,21 +2118,20 @@ const activePanelComponent = computed(() => {
   align-items: center;
   justify-content: center;
   z-index: 50;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.5), 0 0 0 0 rgba(200,169,110,0.4);
-  transition: box-shadow 0.3s ease, transform 0.2s ease, border-color 0.2s ease;
-  animation: pulse-script-btn 2.5s infinite;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5), 0 0 10px rgba(200,169,110,0.35);
+  transition: box-shadow 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
   cursor: pointer;
 }
 
 .view-physical-script-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.08);
   border-color: #f0d080;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.6), 0 0 12px rgba(200,169,110,0.5);
-  animation: none;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6), 0 0 14px rgba(200,169,110,0.6);
 }
 
 .view-physical-script-btn:active {
   transform: scale(0.95);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.7), 0 0 6px rgba(200,169,110,0.4);
 }
 
 .view-script-icon {
@@ -2150,11 +2139,6 @@ const activePanelComponent = computed(() => {
   height: 28px;
   object-fit: contain;
   filter: brightness(1.3) sepia(0.3);
-}
-
-@keyframes pulse-script-btn {
-  0%, 100% { box-shadow: 0 6px 16px rgba(0,0,0,0.5), 0 0 0 0 rgba(200,169,110,0.4); }
-  50% { box-shadow: 0 6px 16px rgba(0,0,0,0.5), 0 0 0 6px rgba(200,169,110,0); }
 }
 
 .add-player-btn {
