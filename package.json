@@ -1,11 +1,13 @@
 {
   "name": "tauri-app",
   "private": true,
-  "version": "0.1.278",
+  "version": "0.1.280",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "check:dict": "node scripts/check-dict.js",
+    "test": "node tests/chineseConverter.test.js",
+    "build": "node scripts/check-dict.js && vite build",
     "type-check": "vue-tsc --noEmit",
     "preview": "vite preview",
     "tauri": "tauri",
