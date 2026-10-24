@@ -360,6 +360,26 @@ export const useScriptStore = defineStore('script', () => {
         customScripts.value = JSON.parse(content)
       }
 
+      // 3. 載入獨立輕量自定義夜晚順序（與巨型劇本檔案解耦，實現秒級持久化）
+      try {
+        const nightOrdersExists = await exists('custom_night_orders.json', { baseDir: BaseDirectory.AppData })
+        if (nightOrdersExists) {
+          const noContent = await readTextFile('custom_night_orders.json', { baseDir: BaseDirectory.AppData })
+          const savedNightOrders = JSON.parse(noContent) as Record<string, { first?: string[]; other?: string[] }>
+          if (savedNightOrders) {
+            Object.entries(savedNightOrders).forEach(([scId, orders]) => {
+              const target = customScripts.value.find(s => s.id === scId) || (masterScript.value.id === scId ? masterScript.value : null)
+              if (target) {
+                if (orders.first) target.custom_first_night_order = [...orders.first]
+                if (orders.other) target.custom_other_night_order = [...orders.other]
+              }
+            })
+          }
+        }
+      } catch (e) {
+        console.warn('載入獨立自定義夜晚順序失敗:', e)
+      }
+
       // 如果尚未裝載其他劇本，預設選擇大全
       if (!gameStore.script || gameStore.script.id === 'all_character_sort') {
         await gameStore.setScript(masterScript.value)
@@ -684,24 +704,25 @@ export const useScriptStore = defineStore('script', () => {
       s.custom_other_night_order = orderedCharIds
     }
 
-    if (scriptId === masterScript.value.id) {
-      const metaIndex = rawCharacterList.value.findIndex((r: any) => r.id === '_meta')
-      if (metaIndex >= 0) {
-        if (tab === 'first') rawCharacterList.value[metaIndex].custom_first_night_order = orderedCharIds
-        else rawCharacterList.value[metaIndex].custom_other_night_order = orderedCharIds
+    // 💡 輕量化儲存：僅寫入獨立的小檔 custom_night_orders.json，避免在每次微調順序時重複序列化 40MB 劇本包
+    try {
+      let ordersMap: Record<string, { first?: string[]; other?: string[] }> = {}
+      const nightOrdersExists = await exists('custom_night_orders.json', { baseDir: BaseDirectory.AppData })
+      if (nightOrdersExists) {
+        const noContent = await readTextFile('custom_night_orders.json', { baseDir: BaseDirectory.AppData })
+        ordersMap = JSON.parse(noContent) || {}
+      }
+      if (!ordersMap[scriptId]) {
+        ordersMap[scriptId] = {}
+      }
+      if (tab === 'first') {
+        ordersMap[scriptId].first = [...orderedCharIds]
       } else {
-        const metaObj: any = { id: '_meta', name: masterScript.value.name }
-        if (tab === 'first') metaObj.custom_first_night_order = orderedCharIds
-        else metaObj.custom_other_night_order = orderedCharIds
-        rawCharacterList.value.unshift(metaObj)
+        ordersMap[scriptId].other = [...orderedCharIds]
       }
-      try {
-        await writeTextFile('all_character_sort.json', JSON.stringify(rawCharacterList.value, null, 2), { baseDir: BaseDirectory.AppData })
-      } catch (e) {
-        console.warn('Failed to save characters to filesystem', e)
-      }
-    } else {
-      await saveCustomScripts()
+      await writeTextFile('custom_night_orders.json', JSON.stringify(ordersMap, null, 2), { baseDir: BaseDirectory.AppData })
+    } catch (e) {
+      console.warn('儲存獨立自定義夜晚順序失敗:', e)
     }
 
     if (gameStore.script && gameStore.script.id === scriptId) {
@@ -724,19 +745,23 @@ export const useScriptStore = defineStore('script', () => {
       delete s.custom_other_night_order
     }
 
-    if (scriptId === masterScript.value.id) {
-      const metaIndex = rawCharacterList.value.findIndex((r: any) => r.id === '_meta')
-      if (metaIndex >= 0) {
-        if (tab === 'first') delete rawCharacterList.value[metaIndex].custom_first_night_order
-        else delete rawCharacterList.value[metaIndex].custom_other_night_order
+    // 💡 從獨立小檔中移除對應項
+    try {
+      const nightOrdersExists = await exists('custom_night_orders.json', { baseDir: BaseDirectory.AppData })
+      if (nightOrdersExists) {
+        const noContent = await readTextFile('custom_night_orders.json', { baseDir: BaseDirectory.AppData })
+        const ordersMap = JSON.parse(noContent) || {}
+        if (ordersMap[scriptId]) {
+          if (tab === 'first') delete ordersMap[scriptId].first
+          else delete ordersMap[scriptId].other
+          if (!ordersMap[scriptId].first && !ordersMap[scriptId].other) {
+            delete ordersMap[scriptId]
+          }
+          await writeTextFile('custom_night_orders.json', JSON.stringify(ordersMap, null, 2), { baseDir: BaseDirectory.AppData })
+        }
       }
-      try {
-        await writeTextFile('all_character_sort.json', JSON.stringify(rawCharacterList.value, null, 2), { baseDir: BaseDirectory.AppData })
-      } catch (e) {
-        console.warn('Failed to save characters to filesystem', e)
-      }
-    } else {
-      await saveCustomScripts()
+    } catch (e) {
+      console.warn('重置獨立自定義夜晚順序失敗:', e)
     }
 
     if (gameStore.script && gameStore.script.id === scriptId) {

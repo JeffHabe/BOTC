@@ -49,15 +49,20 @@
       </div>
 
       <!-- 順序列表 (編輯模式顯示全劇本夜間角色列表，普通模式顯示遊戲即時列表) -->
-      <div class="order-list" ref="listRef" @scroll="handleScroll">
-        <div class="order-empty" v-if="(isEditing ? editOrderList : currentOrder).length === 0">
+      <div
+        class="order-list"
+        ref="listRef"
+        :class="{ 'is-sorting': sortDragIndex !== null }"
+        @scroll="handleScroll"
+      >
+        <div class="order-empty" v-if="(isEditing ? localOrderList : currentOrder).length === 0">
           <span>此劇本無夜晚行動角色</span>
         </div>
 
         <!-- 編輯模式列表 (支援滑鼠與手機觸控 Pointer Events 拖拽) -->
         <template v-if="isEditing">
           <div
-            v-for="(char, i) in editOrderList"
+            v-for="(char, i) in localOrderList"
             :key="char.id"
             :data-sort-index="i"
             class="order-item order-item-editing"
@@ -91,7 +96,7 @@
               >▲</button>
               <button
                 class="move-btn"
-                :disabled="i === editOrderList.length - 1"
+                :disabled="i === localOrderList.length - 1"
                 @click.stop="moveItem(i, 1)"
                 title="下移"
               >▼</button>
@@ -168,7 +173,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
 import type { RoleType } from '../types'
@@ -179,6 +184,28 @@ const uiStore = useUIStore()
 
 const listRef = ref<HTMLElement | null>(null)
 const isEditing = ref(false)
+
+/**
+ * 系統預設流程 (首夜專用) - 必須在 editOrderList 計算屬性之前宣告以避免 TDZ 執行期錯誤
+ */
+const SYSTEM_ACTIONS: any[] = [
+  {
+    id: 'sys_minion_info',
+    name: '爪牙信息',
+    role_type: 'Minion',
+    first_night_reminder: '爪牙彼此相認，並得知惡魔是誰。',
+    night_order_first: 10,
+    is_system: true
+  },
+  {
+    id: 'sys_demon_info',
+    name: '惡魔信息',
+    role_type: 'Demon',
+    first_night_reminder: '惡魔得知爪牙是誰，並獲得三個不在場的角色作為偽裝。',
+    night_order_first: 11,
+    is_system: true
+  }
+]
 
 const activeTab = ref<'first' | 'other'>(
   (gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup') ? 'first' : 'other'
@@ -222,6 +249,26 @@ const editOrderList = computed(() => {
   return allFirstChars.sort((a, b) => (a.night_order_first ?? 999) - (b.night_order_first ?? 999))
 })
 
+// 💡 局部編輯狀態陣列：拖曳過程中僅在本地陣列做 0ms 交換，絕不觸發全域 Computed 與大型 Store 重繪
+const localOrderList = ref<any[]>([])
+
+// 保持局部列表與 computed 預設值同步（僅在未處於拖曳狀態時）
+watch(
+  editOrderList,
+  (newVal) => {
+    if (sortDragIndex.value === null) {
+      localOrderList.value = [...newVal]
+    }
+  },
+  { immediate: true }
+)
+
+watch(isEditing, (val) => {
+  if (val) {
+    localOrderList.value = [...editOrderList.value]
+  }
+})
+
 const sortDragIndex = ref<number | null>(null)
 const sortOverIndex = ref<number | null>(null)
 
@@ -240,45 +287,41 @@ function triggerSaveDebounced() {
 
 async function saveCurrentNightOrder() {
   const isFirst = activeTab.value === 'first'
-  const orderedIds = editOrderList.value.map(c => c.id)
+  const orderedIds = localOrderList.value.map(c => c.id)
   await gameStore.updateScriptCustomNightOrder(isFirst ? 'first' : 'other', orderedIds)
 }
 
 function applyOrderChange(fromIndex: number, toIndex: number) {
   if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return
-  const isFirst = activeTab.value === 'first'
-  const list = [...editOrderList.value]
+  const list = [...localOrderList.value]
   if (fromIndex >= list.length || toIndex >= list.length) return
 
   const [removed] = list.splice(fromIndex, 1)
   list.splice(toIndex, 0, removed)
-  const orderedIds = list.map(c => c.id)
-
-  // 同步更新 store 中的響應式順序，0ms 反應
-  if (gameStore.script) {
-    if (isFirst) {
-      gameStore.script.custom_first_night_order = [...orderedIds]
-    } else {
-      gameStore.script.custom_other_night_order = [...orderedIds]
-    }
-  }
+  localOrderList.value = list
+  // 💡 核心優化：拖曳過程中只在 localOrderList 交換，不修改 gameStore.script，避免 60fps 連鎖重新計算
 }
 
 // 點擊按鈕上下移動
 function moveItem(index: number, delta: number) {
   const targetIndex = index + delta
-  if (targetIndex < 0 || targetIndex >= editOrderList.value.length) return
+  if (targetIndex < 0 || targetIndex >= localOrderList.value.length) return
 
   applyOrderChange(index, targetIndex)
   triggerSaveDebounced()
 }
 
-// --- Pointer Events 觸控與滑鼠拖拽事件 ---
+// --- Pointer Events 觸控與滑鼠拖拽事件（採用純幾何命中、容器 Capture 鎖定、Auto-scroll 與 rAF 節流） ---
 function onPointerDown(e: PointerEvent, index: number) {
   if (e.button !== 0) return
-  const handleEl = e.currentTarget as HTMLElement
+  if (e.cancelable) {
+    e.preventDefault()
+  }
+
+  // 💡 關鍵修復：將 Pointer Capture 鎖定在不會在 DOM 中移動的列表容器上，杜絕因換位導致 Capture 丟失
+  const captureEl = listRef.value || (e.currentTarget as HTMLElement)
   try {
-    handleEl.setPointerCapture(e.pointerId)
+    captureEl.setPointerCapture(e.pointerId)
   } catch (err) {
     console.warn('Pointer Capture 鎖定失敗:', err)
   }
@@ -286,53 +329,102 @@ function onPointerDown(e: PointerEvent, index: number) {
   sortDragIndex.value = index
   sortOverIndex.value = index
 
+  let rafId: number | null = null
+  let latestClientY = e.clientY
+
   const onPointerMove = (moveEvt: PointerEvent) => {
     if (sortDragIndex.value === null) return
 
-    const draggingEl = document.querySelector('.order-item-editing.is-dragging') as HTMLElement | null
-    let prevPe = ''
-    if (draggingEl) {
-      prevPe = draggingEl.style.pointerEvents
-      draggingEl.style.pointerEvents = 'none'
+    // 💡 阻止行動端瀏覽器預設捲動搶奪觸控手勢
+    if (moveEvt.cancelable) {
+      moveEvt.preventDefault()
     }
+    latestClientY = moveEvt.clientY
 
-    const target = document.elementFromPoint(moveEvt.clientX, moveEvt.clientY)
-    if (draggingEl) {
-      draggingEl.style.pointerEvents = prevPe
-    }
+    if (rafId !== null) return // 💡 rAF 節流：一幀最多只計算一次碰撞，消除 Layout Thrashing
 
-    const itemEl = target?.closest('[data-sort-index]') as HTMLElement | null
-    if (itemEl && itemEl.dataset.sortIndex !== undefined) {
-      const overIdx = parseInt(itemEl.dataset.sortIndex, 10)
+    rafId = requestAnimationFrame(() => {
+      rafId = null
+      if (sortDragIndex.value === null || !listRef.value) return
+
+      const clientY = latestClientY
       const currentDrag = sortDragIndex.value
-      if (!isNaN(overIdx) && overIdx !== currentDrag) {
-        applyOrderChange(currentDrag, overIdx)
-        sortDragIndex.value = overIdx
-        sortOverIndex.value = overIdx
+      const items = listRef.value.querySelectorAll<HTMLElement>('.order-item-editing')
+      if (items.length === 0) return
+
+      // 💡 容器邊緣自動滾動（Auto-scroll），支援長清單一口氣從底部拖到頂部
+      const containerRect = listRef.value.getBoundingClientRect()
+      const scrollThreshold = 40
+      const scrollSpeed = 8
+      if (clientY < containerRect.top + scrollThreshold) {
+        listRef.value.scrollTop -= scrollSpeed
+      } else if (clientY > containerRect.bottom - scrollThreshold) {
+        listRef.value.scrollTop += scrollSpeed
       }
-    }
+
+      // 💡 純幾何座標判定：完全拋棄 document.elementFromPoint 與 pointer-events: none
+      let targetIdx = currentDrag
+
+      if (currentDrag > 0) {
+        // 向上檢查：只要手指越過上方項目的中線，就能連續向上跳換多格
+        for (let i = currentDrag - 1; i >= 0; i--) {
+          const rect = items[i].getBoundingClientRect()
+          const midY = rect.top + rect.height / 2
+          if (clientY < midY) {
+            targetIdx = i
+          } else {
+            break // 尚未越過該項目的中線，停止向上搜尋
+          }
+        }
+      }
+
+      if (currentDrag < items.length - 1 && targetIdx === currentDrag) {
+        // 向下檢查：只要手指越過下方項目的中線，就能連續向下跳換多格
+        for (let i = currentDrag + 1; i < items.length; i++) {
+          const rect = items[i].getBoundingClientRect()
+          const midY = rect.top + rect.height / 2
+          if (clientY > midY) {
+            targetIdx = i
+          } else {
+            break // 尚未越過該項目的中線，停止向下搜尋
+          }
+        }
+      }
+
+      if (targetIdx !== currentDrag) {
+        applyOrderChange(currentDrag, targetIdx)
+        sortDragIndex.value = targetIdx
+        sortOverIndex.value = targetIdx
+      }
+    })
   }
 
   const cleanup = (upEvt: PointerEvent) => {
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId)
+      rafId = null
+    }
     try {
-      handleEl.releasePointerCapture(upEvt.pointerId)
+      captureEl.releasePointerCapture(upEvt.pointerId)
     } catch (err) {}
 
-    handleEl.removeEventListener('pointermove', onPointerMove)
-    handleEl.removeEventListener('pointerup', cleanup)
-    handleEl.removeEventListener('pointercancel', cleanup)
+    // 💡 監聽在 window 上，即使手指快速滑出手柄區域也能 100% 捕獲釋放事件
+    window.removeEventListener('pointermove', onPointerMove)
+    window.removeEventListener('pointerup', cleanup)
+    window.removeEventListener('pointercancel', cleanup)
 
     if (sortDragIndex.value !== null) {
-      triggerSaveDebounced()
+      // 💡 手指放開時，一次性保存並同步至全域 Store
+      saveCurrentNightOrder()
     }
 
     sortDragIndex.value = null
     sortOverIndex.value = null
   }
 
-  handleEl.addEventListener('pointermove', onPointerMove)
-  handleEl.addEventListener('pointerup', cleanup)
-  handleEl.addEventListener('pointercancel', cleanup)
+  window.addEventListener('pointermove', onPointerMove, { passive: false })
+  window.addEventListener('pointerup', cleanup)
+  window.addEventListener('pointercancel', cleanup)
 }
 
 async function resetNightOrder() {
@@ -346,6 +438,7 @@ async function resetNightOrder() {
     else delete gameStore.script.custom_other_night_order
   }
   await gameStore.resetScriptCustomNightOrder(activeTab.value)
+  localOrderList.value = [...editOrderList.value]
 }
 
 // 恢復捲動位置與註冊按鍵事件
@@ -377,28 +470,6 @@ function handleScroll(e: Event) {
   const target = e.target as HTMLElement
   uiStore.setNightOrderScroll(target.scrollTop)
 }
-
-/**
- * 系統預設流程 (首夜專用)
- */
-const SYSTEM_ACTIONS: any[] = [
-  {
-    id: 'sys_minion_info',
-    name: '爪牙信息',
-    role_type: 'Minion',
-    first_night_reminder: '爪牙彼此相認，並得知惡魔是誰。',
-    night_order_first: 10,
-    is_system: true
-  },
-  {
-    id: 'sys_demon_info',
-    name: '惡魔信息',
-    role_type: 'Demon',
-    first_night_reminder: '惡魔得知爪牙是誰，並獲得三個不在場的角色作為偽裝。',
-    night_order_first: 11,
-    is_system: true
-  }
-]
 
 const currentOrder = computed(() => {
   const isFirst = activeTab.value === 'first'
@@ -867,9 +938,21 @@ function cancelLongPress() {
 }
 
 .order-item-editing.is-dragging {
-  opacity: 0.5;
-  background: rgba(201, 168, 76, 0.2);
+  opacity: 0.6;
+  background: rgba(201, 168, 76, 0.25);
   border: 1px dashed var(--color-gold);
+}
+
+/* 拖拽進行中的清單手勢鎖定，杜絕 Android WebView 觸發原生捲動並派發 pointercancel */
+.order-list.is-sorting {
+  touch-action: none !important;
+  user-select: none !important;
+  overscroll-behavior: contain;
+}
+
+.order-list.is-sorting .order-item-editing {
+  touch-action: none !important;
+  user-select: none !important;
 }
 
 .order-item-editing.is-over {
