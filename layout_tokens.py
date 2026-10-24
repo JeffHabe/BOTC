@@ -187,23 +187,47 @@ def main():
         except Exception:
             printed_tokens = set()
 
-    # 清理舊的 png 檔案
+    # 檢查是否有上一次產生的 A4_Page_New_*.png 增量圖檔，並計算接續起始頁碼
+    start_page_num = 1
+    existing_new_pages = sorted([
+        f for f in os.listdir(output_dir) 
+        if f.lower().startswith("a4_page_new_") and f.lower().endswith(".png")
+    ])
     if args.new_only:
-        # 只清理舊的 A4_Page_New 增量圖檔，保留正式全量 A4_Page 檔案
-        for file in os.listdir(output_dir):
-            if file.lower().startswith("a4_page_new_") and file.lower().endswith(".png"):
-                try:
-                    os.remove(os.path.join(output_dir, file))
-                except Exception:
-                    pass
-    elif not args.roles and not args.team:
-        # 全量排版時清空舊的 PNG 檔案與紀錄
+        existing_indices = []
+        for f in existing_new_pages:
+            base_name = os.path.splitext(f)[0]
+            if base_name.startswith("A4_Page_New_"):
+                suffix = base_name.replace("A4_Page_New_", "")
+                if suffix.endswith("_Back"):
+                    suffix = suffix[:-5]
+                if suffix.isdigit():
+                    existing_indices.append(int(suffix))
+        
+        if existing_indices:
+            max_idx = max(existing_indices)
+            start_page_num = max_idx + 1
+            print(f"Found {len(existing_new_pages)} existing incremental page files (up to page {max_idx}).")
+            print(f"Preserving existing files. New incremental page(s) will continue from page {start_page_num}.")
+        else:
+            print("No previous 'A4_Page_New' files found in output directory. Starting from page 1.")
+    else:
+        if existing_new_pages:
+            print(f"Found {len(existing_new_pages)} previous incremental page(s): {', '.join(existing_new_pages)}")
+
+    # 清理舊的 png 檔案（僅在全量重排時清空）
+    if not args.new_only and not args.roles and not args.team:
+        # 全量排版模式：清空所有舊的 PNG 檔案與紀錄
+        removed_count = 0
         for file in os.listdir(output_dir):
             if file.lower().endswith(".png"):
                 try:
                     os.remove(os.path.join(output_dir, file))
+                    removed_count += 1
                 except Exception:
                     pass
+        if removed_count > 0:
+            print(f"Cleaned up {removed_count} old PNG page(s) in {output_dir} for full re-compilation.")
         printed_tokens = set()
     
     # 獲取所有令片 PNG 圖片
@@ -334,7 +358,8 @@ def main():
         
         # 保存為高品質 PNG 格式
         page_prefix = "A4_Page_New_" if args.new_only else "A4_Page_"
-        output_filename = f"{page_prefix}{page_idx + 1}.png"
+        current_page_num = (start_page_num + page_idx) if args.new_only else (page_idx + 1)
+        output_filename = f"{page_prefix}{current_page_num}.png"
         output_path = os.path.join(output_dir, output_filename)
         
         # 轉為 RGB 格式保存為 PNG，節約硬碟容量
@@ -342,7 +367,7 @@ def main():
         rgb_page.save(output_path, "PNG", dpi=(DPI, DPI))
         
         # 保存背面圖檔
-        output_back_filename = f"{page_prefix}{page_idx + 1}_Back.png"
+        output_back_filename = f"{page_prefix}{current_page_num}_Back.png"
         output_back_path = os.path.join(output_dir, output_back_filename)
         rgb_back_page = page_back_img.convert("RGB")
         rgb_back_page.save(output_back_path, "PNG", dpi=(DPI, DPI))

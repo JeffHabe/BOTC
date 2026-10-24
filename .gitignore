@@ -2,6 +2,7 @@
 node_modules/
 dist/
 dist-ssr/
+public/pic/temp_roles/
 *.local
 npm-debug.log*
 yarn-debug.log*
@@ -43,4 +44,4 @@ guide/player_guide.docx
 
 # Sub-projects
 license_app/
-
+dist/

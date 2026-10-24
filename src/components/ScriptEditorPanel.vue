@@ -799,7 +799,7 @@ async function handleJsonFileChange(e: Event) {
             otherNight: (item && typeof item === 'object' && item.otherNight) ? Math.floor(Number(item.otherNight)) : undefined,
             reminders: (item && typeof item === 'object' && Array.isArray(item.reminders)) ? item.reminders.map((r: string) => simplifyToTraditional(r)) : [],
             setup: (item && typeof item === 'object' && item.setup) || false,
-            image: (item && typeof item === 'object' && item.image) ? item.image.replace(/\\/g, '') : null,
+            image: (item && typeof item === 'object' && item.image) ? (Array.isArray(item.image) ? (item.image[0] ? String(item.image[0]).replace(/\\/g, '') : null) : String(item.image).replace(/\\/g, '')) : null,
             firstNightReminder: (item && typeof item === 'object' && item.firstNightReminder) ? simplifyToTraditional(item.firstNightReminder) : undefined,
             otherNightReminder: (item && typeof item === 'object' && item.otherNightReminder) ? simplifyToTraditional(item.otherNightReminder) : undefined,
             conflicts: [],

@@ -120,3 +120,14 @@ py layout_tokens.py --roles 廚師,投毒者
 
 1. **圖片快取**：下載的角色頭像會快取在 `public/pic/temp_roles` 資料夾中。日後重新執行步驟一時，將免去重複下載時間，實現秒級生成。若想重新下載所有頭像，只需刪除此快取資料夾即可。
 2. **自動清空機制**：兩個腳本在啟動時都會自動清空各自對應輸出目錄（`Token_png` 或 `Token_A4`）下的舊 PNG 圖檔，防止新舊規格的檔案混合。請確保您已備份了裡面有需要保留的自建圖片。
+
+### 如何微調列印方向（針對背面圖案與裁切線）
+
+如果您的實際列印成品發現背面圖案位置偏移，或希望調整裁剪線與令片邊緣的距離，請使用以下參數進行微調（單位皆為 mm）：
+
+調整需求	應調整的參數	設定方式	執行範例
+純粹把裁切圓圈線拉大	--offset	加 (+)	py layout_tokens.py --offset 6
+背面圖案偏左，要往右移	--back-offset-x	加 (+)	py layout_tokens.py --back-offset-x 1.0
+背面圖案偏右，要往左移	--back-offset-x	減 (-)	py layout_tokens.py --back-offset-x -1.0
+背面圖案偏上，要往下移	--back-offset-y	加 (+)	py layout_tokens.py --back-offset-y 1.0
+背面圖案偏下，要往上移	--back-offset-y	減 (-)	py layout_tokens.py --back-offset-y -1.0

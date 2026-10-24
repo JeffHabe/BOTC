@@ -44,7 +44,7 @@ function parseRawArray(raw: any[], id: string, defaultName: string): Script {
       reminders: r.reminders || [],
       remindersGlobal: r.remindersGlobal || [],
       setup: r.setup || false,
-      image: r.image ? r.image.replace(/\\/g, '') : null,
+      image: r.image ? (Array.isArray(r.image) ? (r.image[0] ? String(r.image[0]).replace(/\\/g, '') : null) : String(r.image).replace(/\\/g, '')) : null,
       first_night_reminder: r.firstNightReminder || null,
       other_night_reminder: r.otherNightReminder || null,
       conflicts: r.conflicts || [],
