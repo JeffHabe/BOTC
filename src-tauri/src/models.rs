@@ -54,6 +54,47 @@ impl ReminderToken {
     }
 }
 
+fn deserialize_bool_flexible<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Visitor;
+    struct BoolVisitor;
+
+    impl<'de> Visitor<'de> for BoolVisitor {
+        type Value = bool;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("a boolean or an integer 0/1 or string true/false")
+        }
+
+        fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E> {
+            Ok(v)
+        }
+
+        fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E> {
+            Ok(v != 0)
+        }
+
+        fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E> {
+            Ok(v != 0)
+        }
+
+        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        where
+            E: serde::de::Error,
+        {
+            match v.to_lowercase().as_str() {
+                "true" | "1" => Ok(true),
+                "false" | "0" | "" => Ok(false),
+                _ => Err(E::custom(format!("invalid boolean string: {}", v))),
+            }
+        }
+    }
+
+    deserializer.deserialize_any(BoolVisitor)
+}
+
 // ─── 角色定義（腳本中的角色資料）────────────────────────────
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CharacterDef {
@@ -65,9 +106,11 @@ pub struct CharacterDef {
     pub flavor: Option<String>,         // 風味文字
     pub night_order_first: Option<f64>, // 首夜順序（None = 不行動，用f64兼容小數值如3.3）
     pub night_order_other: Option<f64>, // 其他夜順序
+    #[serde(default)]
     pub reminders: Vec<String>,         // 提供的提醒令牌文字
     #[serde(rename = "remindersGlobal", default)]
     pub reminders_global: Vec<String>,
+    #[serde(default, deserialize_with = "deserialize_bool_flexible")]
     pub setup: bool,                    // 是否在準備階段使用
     pub image: Option<String>,          // 圖片路徑或 URL
     pub first_night_reminder: Option<String>,
@@ -285,5 +328,33 @@ impl GameState {
 
     pub fn touch(&mut self) {
         self.updated_at = chrono::Utc::now().to_rfc3339();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_character_def_setup_deserialization() {
+        // 測試布林值 true
+        let json1 = r#"{"id":"test1","name":"測試1","name_en":"Test1","role_type":"townsfolk","ability":"","setup":true}"#;
+        let c1: CharacterDef = serde_json::from_str(json1).unwrap();
+        assert!(c1.setup);
+
+        // 測試整數 1 (治安官歷史相容性)
+        let json2 = r#"{"id":"test2","name":"測試2","name_en":"Test2","role_type":"townsfolk","ability":"","setup":1}"#;
+        let c2: CharacterDef = serde_json::from_str(json2).unwrap();
+        assert!(c2.setup);
+
+        // 測試整數 0
+        let json3 = r#"{"id":"test3","name":"測試3","name_en":"Test3","role_type":"townsfolk","ability":"","setup":0}"#;
+        let c3: CharacterDef = serde_json::from_str(json3).unwrap();
+        assert!(!c3.setup);
+
+        // 測試未傳 setup (default false)
+        let json4 = r#"{"id":"test4","name":"測試4","name_en":"Test4","role_type":"townsfolk","ability":""}"#;
+        let c4: CharacterDef = serde_json::from_str(json4).unwrap();
+        assert!(!c4.setup);
     }
 }

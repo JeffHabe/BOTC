@@ -1,0 +1,38 @@
+# ─── BOTC 雙容器全容器化部署設定 ────────────────────────────────
+# 一鍵啟動指令: docker compose up -d --build
+# 包含兩個容器:
+#   1. server: Rust Axum 遊戲後端 (監聽 3030，僅在 Docker 內部網路開放)
+#   2. nginx : Nginx 反向代理 (監聽 80，對外入口，託管前端 dist 與代理 API/WS)
+
+services:
+  # ─── 1. Rust 遊戲伺服器 ─────────────────────────────────────────
+  server:
+    container_name: botc-server
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.server
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=info
+    networks:
+      - botc-net
+
+  # ─── 2. Nginx 反向代理與 Web 託管 ──────────────────────────────
+  nginx:
+    container_name: botc-nginx
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./dist:/usr/share/nginx/html:ro
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - server
+    networks:
+      - botc-net
+
+# ─── 專屬隔離虛擬網路 ──────────────────────────────────────────
+networks:
+  botc-net:
+    driver: bridge

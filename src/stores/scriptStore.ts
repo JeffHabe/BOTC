@@ -8,9 +8,7 @@ import { useUIStore } from './uiStore'
 import allCharacterRaw from '../../src-tauri/data/all_character_sort.json'
 import { simplifyToTraditional, normalizeName } from '../utils/chineseConverter'
 
-import { BaseDirectory, exists, readTextFile, writeTextFile, mkdir } from '@tauri-apps/plugin-fs'
-import { convertFileSrc } from '@tauri-apps/api/core'
-import { appDataDir } from '@tauri-apps/api/path'
+import { isTauri, existsAppData, readAppData, writeAppData } from '../utils/platformAdapter'
 
 function parseRawArray(raw: any[], id: string, defaultName: string): Script {
   const meta = raw.find((r: any) => r.id === '_meta') || {}
@@ -43,7 +41,7 @@ function parseRawArray(raw: any[], id: string, defaultName: string): Script {
       night_order_other: r.otherNight ? Math.floor(r.otherNight) : null,
       reminders: r.reminders || [],
       remindersGlobal: r.remindersGlobal || [],
-      setup: r.setup || false,
+      setup: Boolean(r.setup),
       image: r.image ? (Array.isArray(r.image) ? (r.image[0] ? String(r.image[0]).replace(/\\/g, '') : null) : String(r.image).replace(/\\/g, '')) : null,
       first_night_reminder: r.firstNightReminder || null,
       other_night_reminder: r.otherNightReminder || null,
@@ -165,7 +163,9 @@ export const useScriptStore = defineStore('script', () => {
   const appDataDirPath = ref('')
 
   async function initAppDataPath() {
+    if (!isTauri()) return
     try {
+      const { appDataDir } = await import('@tauri-apps/api/path')
       const path = await appDataDir()
       appDataDirPath.value = path.replace(/\\/g, '/')
     } catch (e) {
@@ -181,7 +181,7 @@ export const useScriptStore = defineStore('script', () => {
       return path
     }
     const cleanPath = path.replace(/\\/g, '/')
-    if (!appDataDirPath.value) {
+    if (!isTauri() || !appDataDirPath.value) {
       return cleanPath
     }
     let fullPath = `${appDataDirPath.value}/${cleanPath}`
@@ -189,7 +189,13 @@ export const useScriptStore = defineStore('script', () => {
     if (isWindows) {
       fullPath = fullPath.replace(/\//g, '\\')
     }
-    return convertFileSrc(fullPath)
+    try {
+      // 在 Tauri 運行時 window.__TAURI_INTERNALS__ 注入 convertFileSrc
+      const convert = (window as any).__TAURI_INTERNALS__?.convertFileSrc || ((p: string) => `asset://${p}`)
+      return convert(fullPath)
+    } catch (_) {
+      return cleanPath
+    }
   }
 
   async function createCustomScript(
@@ -311,13 +317,12 @@ export const useScriptStore = defineStore('script', () => {
       // 載入類別
       loadCategories()
       // 1. 載入核心角色大全
-      const dbExists = await exists('all_character_sort.json', { baseDir: BaseDirectory.AppData })
+      const dbExists = await existsAppData('all_character_sort.json')
       if (!dbExists) {
-        await mkdir('', { baseDir: BaseDirectory.AppData, recursive: true })
-        await writeTextFile('all_character_sort.json', JSON.stringify(allCharacterRaw, null, 2), { baseDir: BaseDirectory.AppData })
+        await writeAppData('all_character_sort.json', JSON.stringify(allCharacterRaw, null, 2))
         rawCharacterList.value = [...allCharacterRaw]
       } else {
-        const content = await readTextFile('all_character_sort.json', { baseDir: BaseDirectory.AppData })
+        const content = await readAppData('all_character_sort.json')
         const localList = JSON.parse(content) as any[]
 
         // 建立新封裝官方角色的 Map，方便快速查找
@@ -351,27 +356,30 @@ export const useScriptStore = defineStore('script', () => {
           if (Array.isArray(copy.reminders)) {
             copy.reminders = copy.reminders.map((r: string) => simplifyToTraditional(r))
           }
+          if (copy.setup !== undefined) {
+            copy.setup = Boolean(copy.setup)
+          }
           return copy
         })
 
         // 將合併後的安全清單寫回本機
-        await writeTextFile('all_character_sort.json', JSON.stringify(cleanedMergedList, null, 2), { baseDir: BaseDirectory.AppData })
+        await writeAppData('all_character_sort.json', JSON.stringify(cleanedMergedList, null, 2))
         rawCharacterList.value = cleanedMergedList
       }
       masterScript.value = parseRawArray(rawCharacterList.value, 'all_character_sort', '全角色大全')
 
       // 2. 載入自定義劇本清單
-      const scriptsExists = await exists('custom_scripts.json', { baseDir: BaseDirectory.AppData })
+      const scriptsExists = await existsAppData('custom_scripts.json')
       if (scriptsExists) {
-        const content = await readTextFile('custom_scripts.json', { baseDir: BaseDirectory.AppData })
+        const content = await readAppData('custom_scripts.json')
         customScripts.value = JSON.parse(content)
       }
 
       // 3. 載入獨立輕量自定義夜晚順序（與巨型劇本檔案解耦，實現秒級持久化）
       try {
-        const nightOrdersExists = await exists('custom_night_orders.json', { baseDir: BaseDirectory.AppData })
+        const nightOrdersExists = await existsAppData('custom_night_orders.json')
         if (nightOrdersExists) {
-          const noContent = await readTextFile('custom_night_orders.json', { baseDir: BaseDirectory.AppData })
+          const noContent = await readAppData('custom_night_orders.json')
           const savedNightOrders = JSON.parse(noContent) as Record<string, { first?: string[]; other?: string[] }>
           if (savedNightOrders) {
             Object.entries(savedNightOrders).forEach(([scId, orders]) => {
@@ -398,7 +406,7 @@ export const useScriptStore = defineStore('script', () => {
 
   async function saveCustomScripts() {
     try {
-      await writeTextFile('custom_scripts.json', JSON.stringify(customScripts.value, null, 2), { baseDir: BaseDirectory.AppData })
+      await writeAppData('custom_scripts.json', JSON.stringify(customScripts.value, null, 2))
     } catch (e) {
       console.warn('儲存自定義劇本失敗:', e)
     }
@@ -472,7 +480,7 @@ export const useScriptStore = defineStore('script', () => {
     })
 
     try {
-      await writeTextFile('all_character_sort.json', JSON.stringify(processedList, null, 2), { baseDir: BaseDirectory.AppData })
+      await writeAppData('all_character_sort.json', JSON.stringify(processedList, null, 2))
     } catch (e) {
       console.warn('Failed to save characters to filesystem', e)
     }
@@ -487,7 +495,7 @@ export const useScriptStore = defineStore('script', () => {
 
   async function resetToDefault() {
     try {
-      await writeTextFile('all_character_sort.json', JSON.stringify(allCharacterRaw, null, 2), { baseDir: BaseDirectory.AppData })
+      await writeAppData('all_character_sort.json', JSON.stringify(allCharacterRaw, null, 2))
       rawCharacterList.value = [...allCharacterRaw]
       masterScript.value = parseRawArray(rawCharacterList.value, 'all_character_sort', '全角色大全')
 
@@ -681,7 +689,7 @@ export const useScriptStore = defineStore('script', () => {
       const newRaw = [...meta, ...ordered]
       rawCharacterList.value = newRaw
       try {
-        await writeTextFile('all_character_sort.json', JSON.stringify(newRaw, null, 2), { baseDir: BaseDirectory.AppData })
+        await writeAppData('all_character_sort.json', JSON.stringify(newRaw, null, 2))
       } catch (e) {
         console.warn('儲存角色順序失敗', e)
       }
@@ -718,9 +726,9 @@ export const useScriptStore = defineStore('script', () => {
     // 💡 輕量化儲存：僅寫入獨立的小檔 custom_night_orders.json，避免在每次微調順序時重複序列化 40MB 劇本包
     try {
       let ordersMap: Record<string, { first?: string[]; other?: string[] }> = {}
-      const nightOrdersExists = await exists('custom_night_orders.json', { baseDir: BaseDirectory.AppData })
+      const nightOrdersExists = await existsAppData('custom_night_orders.json')
       if (nightOrdersExists) {
-        const noContent = await readTextFile('custom_night_orders.json', { baseDir: BaseDirectory.AppData })
+        const noContent = await readAppData('custom_night_orders.json')
         ordersMap = JSON.parse(noContent) || {}
       }
       if (!ordersMap[scriptId]) {
@@ -731,7 +739,7 @@ export const useScriptStore = defineStore('script', () => {
       } else {
         ordersMap[scriptId].other = [...orderedCharIds]
       }
-      await writeTextFile('custom_night_orders.json', JSON.stringify(ordersMap, null, 2), { baseDir: BaseDirectory.AppData })
+      await writeAppData('custom_night_orders.json', JSON.stringify(ordersMap, null, 2))
     } catch (e) {
       console.warn('儲存獨立自定義夜晚順序失敗:', e)
     }
@@ -760,9 +768,9 @@ export const useScriptStore = defineStore('script', () => {
 
     // 💡 從獨立小檔中移除對應項
     try {
-      const nightOrdersExists = await exists('custom_night_orders.json', { baseDir: BaseDirectory.AppData })
+      const nightOrdersExists = await existsAppData('custom_night_orders.json')
       if (nightOrdersExists) {
-        const noContent = await readTextFile('custom_night_orders.json', { baseDir: BaseDirectory.AppData })
+        const noContent = await readAppData('custom_night_orders.json')
         const ordersMap = JSON.parse(noContent) || {}
         if (ordersMap[scriptId]) {
           if (tab === 'first') delete ordersMap[scriptId].first
@@ -770,7 +778,7 @@ export const useScriptStore = defineStore('script', () => {
           if (!ordersMap[scriptId].first && !ordersMap[scriptId].other) {
             delete ordersMap[scriptId]
           }
-          await writeTextFile('custom_night_orders.json', JSON.stringify(ordersMap, null, 2), { baseDir: BaseDirectory.AppData })
+          await writeAppData('custom_night_orders.json', JSON.stringify(ordersMap, null, 2))
         }
       }
     } catch (e) {

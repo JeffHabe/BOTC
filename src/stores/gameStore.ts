@@ -1,7 +1,7 @@
 // 血染鐘樓助手 Pinia 遊戲狀態 Store
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import { invoke } from '@tauri-apps/api/core'
+import { safeInvoke } from '../utils/platformAdapter'
 import type { GameState, CharacterDef, Script, GamePhase } from '../types'
 import { logger } from '../utils/logger'
 import { aliveCount, deadCount, executionThreshold } from '../types'
@@ -131,7 +131,7 @@ export const useGameStore = defineStore('game', () => {
     error.value = null
     logger.debug(`呼叫 Tauri 指令 [${cmd}], 參數:`, args)
     try {
-      const result = await invoke<T>(cmd, args)
+      const result = await safeInvoke<T>(cmd, args)
       return result
     } catch (e) {
       error.value = String(e)
@@ -261,16 +261,26 @@ export const useGameStore = defineStore('game', () => {
   }
 
   async function setScript(script: Script) {
-    // 兼容性處理：前端可能發送角色類型，Rust 後端要求全小寫
-    const compatScript = JSON.parse(JSON.stringify(script)) as Script
-    compatScript.characters.forEach(c => {
-      c.role_type = c.role_type.toLowerCase() as any
-    })
+    try {
+      // 兼容性處理：前端可能發送角色類型，Rust 後端要求全小寫
+      const compatScript = JSON.parse(JSON.stringify(script)) as Script
+      compatScript.characters.forEach(c => {
+        c.role_type = (c.role_type || 'townsfolk').toLowerCase() as any
+        c.setup = Boolean(c.setup)
+      })
 
-    historicalRoleIds.value.clear()
+      historicalRoleIds.value.clear()
 
-    const gs = await callCommand<GameState>('set_script', { script: compatScript })
-    await syncState(gs)
+      const gs = await callCommand<GameState>('set_script', { script: compatScript })
+      await syncState(gs)
+    } catch (e) {
+      console.error('setScript 失敗:', e)
+      // 若後端拋錯，前端仍將本地 script 切換以維持 UI 正常顯示，避免畫面僵死
+      if (state.value) {
+        state.value.script = script
+      }
+      throw e
+    }
   }
 
   // 玩家管理

@@ -1,10 +1,9 @@
-import { invoke } from '@tauri-apps/api/core';
+import { isTauri, safeInvoke } from './platformAdapter';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 // 判斷是否為 Vite 開發環境
-const isDev = import.meta.env.DEV;
-const isTauri = typeof window !== 'undefined' && !!(window as any).__TAURI__;
+const isDev = import.meta.env?.DEV ?? false;
 
 class Logger {
   private log(level: LogLevel, message: string, ...optionalParams: any[]) {
@@ -26,7 +25,7 @@ class Logger {
 
     // 2. 實體日誌檔案寫入 (跨平台 Tauri 支援，含 Android)
     // 💡 生產環境過濾 debug 級別，避免頻繁喚醒快閃記憶體 I/O 導致發熱耗電
-    if (isTauri && (isDev || level !== 'debug')) {
+    if (isTauri() && (isDev || level !== 'debug')) {
       let paramStr = '';
       if (optionalParams.length > 0) {
         try {
@@ -41,7 +40,7 @@ class Logger {
         }
       }
 
-      invoke('write_log_file', { level, message: message + paramStr }).catch(err => {
+      safeInvoke('write_log_file', { level, message: message + paramStr }).catch(err => {
         console.error('寫入實體日誌檔案失敗:', err);
       });
     }

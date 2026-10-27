@@ -1,0 +1,51 @@
+# ─── 階段 1：編譯建置環境 (Builder) ─────────────────────────────
+FROM rust:1.85-slim AS builder
+
+WORKDIR /app
+
+# 安裝基本編譯相依套件
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 複製共用模組與伺服器原始碼
+COPY shared ./shared
+COPY server ./server
+
+# 建立專為後端編譯的 workspace Cargo.toml (排除 src-tauri 以保持極致輕量與快速編譯)
+RUN printf '[workspace]\nresolver = "2"\nmembers = ["server", "shared"]\n' > Cargo.toml
+
+# 進行 Release 最佳化編譯
+WORKDIR /app/server
+RUN cargo build --release
+
+# ─── 階段 2：輕量運行環境 (Runner) ───────────────────────────────
+FROM debian:bookworm-slim AS runner
+
+WORKDIR /app
+
+# 安裝基本執行時期必要相依 (CA 憑證與 OpenSSL 運行時)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libssl3 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 從編譯階段複製最終二進位執行檔
+COPY --from=builder /app/target/release/server /app/botc-server
+
+# 建立非 root 安全帳號執行程序
+RUN useradd -m -u 1000 -U botc && chown -R botc:botc /app
+USER botc
+
+# 暴露內部連接埠與設定日誌
+EXPOSE 3030
+ENV RUST_LOG=info
+
+# 健康檢查指示器
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -f http://127.0.0.1:3030/ || exit 1
+
+# 啟動伺服器
+CMD ["/app/botc-server"]

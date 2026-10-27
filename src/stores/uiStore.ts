@@ -4,7 +4,7 @@ import { ref, watch, computed } from 'vue'
 import type { Player } from '../types'
 import { playClocktowerBell, stopClocktowerBell, unlockAudio, playCustomSound, stopCustomSound } from '../utils/audio'
 import { saveSound, getAllSoundsMeta, getSoundData, deleteSound } from '../utils/soundDb'
-import { invoke } from '@tauri-apps/api/core'
+import { isTauri, safeInvoke } from '../utils/platformAdapter'
 
 export type Panel =
   | 'none'
@@ -51,20 +51,28 @@ export const useUIStore = defineStore('ui', () => {
 
   async function updateLicenseStatusFromBackend() {
     try {
-      const res = await invoke<any>('check_license')
-      if (res.status === 'Valid') {
+      if (!isTauri()) {
+        licenseRemainingDays.value = 999
+        licenseExpiryDate.value = 'Web版模式'
+        licenseDeviceId.value = 'web-client'
+        licenseIsActivated.value = true
+        licenseStatus.value = 'Valid'
+        return
+      }
+      const res = await safeInvoke<any>('check_license')
+      if (res && res.status === 'Valid') {
         licenseRemainingDays.value = res.data.remaining_days
         licenseExpiryDate.value = res.data.expiry_date
         licenseDeviceId.value = res.data.device_id
         licenseIsActivated.value = res.data.is_activated
         licenseStatus.value = 'Valid'
-      } else if (res.status === 'Expired') {
+      } else if (res && res.status === 'Expired') {
         licenseRemainingDays.value = -1
         licenseExpiryDate.value = res.data.expiry_date
         licenseDeviceId.value = res.data.device_id
         licenseIsActivated.value = res.data.is_activated
         licenseStatus.value = 'Expired'
-      } else if (res.status === 'TimeTampered') {
+      } else if (res && res.status === 'TimeTampered') {
         licenseRemainingDays.value = -1
         licenseDeviceId.value = res.data.device_id
         licenseExpiryDate.value = '時間異常'
@@ -605,7 +613,7 @@ export const useUIStore = defineStore('ui', () => {
 
       // 針對 Android 背景優化：在後端啟動計時通知
       if (isTimerNotificationEnabled.value) {
-        invoke('start_background_timer', { seconds: timerRemaining.value })
+        safeInvoke('start_background_timer', { seconds: timerRemaining.value })
       }
 
       // 核心改進：記錄結束的時間點，防止鎖屏暫停

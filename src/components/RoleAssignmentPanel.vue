@@ -50,7 +50,7 @@
             <div class="preset-manager">
               <div class="preset-label">劇本：</div>
               <div class="preset-controls">
-                <div class="searchable-select-container" @focusout="closeDropdown">
+                <div class="searchable-select-container" ref="selectContainerRef">
                   <div class="select-trigger">
                     <input
                       type="text"
@@ -74,8 +74,7 @@
                           :key="'script::'+s.id" 
                           class="dropdown-option"
                           :class="{ 'is-active': selectedCombinedId === 'script::'+s.id }"
-                          @pointerdown.prevent="selectOption('script::'+s.id)"
-                          @mousedown="selectOption('script::'+s.id)"
+                          @click="selectOption('script::'+s.id)"
                         >
                           {{ s.id === 'all_character_sort' ? '全角色大全 (所有角色)' : s.name }}
                         </div>
@@ -88,8 +87,7 @@
                           :key="'preset::'+p.id" 
                           class="dropdown-option"
                           :class="{ 'is-active': selectedCombinedId === 'preset::'+p.id }"
-                          @pointerdown.prevent="selectOption('preset::'+p.id)"
-                          @mousedown="selectOption('preset::'+p.id)"
+                          @click="selectOption('preset::'+p.id)"
                         >
                           {{ p.name }}
                         </div>
@@ -773,10 +771,12 @@ const scriptStore = useScriptStore()
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
+  document.addEventListener('pointerdown', handleDocumentClick)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('pointerdown', handleDocumentClick)
 })
 
 function handleKeydown(e: KeyboardEvent) {
@@ -858,29 +858,8 @@ const selectedCombinedId = computed({
     return ''
   },
   set(val: string) {
-    if (!val) return;
-    const [type, id] = val.split('::')
-    
-    if (type === 'preset') {
-      const preset = poolPresets.value.find(p => p.id === id)
-      if (preset) {
-        // 切換到該 preset 的基礎劇本
-        const baseScript = scriptStore.allScripts.find(s => s.id === preset.script_id)
-        if (baseScript && gameStore.script?.id !== baseScript.id) {
-          scriptStore.selectScript(baseScript)
-        }
-        applyPreset(preset)
-        activePresetId.value = id
-      }
-    } else if (type === 'script') {
-      const script = scriptStore.allScripts.find(s => s.id === id)
-      if (script) {
-        scriptStore.selectScript(script)
-        // 清除 preset 狀態
-        activePresetId.value = ''
-        uiStore.activePoolPresetName = ''
-        excludedPoolIds.value = [] // 載入新劇本時預設不排除任何角色
-      }
+    if (val) {
+      selectOption(val)
     }
   }
 })
@@ -888,32 +867,64 @@ const selectedCombinedId = computed({
 const scriptSearchQuery = ref('')
 const isDropdownOpen = ref(false)
 const searchInputRef = ref<HTMLInputElement | null>(null)
+const selectContainerRef = ref<HTMLElement | null>(null)
 
 function openDropdown() {
   isDropdownOpen.value = true
 }
 
-function closeDropdown() {
-  // 延遲關閉，防止 mousedown 來不及觸發就被關閉
-  setTimeout(() => {
+function handleDocumentClick(e: PointerEvent) {
+  if (!isDropdownOpen.value) return
+  const target = e.target as Node | null
+  if (selectContainerRef.value && target && !selectContainerRef.value.contains(target)) {
     isDropdownOpen.value = false
     scriptSearchQuery.value = ''
-  }, 200)
+  }
 }
 
 function toggleDropdown() {
   if (isDropdownOpen.value) {
     searchInputRef.value?.blur()
+    isDropdownOpen.value = false
+    scriptSearchQuery.value = ''
   } else {
-    searchInputRef.value?.focus()
+    isDropdownOpen.value = true
   }
 }
 
-function selectOption(combinedId: string) {
-  selectedCombinedId.value = combinedId
+async function selectOption(combinedId: string) {
   scriptSearchQuery.value = ''
   isDropdownOpen.value = false
   searchInputRef.value?.blur()
+
+  if (!combinedId) return
+  const [type, id] = combinedId.split('::')
+
+  if (type === 'preset') {
+    const preset = poolPresets.value.find(p => p.id === id)
+    if (preset) {
+      const baseScript = scriptStore.allScripts.find(s => s.id === preset.script_id)
+      if (baseScript && gameStore.script?.id !== baseScript.id) {
+        await scriptStore.selectScript(baseScript)
+      }
+      applyPreset(preset)
+      activePresetId.value = id
+    }
+  } else if (type === 'script') {
+    const script = scriptStore.allScripts.find(s => s.id === id)
+    if (script) {
+      try {
+        await scriptStore.selectScript(script)
+        activePresetId.value = ''
+        uiStore.activePoolPresetName = ''
+        excludedPoolIds.value = [] // 載入新劇本時預設不排除任何角色
+        selectedRoleIds.value = [] // 清空先前選中的角色
+      } catch (err: any) {
+        console.error('切換劇本失敗:', err)
+        uiStore.showAlert('切換劇本失敗', `無法載入劇本「${script.name}」：\n${err?.message || err}`)
+      }
+    }
+  }
 }
 
 const groupedScripts = computed(() => {
@@ -2925,12 +2936,42 @@ function scrollToGroup(typeKey: string) {
   border-radius: 8px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   z-index: 200;
-  max-height: 260px;
+  max-height: 280px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+  scrollbar-color: #c9a84c rgba(0, 0, 0, 0.4);
+}
+
+/* 劇本選單專屬加粗滾動條（寬度 18px，適配觸控螢幕手指拖曳） */
+.select-dropdown::-webkit-scrollbar {
+  width: 18px;
+}
+
+.select-dropdown::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.4);
+  border-left: 1px solid rgba(201, 168, 76, 0.25);
+  border-radius: 0 8px 8px 0;
+}
+
+.select-dropdown::-webkit-scrollbar-thumb {
+  background: #c9a84c;
+  border: 3px solid #15171e;
+  border-radius: 9px;
+  min-height: 42px;
+}
+
+.select-dropdown::-webkit-scrollbar-thumb:hover,
+.select-dropdown::-webkit-scrollbar-thumb:active {
+  background: #ffd875;
 }
 
 .dropdown-scroll {
   padding: 4px 0;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .dropdown-group-header {
@@ -2948,12 +2989,15 @@ function scrollToGroup(typeKey: string) {
 }
 
 .dropdown-option {
-  padding: 8px 16px;
-  font-size: 13px;
+  padding: 10px 16px;
+  font-size: 13.5px;
   color: #e0e0e0;
   cursor: pointer;
   text-align: left;
   transition: background 0.15s, color 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: rgba(201, 168, 76, 0.2);
 }
 
 .dropdown-option:hover {

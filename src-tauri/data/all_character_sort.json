@@ -4009,7 +4009,7 @@
     "firstNight": 14,
     "otherNight": 14,
     "reminders": [],
-    "setup": 1,
+    "setup": true,
     "image": "https://botchomebrew.wiki/assets/art/constable.png",
     "firstNightReminder": "得知外來者或爪牙",
     "otherNightReminder": "若死亡得知外來者或爪牙",
