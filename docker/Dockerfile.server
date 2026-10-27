@@ -1,5 +1,5 @@
 # ─── 階段 1：編譯建置環境 (Builder) ─────────────────────────────
-FROM rust:1.85-slim AS builder
+FROM rust:slim AS builder
 
 WORKDIR /app
 

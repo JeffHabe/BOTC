@@ -60,8 +60,15 @@ async fn main() {
     // 3. 建立並配置 HTTP / WebSocket 路由樹
     let app = create_app(state);
 
-    // 4. 綁定監聽連接埠 (預設本機 127.0.0.1:3030，容器環境下轉發)
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3030));
+    // 4. 綁定監聽連接埠 (預設 0.0.0.0:3030，支援容器網路與環境變數動態覆寫)
+    let host = std::env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
+    let port: u16 = std::env::var("PORT")
+        .ok()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or(3030);
+    let addr: SocketAddr = format!("{}:{}", host, port)
+        .parse()
+        .unwrap_or_else(|_| SocketAddr::from(([0, 0, 0, 0], 3030)));
     info!("BOTC 遊戲伺服器已啟動，監聽 http://{}", addr);
 
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
