@@ -532,5 +532,73 @@ mod tests {
         assert_eq!(query_a["players"].as_array().unwrap().len(), 1);
         assert_eq!(query_a["players"][0]["name"], "手機A玩家");
     }
+
+    #[tokio::test]
+    async fn test_voting_toggle_and_execution() {
+        let mut gs = game::GameState::default();
+        let _ = game::execute_action(&mut gs, "set_player_count", serde_json::json!({ "count": 4 })).unwrap();
+        let p1_id = gs.players[0].id.clone();
+        let p2_id = gs.players[1].id.clone();
+        let p3_id = gs.players[2].id.clone();
+
+        // p3 設為死亡玩家 (擁有幽靈票)
+        let _ = game::execute_action(&mut gs, "kill_player", serde_json::json!({ "playerId": p3_id })).unwrap();
+        assert!(!gs.players[2].is_alive);
+        assert!(gs.players[2].has_ghost_vote);
+
+        // p1 提名 p2 (存活 3 人 -> 門檻 2 票)
+        let _ = game::execute_action(
+            &mut gs,
+            "nominate",
+            serde_json::json!({ "nominatorId": p1_id, "nomineeId": p2_id }),
+        )
+        .unwrap();
+        assert!(!gs.players[0].can_nominate);
+        assert!(gs.players[1].is_nominated);
+
+        // 1. 測試前端點擊 p1 投票 (不傳 in_favor，應切換為已投票)
+        let _ = game::execute_action(
+            &mut gs,
+            "vote",
+            serde_json::json!({ "nominationIndex": 0, "voterId": p1_id }),
+        )
+        .unwrap();
+        assert_eq!(gs.nominations[0].votes_for, vec![p1_id.clone()]);
+
+        // 2. 再次點擊 p1 取消投票
+        let _ = game::execute_action(
+            &mut gs,
+            "vote",
+            serde_json::json!({ "nominationIndex": 0, "voterId": p1_id }),
+        )
+        .unwrap();
+        assert!(gs.nominations[0].votes_for.is_empty());
+
+        // 3. p1 與死亡玩家 p3 投票 -> p3 扣除幽靈票且達門檻 2 票
+        let _ = game::execute_action(
+            &mut gs,
+            "vote",
+            serde_json::json!({ "nominationIndex": 0, "voterId": p1_id }),
+        )
+        .unwrap();
+        let _ = game::execute_action(
+            &mut gs,
+            "vote",
+            serde_json::json!({ "nominationIndex": 0, "voterId": p3_id }),
+        )
+        .unwrap();
+        assert!(!gs.players[2].has_ghost_vote);
+        assert_eq!(gs.nominations[0].votes_for.len(), 2);
+
+        // 4. 執行處決 p2 -> p2 死亡且掛上處決標記
+        let _ = game::execute_action(&mut gs, "execute", serde_json::json!({ "nominationIndex": 0 })).unwrap();
+        assert!(gs.nominations[0].executed);
+        assert!(!gs.players[1].is_alive);
+
+        // 5. 撤銷處決 p2 -> p2 復活
+        let _ = game::execute_action(&mut gs, "undo_execution", serde_json::json!({ "nominationIndex": 0 })).unwrap();
+        assert!(!gs.nominations[0].executed);
+        assert!(gs.players[1].is_alive);
+    }
 }
 

@@ -133,6 +133,12 @@ pub struct Player {
     pub is_nominated: bool,
     /// 今日白天是否還具備發起提名的資格
     pub can_nominate: bool,
+    /// 額外提名次數 (如報喪女妖技能)
+    #[serde(default)]
+    pub extra_nominations: u32,
+    /// 額外投票次數 (如報喪女妖技能)
+    #[serde(default)]
+    pub extra_votes: u32,
     /// 說書人私有便條筆記 (自訂備註)
     #[serde(default)]
     pub notes: String,
@@ -153,7 +159,20 @@ impl Player {
             reminders: Vec::new(),
             is_nominated: false,
             can_nominate: true,
+            extra_nominations: 0,
+            extra_votes: 0,
             notes: String::new(),
+        }
+    }
+}
+
+fn make_player_dead(p: &mut Player) {
+    p.is_alive = false;
+    if let Some(ref r) = p.role {
+        if r.id == "banshee" {
+            p.can_nominate = true;
+            p.extra_nominations = 1;
+            p.extra_votes = 1;
         }
     }
 }
@@ -509,7 +528,7 @@ pub fn execute_action(gs: &mut GameState, cmd: &str, args: Value) -> Result<Valu
         "kill_player" => {
             let player_id = args.get("player_id").or_else(|| args.get("playerId")).and_then(|v| v.as_str()).unwrap_or("");
             if let Some(p) = gs.players.iter_mut().find(|p| p.id == player_id) {
-                p.is_alive = false;
+                make_player_dead(p);
                 gs.touch();
             }
             serde_json::to_value(&*gs).map_err(|e| e.to_string())
@@ -522,6 +541,8 @@ pub fn execute_action(gs: &mut GameState, cmd: &str, args: Value) -> Result<Valu
             if let Some(p) = gs.players.iter_mut().find(|p| p.id == player_id) {
                 p.is_alive = true;
                 p.has_ghost_vote = true;
+                p.extra_nominations = 0;
+                p.extra_votes = 0;
                 gs.touch();
             }
             serde_json::to_value(&*gs).map_err(|e| e.to_string())
@@ -578,11 +599,20 @@ pub fn execute_action(gs: &mut GameState, cmd: &str, args: Value) -> Result<Valu
         // 參數: 無
         "advance_phase" => {
             match gs.phase {
-                GamePhase::Setup => gs.phase = GamePhase::FirstNight,
+                GamePhase::Setup => {
+                    gs.round = 1;
+                    gs.phase = GamePhase::FirstNight;
+                }
                 GamePhase::FirstNight => gs.phase = GamePhase::Day,
                 GamePhase::Day => {
                     gs.phase = GamePhase::Night;
                     gs.round += 1;
+                    for p in gs.players.iter_mut() {
+                        p.is_nominated = false;
+                        if p.is_alive {
+                            p.can_nominate = true;
+                        }
+                    }
                 }
                 GamePhase::Night => gs.phase = GamePhase::Day,
             }
@@ -652,7 +682,11 @@ pub fn execute_action(gs: &mut GameState, cmd: &str, args: Value) -> Result<Valu
                 extra_votes: 0,
             });
             if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominator_id) {
-                p.can_nominate = false;
+                if p.extra_nominations > 0 {
+                    p.extra_nominations -= 1;
+                } else {
+                    p.can_nominate = false;
+                }
             }
             if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominee_id) {
                 p.is_nominated = true;
@@ -661,31 +695,264 @@ pub fn execute_action(gs: &mut GameState, cmd: &str, args: Value) -> Result<Valu
             serde_json::to_value(&*gs).map_err(|e| e.to_string())
         }
 
-        // 撤銷或刪除指定索引的提名記錄
-        // 參數: { "index": 0 }
+        // 修改當日尚未處決的提名
+        // 參數: { "nomination_index": 0, "new_nominator_id": "ID", "new_nominee_id": "ID" }
+        "edit_nomination" => {
+            let nomination_index = args.get("nomination_index").or_else(|| args.get("nominationIndex")).and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+            let new_nominator_id = args.get("new_nominator_id").or_else(|| args.get("newNominatorId")).and_then(|v| v.as_str()).unwrap_or("");
+            let new_nominee_id = args.get("new_nominee_id").or_else(|| args.get("newNomineeId")).and_then(|v| v.as_str()).unwrap_or("");
+
+            let current_round = gs.round;
+            let (old_nominator_id, old_nominee_id) = {
+                let nom = gs.nominations.get(nomination_index).ok_or("找不到指定提名")?;
+                if nom.executed {
+                    return Err("已執行的提名無法修改".into());
+                }
+                if nom.round != current_round {
+                    return Err("只能修改當日的提名".into());
+                }
+                (nom.nominator_id.clone(), nom.nominee_id.clone())
+            };
+
+            if let Some(p) = gs.players.iter_mut().find(|p| p.id == old_nominator_id) {
+                p.can_nominate = true;
+            }
+            if let Some(p) = gs.players.iter_mut().find(|p| p.id == old_nominee_id) {
+                p.is_nominated = false;
+            }
+
+            let mut valid = true;
+            let mut err_msg = "";
+
+            if let Some(nominator) = gs.players.iter().find(|p| p.id == new_nominator_id) {
+                if !nominator.can_nominate {
+                    valid = false;
+                    err_msg = "該提名者今日已發起過提名";
+                }
+            } else {
+                valid = false;
+                err_msg = "找不到提名者";
+            }
+
+            if valid {
+                if let Some(nominee) = gs.players.iter().find(|p| p.id == new_nominee_id) {
+                    if nominee.is_nominated {
+                        valid = false;
+                        err_msg = "該被提名者今日已被提名過";
+                    }
+                } else {
+                    valid = false;
+                    err_msg = "找不到被提名者";
+                }
+            }
+
+            if !valid {
+                if let Some(p) = gs.players.iter_mut().find(|p| p.id == old_nominator_id) {
+                    p.can_nominate = false;
+                }
+                if let Some(p) = gs.players.iter_mut().find(|p| p.id == old_nominee_id) {
+                    p.is_nominated = true;
+                }
+                return Err(err_msg.into());
+            }
+
+            if let Some(p) = gs.players.iter_mut().find(|p| p.id == new_nominator_id) {
+                p.can_nominate = false;
+            }
+            if let Some(p) = gs.players.iter_mut().find(|p| p.id == new_nominee_id) {
+                p.is_nominated = true;
+            }
+
+            if let Some(nom) = gs.nominations.get_mut(nomination_index) {
+                nom.nominator_id = new_nominator_id.to_string();
+                nom.nominee_id = new_nominee_id.to_string();
+            }
+
+            gs.touch();
+            serde_json::to_value(&*gs).map_err(|e| e.to_string())
+        }
+
+        // 撤銷或刪除指定索引的提名記錄並歸還提名/被提/死亡票權利
+        // 參數: { "nomination_index": 0 } 或 { "index": 0 }
         "remove_nomination" => {
-            let index = args.get("index").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+            let index = args.get("nomination_index")
+                .or_else(|| args.get("nominationIndex"))
+                .or_else(|| args.get("index"))
+                .and_then(|v| v.as_u64())
+                .unwrap_or(0) as usize;
             if index < gs.nominations.len() {
+                let nom = &gs.nominations[index];
+                if nom.executed {
+                    return Err("已執行的提名無法取消，請先撤銷處決".into());
+                }
+                let nominator_id = nom.nominator_id.clone();
+                let nominee_id = nom.nominee_id.clone();
+                let voters = nom.votes_for.clone();
+
+                if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominator_id) {
+                    p.can_nominate = true;
+                }
+                if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominee_id) {
+                    p.is_nominated = false;
+                }
+                for voter_id in voters {
+                    if let Some(p) = gs.players.iter_mut().find(|p| p.id == voter_id) {
+                        if !p.is_alive {
+                            p.has_ghost_vote = true;
+                        }
+                    }
+                }
+
                 gs.nominations.remove(index);
                 gs.touch();
             }
             serde_json::to_value(&*gs).map_err(|e| e.to_string())
         }
 
-        // 在當前提名中記錄玩家投票 (投贊成票或收回)
-        // 參數: { "nomination_index": 0, "voter_id": "投票者ID", "in_favor": true }
+        // 調整提名的額外票數
+        // 參數: { "nomination_index": 0, "extra_votes": 1 }
+        "adjust_extra_votes" => {
+            let nomination_idx = args.get("nomination_index").or_else(|| args.get("nominationIndex")).and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+            let extra_votes = args.get("extra_votes").or_else(|| args.get("extraVotes")).and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+            if let Some(nom) = gs.nominations.get_mut(nomination_idx) {
+                nom.extra_votes = extra_votes;
+                gs.touch();
+            }
+            serde_json::to_value(&*gs).map_err(|e| e.to_string())
+        }
+
+        // 在當前提名中記錄或切換玩家投票 (支援 Toggle 切換與死亡票扣除/歸還)
+        // 參數: { "nomination_index": 0, "voter_id": "投票者ID" } (可選 "in_favor": bool)
         "vote" => {
             let nomination_idx = args.get("nomination_index").or_else(|| args.get("nominationIndex")).and_then(|v| v.as_u64()).unwrap_or(0) as usize;
             let voter_id = args.get("voter_id").or_else(|| args.get("voterId")).and_then(|v| v.as_str()).unwrap_or("");
-            let in_favor = args.get("in_favor").or_else(|| args.get("inFavor")).and_then(|v| v.as_bool()).unwrap_or(false);
+            let explicit_in_favor = args.get("in_favor").or_else(|| args.get("inFavor")).and_then(|v| v.as_bool());
 
-            if let Some(nom) = gs.nominations.get_mut(nomination_idx) {
-                if in_favor {
-                    if !nom.votes_for.contains(&voter_id.to_string()) {
-                        nom.votes_for.push(voter_id.to_string());
+            let (is_alive, has_ghost_vote, voter_extra_votes) = gs
+                .players
+                .iter()
+                .find(|p| p.id == voter_id)
+                .map(|p| (p.is_alive, p.has_ghost_vote, p.extra_votes))
+                .unwrap_or((true, false, 0));
+
+            let is_voted = if let Some(nom) = gs.nominations.get(nomination_idx) {
+                nom.votes_for.iter().any(|id| id == voter_id)
+            } else {
+                return Err("找不到指定提名".into());
+            };
+
+            let target_vote = explicit_in_favor.unwrap_or(!is_voted);
+
+            if !target_vote && is_voted {
+                // 取消投票并歸還死亡玩家投票權
+                if !is_alive {
+                    if let Some(p) = gs.players.iter_mut().find(|p| p.id == voter_id) {
+                        if !p.has_ghost_vote {
+                            p.has_ghost_vote = true;
+                        } else {
+                            p.extra_votes += 1;
+                        }
                     }
-                } else {
+                }
+                if let Some(nom) = gs.nominations.get_mut(nomination_idx) {
                     nom.votes_for.retain(|id| id != voter_id);
+                }
+                gs.touch();
+            } else if target_vote && !is_voted {
+                // 投贊成票並扣除死亡玩家投票權
+                let has_any_vote = has_ghost_vote || voter_extra_votes > 0;
+                if !is_alive && !has_any_vote {
+                    return Err("該死亡玩家已無投票權".into());
+                }
+                if !is_alive {
+                    if let Some(p) = gs.players.iter_mut().find(|p| p.id == voter_id) {
+                        if p.extra_votes > 0 {
+                            p.extra_votes -= 1;
+                        } else {
+                            p.has_ghost_vote = false;
+                        }
+                    }
+                }
+                if let Some(nom) = gs.nominations.get_mut(nomination_idx) {
+                    nom.votes_for.push(voter_id.to_string());
+                }
+                gs.touch();
+            }
+            serde_json::to_value(&*gs).map_err(|e| e.to_string())
+        }
+
+        // 執行行刑處決
+        // 參數: { "nomination_index": 0 }
+        "execute" => {
+            let nomination_index = args.get("nomination_index").or_else(|| args.get("nominationIndex")).and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+            let current_round = gs.round;
+
+            let (target_votes, target_threshold) = {
+                let nom = gs.nominations.get(nomination_index).ok_or("找不到指定提名")?;
+                ((nom.votes_for.len() as i32 + nom.extra_votes).max(0) as usize, gs.execution_threshold())
+            };
+
+            if target_votes < target_threshold as usize {
+                return Err("票數未達門檻，無法行刑".into());
+            }
+
+            let mut max_votes = 0;
+            let mut tie_detected = false;
+
+            for nom in gs.nominations.iter().filter(|n| n.round == current_round) {
+                let v_count = (nom.votes_for.len() as i32 + nom.extra_votes).max(0) as usize;
+                if v_count > max_votes {
+                    max_votes = v_count;
+                    tie_detected = false;
+                } else if v_count == max_votes && v_count > 0 {
+                    tie_detected = true;
+                }
+            }
+
+            if target_votes < max_votes {
+                return Err("該提名非當日最高票，無法行刑".into());
+            }
+            if tie_detected {
+                return Err("最高票平手時無法行刑".into());
+            }
+
+            if let Some(nom) = gs.nominations.get_mut(nomination_index) {
+                nom.executed = true;
+                nom.threshold = target_threshold;
+                let nominee_id = nom.nominee_id.clone();
+                if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominee_id) {
+                    if p.is_alive {
+                        make_player_dead(p);
+                        p.reminders.push(ReminderToken::new("處決", "系統", current_round));
+                    }
+                }
+                gs.touch();
+            }
+            serde_json::to_value(&*gs).map_err(|e| e.to_string())
+        }
+
+        // 撤銷/反悔行刑處決
+        // 參數: { "nomination_index": 0 }
+        "undo_execution" => {
+            let nomination_index = args.get("nomination_index").or_else(|| args.get("nominationIndex")).and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+            let current_round = gs.round;
+            if let Some(nom) = gs.nominations.get_mut(nomination_index) {
+                if !nom.executed {
+                    return Err("該提名尚未執行行刑，無法撤銷".into());
+                }
+                if nom.round != current_round {
+                    return Err("僅能撤銷本日的行刑記錄".into());
+                }
+                nom.executed = false;
+                let nominee_id = nom.nominee_id.clone();
+
+                if let Some(p) = gs.players.iter_mut().find(|p| p.id == nominee_id) {
+                    let died_from_execution = p.reminders.iter().any(|r| r.text == "處決");
+                    if died_from_execution {
+                        p.is_alive = true;
+                        p.has_ghost_vote = true;
+                        p.reminders.retain(|r| r.text != "處決");
+                    }
                 }
                 gs.touch();
             }
