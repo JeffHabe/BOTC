@@ -96,6 +96,7 @@ pub fn create_app(state: AppState) -> Router {
         .route("/api/game/state", get(game_state_handler))
         .route("/api/game/action", post(game_action_handler))
         .with_state(state)
+        .layer(axum::extract::DefaultBodyLimit::max(50 * 1024 * 1024))
         .layer(cors)
 }
 

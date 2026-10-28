@@ -157,12 +157,24 @@ export const useGameStore = defineStore('game', () => {
           if (found.custom_other_night_order) {
             newState.script.custom_other_night_order = [...found.custom_other_night_order]
           }
+          if (found.physical_image) {
+            newState.script.physical_image = found.physical_image
+          }
+          if (found.physical_image_back) {
+            newState.script.physical_image_back = found.physical_image_back
+          }
         } else if (state.value?.script?.id === newState.script.id) {
           if (state.value.script.custom_first_night_order) {
             newState.script.custom_first_night_order = [...state.value.script.custom_first_night_order]
           }
           if (state.value.script.custom_other_night_order) {
             newState.script.custom_other_night_order = [...state.value.script.custom_other_night_order]
+          }
+          if (state.value.script.physical_image) {
+            newState.script.physical_image = state.value.script.physical_image
+          }
+          if (state.value.script.physical_image_back) {
+            newState.script.physical_image_back = state.value.script.physical_image_back
           }
         }
       }
@@ -201,8 +213,14 @@ export const useGameStore = defineStore('game', () => {
 
   async function saveState() {
     if (state.value) {
-      // 確保日誌也被包含在存檔中
+      // 確保日誌也被包含在存檔中，並移除大型 Base64 圖片避免請求過大 (413)
       const fullState = { ...state.value, game_logs: logs.value }
+      if (fullState.script) {
+        const cleanScript = { ...fullState.script }
+        delete cleanScript.physical_image
+        delete cleanScript.physical_image_back
+        fullState.script = cleanScript
+      }
       await callCommand('save_game_state', { state: fullState })
     }
   }
@@ -264,6 +282,8 @@ export const useGameStore = defineStore('game', () => {
     try {
       // 兼容性處理：前端可能發送角色類型，Rust 後端要求全小寫
       const compatScript = JSON.parse(JSON.stringify(script)) as Script
+      delete compatScript.physical_image
+      delete compatScript.physical_image_back
       compatScript.characters.forEach(c => {
         c.role_type = (c.role_type || 'townsfolk').toLowerCase() as any
         c.setup = Boolean(c.setup)

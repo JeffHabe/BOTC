@@ -30,8 +30,9 @@ assert.strictEqual(content.includes('proxy_set_header Upgrade $http_upgrade;'), 
 assert.strictEqual(content.includes('proxy_set_header Connection "Upgrade";'), true, '必須配置 WebSocket Connection 標頭');
 console.log('✔ 測試 3 通過：API 與 WebSocket 反向代理規則齊全');
 
-// 測試 4：驗證 Gzip 壓縮啟用
+// 測試 4：驗證 Gzip 壓縮啟用與請求大小上限設定
 assert.strictEqual(content.includes('gzip on;'), true, '必須啟用 Gzip 傳輸壓縮');
-console.log('✔ 測試 4 通過：Gzip 效能優化配置正確');
+assert.strictEqual(content.includes('client_max_body_size 50M;'), true, '必須設定 client_max_body_size 防止 413 Request Entity Too Large');
+console.log('✔ 測試 4 通過：Gzip 效能優化與 client_max_body_size 配置正確');
 
 console.log('🎉 所有 Nginx 配置規格測試全數通過！');
