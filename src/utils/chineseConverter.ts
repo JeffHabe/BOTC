@@ -62,20 +62,42 @@ const rawPairs: [string, string][] = [
 ]
 
 // 擴充常用漢字簡繁對照背景字庫 (簡繁雙字交替：簡1繁1簡2繁2...)，用於在本地轉換時兜底覆蓋
-const CHINESE_DICT = "证證纹紋闻聞语語贼賊医醫弃棄满滿禅禪洁潔萨薩婴嬰捞撈尸屍纸紙论論圣聖万萬与與专專业業丛叢东東丝絲丢丟两兩严嚴丧喪个個丰豐临臨为爲丽麗举舉么麼义義乌烏乐樂乔喬习習乡鄉书書买買乱亂争爭于於亏虧亚亞产產亩畝亲親亿億仅僅仆僕仑侖仓倉们們仪儀优優伤傷伫佇价價众衆会會伟偉传傳伥倀伪僞体體余餘佣傭佥僉侠俠侣侶侥僥侦偵侧側侨僑侩儈侪儕侬儂俦儔俨儼俩倆俪儷俭儉债債倾傾偬傯偻僂偿償傥儻傧儐储儲儿兒兑兌兖兗党黨兰蘭关關兴興兹茲养養兽獸冁囅内內冈岡册冊写寫军軍农農冯馮冲衝决決况況冻凍净淨凄悽准準凉涼减減凑湊凛凜几幾凤鳳凭憑凯凱击擊凿鑿划劃刘劉创創刚剛删刪刹剎则則剐剮剑劍剧劇办辦劝勸务務劢勱动動励勵劲勁劳勞势勢勋勳华華协協单單卖賣卢盧卤滷卧臥卫衛却卻厂廠厅廳历歷厉厲压壓厌厭厕廁厘釐厢廂厣厴厦廈厨廚厩廄厮廝县縣参參双雙发髮变變叙敘叠疊叶葉号號叹嘆叽嘰吁籲后後吓嚇吕呂吗嗎吨噸听聽启啓吴吳呒嘸呓囈员員呖嚦坝壩罢罷帮幫绑綁镑鎊谤謗剥剝饱飽宝寶报報鲍鮑辈輩贝貝钡鋇惫憊备備绷繃毕畢毙斃币幣闭閉辟闢边邊编編贬貶辩辯辫辮标標鳖鱉别別瘪癟濒瀕滨濱宾賓摈擯饼餅拨撥钵鉢铂鉑驳駁补補财財采採残殘惭慚惨慘灿燦苍蒼舱艙沧滄测測层層诧詫铲鏟阐闡颤顫场場尝嘗长長肠腸畅暢钞鈔车車尘塵陈陳衬襯撑撐称稱惩懲诚誠骋騁痴癡迟遲驰馳耻恥齿齒炽熾虫蟲宠寵踌躊筹籌绸綢丑醜锄鋤雏雛础礎触觸处處疮瘡闯闖锤錘辞辭赐賜聪聰囱囪蹿躥错錯达達哒噠贷貸带帶担擔郸鄲胆膽惮憚诞誕弹彈当當挡擋导導捣搗岛島祷禱盗盜灯燈邓鄧敌敵涤滌递遞缔締颠顛点點垫墊电電钓釣调調谍諜顶頂订訂栋棟斗鬥独獨读讀断斷锻鍛队隊对對顿頓钝鈍夺奪铎鐸堕墮讹訛恶惡饿餓额額罚罰阀閥珐琺烦煩饭飯范範贩販访訪纺紡飞飛废廢费費纷紛坟墳愤憤粪糞风風枫楓疯瘋缝縫讽諷辐輻抚撫辅輔妇婦负負复復赋賦盖蓋钙鈣杠槓搁擱鸽鴿阁閣给給贡貢沟溝钩鉤够夠构構购購顾顧雇僱挂掛观觀馆館贯貫惯慣广廣归歸规規闺閨轨軌诡詭贵貴刽劊柜櫃过過滤濾国國韩韓汉漢阂閡鹤鶴贺賀横橫轰轟红紅壶壺护護户戶哗譁画畫话話怀懷坏壞欢歡环環还還缓緩唤喚换換涣渙黄黃谎謊挥揮辉輝毁毀汇匯讳諱绘繪诲誨馈饋贿賄秽穢伙夥获獲货貨祸禍机機积積饥飢迹跡极極级級挤擠济濟记記纪紀际際继繼绩績辑輯夹夾颊頰贾賈钾鉀驾駕坚堅歼殲间間艰艱监監茧繭检檢碱鹼拣揀简簡荐薦槛檻鉴鑑践踐贱賤见見键鍵壳殼课課垦墾恳懇库庫裤褲夸誇宽寬旷曠矿礦溃潰扩擴阔闊蜡蠟来來莱萊赖賴蓝藍栏欄里裏"
+const CHINESE_DICT = "证證纹紋闻聞语語贼賊医醫弃棄满滿禅禪洁潔萨薩婴嬰捞撈尸屍纸紙论論圣聖万萬与與专專业業丛叢东東丝絲丢丟两兩严嚴丧喪个個丰豐临臨为爲丽麗举舉么麼义義乌烏乐樂乔喬习習乡鄉书書买買乱亂争爭于於亏虧亚亞产產亩畝亲親亿億仅僅仆僕仑侖仓倉们們仪儀优優伤傷伫佇价價众衆会會伟偉传傳伥倀伪僞体體余餘佣傭佥僉侠俠侣侶侥僥侦偵侧側侨僑侩儈侪儕侬儂俦儔俨儼俩倆俪儷俭儉债債倾傾偬傯偻僂偿償傥儻傧儐储儲儿兒兑兌兖兗党黨兰蘭关關兴興兹茲养養兽獸冁囅内內冈岡册冊写寫军軍农農冯馮冲衝决決况況冻凍净淨凄悽准準凉涼减減凑湊凛凜几幾凤鳳凭憑凯凱击擊凿鑿划劃刘劉创創刚剛删刪刹剎则則剐剮剑劍剧劇办辦劝勸务務劢勱动動励勵劲勁劳勞势勢勋勳华華协協单單卖賣卢盧卤滷卧臥卫衛却卻厂廠厅廳历歷厉厲压壓厌厭厕廁厘釐厢廂厣厴厦廈厨廚厩廄厮廝县縣参參双雙发髮变變叙敘叠疊叶葉号號叹嘆叽嘰吁籲后後吓嚇吕呂吗嗎吨噸听聽启啓吴吳呒嘸呓囈员員呖嚦坝壩罢罷帮幫绑綁镑鎊谤謗剥剝饱飽宝寶报報鲍鮑辈輩贝貝钡鋇惫憊备備绷繃毕畢毙斃币幣闭閉辟闢边邊编編贬貶辩辯辫辮标標鳖鱉别別瘪癟濒瀕滨濱宾賓摈擯饼餅拨撥钵鉢铂鉑驳駁补補财財采採残殘惭慚惨慘灿燦苍蒼舱艙沧滄测測层層诧詫铲鏟阐闡颤顫场場尝嘗长長肠腸畅暢钞鈔车車尘塵陈陳衬襯撑撐称稱惩懲诚誠骋騁痴癡迟遲驰馳耻恥齿齒炽熾虫蟲宠寵踌躊筹籌绸綢丑醜锄鋤雏雛础礎触觸处處疮瘡闯闖锤錘辞辭赐賜聪聰囱囪蹿躥错錯达達哒噠贷貸带帶担擔郸鄲胆膽惮憚诞誕弹彈当當挡擋导導捣搗岛島祷禱盗盜灯燈邓鄧敌敵涤滌递遞缔締颠顛点點垫墊电電钓釣调調谍諜顶頂订訂栋棟斗鬥独獨读讀断斷锻鍛队隊对對顿頓钝鈍夺奪铎鐸堕墮讹訛恶惡饿餓额額罚罰阀閥珐琺烦煩饭飯范範贩販访訪纺紡飞飛废廢费費纷紛坟墳愤憤粪糞风風枫楓疯瘋缝縫讽諷辐輻抚撫辅輔妇婦负負复復赋賦盖蓋钙鈣杠槓搁擱鸽鴿阁閣给給贡貢沟溝钩鉤够夠构構购購顾顧雇僱挂掛观觀馆館贯貫惯慣广廣归歸规規闺閨轨軌诡詭贵貴刽劊柜櫃过過滤濾国國韩韓汉漢阂閡鹤鶴贺賀横橫轰轟红紅壶壺护護户戶哗譁画畫话話怀懷坏壞欢歡环環还還缓緩唤喚换換涣渙黄黃谎謊挥揮辉輝毁毀汇匯讳諱绘繪诲誨馈饋贿賄秽穢伙夥获獲货貨祸禍机機积積饥飢迹跡极極级級挤擠济濟记記纪紀际際继繼绩績辑輯夹夾颊頰贾賈钾鉀驾駕坚堅歼殲间間艰艱监監茧繭检檢碱鹼拣揀简簡荐薦槛檻鉴鑑践踐贱賤见見键鍵壳殼课課垦墾恳懇库庫裤褲夸誇宽寬旷曠矿礦溃潰扩擴阔闊蜡蠟来來莱萊赖賴蓝藍栏欄里裏态態卷捲轴軸输輸连連认認设設开開让讓误誤营營颜顏筛篩从從档檔录錄类類顺順资資没沒强強签籤该該张張议議执執败敗须須现現胜勝逻邏锁鎖踪蹤进進应應组組实實视視觉覺计計松鬆区區杆桿纯純转轉装裝详詳细細笔筆块塊据據页頁载載浏瀏览覽头頭钮鈕声聲盘盤纳納项項讯訊随隨懒懶萤螢软軟圆圓滚滾彻徹围圍较較轻輕离離阈閾椭橢属屬径徑腾騰质質雳靂紧緊渐漸扰擾衔銜拢攏稳穩适適频頻抢搶帧幀抛拋释釋题題异異约約针針润潤镜鏡远遠齐齊码碼奖獎静靜烁爍钥鑰识識拟擬啰囉词詞泪淚缀綴拦攔殒殞许許胶膠钉釘悬懸销銷赞贊维維烫燙尔爾脚腳虚虛热熱摇搖孙孫询詢诉訴领領脸臉锦錦遗遺挚摯责責诅詛脑腦惧懼睁睜愿願赶趕谋謀梼檮刍芻穷窮链鏈窃竊铃鈴莺鶯瘾癮讨討枪槍龙龍纠糾诈詐竖豎讷訥园園狮獅请請谢謝坠墜跄蹌银銀审審诃訶恋戀诵誦尽盡髅髏掷擲麦麥麸麩粘黏齑齏龄齡龈齦龋齲龚龔龛龕龟龜鲦鰷鲨鯊鲫鯽鲭鯖鲵鯢鲷鯛鹅鵝鹊鵲鹑鶉鹗鶚鹘鶻鹞鷂鹦鸚鹧鷓鹫鷲鹬鷸鹭鷺鹰鷹"
 
 const s2tTable: Record<string, string> = {}
+const t2sTable: Record<string, string> = {}
 
 // 1. 先用交替字串初始化背景字庫
 for (let i = 0; i < CHINESE_DICT.length; i += 2) {
   const sChar = CHINESE_DICT.charAt(i)
   const tChar = CHINESE_DICT.charAt(i + 1)
   s2tTable[sChar] = tChar
+  t2sTable[tChar] = sChar
 }
 
 // 2. 再用血染鐘樓專用配對進行覆蓋，確保特有翻譯最優先
 rawPairs.forEach(([s, t]) => {
   s2tTable[s] = t
+  if ([...s].length === 1 && [...t].length === 1 && s !== '發') {
+    t2sTable[t] = s
+  }
+})
+
+// 3. 補充一簡對多繁的繁轉簡異體字映射，確保所有繁體字皆能準確轉為簡體
+const t2sVariants: [string, string][] = [
+  ['發', '发'], ['髮', '发'], ['為', '为'], ['爲', '为'], ['偽', '伪'], ['僞', '伪'],
+  ['眾', '众'], ['衆', '众'], ['啟', '启'], ['啓', '启'], ['嘩', '哗'], ['譁', '哗'],
+  ['裡', '里'], ['裏', '里'], ['製', '制'], ['複', '复'], ['復', '复'], ['並', '并'],
+  ['併', '并'], ['摺', '折'], ['簽', '签'], ['籤', '签'], ['誌', '志'], ['註', '注'],
+  ['佈', '布'], ['佔', '占'], ['緻', '致'], ['迴', '回'], ['嚮', '向'], ['祕', '秘'],
+  ['瞭', '了'], ['剋', '克'], ['脣', '唇'], ['撃', '击'], ['擊', '击'], ['鬆', '松'],
+  ['乾', '干'], ['幹', '干'], ['係', '系'], ['繫', '系'], ['檯', '台'], ['臺', '台'],
+  ['餘', '余'], ['曆', '历'], ['歷', '历'], ['鍾', '钟'], ['鐘', '钟'], ['麵', '面'],
+  ['徵', '征'], ['彙', '汇'], ['匯', '汇'], ['穫', '获'], ['獲', '获'], ['藉', '借'],
+  ['昇', '升'], ['鬱', '郁'], ['禦', '御'], ['齣', '出'], ['髒', '脏'], ['臟', '脏']
+]
+t2sVariants.forEach(([t, s]) => {
+  t2sTable[t] = s
 })
 
 /**
@@ -86,6 +108,139 @@ rawPairs.forEach(([s, t]) => {
 export function simplifyToTraditional(str: string): string {
   if (!str) return ''
   return str.split('').map(char => s2tTable[char] || char).join('')
+}
+
+/**
+ * 將繁體中文字元轉換為簡體中文
+ * @param str 輸入字串
+ * @returns 轉換後的簡體中文串
+ */
+export function traditionalToSimplified(str: string): string {
+  if (!str) return ''
+  return str.split('').map(char => t2sTable[char] || char).join('')
+}
+
+// --- 全域 DOM 簡繁語言自動轉換器 ---
+export type AppLanguage = 'zh-TW' | 'zh-CN'
+
+const origTextMap = new WeakMap<Text, { tw: string; cn: string }>()
+const origAttrMap = new WeakMap<Element, Record<string, { tw: string; cn: string }>>()
+const CONVERT_ATTRS = ['placeholder', 'title', 'aria-label']
+
+function shouldSkipElement(el: Element | null): boolean {
+  if (!el) return true
+  const tag = el.tagName
+  if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT') return true
+  if (el.closest && el.closest('[data-no-lang-convert]')) return true
+  return false
+}
+
+function convertTextNode(node: Text, lang: AppLanguage) {
+  if (shouldSkipElement(node.parentElement)) return
+  const val = node.nodeValue
+  if (!val || !val.trim()) return
+
+  const cached = origTextMap.get(node)
+  if (lang === 'zh-CN') {
+    if (cached && val === cached.cn) return
+    const cn = traditionalToSimplified(val)
+    origTextMap.set(node, { tw: val, cn })
+    if (cn !== val) {
+      node.nodeValue = cn
+    }
+  } else {
+    if (cached && val === cached.cn) {
+      node.nodeValue = cached.tw
+    }
+  }
+}
+
+function convertElementAttrs(el: Element, lang: AppLanguage) {
+  if (shouldSkipElement(el)) return
+  for (const attr of CONVERT_ATTRS) {
+    if (!el.hasAttribute(attr)) continue
+    const val = el.getAttribute(attr)
+    if (!val || !val.trim()) continue
+
+    let attrRecord = origAttrMap.get(el)
+    if (!attrRecord) {
+      attrRecord = {}
+      origAttrMap.set(el, attrRecord)
+    }
+    const cached = attrRecord[attr]
+    if (lang === 'zh-CN') {
+      if (cached && val === cached.cn) continue
+      const cn = traditionalToSimplified(val)
+      attrRecord[attr] = { tw: val, cn }
+      if (cn !== val) {
+        el.setAttribute(attr, cn)
+      }
+    } else {
+      if (cached && val === cached.cn) {
+        el.setAttribute(attr, cached.tw)
+      }
+    }
+  }
+}
+
+export function applyLanguageToSubtree(root: Node, lang: AppLanguage) {
+  if (typeof document === 'undefined') return
+  if (root.nodeType === Node.TEXT_NODE) {
+    convertTextNode(root as Text, lang)
+    return
+  }
+  if (root.nodeType === Node.ELEMENT_NODE) {
+    convertElementAttrs(root as Element, lang)
+  }
+  const walker = document.createTreeWalker(
+    root,
+    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT
+  )
+  let current: Node | null = walker.nextNode()
+  while (current) {
+    if (current.nodeType === Node.TEXT_NODE) {
+      convertTextNode(current as Text, lang)
+    } else if (current.nodeType === Node.ELEMENT_NODE) {
+      convertElementAttrs(current as Element, lang)
+    }
+    current = walker.nextNode()
+  }
+}
+
+let domObserver: MutationObserver | null = null
+
+export function syncDocumentLanguage(lang: AppLanguage, getLang: () => AppLanguage) {
+  if (typeof document === 'undefined') return
+  document.documentElement.lang = lang
+  document.title = lang === 'zh-CN' ? traditionalToSimplified('染鐘樓謎團魔典') : '染鐘樓謎團魔典'
+  if (document.body) {
+    applyLanguageToSubtree(document.body, lang)
+  }
+
+  if (!domObserver && typeof MutationObserver !== 'undefined' && document.body) {
+    domObserver = new MutationObserver((mutations) => {
+      const currentLang = getLang()
+      if (currentLang !== 'zh-CN') return
+      for (const m of mutations) {
+        if (m.type === 'characterData') {
+          convertTextNode(m.target as Text, currentLang)
+        } else if (m.type === 'attributes' && m.target.nodeType === Node.ELEMENT_NODE) {
+          convertElementAttrs(m.target as Element, currentLang)
+        } else if (m.type === 'childList') {
+          m.addedNodes.forEach((node) => {
+            applyLanguageToSubtree(node, currentLang)
+          })
+        }
+      }
+    })
+    domObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: CONVERT_ATTRS
+    })
+  }
 }
 
 /**

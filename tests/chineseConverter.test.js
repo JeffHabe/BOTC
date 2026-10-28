@@ -50,4 +50,41 @@ if (rawPairsMatch) {
   }
 }
 
+// 測試 4：驗證繁轉簡 (traditionalToSimplified) 字典映射正確性
+const dictMatch = content.match(/const CHINESE_DICT\s*=\s*"([^"]+)"/);
+assert.ok(dictMatch, '必須能讀取 CHINESE_DICT 字串');
+const dictStr = dictMatch[1];
+const t2sTable = {};
+for (let i = 0; i < dictStr.length; i += 2) {
+  t2sTable[dictStr[i + 1]] = dictStr[i];
+}
+const pairRegex = /\['([^']+)',\s*'([^']+)'\]/g;
+let m;
+while ((m = pairRegex.exec(content)) !== null) {
+  if ([...m[1]].length === 1 && [...m[2]].length === 1 && m[1] !== '發') {
+    if (!content.slice(0, m.index).includes('t2sVariants')) {
+      t2sTable[m[2]] = m[1];
+    } else {
+      t2sTable[m[1]] = m[2];
+    }
+  }
+}
+function t2s(str) {
+  return [...str].map(ch => t2sTable[ch] || ch).join('');
+}
+
+assert.strictEqual(t2s('染鐘樓謎團魔典'), '染钟楼谜团魔典', '標題繁轉簡應正確');
+assert.strictEqual(t2s('設置選項'), '设置选项', '設置選項繁轉簡應正確');
+assert.strictEqual(t2s('處決門檻'), '处决门槛', '處決門檻繁轉簡應正確');
+assert.strictEqual(t2s('鎮民、外來者、爪牙、惡魔、旅行者、傳說、奇遇'), '镇民、外来者、爪牙、恶魔、旅行者、传说、奇遇', '陣營名稱繁轉簡應正確');
+console.log('✔ 測試 4 通過：繁轉簡 (traditionalToSimplified) 關鍵詞彙轉換正確');
+
+// 測試 5：驗證 SettingsPanel 與 uiStore 具備簡體語言切換功能
+const settingsContent = fs.readFileSync(path.resolve(__dirname, '../src/components/SettingsPanel.vue'), 'utf8');
+const uiStoreContent = fs.readFileSync(path.resolve(__dirname, '../src/stores/uiStore.ts'), 'utf8');
+assert.strictEqual(settingsContent.includes("uiStore.setLanguage('zh-CN')"), true, 'SettingsPanel 必須包含切換為 zh-CN 的按鈕');
+assert.strictEqual(settingsContent.includes("uiStore.setLanguage('zh-TW')"), true, 'SettingsPanel 必須包含切換為 zh-TW 的按鈕');
+assert.strictEqual(uiStoreContent.includes("localStorage.setItem('botc-language', lang)"), true, 'uiStore 必須持久化語言設定至 localStorage');
+console.log('✔ 測試 5 通過：SettingsPanel 與 uiStore 簡繁語言切換整合完整');
+
 console.log('🎉 所有簡繁字典校驗測試全數通過！\n');

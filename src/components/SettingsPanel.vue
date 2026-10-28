@@ -139,6 +139,35 @@
             <span class="grid-label">匯出劇本</span>
           </button>
 
+          <button class="grid-item" @click="restoreDefaultScripts">
+            <span class="grid-icon"><img src="/pic/spellbook.png" class="grid-img" /></span>
+            <span class="grid-label">還原預設劇本</span>
+          </button>
+
+          <button class="grid-item" @click="restoreDefaultCharacters">
+            <span class="grid-icon"><img src="/pic/anonymous.png" class="grid-img" /></span>
+            <span class="grid-label">重置預設角色</span>
+          </button>
+
+        </div>
+
+        <div class="divider" />
+
+        <!-- 語言設置 -->
+        <div class="section-title">語言設置 (Language)</div>
+        <div class="layout-selector-grid cols-2" data-no-lang-convert>
+          <button class="layout-option" :class="{ active: uiStore.language === 'zh-TW' }"
+            @click="uiStore.setLanguage('zh-TW')">
+            <span class="opt-icon">繁</span>
+            <span class="opt-label">繁體中文</span>
+            <div v-if="uiStore.language === 'zh-TW'" class="active-check">✓</div>
+          </button>
+          <button class="layout-option" :class="{ active: uiStore.language === 'zh-CN' }"
+            @click="uiStore.setLanguage('zh-CN')">
+            <span class="opt-icon">简</span>
+            <span class="opt-label">简体中文</span>
+            <div v-if="uiStore.language === 'zh-CN'" class="active-check">✓</div>
+          </button>
         </div>
 
         <div class="divider" />
@@ -743,6 +772,38 @@ async function exportAllScripts() {
     a.click()
     URL.revokeObjectURL(url)
   }
+}
+
+function restoreDefaultScripts() {
+  uiStore.showConfirm(
+    '還原預設劇本',
+    '是否要重載系統預設劇本庫？這將把官方與社群精選劇本更新至最新狀態。',
+    async () => {
+      const success = await scriptStore.loadDefaultScripts(false)
+      if (success) {
+        uiStore.showAlert('還原成功', '已成功載入最新預設劇本庫')
+      } else {
+        uiStore.showAlert('載入失敗', '未能讀取預設劇本檔案')
+      }
+    },
+    false
+  )
+}
+
+function restoreDefaultCharacters() {
+  uiStore.showConfirm(
+    '重置預設角色',
+    '是否要重置全角色大全為系統最新內建設定？',
+    async () => {
+      try {
+        await scriptStore.resetToDefault()
+        uiStore.showAlert('重置成功', '全角色大全已成功還原為最新預設值')
+      } catch (e) {
+        uiStore.showAlert('重置失敗', '重置角色失敗')
+      }
+    },
+    true
+  )
 }
 
 function resetStates() {

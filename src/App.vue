@@ -28,6 +28,7 @@ import GrimoireBoard from './components/GrimoireBoard.vue'
 const uiStore = useUIStore()
 
 onMounted(async () => {
+  uiStore.initLanguage()
   try {
     await uiStore.updateLicenseStatusFromBackend()
   } catch (err) {

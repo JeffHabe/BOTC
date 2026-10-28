@@ -284,7 +284,7 @@ export const useScriptStore = defineStore('script', () => {
     }
 
     if (searchQuery.value.trim()) {
-      const q = searchQuery.value.trim().toLowerCase()
+      const q = simplifyToTraditional(searchQuery.value.trim()).toLowerCase()
       chars = chars.filter(c =>
         c.name.toLowerCase().includes(q) ||
         c.name_en.toLowerCase().includes(q) ||
@@ -373,6 +373,9 @@ export const useScriptStore = defineStore('script', () => {
       if (scriptsExists) {
         const content = await readAppData('custom_scripts.json')
         customScripts.value = JSON.parse(content)
+      } else {
+        // 💡 首次啟動：自動從預設劇本庫載入
+        await loadDefaultScripts(false)
       }
 
       // 3. 載入獨立輕量自定義夜晚順序（與巨型劇本檔案解耦，實現秒級持久化）
@@ -506,6 +509,50 @@ export const useScriptStore = defineStore('script', () => {
       console.error('Failed to reset characters', e)
       throw e
     }
+  }
+
+  /**
+   * 載入或重整預設劇本庫（來自 public/data/default_scripts.json）
+   * @param forceReset 若為 true 則重置為預設劇本清單
+   */
+  async function loadDefaultScripts(forceReset: boolean = false): Promise<boolean> {
+    try {
+      let jsonContent = ''
+      const res = await fetch('/data/default_scripts.json')
+      if (res.ok) {
+        jsonContent = await res.text()
+      } else if (await existsAppData('default_scripts.json')) {
+        jsonContent = await readAppData('default_scripts.json')
+      }
+
+      if (!jsonContent) return false
+
+      const data = JSON.parse(jsonContent)
+      if (data && data.scripts && Array.isArray(data.scripts)) {
+        const incoming: Script[] = data.scripts.filter((s: any) => s.id !== 'all_character_sort')
+        if (forceReset) {
+          customScripts.value = incoming
+        } else {
+          const existingMap = new Map(customScripts.value.map(s => [s.id, s]))
+          incoming.forEach((s: Script) => {
+            if (!existingMap.has(s.id)) {
+              existingMap.set(s.id, s)
+            }
+          })
+          customScripts.value = Array.from(existingMap.values())
+        }
+        triggerRef(customScripts)
+        await saveCustomScripts()
+        return true
+      }
+    } catch (e) {
+      console.warn('載入預設劇本失敗:', e)
+    }
+    return false
+  }
+
+  async function resetScriptsToDefault(): Promise<boolean> {
+    return await loadDefaultScripts(true)
   }
 
   async function selectScript(script: Script) {
@@ -807,6 +854,8 @@ export const useScriptStore = defineStore('script', () => {
     loadCharacters,
     saveCharacters,
     resetToDefault,
+    loadDefaultScripts,
+    resetScriptsToDefault,
     selectScript,
     importFromJson,
     exportAllScripts,

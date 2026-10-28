@@ -5,6 +5,7 @@ import type { Player } from '../types'
 import { playClocktowerBell, stopClocktowerBell, unlockAudio, playCustomSound, stopCustomSound } from '../utils/audio'
 import { saveSound, getAllSoundsMeta, getSoundData, deleteSound } from '../utils/soundDb'
 import { isTauri, safeInvoke } from '../utils/platformAdapter'
+import { syncDocumentLanguage, type AppLanguage } from '../utils/chineseConverter'
 
 export type Panel =
   | 'none'
@@ -98,6 +99,20 @@ export const useUIStore = defineStore('ui', () => {
   }
   function setNightOrderScroll(pos: number) {
     nightOrderScrollPos.value = pos
+  }
+
+  // --- 語言設置 (繁體中文 / 簡體中文) ---
+  const savedLang = localStorage.getItem('botc-language')
+  const language = ref<AppLanguage>(savedLang === 'zh-CN' ? 'zh-CN' : 'zh-TW')
+
+  function setLanguage(lang: AppLanguage) {
+    language.value = lang
+    localStorage.setItem('botc-language', lang)
+    syncDocumentLanguage(lang, () => language.value)
+  }
+
+  function initLanguage() {
+    syncDocumentLanguage(language.value, () => language.value)
   }
 
   // --- 提示標記佈局方案 ---
@@ -915,6 +930,8 @@ export const useUIStore = defineStore('ui', () => {
     // 設置嚮導暫存
     setupWizardState, resetSetupWizard,
     // 授權管理
-    licenseStatus, licenseDeviceId, licenseExpiryDate, licenseRemainingDays, licenseIsActivated, updateLicenseStatusFromBackend
+    licenseStatus, licenseDeviceId, licenseExpiryDate, licenseRemainingDays, licenseIsActivated, updateLicenseStatusFromBackend,
+    // 語言設置
+    language, setLanguage, initLanguage
   }
 })
