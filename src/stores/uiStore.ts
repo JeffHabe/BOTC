@@ -767,7 +767,7 @@ export const useUIStore = defineStore('ui', () => {
 
   // --- 設置嚮導 (RoleAssignmentPanel) 暫存 ---
   const initialSetupState: SetupWizardState = {
-    step: 'pool',
+    step: 'select',
     counts: { Townsfolk: 0, Outsider: 0, Minion: 0, Demon: 0 },
     selectedRoleIds: [],
     selectedBluffIds: [],
@@ -786,7 +786,11 @@ export const useUIStore = defineStore('ui', () => {
     const saved = localStorage.getItem('botc-setup-wizard-state')
     if (saved) {
       try {
-        return { ...initialSetupState, ...JSON.parse(saved) }
+        const parsed = JSON.parse(saved)
+        if (parsed.step === 'pool' || parsed.step === 'config') {
+          parsed.step = 'select'
+        }
+        return { ...initialSetupState, ...parsed }
       } catch (e) {
         return { ...initialSetupState }
       }

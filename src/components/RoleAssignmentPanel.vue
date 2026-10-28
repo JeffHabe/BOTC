@@ -4,280 +4,16 @@
       <div class="panel-header">
         <span class="panel-icon">🎲</span>
         <h2 class="panel-title">{{ panelTitle }}</h2>
-        <div class="step-indicator">Step {{ currentStepNum }} / 6</div>
+        <div class="step-indicator">Step {{ currentStepNum }} / 4</div>
         <button class="btn-icon reset-all-btn" @click="handleResetSetup" title="重新開始">🔄</button>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
 
       <div class="assignment-content">
-        <!-- 步驟 1: 篩選可用角色池 -->
-        <div v-if="step === 'pool'" class="step-pool">
+        <!-- 步驟 1 (原步驟 3): 挑選具體角色 -->
+        <div v-if="step === 'select'" class="step-select">
           <div class="action-footer top-actions compact">
             <button class="btn-ghost btn-xs" @click="uiStore.closePanel()">← 關閉面板</button>
-            <button 
-              class="btn-primary btn-xs" 
-              @click="step = 'config'"
-            >
-              設定人數配比 →
-            </button>
-          </div>
-
-          <!-- 相似劇本提示 -->
-          <div v-if="similarScriptNotice" class="similar-script-notice-banner animate-fade-in">
-            <span class="notice-icon">💡</span>
-            <div class="notice-text">
-              偵測到您選擇的角色與現有劇本<strong>【{{ similarScriptNotice.name }}】</strong>相似度達 <strong>{{ similarScriptNotice.similarity }}%</strong>！
-            </div>
-            <button class="btn-xs btn-notice-action" @click="switchToSimilarScript(similarScriptNotice.id)">
-              直接套用此劇本
-            </button>
-          </div>
-
-          <div class="collapsible-header" @click="isPresetExpanded = !isPresetExpanded">
-            <span class="header-text">
-              📋 劇本 配置 :
-              <span class="current-script-name">{{ currentScriptName }}</span>
-            </span>
-            <span class="header-toggle">{{ isPresetExpanded ? '收起 ▲' : '展開 ▼' }}</span>
-          </div>
-
-          <div v-if="isPresetExpanded" class="collapsible-body animate-slide-down">
-            <div class="info-banner">
-              <span class="info-icon">ℹ️</span>
-              <span><strong>角色池：</strong> 勾選的角色將參與隨機分派。未勾選的角色將被排除。</span>
-            </div>
-
-            <div class="preset-manager">
-              <div class="preset-label">劇本：</div>
-              <div class="preset-controls">
-                <div class="searchable-select-container" ref="selectContainerRef">
-                  <div class="select-trigger">
-                    <input
-                      type="text"
-                      class="select-input"
-                      :placeholder="currentScriptName"
-                      v-model="scriptSearchQuery"
-                      @focus="openDropdown"
-                      @click="openDropdown"
-                      ref="searchInputRef"
-                    />
-                    <span class="select-arrow" :class="{ 'is-open': isDropdownOpen }" @click.stop="toggleDropdown">▼</span>
-                  </div>
-                  
-                  <div v-if="isDropdownOpen" class="select-dropdown animate-fade-in">
-                    <div class="dropdown-scroll">
-                      <!-- 官方劇本 -->
-                      <div v-for="g in groupedScripts" :key="g.category" class="dropdown-group">
-                        <div class="dropdown-group-header">{{ g.category }}</div>
-                        <div 
-                          v-for="s in g.list" 
-                          :key="'script::'+s.id" 
-                          class="dropdown-option"
-                          :class="{ 'is-active': selectedCombinedId === 'script::'+s.id }"
-                          @click="selectOption('script::'+s.id)"
-                        >
-                          {{ s.id === 'all_character_sort' ? '全角色大全 (所有角色)' : s.name }}
-                        </div>
-                      </div>
-                      <!-- 自訂劇本 -->
-                      <div v-if="filteredPoolPresets.length > 0" class="dropdown-group">
-                        <div class="dropdown-group-header">自訂劇本 (暫存配置)</div>
-                        <div 
-                          v-for="p in filteredPoolPresets" 
-                          :key="'preset::'+p.id" 
-                          class="dropdown-option"
-                          :class="{ 'is-active': selectedCombinedId === 'preset::'+p.id }"
-                          @click="selectOption('preset::'+p.id)"
-                        >
-                          {{ p.name }}
-                        </div>
-                      </div>
-                      <!-- 無匹配結果 -->
-                      <div v-if="groupedScripts.length === 0 && filteredPoolPresets.length === 0" class="no-options">
-                        無符合的劇本
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="preset-actions">
-                  <button v-if="activePresetId" class="btn-icon" @click="updatePreset" title="儲存變更">💾</button>
-                  <button class="btn-icon" @click="showSaveModal = true" title="另存新檔">📁</button>
-                  <button class="btn-icon" @click="renameScriptOrPreset" title="編輯名稱">✏️</button>
-                  <button v-if="activePresetId" class="btn-icon" @click="convertPresetToScript(activePresetId)" title="轉換為獨立劇本">📜</button>
-                  <button v-if="activePresetId" class="btn-icon" @click="exportPreset(activePresetId)" title="匯出預設 (複製)">📥</button>
-                  <button class="btn-icon" @click="showImportModal = true" title="匯入預設">📤</button>
-                  <button v-if="selectedCombinedId" class="btn-icon text-danger" @click="deleteScriptOrPreset" title="刪除">🗑️</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 匯入預設模態框 -->
-          <div v-if="showImportModal" class="mini-modal">
-            <div class="modal-content">
-              <h4>匯入劇本</h4>
-              <textarea v-model="importString" placeholder="請貼上劇本匯出代碼..." class="import-textarea"></textarea>
-              <!-- 隱藏的本機 JSON 檔案選擇器 -->
-              <input type="file" accept=".json" ref="officialJsonInput" style="display: none" @change="onOfficialJsonFileSelected" />
-              <div class="modal-btns">
-                <button @click="showImportModal = false">取消</button>
-                <button class="secondary" @click="handleImportOfficialJson">官方 JSON</button>
-                <button class="primary" @click="handleImport">確認匯入</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 儲存預設模態框 -->
-          <div v-if="showSaveModal" class="mini-modal">
-            <div class="modal-content">
-              <h4>儲存目前的篩選配置</h4>
-              <input v-model="presetNameInput" placeholder="例如：新手平衡場" @keyup.enter="savePreset" />
-              <div class="modal-btns">
-                <button @click="showSaveModal = false">取消</button>
-                <button class="primary" @click="savePreset">確定儲存</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="pool-quick-actions" v-if="canEditPoolQuickly">
-            <button class="btn-ghost btn-xs" @click="includeAllRoles">✅ 全選角色</button>
-            <button class="btn-ghost btn-xs" @click="excludeAllRoles">🚫 清空池子</button>
-          </div>
-
-          <div class="search-bar-assignment" v-if="false">
-            <span class="search-icon">🔍</span>
-            <input 
-              v-model="searchQuery" 
-              placeholder="搜尋角色名稱..." 
-              class="search-input-assignment" 
-              @keyup.enter="handleSearchEnter"
-            />
-            <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
-          </div>
-          
-
-          
-          <div class="selection-status-bar sticky-tabs">
-            <div v-for="type in roleTypes" :key="type.key" 
-                 class="type-pill interactive"
-                 @click="scrollToGroup(type.key)">
-              {{ type.label }} (池: {{ poolTypeCount(type.key) }}/{{ scriptTypeTotal(type.key) }})
-            </div>
-          </div>
-          <div class="instruction">點擊角色可從本局池子中排除（變暗代表不使用）</div>
-          <div class="role-grid-container">
-            <div v-for="group in fullGroupedCharacters" :key="group.type" :id="'group-' + group.type" class="role-group">
-              <div class="group-header" :style="{ color: group.color }">
-                {{ group.label }} 
-              </div>
-              <div class="role-grid">
-                <div v-for="role in group.list" 
-                     :key="role.id" 
-                     class="role-card"
-                     :class="{ 'is-excluded': excludedPoolIds.includes(role.id) }"
-                     @click="togglePoolInclusion(role.id)">
-                  <div class="role-card-icon" :class="(role.role_type || '').toLowerCase()">
-                    <img v-if="role.image" :src="role.image" class="r-img" />
-                    <span v-else class="role-text-fallback">{{ role.name.charAt(0) }}</span>
-                  </div>
-                  <div class="role-card-name">{{ role.name }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 步驟 2: 配置人數配比 -->
-        <div v-else-if="step === 'config'" class="step-config">
-          <div class="footer-btns" style="display:flex; gap:12px;">
-            <button class="btn-ghost" @click="step = 'pool'">← 角色池</button>
-            <button 
-              class="btn-primary start-btn" 
-              :disabled="totalConfigured !== totalPlayers || !isPoolLargeEnough"
-              @click="goToSelect"
-              style="flex:1;"
-            >
-              挑選玩家角色 →
-            </button>
-          </div>
-          <div class="header-text">
-            <span class="info-icon">👥</span>
-            <span>當前玩家人數: <strong>{{ totalPlayers }}</strong></span>
-          </div>
-          <div class="section-title">決定角色配比</div>
-          <div class="counts-editor">
-            <div v-for="type in roleTypes" :key="type.key" class="count-row">
-              <div class="type-info">
-                <span class="type-dot" :style="{ backgroundColor: type.color }"></span>
-                <span class="type-label">{{ type.label }}</span>
-              </div>
-              <div class="count-controls">
-                <button @click="adjustCount(type.key, -1)" class="minus">-</button>
-                <div class="count-val">{{ counts[type.key] }}</div>
-                <button @click="adjustCount(type.key, 1)" class="plus">+</button>
-              </div>
-              <div class="pool-hint" :class="{'is-error': poolTypeCount(type.key) < counts[type.key]}">
-                (可用: {{ poolTypeCount(type.key) }})
-              </div>
-            </div>
-          </div>
-
-          <div class="config-footer">
-            <div class="total-status" :class="{ 'is-match': totalConfigured === totalPlayers }">
-              總計配置: {{ totalConfigured }} / {{ totalPlayers }}
-            </div>
-          </div>
-
-          <!-- 官方配比參考表格 -->
-          <div class="reference-table-wrapper">
-            <div class="reference-title">📋 官方人數標準配比參考</div>
-            <div class="reference-table-scroll">
-              <table class="reference-table">
-                <thead>
-                  <tr>
-                    <th>玩家</th>
-                    <th v-for="n in [7, 8, 9, 10, 11, 12, 13, 14, 15]" :key="n" :class="{ 'highlight-col': totalPlayers === n || (n === 15 && totalPlayers >= 15) }">
-                      {{ n === 15 ? '15+' : n }}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td class="ref-label townsfolk">鎮民</td>
-                    <td v-for="(v, i) in [5, 5, 5, 7, 7, 7, 9, 9, 9]" :key="i" :class="{ 'highlight-col': totalPlayers === (i + 7) || (i === 8 && totalPlayers >= 15) }">
-                      {{ v }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="ref-label outsider">外來者</td>
-                    <td v-for="(v, i) in [0, 1, 2, 0, 1, 2, 0, 1, 2]" :key="i" :class="{ 'highlight-col': totalPlayers === (i + 7) || (i === 8 && totalPlayers >= 15) }">
-                      {{ v }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="ref-label minion">爪牙</td>
-                    <td v-for="(v, i) in [1, 1, 1, 2, 2, 2, 3, 3, 3]" :key="i" :class="{ 'highlight-col': totalPlayers === (i + 7) || (i === 8 && totalPlayers >= 15) }">
-                      {{ v }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="ref-label demon">惡魔</td>
-                    <td v-for="(v, i) in [1, 1, 1, 1, 1, 1, 1, 1, 1]" :key="i" :class="{ 'highlight-col': totalPlayers === (i + 7) || (i === 8 && totalPlayers >= 15) }">
-                      {{ v }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-
-
-        <!-- 步驟 3: 挑選具體角色 -->
-        <div v-else-if="step === 'select'" class="step-select">
-          <div class="action-footer top-actions compact">
-            <button class="btn-ghost btn-xs" @click="step = 'config'">← 返回配比</button>
             <button class="btn-secondary btn-xs" @click="autoFillRoles">🎲 隨機補齊</button>
             <button 
               class="btn-primary btn-xs" 
@@ -301,7 +37,7 @@
                 角色 <strong>【{{ w.name }}】</strong> 具有變更配置的能力：<span class="ability-tag">{{ w.match }}</span>
               </div>
             </div>
-            <div class="warning-footer">請確認「步驟 2」中的人數配比已手動調整。</div>
+            <div class="warning-footer">挑選角色時請自行依此能力增減對應陣營角色數量。</div>
           </div>
 
           <div class="search-bar-assignment">
@@ -761,7 +497,7 @@ import { ref, computed, reactive, onMounted, onBeforeUnmount, watch, nextTick } 
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
 import { useScriptStore } from '../stores/scriptStore'
-import type { CharacterDef, Script } from '../types'
+import type { CharacterDef } from '../types'
 import { ROLE_TYPE_COLOR } from '../types'
 import CharacterDetailOverlay from './CharacterDetailOverlay.vue'
 
@@ -771,12 +507,10 @@ const scriptStore = useScriptStore()
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
-  document.addEventListener('pointerdown', handleDocumentClick)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
-  document.removeEventListener('pointerdown', handleDocumentClick)
 })
 
 function handleKeydown(e: KeyboardEvent) {
@@ -789,10 +523,6 @@ function handleKeydown(e: KeyboardEvent) {
     } else if (showReadyModal.value) {
       showReadyModal.value = false
       spinningPlayerId.value = null
-    } else if (showImportModal.value) {
-      showImportModal.value = false
-    } else if (showSaveModal.value) {
-      showSaveModal.value = false
     } else {
       uiStore.closePanel()
     }
@@ -804,18 +534,22 @@ function handleKeydown(e: KeyboardEvent) {
 // 狀態管理
 type Step = 'pool' | 'config' | 'select' | 'drunk' | 'wudaozhe' | 'lunatic' | 'marionette' | 'bluff' | 'preview' | 'draw'
 
-// 從 UI Store 同步狀態
+// 從 UI Store 同步狀態 (移除原步驟 1、2，直接從挑選角色 select 開始)
 const savedState = uiStore.setupWizardState as any
-const step = ref<Step>(savedState.step || 'pool')
+const initialStep: Step =
+  !savedState.step || savedState.step === 'pool' || savedState.step === 'config'
+    ? 'select'
+    : savedState.step
+const step = ref<Step>(initialStep)
 const totalPlayers = computed(() => gameStore.players.length)
 
-// 限制未正式啟用授權的用戶（包括試用期內）僅能使用 Step 1 (篩選角色池)
-watch(step, (newStep) => {
-  if (newStep !== 'pool' && (uiStore.licenseStatus !== 'Valid' || !uiStore.licenseIsActivated)) {
-    step.value = 'pool'
+// 限制未正式啟用授權的用戶
+watch(step, () => {
+  if (uiStore.licenseStatus !== 'Loading' && (uiStore.licenseStatus !== 'Valid' || !uiStore.licenseIsActivated)) {
+    uiStore.closePanel()
     uiStore.showAlert(
       '開局功能已鎖定',
-      `完整開局功能（Step 2-6）需要啟用正式授權金鑰。\n\n試用期內僅開放 Step 1 角色池篩選與魔典瀏覽。請前往「設置選項」->「軟體使用授權」貼上金鑰啟用。\n\n您的裝置識別碼：\n${uiStore.licenseDeviceId}\n(可前往設定選單複製此識別碼並發送給管理員)`
+      `完整開局功能需要啟用正式授權金鑰。請前往「設置選項」->「軟體使用授權」貼上金鑰啟用。\n\n您的裝置識別碼：\n${uiStore.licenseDeviceId}\n(可前往設定選單複製此識別碼並發送給管理員)`
     )
   }
 }, { immediate: true })
@@ -845,165 +579,6 @@ function syncToStore() {
 const excludedPoolIds = computed({
   get: () => uiStore.excludedPoolIds,
   set: (val) => uiStore.excludedPoolIds = val
-})
-const activePresetId = computed({
-  get: () => uiStore.activePoolPresetId,
-  set: (val) => uiStore.activePoolPresetId = val
-})
-
-const selectedCombinedId = computed({
-  get() {
-    if (activePresetId.value) return `preset::${activePresetId.value}`
-    if (gameStore.script) return `script::${gameStore.script.id}`
-    return ''
-  },
-  set(val: string) {
-    if (val) {
-      selectOption(val)
-    }
-  }
-})
-
-const scriptSearchQuery = ref('')
-const isDropdownOpen = ref(false)
-const searchInputRef = ref<HTMLInputElement | null>(null)
-const selectContainerRef = ref<HTMLElement | null>(null)
-
-function openDropdown() {
-  isDropdownOpen.value = true
-}
-
-function handleDocumentClick(e: PointerEvent) {
-  if (!isDropdownOpen.value) return
-  const target = e.target as Node | null
-  if (selectContainerRef.value && target && !selectContainerRef.value.contains(target)) {
-    isDropdownOpen.value = false
-    scriptSearchQuery.value = ''
-  }
-}
-
-function toggleDropdown() {
-  if (isDropdownOpen.value) {
-    searchInputRef.value?.blur()
-    isDropdownOpen.value = false
-    scriptSearchQuery.value = ''
-  } else {
-    isDropdownOpen.value = true
-  }
-}
-
-async function selectOption(combinedId: string) {
-  scriptSearchQuery.value = ''
-  isDropdownOpen.value = false
-  searchInputRef.value?.blur()
-
-  if (!combinedId) return
-  const [type, id] = combinedId.split('::')
-
-  if (type === 'preset') {
-    const preset = poolPresets.value.find(p => p.id === id)
-    if (preset) {
-      const baseScript = scriptStore.allScripts.find(s => s.id === preset.script_id)
-      if (baseScript && gameStore.script?.id !== baseScript.id) {
-        await scriptStore.selectScript(baseScript)
-      }
-      applyPreset(preset)
-      activePresetId.value = id
-    }
-  } else if (type === 'script') {
-    const script = scriptStore.allScripts.find(s => s.id === id)
-    if (script) {
-      try {
-        await scriptStore.selectScript(script)
-        activePresetId.value = ''
-        uiStore.activePoolPresetName = ''
-        excludedPoolIds.value = [] // 載入新劇本時預設不排除任何角色
-        selectedRoleIds.value = [] // 清空先前選中的角色
-      } catch (err: any) {
-        console.error('切換劇本失敗:', err)
-        uiStore.showAlert('切換劇本失敗', `無法載入劇本「${script.name}」：\n${err?.message || err}`)
-      }
-    }
-  }
-}
-
-const groupedScripts = computed(() => {
-  const groups: Record<string, Script[]> = {}
-  const query = scriptSearchQuery.value.trim().toLowerCase()
-  
-  scriptStore.allScripts.forEach(s => {
-    // 💡 關鍵修復：名稱智慧模糊搜尋，支援「全角色」、「全角色劇本」、「全角色大全」、「大全」
-    const isMaster = s.id === 'all_character_sort'
-    const matchesQuery = !query || 
-      s.name.toLowerCase().includes(query) ||
-      (isMaster && (
-        query.includes('全角色') ||
-        query.includes('大全') ||
-        '全角色全角色劇本全角色大全'.includes(query) ||
-        query === 'all'
-      ))
-
-    if (!matchesQuery) {
-      return
-    }
-
-    // 💡 全角色大全統一歸入「官方劇本」，避免被丟到未排名的分類沉入底部
-    const cat = isMaster ? '官方劇本' : (s.category || '官方劇本')
-    if (!groups[cat]) {
-      groups[cat] = []
-    }
-    // 💡 全角色大全置頂在官方劇本第 1 位，方便使用者一開局立刻點選
-    if (isMaster) {
-      groups[cat].unshift(s)
-    } else {
-      groups[cat].push(s)
-    }
-  })
-  
-  // 依據 categories 排序，未定義的排在最後
-  const sortedCategories = Object.keys(groups).sort((a, b) => {
-    const idxA = scriptStore.categories.indexOf(a)
-    const idxB = scriptStore.categories.indexOf(b)
-    const valA = idxA === -1 ? 99999 : idxA
-    const valB = idxB === -1 ? 99999 : idxB
-    return valA - valB
-  })
-
-  return sortedCategories.map(cat => ({
-    category: cat,
-    list: groups[cat]
-  }))
-})
-
-interface PoolPreset {
-  id: string
-  name: string
-  script_id: string
-  excluded_ids: string[]
-}
-const poolPresets = ref<PoolPreset[]>([])
-const filteredPoolPresets = computed(() => {
-  const query = scriptSearchQuery.value.trim().toLowerCase()
-  if (!query) return poolPresets.value
-  return poolPresets.value.filter(p => p.name.toLowerCase().includes(query))
-})
-const presetNameInput = ref('')
-const showSaveModal = ref(false)
-const showImportModal = ref(false)
-const importString = ref('')
-const officialJsonInput = ref<HTMLInputElement | null>(null)
-const isPresetExpanded = ref(false)
-
-const currentScriptName = computed(() => {
-  if (activePresetId.value) {
-    const preset = poolPresets.value.find(p => p.id === activePresetId.value)
-    if (preset) return preset.name
-  }
-  return gameStore.script?.name || '未選擇劇本'
-})
-
-const canEditPoolQuickly = computed(() => {
-  return !!activePresetId.value || gameStore.script?.id === 'all_character_sort'
 })
 
 // 抽獎與酒鬼邏輯
@@ -1169,129 +744,6 @@ watch(() => step.value, () => {
   selectedClass.value = ''
 })
 
-// 相似劇本偵測 (動態比對系統內所有劇本，排除全角色大全及目前選擇的劇本)
-const similarScriptNotice = computed(() => {
-  if (!gameStore.script) return null
-
-  // 僅在「全角色大全」且「步驟 1 (pool，篩選可用角色池)」時進行相似劇本偵測
-  if (gameStore.script.id !== 'all_character_sort' || step.value !== 'pool') return null
-
-  const currentScriptId = gameStore.script.id
-
-  // 取得目前使用者點選的角色 ID (排除掉不包含的角色)
-  const currentIds = gameStore.script.characters
-    .filter(c => !excludedPoolIds.value.includes(c.id))
-    .map(c => c.id)
-
-  if (currentIds.length < 5) return null // 角色太少時不提示
-
-  const currentIdsSet = new Set(currentIds)
-  let bestMatch: { id: string; name: string; similarity: number } | null = null
-
-  // 遍歷系統內所有載入的劇本
-  for (const s of scriptStore.allScripts) {
-    // 排除全角色大全與當前劇本
-    if (s.id === 'all_character_sort' || s.id === currentScriptId) continue
-
-    const scriptCharIds = s.characters.map(c => c.id)
-    const intersection = scriptCharIds.filter(id => currentIdsSet.has(id)).length
-    const union = new Set([...currentIds, ...scriptCharIds]).size
-    const similarity = union > 0 ? (intersection / union) : 0
-
-    // 相似度大於等於 60%
-    if (similarity >= 0.60) {
-      if (!bestMatch || similarity > bestMatch.similarity) {
-        bestMatch = { id: s.id, name: s.name, similarity }
-      }
-    }
-  }
-
-  if (bestMatch) {
-    return {
-      id: bestMatch.id,
-      name: bestMatch.name,
-      similarity: Math.round(bestMatch.similarity * 100)
-    }
-  }
-
-  return null
-})
-
-// 用於鎖定避免在切換劇本時觸發重複彈窗的標記
-const isSwitchingScript = ref(false)
-
-// 切換至相似劇本
-async function switchToSimilarScript(scriptId: string) {
-  const targetScript = scriptStore.allScripts.find(s => s.id === scriptId)
-  if (!targetScript) return
-
-  isSwitchingScript.value = true
-  try {
-    await scriptStore.selectScript(targetScript)
-    selectedCombinedId.value = `script::${targetScript.id}`
-    activePresetId.value = ''
-    uiStore.activePoolPresetName = ''
-    excludedPoolIds.value = []
-    selectedRoleIds.value = []
-    uiStore.showAlert('切換成功', `已切換至劇本【${targetScript.name}】！`)
-  } finally {
-    nextTick(() => {
-      setTimeout(() => {
-        isSwitchingScript.value = false
-      }, 300)
-    })
-  }
-}
-
-// 用於避免重複為同一個劇本彈出相同比例的提示
-const alertedThresholds = ref<Record<string, Set<number>>>({})
-
-watch(() => similarScriptNotice.value, (newNotice) => {
-  if (isSwitchingScript.value) return // 正在切換劇本時直接忽略任何新的提示偵測
-
-  if (!newNotice) {
-    // 取得目前篩選角色池的角色數 (未排除的角色數量)
-    const currentIdsCount = gameStore.script
-      ? gameStore.script.characters.filter(c => !excludedPoolIds.value.includes(c.id)).length
-      : 0
-    // 只有在角色池確實被清空或角色數太少時（表示重新開始或重置角色池），才重置提示紀錄
-    if (currentIdsCount < 5) {
-      alertedThresholds.value = {}
-    }
-    return
-  }
-
-  const { id: scriptId, name: scriptName, similarity } = newNotice
-  
-  // 檢查是否達到 80%, 90%, 100%
-  const targetThresholds = [80, 90, 100]
-  // 找出目前相似度超過且最接近的閾值
-  const matchedThreshold = targetThresholds.slice().reverse().find(t => similarity >= t)
-
-  if (matchedThreshold) {
-    if (!alertedThresholds.value[scriptId]) {
-      alertedThresholds.value[scriptId] = new Set()
-    }
-
-    // 如果該劇本的這個閾值還沒有彈出過
-    if (!alertedThresholds.value[scriptId].has(matchedThreshold)) {
-      alertedThresholds.value[scriptId].add(matchedThreshold)
-
-      // 延遲一下彈窗，避免阻塞點擊卡片的 UI 動畫
-      setTimeout(() => {
-        // 在定時器觸發時，再次確認目前沒有正在切換劇本
-        if (isSwitchingScript.value) return
-
-        const confirmSwitch = window.confirm(
-          `偵測到您選擇的角色與劇本【${scriptName}】相似度已達 ${similarity}%！\n\n是否直接套用此劇本並重置配置？`
-        )
-        if (confirmSwitch) {
-          switchToSimilarScript(scriptId)
-        }
-      }, 100)
-    }
-  }
-}, { deep: true })
 // 長按顯示詳情邏輯
 const longPressChar = ref<CharacterDef | null>(null)
 let hasTriggeredLongPress = false
@@ -1318,12 +770,8 @@ const roleTypes = [
   { key: 'Demon', label: '惡魔', color: ROLE_TYPE_COLOR.Demon },
 ]
 
-onMounted(() => {
-  // 如果已經有暫存資料（人數配比總和大於 0），則不初始化
-  if (Object.values(counts).reduce((a, b) => a + b, 0) > 0) return
-
-  const p = totalPlayers.value
-  // 使用標準推薦人數
+function applyDefaultCounts(p: number) {
+  // 根據外部玩家人數套用標準推薦配比
   if (p === 5) { counts.Townsfolk = 3; counts.Outsider = 0; counts.Minion = 1; counts.Demon = 1; }
   else if (p === 6) { counts.Townsfolk = 3; counts.Outsider = 1; counts.Minion = 1; counts.Demon = 1; }
   else if (p === 7) { counts.Townsfolk = 5; counts.Outsider = 0; counts.Minion = 1; counts.Demon = 1; }
@@ -1332,333 +780,36 @@ onMounted(() => {
   else if (p === 10) { counts.Townsfolk = 7; counts.Outsider = 0; counts.Minion = 2; counts.Demon = 1; }
   else if (p === 11) { counts.Townsfolk = 7; counts.Outsider = 1; counts.Minion = 2; counts.Demon = 1; }
   else if (p === 12) { counts.Townsfolk = 7; counts.Outsider = 2; counts.Minion = 2; counts.Demon = 1; }
-  else if (p >= 13) { counts.Townsfolk = 9; counts.Outsider = 0 + (p-13); counts.Minion = 3; counts.Demon = 1; }
+  else if (p >= 13) { counts.Townsfolk = 9; counts.Outsider = 0 + (p - 13); counts.Minion = 3; counts.Demon = 1; }
   else {
     counts.Townsfolk = Math.max(0, p - 3)
     counts.Demon = 1; counts.Minion = 1; counts.Outsider = 1;
   }
-})
+}
+
+watch(totalPlayers, (p) => {
+  applyDefaultCounts(p)
+}, { immediate: true })
 
 // 計算屬性
-const totalConfigured = computed(() => Object.values(counts).reduce((a, b) => a + b, 0))
 const panelTitle = computed(() => {
   const titles: Record<Step, string> = {
-    pool: '1. 篩選可用角色池',
-    config: '2. 設定人數配比',
-    select: '3. 挑選玩家角色',
-    drunk: '3.5 酒鬼認知',
-    wudaozhe: '3.52 悟道者認知',
-    lunatic: '3.55 瘋子認知',
-    marionette: '3.6 木偶偽裝',
-    bluff: '4. 挑選惡魔偽裝',
-    preview: '5. 最終預覽',
-    draw: '6. 輪盤抽獎'
+    pool: '1. 挑選玩家角色',
+    config: '1. 挑選玩家角色',
+    select: '1. 挑選玩家角色',
+    drunk: '1.5 酒鬼認知',
+    wudaozhe: '1.52 悟道者認知',
+    lunatic: '1.55 瘋子認知',
+    marionette: '1.6 木偶偽裝',
+    bluff: '2. 挑選惡魔偽裝',
+    preview: '3. 最終預覽',
+    draw: '4. 輪盤抽獎'
   }
   return titles[step.value]
 })
 const currentStepNum = computed(() => {
-  const map: Record<Step, number> = { pool: 1, config: 2, select: 3, drunk: 3, wudaozhe: 3, lunatic: 3, marionette: 3, bluff: 4, preview: 5, draw: 6 }
+  const map: Record<Step, number> = { pool: 1, config: 1, select: 1, drunk: 1, wudaozhe: 1, lunatic: 1, marionette: 1, bluff: 2, preview: 3, draw: 4 }
   return map[step.value]
-})
-
-onMounted(() => {
-  loadPresets()
-})
-
-function loadPresets() {
-  const saved = localStorage.getItem('botc-pool-presets')
-  if (saved) {
-    try {
-      poolPresets.value = JSON.parse(saved)
-    } catch (e) {
-      console.error('Failed to load presets', e)
-    }
-  }
-}
-
-function savePreset() {
-  if (!presetNameInput.value.trim() || !gameStore.script) return
-  
-  const masterScript = scriptStore.allScripts.find(s => s.id === 'all_character_sort') || scriptStore.masterScript
-  const allMasterIds = masterScript ? masterScript.characters.map(c => c.id) : []
-  
-  const currentIncludedIds = new Set(
-    gameStore.script.characters
-      .map(c => c.id)
-      .filter(id => !excludedPoolIds.value.includes(id))
-  )
-  
-  const newExcludedIds = allMasterIds.filter(id => !currentIncludedIds.has(id))
-
-  const newPreset: PoolPreset = {
-    id: Date.now().toString(),
-    name: presetNameInput.value.trim(),
-    script_id: 'all_character_sort',
-    excluded_ids: newExcludedIds
-  }
-  
-  poolPresets.value.push(newPreset)
-  localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
-  presetNameInput.value = ''
-  showSaveModal.value = false
-  
-  selectedCombinedId.value = `preset::${newPreset.id}`
-}
-
-function updatePreset() {
-  if (!activePresetId.value || !gameStore.script) return
-  const preset = poolPresets.value.find(p => p.id === activePresetId.value)
-  if (preset) {
-    preset.excluded_ids = [...excludedPoolIds.value]
-    localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
-    uiStore.showAlert('更新成功', `角色池預設 "${preset.name}" 已更新！`)
-  }
-}
-
-function applyPreset(preset: PoolPreset) {
-  excludedPoolIds.value = [...preset.excluded_ids]
-  uiStore.activePoolPresetName = preset.name
-}
-
-function deletePreset(id: string) {
-  poolPresets.value = poolPresets.value.filter(p => p.id !== id)
-  localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
-  if (activePresetId.value === id) {
-    activePresetId.value = ''
-    uiStore.activePoolPresetName = ''
-  }
-}
-
-async function renameScriptOrPreset() {
-  if (!selectedCombinedId.value) return
-
-  const [type, id] = selectedCombinedId.value.split('::')
-  if (type === 'preset') {
-    const preset = poolPresets.value.find(p => p.id === id)
-    if (!preset) return
-    const newName = await uiStore.showPrompt('重新命名配置', '請輸入新的劇本名稱：', preset.name)
-    if (newName !== null && newName.trim() !== '') {
-      preset.name = newName.trim()
-      localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
-      uiStore.activePoolPresetName = preset.name
-    }
-  } else if (type === 'script') {
-    const s = scriptStore.allScripts.find(x => x.id === id)
-    if (!s) return
-    const newName = await uiStore.showPrompt('重新命名劇本', '請輸入新的劇本名稱：', s.name)
-    if (newName !== null && newName.trim() !== '') {
-      let newCategory = s.category || '標準劇本'
-      if (id !== 'all_character_sort') {
-        const userCat = await uiStore.showPrompt(
-          '設定劇本分類',
-          '請輸入劇本分類（例如：官方劇本、小劇本、新手局建議）：',
-          newCategory
-        )
-        if (userCat !== null) {
-          newCategory = userCat.trim() || '標準劇本'
-        }
-      }
-      const success = await scriptStore.renameScript(id, newName.trim(), newCategory)
-      if (success) {
-        uiStore.showAlert('更新成功', '✅ 劇本已更新！')
-      }
-    }
-  }
-}
-
-async function deleteScriptOrPreset() {
-  if (!selectedCombinedId.value) return
-
-  const [type, id] = selectedCombinedId.value.split('::')
-  if (type === 'preset') {
-    uiStore.showConfirm(
-      '刪除配置',
-      '確定要刪除這個角色池配置嗎？',
-      () => { deletePreset(id) },
-      true
-    )
-  } else if (type === 'script') {
-    if (id === 'all_character_sort') {
-      uiStore.showAlert('無法刪除', '無法刪除全角色大全！')
-      return
-    }
-    const customScript = scriptStore.customScripts.find(x => x.id === id)
-    if (!customScript) {
-      uiStore.showAlert('無法刪除', '這是官方內建劇本，無法刪除喔！')
-      return
-    }
-    uiStore.showConfirm(
-      '刪除劇本',
-      `確定要刪除自訂劇本「${customScript.name}」嗎？這個操作無法復原。`,
-      async () => {
-        const success = await scriptStore.deleteCustomScript(id)
-        if (success) {
-          uiStore.showAlert('刪除成功', '✅ 劇本已刪除！')
-          selectedCombinedId.value = `script::all_character_sort`
-        }
-      },
-      true
-    )
-  }
-}
-
-function exportPreset(id: string) {
-  const p = poolPresets.value.find(p => p.id === id)
-  if (!p) return
-  
-  // 匯出關鍵資料
-  const exportData = {
-    name: p.name,
-    script_id: p.script_id,
-    excluded_ids: p.excluded_ids
-  }
-  
-  try {
-    // 處理中文編碼
-    const str = btoa(encodeURIComponent(JSON.stringify(exportData)))
-    navigator.clipboard.writeText(str).then(() => {
-      uiStore.showAlert('匯出成功', '✅ 匯出成功！已將代碼複製到剪貼簿，請分享給其他說書人。')
-    })
-  } catch (e) {
-    uiStore.showAlert('匯出失敗', '❌ 匯出失敗')
-  }
-}
-
-async function convertPresetToScript(presetId: string) {
-  const preset = poolPresets.value.find(p => p.id === presetId)
-  if (!preset) return
-  
-  // 找出該 preset 基礎劇本的所有角色
-  let baseChars = []
-  if (preset.script_id === 'all_character_sort') {
-    baseChars = scriptStore.masterScript.characters
-  } else {
-    const s = scriptStore.allScripts.find(x => x.id === preset.script_id)
-    if (s) {
-      baseChars = s.characters
-    } else {
-      baseChars = scriptStore.masterScript.characters
-    }
-  }
-  
-  // 過濾掉被排除的角色
-  const activeChars = baseChars.filter(c => !preset.excluded_ids.includes(c.id))
-  
-  // 建立官方格式的 JSON 陣列
-  const jsonArray = [
-    { id: '_meta', name: preset.name },
-    ...activeChars.map(c => ({ id: c.id }))
-  ]
-  
-  try {
-    const success = await scriptStore.importFromJson(JSON.stringify(jsonArray), '', true)
-    if (success) {
-      uiStore.showAlert('轉換成功', `✅ 已成功將預設【${preset.name}】轉換為獨立劇本並載入！`)
-      deletePreset(presetId)
-      uiStore.closePanel()
-    }
-  } catch (e) {
-    uiStore.showAlert('轉換失敗', '轉換失敗：' + e)
-  }
-}
-
-function handleImport() {
-  if (!importString.value.trim()) return
-  
-  try {
-    // 解碼 Base64
-    const jsonStr = decodeURIComponent(atob(importString.value.trim()))
-    const data = JSON.parse(jsonStr)
-    
-    if (!data.excluded_ids || !Array.isArray(data.excluded_ids)) {
-      throw new Error('無效資料格式')
-    }
-
-    const newPreset: PoolPreset = {
-      id: Date.now().toString(),
-      name: (data.name || '匯入配置') + ' (匯入)',
-      script_id: data.script_id || gameStore.script?.id || '',
-      excluded_ids: data.excluded_ids
-    }
-
-    poolPresets.value.push(newPreset)
-    localStorage.setItem('botc-pool-presets', JSON.stringify(poolPresets.value))
-    
-    importString.value = ''
-    showImportModal.value = false
-    uiStore.showAlert('匯入成功', '✅ 匯入成功！您可以在預設清單中選取它了。')
-  } catch (e) {
-    console.error(e)
-    uiStore.showAlert('匯入失敗', '❌ 匯入失敗，請確認代碼是否完整且正確。')
-  }
-}
-
-function handleImportOfficialJson() {
-  // 觸發隱藏的 file input 選擇本機 JSON 檔案
-  officialJsonInput.value?.click()
-}
-
-async function onOfficialJsonFileSelected(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file) return
-
-  const reader = new FileReader()
-  reader.onload = async (event) => {
-    const content = event.target?.result as string
-    try {
-      let fileName = file.name
-      try {
-        fileName = decodeURIComponent(fileName)
-      } catch (_) {}
-      if (fileName.toLowerCase().endsWith('.json')) {
-        fileName = fileName.substring(0, fileName.length - 5)
-      }
-      if (/^msf:\d+$/i.test(fileName) || fileName.includes('/') || fileName.includes(':')) {
-        fileName = '匯入劇本'
-      }
-      const success = await scriptStore.importFromJson(content, fileName)
-      if (success) {
-        uiStore.showAlert('匯入成功', '✅ 官方劇本檔案已成功匯入與載入！')
-        importString.value = ''
-        showImportModal.value = false
-        const lastScript = scriptStore.customScripts[scriptStore.customScripts.length - 1]
-        if (lastScript) {
-          selectedCombinedId.value = `script::${lastScript.id}`
-        }
-      } else {
-        uiStore.showAlert('匯入失敗', '❌ 匯入失敗：檔案內容無法解析為有效劇本格式')
-      }
-    } catch (err) {
-      uiStore.showAlert('匯入失敗', '❌ 匯入官方 JSON 失敗：請確保檔案格式為官方標準陣列格式')
-    }
-    // 復原 input 值以利重複選取同名檔案
-    if (officialJsonInput.value) officialJsonInput.value.value = ''
-  }
-  reader.readAsText(file)
-}
-
-
-
-const fullGroupedCharacters = computed(() => {
-  if (!gameStore.script) return []
-  const query = searchQuery.value.trim().toLowerCase()
-  return roleTypes.map(t => ({
-    type: t.key,
-    label: t.label,
-    color: t.color,
-    list: gameStore.script!.characters.filter(c => {
-      const cType = (c.role_type || '').trim().toLowerCase()
-      const tType = t.key.trim().toLowerCase()
-      const matchesType = cType === tType
-      const matchesQuery = !query || c.name.toLowerCase().includes(query)
-      
-      const globalChar = scriptStore.rawCharacterList.find(rc => rc.id === c.id.split('::COPY::')[0])
-      const charClass = c.class || (globalChar ? globalChar.class : null)
-      const matchesClass = !selectedClass.value || charClass === selectedClass.value
-      
-      return matchesType && matchesQuery && matchesClass
-    })
-  }))
 })
 
 const groupedCharacters = computed(() => {
@@ -1765,42 +916,9 @@ watch(validBluffIds, (validSet) => {
   selectedBluffIds.value = selectedBluffIds.value.filter(id => validSet.has(id))
 })
 
-function scriptTypeTotal(type: string) {
-  const targetType = type.toLowerCase()
-  return gameStore.script?.characters.filter(c => (c.role_type || '').toLowerCase() === targetType).length || 0
-}
-
-function poolTypeCount(type: string) {
-  if (!gameStore.script) return 0
-  const targetType = type.toLowerCase()
-  const excluded = new Set(excludedPoolIds.value)
-  return gameStore.script.characters.filter(c => 
-    (c.role_type || '').toLowerCase() === targetType && !excluded.has(c.id)
-  ).length
-}
-
-const isPoolLargeEnough = computed(() => {
-  for (const type of roleTypes) {
-    if (poolTypeCount(type.key) < counts[type.key]) return false
-  }
-  return true
-})
-
 const isSelectionComplete = computed(() => {
   return selectedRoleIds.value.length === totalPlayers.value
 })
-
-// 方法
-function adjustCount(key: string, delta: number) {
-  counts[key] = Math.max(0, counts[key] + delta)
-}
-
-function goToSelect() {
-  selectedRoleIds.value = []
-  drunkFakeRoleId.value = null
-  wudaozheFakeRoleId.value = null
-  step.value = 'select'
-}
 
 /**
  * 處理搜尋框按下 Enter：跳轉到第一個符合條件的角色
@@ -1812,14 +930,7 @@ function handleSearchEnter() {
   let targetId: string | null = null
 
   // 1. 找到第一個匹配的角色 ID
-  if (step.value === 'pool') {
-    for (const group of fullGroupedCharacters.value) {
-      if (group.list.length > 0) {
-        targetId = group.list[0].id
-        break
-      }
-    }
-  } else if (step.value === 'select') {
+  if (step.value === 'select') {
     for (const group of groupedCharacters.value) {
       if (group.list.length > 0) {
         targetId = group.list[0].id
@@ -2267,24 +1378,6 @@ function toggleRoleSelection(role: CharacterDef) {
       uiStore.showAlert('已選滿', `已經選滿 ${totalPlayers.value} 個玩家角色囉！`)
     }
   }
-}
-
-function togglePoolInclusion(id: string) {
-  const idx = excludedPoolIds.value.indexOf(id)
-  if (idx > -1) {
-    excludedPoolIds.value.splice(idx, 1)
-  } else {
-    excludedPoolIds.value.push(id)
-  }
-}
-
-function includeAllRoles() {
-  excludedPoolIds.value = []
-}
-
-function excludeAllRoles() {
-  if (!gameStore.script) return
-  excludedPoolIds.value = gameStore.script.characters.map(c => c.id)
 }
 
 function toggleBluffSelection(id: string) {
