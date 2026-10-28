@@ -12,6 +12,9 @@
 
       <!-- 分頁切換 Tabs -->
       <div class="panel-tabs">
+        <button class="tab-btn" :class="{ active: activeTab === 'select' }" @click="activeTab = 'select'">
+          <img src="/pic/spellbook.png" class="btn-icon-img" />選取劇本
+        </button>
         <button class="tab-btn" :class="{ active: activeTab === 'create' }" @click="activeTab = 'create'">
           <template v-if="editingScriptId">
             <img src="/pic/edit.png" class="btn-icon-img" />編輯劇本
@@ -29,6 +32,79 @@
       </div>
 
       <div class="panel-body">
+        <!-- 分頁 0 (首要顯示): 選取主要劇本 -->
+        <div v-if="activeTab === 'select'" class="tab-content list-tab">
+          <div class="current-active-script-banner">
+            <span class="active-script-label">📌 當前主要劇本：</span>
+            <strong class="active-script-name">{{ gameStore.script?.name || '未選擇劇本' }}</strong>
+          </div>
+
+          <!-- 劇本搜尋欄 -->
+          <div class="categorize-search-wrapper">
+            <input 
+              v-model="scriptSelectSearch" 
+              type="text" 
+              placeholder="🔍 搜尋劇本名/作者/角色名稱/技能關鍵字..." 
+              class="categorize-search-input" 
+            />
+            <button v-if="scriptSelectSearch" class="search-clear-btn" @click="scriptSelectSearch = ''">✕</button>
+          </div>
+
+          <!-- 分類篩選列 -->
+          <div class="edition-scroll-wrapper" style="padding: 0 16px 8px;">
+            <div class="edition-filters-row">
+              <button 
+                class="filter-pill-new" 
+                :class="{ active: selectedMainScriptCategory === 'All' }" 
+                @click="selectedMainScriptCategory = 'All'"
+              >
+                全部
+              </button>
+              <button 
+                v-for="cat in scriptStore.categories" 
+                :key="cat" 
+                class="filter-pill-new"
+                :class="{ active: selectedMainScriptCategory === cat }" 
+                @click="selectedMainScriptCategory = cat"
+              >
+                {{ cat }}
+              </button>
+            </div>
+          </div>
+
+          <div class="scripts-categorize-list">
+            <div 
+              v-for="script in filteredSelectScripts" 
+              :key="script.id" 
+              class="script-cat-item selectable-script-item"
+              :class="{ 'is-active-main-script': gameStore.script?.id === script.id }"
+              @click="handleSelectMainScript(script)"
+            >
+              <div class="script-info">
+                <img src="/pic/spellbook.png" class="script-icon-img" />
+                <div class="script-details">
+                  <div class="script-name">
+                    {{ script.id === 'all_character_sort' ? '全角色大全 (所有角色)' : script.name }}
+                  </div>
+                  <div class="script-meta">
+                    {{ script.characters.length }} 個角色 | {{ script.id === 'all_character_sort' ? '官方劇本' : (script.category || '標準劇本') }}
+                  </div>
+                  <div v-if="scriptSelectSearch.trim() && getMatchedSelectCharactersString(script)" class="script-match-tag">
+                    🔍 包含角色：{{ getMatchedSelectCharactersString(script) }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="script-cat-actions">
+                <span v-if="gameStore.script?.id === script.id" class="active-script-badge">✓ 使用中</span>
+                <button v-else class="btn-select-main-script" @click.stop="handleSelectMainScript(script)">
+                  套用此劇本
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 分頁 1: 建立劇本 -->
         <div v-if="activeTab === 'create'" class="tab-content create-tab">
           <!-- 劇本基本資料 -->
@@ -363,6 +439,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
+import { useGameStore } from '../stores/gameStore'
 import type { Script, RoleType } from '../types'
 import { save, open } from '@tauri-apps/plugin-dialog'
 import { writeTextFile, readFile } from '@tauri-apps/plugin-fs'
@@ -370,8 +447,11 @@ import { simplifyToTraditional, normalizeName } from '../utils/chineseConverter'
 
 const uiStore = useUIStore()
 const scriptStore = useScriptStore()
+const gameStore = useGameStore()
 
-const activeTab = ref<'create' | 'list' | 'categories'>('create')
+const activeTab = ref<'select' | 'create' | 'list' | 'categories'>('select')
+const scriptSelectSearch = ref('')
+const selectedMainScriptCategory = ref<string>('All')
 
 const isSaving = ref(false)
 const isDeleting = ref(false)
@@ -1080,6 +1160,72 @@ function scrollToRoleGroup(key: string) {
 const allEditableScripts = computed(() => {
   return scriptStore.allScripts
 })
+
+// 選取主要劇本分頁：搜尋與分類過濾
+const filteredSelectScripts = computed(() => {
+  const query = scriptSelectSearch.value.trim().toLowerCase()
+  const cleanQuery = query.replace(/\s+/g, '')
+  const catFilter = selectedMainScriptCategory.value
+
+  return allEditableScripts.value.filter(s => {
+    const sCat = s.id === 'all_character_sort' ? '官方劇本' : (s.category || '標準劇本')
+    if (catFilter !== 'All' && sCat !== catFilter) {
+      return false
+    }
+    if (!cleanQuery) return true
+
+    if (s.name.toLowerCase().replace(/\s+/g, '').includes(cleanQuery)) {
+      return true
+    }
+    if (s.author && s.author.toLowerCase().replace(/\s+/g, '').includes(cleanQuery)) {
+      return true
+    }
+    return s.characters.some(char => {
+      const cleanCharName = normalizeName(char.name)
+      const cleanQueryName = normalizeName(cleanQuery)
+      const nameMatch =
+        cleanCharName.includes(cleanQueryName) ||
+        (char.name_en && char.name_en.toLowerCase().replace(/\s+/g, '').includes(cleanQuery)) ||
+        (char.id && char.id.toLowerCase().replace(/\s+/g, '').includes(cleanQuery))
+      const abilityMatch = char.ability && char.ability.toLowerCase().replace(/\s+/g, '').includes(cleanQuery)
+      return nameMatch || abilityMatch
+    })
+  })
+})
+
+function getMatchedSelectCharactersString(script: Script): string {
+  const query = scriptSelectSearch.value.trim().toLowerCase()
+  if (!query) return ''
+  const cleanQuery = query.replace(/\s+/g, '')
+
+  const matchedNames = script.characters
+    .filter(char => {
+      const cleanCharName = normalizeName(char.name)
+      const cleanQueryName = normalizeName(cleanQuery)
+      const nameMatch =
+        cleanCharName.includes(cleanQueryName) ||
+        (char.name_en && char.name_en.toLowerCase().replace(/\s+/g, '').includes(cleanQuery))
+      const abilityMatch = char.ability && char.ability.toLowerCase().replace(/\s+/g, '').includes(cleanQuery)
+      return nameMatch || abilityMatch
+    })
+    .map(char => char.name)
+
+  if (matchedNames.length === 0) return ''
+  return matchedNames.slice(0, 3).join('、') + (matchedNames.length > 3 ? '...' : '')
+}
+
+async function handleSelectMainScript(script: Script) {
+  try {
+    await scriptStore.selectScript(script)
+    uiStore.activePoolPresetId = ''
+    uiStore.activePoolPresetName = ''
+    uiStore.excludedPoolIds = []
+    uiStore.resetSetupWizard()
+  } catch (err: any) {
+    console.error('切換劇本失敗:', err)
+    uiStore.showAlert('切換劇本失敗', `無法載入劇本「${script.name}」：\n${err?.message || err}`)
+  }
+}
 
 // 劇本歸類搜尋關鍵字與過濾屬性
 const scriptCategorizeSearch = ref('')
@@ -2596,5 +2742,67 @@ function moveCategory(index: number, direction: number) {
 }
 .modal-btn.confirm-btn:hover {
   background: #ecd27d;
+}
+
+/* 選取主要劇本分頁樣式 */
+.current-active-script-banner {
+  margin: 4px 16px 8px;
+  padding: 10px 14px;
+  background: rgba(201, 168, 76, 0.12);
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 8px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.active-script-label {
+  color: var(--color-text-muted);
+}
+
+.active-script-name {
+  color: var(--color-gold);
+}
+
+.selectable-script-item {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.selectable-script-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(201, 168, 76, 0.3);
+}
+
+.selectable-script-item.is-active-main-script {
+  background: rgba(201, 168, 76, 0.12);
+  border-color: var(--color-gold);
+}
+
+.active-script-badge {
+  color: var(--color-gold);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: rgba(201, 168, 76, 0.15);
+  border-radius: 6px;
+}
+
+.btn-select-main-script {
+  background: rgba(201, 168, 76, 0.15);
+  border: 1px solid rgba(201, 168, 76, 0.4);
+  color: var(--color-gold);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-select-main-script:hover {
+  background: var(--color-gold);
+  color: #121218;
 }
 </style>

@@ -55,3 +55,44 @@ test('all_character_sort.json 角色定義與 setup 屬性合規性驗證', () =
     assert.ok(Array.isArray(c.reminders), `角色 ${c.id} 的 reminders 必須為陣列`)
   })
 })
+
+test('開局面板 (RoleAssignmentPanel) 應移除前兩步並直接從挑選玩家角色 (select) 開始', () => {
+  const uiStorePath = path.resolve(__dirname, '../src/stores/uiStore.ts')
+  const panelPath = path.resolve(__dirname, '../src/components/RoleAssignmentPanel.vue')
+
+  const uiStoreContent = fs.readFileSync(uiStorePath, 'utf8')
+  const panelContent = fs.readFileSync(panelPath, 'utf8')
+
+  assert.ok(
+    uiStoreContent.includes("step: 'select'"),
+    'uiStore 初始開局步驟必須為 select'
+  )
+  assert.strictEqual(
+    panelContent.includes('class="step-pool"'),
+    false,
+    'RoleAssignmentPanel 模板應已移除原步驟 1 (step-pool)'
+  )
+  assert.strictEqual(
+    panelContent.includes('class="step-config"'),
+    false,
+    'RoleAssignmentPanel 模板應已移除原步驟 2 (step-config)'
+  )
+  assert.ok(
+    panelContent.includes('watch(totalPlayers, (p) => {\n  applyDefaultCounts(p)\n}, { immediate: true })') ||
+    panelContent.includes('applyDefaultCounts(p)'),
+    'RoleAssignmentPanel 必須自動讀取外部玩家人數 (totalPlayers) 並套用預設配比'
+  )
+})
+
+test('劇本管理系統 (ScriptEditorPanel) 應以「選取劇本」作為最左側首要顯示分頁', () => {
+  const editorPath = path.resolve(__dirname, '../src/components/ScriptEditorPanel.vue')
+  const editorContent = fs.readFileSync(editorPath, 'utf8')
+
+  assert.ok(
+    editorContent.includes("const activeTab = ref<'select' | 'create' | 'list' | 'categories'>('select')"),
+    'ScriptEditorPanel 預設分頁必須為 select (選取劇本)'
+  )
+  const selectTabIdx = editorContent.indexOf("activeTab === 'select'")
+  const createTabIdx = editorContent.indexOf("activeTab === 'create'")
+  assert.ok(selectTabIdx > -1 && createTabIdx > -1 && selectTabIdx < createTabIdx, '「選取劇本」分頁按鈕必須位於「建立劇本」左邊')
+})
