@@ -323,7 +323,19 @@ pub fn execute_action(gs: &mut GameState, cmd: &str, args: Value) -> Result<Valu
         // ─── 1. 遊戲基礎管理 ────────────────────────────────────
 
         // 取得完整遊戲狀態 (無額外參數)
-        "get_game_state" => {
+        "get_game_state" | "load_game_state" => {
+            serde_json::to_value(&*gs).map_err(|e| e.to_string())
+        }
+
+        // 儲存或還原該說書人的完整遊戲狀態
+        // 參數: { "state": GameState }
+        "save_game_state" => {
+            if let Some(state_val) = args.get("state") {
+                if let Ok(restored) = serde_json::from_value::<GameState>(state_val.clone()) {
+                    *gs = restored;
+                    gs.touch();
+                }
+            }
             serde_json::to_value(&*gs).map_err(|e| e.to_string())
         }
 
@@ -685,7 +697,7 @@ pub fn execute_action(gs: &mut GameState, cmd: &str, args: Value) -> Result<Valu
         // 設定惡魔偽裝身分槽位 (通常有 3 槽: 0, 1, 2)
         // 參數: { "slot": 0, "role": CharacterDef | null }
         "set_demon_bluff" => {
-            let slot = args.get("slot").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+            let slot = args.get("slot").or_else(|| args.get("index")).and_then(|v| v.as_u64()).unwrap_or(0) as usize;
             let role_val = args.get("role");
             let role: Option<CharacterDef> = match role_val {
                 Some(v) if !v.is_null() => serde_json::from_value(v.clone()).ok(),
@@ -701,7 +713,7 @@ pub fn execute_action(gs: &mut GameState, cmd: &str, args: Value) -> Result<Valu
         // 設定瘋子偽裝身分槽位
         // 參數: { "slot": 0, "role": CharacterDef | null }
         "set_lunatic_bluff" => {
-            let slot = args.get("slot").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+            let slot = args.get("slot").or_else(|| args.get("index")).and_then(|v| v.as_u64()).unwrap_or(0) as usize;
             let role_val = args.get("role");
             let role: Option<CharacterDef> = match role_val {
                 Some(v) if !v.is_null() => serde_json::from_value(v.clone()).ok(),

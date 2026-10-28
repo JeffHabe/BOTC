@@ -30,14 +30,17 @@ pub struct Room {
 /// 執行緒安全的房間列表資料庫 (Key: 房間代碼 room_id, Value: 房間實例 Room)
 pub type Db = Arc<RwLock<HashMap<String, Room>>>;
 
+/// 執行緒安全的說書人獨立魔典狀態表 (Key: session_id, Value: 該說書人的 GameState)
+pub type SessionStore = Arc<RwLock<HashMap<String, game::GameState>>>;
+
 /// Axum 全域共享狀態
 /// 注入至所有路由處理器 (Handler) 中，提供多執行緒安全存取
 #[derive(Clone)]
 pub struct AppState {
     /// 多人即時連線房間清單
     pub db: Db,
-    /// 魔典 (Grimoire) 核心遊戲狀態
-    pub game_state: Arc<RwLock<game::GameState>>,
+    /// 按說書人 Session 隔離的魔典 (Grimoire) 核心遊戲狀態表
+    pub sessions: SessionStore,
 }
 
 // ─── 主程式進入點 ──────────────────────────────────────────────
@@ -54,7 +57,7 @@ async fn main() {
     // 2. 建立全域執行緒安全狀態庫
     let state = AppState {
         db: Arc::new(RwLock::new(HashMap::new())),
-        game_state: Arc::new(RwLock::new(game::GameState::default())),
+        sessions: Arc::new(RwLock::new(HashMap::new())),
     };
 
     // 3. 建立並配置 HTTP / WebSocket 路由樹
@@ -101,30 +104,64 @@ pub fn create_app(state: AppState) -> Router {
 /// 欄位：
 /// - `cmd` : 指令名稱 (例如: "new_game", "add_player", "assign_role", "set_phase" 等)
 /// - `args`: 指令所附帶之具體參數物件 (例如: `{ "name": "小明" }`)
+/// - `session_id`: 說書人專屬 Session 識別碼 (未提供則由 Header 或預設 "default" 決定)
 #[derive(serde::Deserialize)]
 pub struct ActionRequest {
     pub cmd: String,
     #[serde(default)]
     pub args: Value,
+    #[serde(default)]
+    pub session_id: Option<String>,
 }
 
-/// [API] 取得魔典最新遊戲狀態
+#[derive(serde::Deserialize, Default)]
+pub struct SessionQuery {
+    pub session_id: Option<String>,
+}
+
+fn resolve_session_id(
+    headers: &axum::http::HeaderMap,
+    body_or_query_id: Option<&str>,
+) -> String {
+    if let Some(id) = body_or_query_id {
+        let trimmed = id.trim();
+        if !trimmed.is_empty() {
+            return trimmed.to_string();
+        }
+    }
+    if let Some(hdr) = headers.get("x-session-id").and_then(|v| v.to_str().ok()) {
+        let trimmed = hdr.trim();
+        if !trimmed.is_empty() {
+            return trimmed.to_string();
+        }
+    }
+    "default".to_string()
+}
+
+/// [API] 取得魔典最新遊戲狀態 (依說書人 Session 隔離)
 /// 
 /// 路由：`GET /api/game/state`
 /// 回應：`200 OK` + `GameState` JSON
-async fn game_state_handler(State(state): State<AppState>) -> impl IntoResponse {
-    let gs = state.game_state.read().await;
+async fn game_state_handler(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    axum::extract::Query(query): axum::extract::Query<SessionQuery>,
+) -> impl IntoResponse {
+    let sid = resolve_session_id(&headers, query.session_id.as_deref());
+    let mut sessions = state.sessions.write().await;
+    let gs = sessions.entry(sid).or_default();
     Json(serde_json::to_value(&*gs).unwrap_or(Value::Null))
 }
 
-/// [API] 執行魔典遊戲操作指令
+/// [API] 執行魔典遊戲操作指令 (依說書人 Session 隔離)
 /// 
 /// 路由：`POST /api/game/action`
 /// 請求 Body (JSON)：
 /// ```json
 /// {
 ///   "cmd": "add_player",
-///   "args": { "name": "玩家名稱" }
+///   "args": { "name": "玩家名稱" },
+///   "session_id": "storyteller-uuid"
 /// }
 /// ```
 /// 回應：
@@ -132,10 +169,13 @@ async fn game_state_handler(State(state): State<AppState>) -> impl IntoResponse 
 /// - 失敗：`400 Bad Request` + `{ "error": "錯誤原因說明" }`
 async fn game_action_handler(
     State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<ActionRequest>,
 ) -> impl IntoResponse {
-    let mut gs = state.game_state.write().await;
-    match game::execute_action(&mut gs, &req.cmd, req.args) {
+    let sid = resolve_session_id(&headers, req.session_id.as_deref());
+    let mut sessions = state.sessions.write().await;
+    let gs = sessions.entry(sid).or_default();
+    match game::execute_action(gs, &req.cmd, req.args) {
         Ok(val) => (axum::http::StatusCode::OK, Json(val)).into_response(),
         Err(err) => (
             axum::http::StatusCode::BAD_REQUEST,
@@ -342,7 +382,7 @@ mod tests {
     fn setup_test_state() -> AppState {
         AppState {
             db: Arc::new(RwLock::new(HashMap::new())),
-            game_state: Arc::new(RwLock::new(game::GameState::default())),
+            sessions: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -415,6 +455,81 @@ mod tests {
         let query_result: serde_json::Value = serde_json::from_slice(&state_body).unwrap();
         assert_eq!(query_result["players"].as_array().unwrap().len(), 1);
         assert_eq!(query_result["players"][0]["name"], "小明");
+    }
+
+    #[tokio::test]
+    async fn test_session_isolation_between_storytellers() {
+        let state = setup_test_state();
+        let app = create_app(state);
+
+        // 1. 說書人 A (session-a) 新增玩家 "手機A玩家"
+        let req_a = serde_json::json!({
+            "cmd": "add_player",
+            "args": { "name": "手機A玩家" },
+            "session_id": "session-a"
+        })
+        .to_string();
+
+        let res_a = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/api/game/action")
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .body(axum::body::Body::from(req_a))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res_a.status(), StatusCode::OK);
+
+        // 2. 說書人 B (session-b) 進入時查詢狀態，應為全新的空白魔典 (0 位玩家)
+        let req_b = serde_json::json!({
+            "cmd": "load_game_state",
+            "args": {},
+            "session_id": "session-b"
+        })
+        .to_string();
+
+        let res_b = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/api/game/action")
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .body(axum::body::Body::from(req_b))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res_b.status(), StatusCode::OK);
+        let body_b = res_b.into_body().collect().await.unwrap().to_bytes();
+        let state_b: serde_json::Value = serde_json::from_slice(&body_b).unwrap();
+        assert_eq!(
+            state_b["players"].as_array().unwrap().len(),
+            0,
+            "新說書人 B 進入時必須是空白魔典，不可看到說書人 A 的玩家"
+        );
+
+        // 3. 說書人 A 再次載入自己的狀態，應能看到自己上一次的 "手機A玩家"
+        let state_res_a = app
+            .oneshot(
+                Request::builder()
+                    .method("GET")
+                    .uri("/api/game/state")
+                    .header("x-session-id", "session-a")
+                    .body(axum::body::Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(state_res_a.status(), StatusCode::OK);
+        let state_body_a = state_res_a.into_body().collect().await.unwrap().to_bytes();
+        let query_a: serde_json::Value = serde_json::from_slice(&state_body_a).unwrap();
+        assert_eq!(query_a["players"].as_array().unwrap().len(), 1);
+        assert_eq!(query_a["players"][0]["name"], "手機A玩家");
     }
 }
 

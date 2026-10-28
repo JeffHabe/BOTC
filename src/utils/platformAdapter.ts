@@ -203,6 +203,31 @@ export async function sendNotification(title: string, body: string): Promise<voi
   }
 }
 
+// ─── 說書人獨立 Session 與本地狀態記憶 ─────────────────────────────
+
+const SESSION_ID_KEY = 'botc:session_id';
+const SAVED_GAME_STATE_KEY = 'botc:saved_game_state';
+
+/**
+ * 取得當前瀏覽器/裝置專屬的說書人 Session ID
+ * 若首次進入則自動產生並持久化至 localStorage，確保每位說書人擁有獨立魔典空間
+ */
+export function getSessionId(): string {
+  if (typeof localStorage !== 'undefined') {
+    const existing = localStorage.getItem(SESSION_ID_KEY);
+    if (existing && existing.trim()) {
+      return existing;
+    }
+    const newId =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `st-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    localStorage.setItem(SESSION_ID_KEY, newId);
+    return newId;
+  }
+  return 'default';
+}
+
 // ─── 安全 IPC 指令調用適配 ────────────────────────────────────────
 
 export async function safeInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T | null> {
@@ -216,29 +241,75 @@ export async function safeInvoke<T>(cmd: string, args?: Record<string, unknown>)
     }
   }
 
-  // Web 模式：透過 HTTP API 發送至 Rust 伺服器
+  const sessionId = getSessionId();
+
+  // Web 模式下同步將說書人的存檔寫入瀏覽器 localStorage，防止容器重啟遺失進度
+  if (cmd === 'save_game_state' && args?.state && typeof localStorage !== 'undefined') {
+    try {
+      localStorage.setItem(SAVED_GAME_STATE_KEY, JSON.stringify(args.state));
+    } catch (_) {}
+  }
+
+  // Web 模式下載入存檔時，若本地已有該說書人上次的對局紀錄，優先同步回伺服器 Session 並還原
+  let effectiveCmd = cmd;
+  let effectiveArgs = args || {};
+  let localSavedState: any = null;
+  if (cmd === 'load_game_state' && typeof localStorage !== 'undefined') {
+    try {
+      const raw = localStorage.getItem(SAVED_GAME_STATE_KEY);
+      if (raw) {
+        localSavedState = JSON.parse(raw);
+        if (localSavedState && Array.isArray(localSavedState.players)) {
+          effectiveCmd = 'save_game_state';
+          effectiveArgs = { state: localSavedState };
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Web 模式：透過 HTTP API 發送至 Rust 伺服器 (附帶專屬 session_id)
   if (typeof fetch !== 'undefined') {
     try {
       const baseUrl = typeof window !== 'undefined' && window.location?.origin ? '' : 'http://127.0.0.1:3030';
       const res = await fetch(`${baseUrl}/api/game/action`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cmd, args: args || {} }),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Id': sessionId,
+        },
+        body: JSON.stringify({
+          cmd: effectiveCmd,
+          args: effectiveArgs,
+          session_id: sessionId,
+        }),
       });
       if (res.ok) {
-        return (await res.json()) as T;
+        const data = (await res.json()) as T;
+        // 若回傳為有效 GameState，同步更新本地快取以便下次開啟即時恢復
+        if (
+          data &&
+          typeof data === 'object' &&
+          Array.isArray((data as any).players) &&
+          typeof localStorage !== 'undefined' &&
+          cmd !== 'load_game_state'
+        ) {
+          try {
+            localStorage.setItem(SAVED_GAME_STATE_KEY, JSON.stringify(data));
+          } catch (_) {}
+        }
+        return data;
       }
       const errData = await res.json().catch(() => ({}));
       console.warn(`[Adapter] Web API [${cmd}] 伺服器回應錯誤:`, errData);
-      return null;
+      return localSavedState as T | null;
     } catch (err: any) {
-      // 伺服器離線時安全靜默防護
+      // 伺服器離線時安全靜默防護，若有本地存檔則回退返回本地存檔
       if (typeof window !== 'undefined') {
         console.warn(`[Adapter] Web API [${cmd}] 連線失敗 (伺服器可能離線):`, err?.message || err);
       }
-      return null;
+      return localSavedState as T | null;
     }
   }
 
-  return null;
+  return localSavedState as T | null;
 }

@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { isTauri, existsAppData, writeAppData, readAppData, safeInvoke } from '../src/utils/platformAdapter.ts';
+import { isTauri, existsAppData, writeAppData, readAppData, safeInvoke, getSessionId } from '../src/utils/platformAdapter.ts';
 
 console.log('--- 開始執行 PlatformAdapter 平台轉接層測試 ---');
 
@@ -50,7 +50,23 @@ async function testSafeInvoke() {
   console.log('✔ 測試 4 通過：safeInvoke 安全防護機制運作正常');
 }
 
+// 測試 5：驗證說書人獨立 Session ID 產生與持久化
+function testSessionIdIsolation() {
+  mockStorage.clear();
+  const sid1 = getSessionId();
+  assert.ok(sid1 && sid1 !== 'default', '應自動為新瀏覽器產生唯一 Session ID');
+  const sid2 = getSessionId();
+  assert.strictEqual(sid1, sid2, '同一瀏覽器再次呼叫 getSessionId 應維持相同 Session ID');
+
+  // 模擬另一台裝置 (清空 localStorage)
+  mockStorage.clear();
+  const otherDeviceSid = getSessionId();
+  assert.notStrictEqual(sid1, otherDeviceSid, '不同裝置/瀏覽器應獲得獨立的 Session ID');
+  console.log('✔ 測試 5 通過：說書人獨立 Session ID 產生與持久化正常');
+}
+
 await testStorage();
 await testSafeInvoke();
+testSessionIdIsolation();
 
 console.log('🎉 所有 PlatformAdapter 測試全數通過！');
