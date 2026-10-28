@@ -134,3 +134,22 @@ test('左下角 + 號按鈕上方應新增「劇本管理」按鈕，且設置�
     'SettingsPanel.vue 內應繼續保留劇本管理按鈕'
   )
 })
+
+test('玩家令片 (PlayerToken.vue) 死亡標記應使用 /pic/shroud1.png 垂掛於令片正上方中央', () => {
+  const tokenPath = path.resolve(__dirname, '../src/components/PlayerToken.vue')
+  const tokenContent = fs.readFileSync(tokenPath, 'utf8')
+
+  assert.ok(
+    tokenContent.includes('src="/pic/shroud1.png"'),
+    'PlayerToken.vue 應使用 /pic/shroud1.png 作為死亡帷幕圖片'
+  )
+  assert.ok(
+    tokenContent.includes('class="death-shroud"'),
+    'PlayerToken.vue 應包含 class="death-shroud" 樣式類別'
+  )
+  assert.strictEqual(
+    tokenContent.includes('class="death-ribbon"'),
+    false,
+    'PlayerToken.vue 不應再包含舊版斜向死亡緞帶 (death-ribbon)'
+  )
+})

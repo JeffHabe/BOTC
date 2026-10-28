@@ -71,11 +71,13 @@
       </svg>
       </div>
       
-      <!-- 死亡緞帶 (絲綢風格 繁體/簡體) -->
-      <div v-if="!player.is_alive" class="death-ribbon" :class="deathTypeClass">
-        <span class="ribbon-text">{{ deathLabel[0] }}</span>
-        <span class="ribbon-text">{{ deathLabel[1] }}</span>
-      </div>
+      <!-- 死亡帷幕 (Shroud) -->
+      <img
+        v-if="!player.is_alive"
+        src="/pic/shroud1.png"
+        alt="死亡"
+        class="death-shroud"
+      />
 
       <!-- 夜晚順序標誌 (祖母綠切割寶石) -->
       <!-- 只有在準備或首夜階段才顯示首夜順序 -->
@@ -511,18 +513,6 @@ function getReminderIcon(text: string) {
   if (text.includes('偵測') || text.includes('查')) return '🔍'
   return text.charAt(0)
 }
-
-const deathLabel = computed(() => {
-  if (props.player.reminders.some(r => r.text === '處決')) return '處決'
-  if (props.player.reminders.some(r => r.text === '被殺')) return '被殺'
-  return '死亡'
-})
-
-const deathTypeClass = computed(() => {
-  if (props.player.reminders.some(r => r.text === '處決')) return 'type-execution'
-  if (props.player.reminders.some(r => r.text === '被殺')) return 'type-killed'
-  return ''
-})
 </script>
 
 <style scoped>
@@ -705,60 +695,18 @@ const deathTypeClass = computed(() => {
   letter-spacing: 4px; 
 }
 
-.death-ribbon {
+.death-shroud {
   position: absolute;
-  top: 55%; /* 稍微偏下方，完美環繞角色圖示 */
-  left: -15%;
-  right: -15%;
-  height: 15px;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(122, 26, 26, 0.9) 10%, 
-    rgba(159, 26, 26, 0.6) 25%, 
-    rgba(159, 26, 26, 0.6) 75%, 
-    rgba(122, 26, 26, 0.9) 90%, 
-    transparent 100%
-  );
-  border-top: 1px solid rgba(255,255,255,0.1);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  transform: translateY(-50%) rotate(-15deg);
-  display: flex;
-  align-items: center;
-  justify-content: space-between; /* 讓 "死" 與 "亡" 分居兩側 */
-  padding: 0 18%; /* 調整間距，確保文字剛好在令片邊緣內側 */
+  top: -6%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44%;
+  height: auto;
+  object-fit: contain;
   z-index: 5;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.death-ribbon.type-execution {
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(139, 26, 26, 0.95) 10%, 
-    rgba(224, 32, 32, 0.6) 25%, 
-    rgba(224, 32, 32, 0.6) 75%, 
-    rgba(139, 26, 26, 0.95) 90%, 
-    transparent 100%
-  );
-}
-
-.death-ribbon.type-killed {
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(74, 10, 10, 0.95) 10%, 
-    rgba(100, 20, 20, 0.6) 25%, 
-    rgba(100, 20, 20, 0.6) 75%, 
-    rgba(74, 10, 10, 0.95) 90%, 
-    transparent 100%
-  );
-}
-
-.ribbon-text {
-  font-size: 11px;
-  font-weight: 900;
-  color: #fff;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
-  /* 移除原有的 letter-spacing，因為現在是分開的 */
+  pointer-events: none;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.65));
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .reminders-classic-container {
