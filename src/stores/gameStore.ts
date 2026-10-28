@@ -151,6 +151,12 @@ export const useGameStore = defineStore('game', () => {
         const found = scriptStore.customScripts.find(s => s.id === newState.script.id) ||
                       (scriptStore.masterScript.id === newState.script.id ? scriptStore.masterScript : null)
         if (found) {
+          if (found.logo) {
+            newState.script.logo = found.logo
+          }
+          if (found.name_en) {
+            newState.script.name_en = found.name_en
+          }
           if (found.custom_first_night_order) {
             newState.script.custom_first_night_order = [...found.custom_first_night_order]
           }
@@ -164,6 +170,12 @@ export const useGameStore = defineStore('game', () => {
             newState.script.physical_image_back = found.physical_image_back
           }
         } else if (state.value?.script?.id === newState.script.id) {
+          if (state.value.script.logo && !newState.script.logo) {
+            newState.script.logo = state.value.script.logo
+          }
+          if (state.value.script.name_en && !newState.script.name_en) {
+            newState.script.name_en = state.value.script.name_en
+          }
           if (state.value.script.custom_first_night_order) {
             newState.script.custom_first_night_order = [...state.value.script.custom_first_night_order]
           }

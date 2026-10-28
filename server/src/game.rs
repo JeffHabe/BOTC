@@ -186,8 +186,14 @@ pub struct Script {
     pub id: String,
     /// 劇本名稱 (例如 "暗流湧動", "災禍滋生")
     pub name: String,
+    /// 劇本英文名
+    #[serde(default)]
+    pub name_en: Option<String>,
     /// 劇本作者名稱
     pub author: Option<String>,
+    /// 劇本圖示 (Logo) 網址
+    #[serde(default)]
+    pub logo: Option<String>,
     /// 劇本所包含的角色清單
     pub characters: Vec<CharacterDef>,
     /// 劇本分類 (例如 "官方劇本", "自訂劇本")
@@ -204,7 +210,9 @@ impl Script {
         Self {
             id: "all_character_sort".to_string(),
             name: "全角色大全".to_string(),
+            name_en: None,
             author: None,
+            logo: None,
             characters: Vec::new(),
             category: None,
             custom_first_night_order: None,

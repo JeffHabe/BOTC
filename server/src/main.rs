@@ -600,5 +600,27 @@ mod tests {
         assert!(!gs.nominations[0].executed);
         assert!(gs.players[1].is_alive);
     }
+
+    #[tokio::test]
+    async fn test_set_script_preserves_logo() {
+        let mut gs = game::GameState::default();
+        let script_payload = serde_json::json!({
+            "script": {
+                "id": "custom_small_bottle",
+                "name": "小瓶子",
+                "name_en": "Small Bottle",
+                "author": "測試作者",
+                "logo": "https://i0.hdslb.com/bfs/new_dyn/43f12860ef5fe86e9f9bf9d6ea35381844902471.png",
+                "characters": [],
+                "category": "自訂劇本"
+            }
+        });
+        let res = game::execute_action(&mut gs, "set_script", script_payload).unwrap();
+        assert_eq!(gs.script.name, "小瓶子");
+        assert_eq!(gs.script.logo, Some("https://i0.hdslb.com/bfs/new_dyn/43f12860ef5fe86e9f9bf9d6ea35381844902471.png".to_string()));
+        assert_eq!(gs.script.name_en, Some("Small Bottle".to_string()));
+        assert_eq!(res["script"]["logo"], "https://i0.hdslb.com/bfs/new_dyn/43f12860ef5fe86e9f9bf9d6ea35381844902471.png");
+        assert_eq!(res["script"]["name_en"], "Small Bottle");
+    }
 }
 

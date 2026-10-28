@@ -62,7 +62,7 @@
         <div class="center-logo-inner">
           <img 
             v-if="gameStore.script?.logo && !logoLoadFailed" 
-            :src="gameStore.script.logo" 
+            :src="scriptStore.getScriptImageUrl(gameStore.script.logo) || gameStore.script.logo" 
             referrerpolicy="no-referrer"
             @error="handleLogoError"
             class="center-logo-img" 
@@ -507,7 +507,7 @@ const scriptStore = useScriptStore()
 
 // --- 劇本 Logo 載入出錯 Fallback 處理 ───
 const logoLoadFailed = ref(false)
-watch(() => gameStore.script?.logo, () => {
+watch([() => gameStore.script?.logo, () => gameStore.script?.id], () => {
   logoLoadFailed.value = false
 })
 function handleLogoError() {
