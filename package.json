@@ -1,7 +1,7 @@
 {
   "name": "tauri-app",
   "private": true,
-  "version": "0.1.285",
+  "version": "0.1.286",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,6 +13,7 @@
     "verify:cp4": "node scripts/verify/verify-cp4.cjs",
     "verify:cp5": "node scripts/verify/verify-cp5.cjs",
     "verify:all": "node scripts/verify/verify-all.cjs",
+    "update:presets": "node scripts/update-presets.cjs",
     "build": "node scripts/check-dict.js && vite build",
     "type-check": "vue-tsc --noEmit",
     "preview": "vite preview",

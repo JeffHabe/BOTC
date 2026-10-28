@@ -32,6 +32,17 @@ services:
     networks:
       - botc-net
 
+  # ─── 3. Cloudflare Tunnel 遠端穿透 (公網安全訪問) ────────────
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: botc-cloudflared
+    restart: unless-stopped
+    command: tunnel run --token eyJhIjoiNDkzOTc1OTc2YzkzODlhMDhhNzNlZGU5ZGIzMzVkMDMiLCJ0IjoiYzgxZDJmZWUtMGU5NS00MGVjLWEwNTctYmEyNmNiZjY4YmMxIiwicyI6Ik5UY3hObUZpT1RBdFpEVmxZaTAwTVRRMExXRmpZemd0TWpRNFpEVXhOekpqWVdKaiJ9
+    networks:
+      - botc-net
+    depends_on:
+      - nginx
+
 # ─── 專屬隔離虛擬網路 ──────────────────────────────────────────
 networks:
   botc-net:
