@@ -2126,77 +2126,89 @@ const activePanelComponent = computed(() => {
    ───────────────────────────────────────────────────────────────────────── */
 .view-physical-script-btn {
   position: fixed;
-  bottom: calc(75px + env(safe-area-inset-bottom, 16px) + 120px);
-  left: 24px;
-  width: 52px;
-  height: 52px;
+  bottom: calc(30px + env(safe-area-inset-bottom, 16px) + 88px);
+  left: 12px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: linear-gradient(135deg, #3d2512 0%, #1e1008 100%);
-  border: 2px solid #c8a96e;
+  border: 1.5px solid #c8a96e;
   color: #d4c8b0;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.5), 0 0 10px rgba(200,169,110,0.35);
-  transition: box-shadow 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 8px rgba(200,169,110,0.35);
+  transition: box-shadow 0.2s ease, transform 0.15s ease, border-color 0.2s ease, opacity 0.3s ease;
   cursor: pointer;
 }
 
 .script-manager-btn {
   position: fixed;
-  bottom: calc(75px + env(safe-area-inset-bottom, 16px) + 60px);
-  left: 24px;
-  width: 52px;
-  height: 52px;
+  bottom: calc(30px + env(safe-area-inset-bottom, 16px) + 44px);
+  left: 12px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: #2a1b15;
-  border: 2px solid #8d6e63;
+  background: rgba(42, 27, 21, 0.85);
+  border: 1.5px solid #8d6e63;
   color: #d4c8b0;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-  transition: box-shadow 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  transition: box-shadow 0.2s ease, transform 0.15s ease, border-color 0.2s ease, opacity 0.3s ease;
   cursor: pointer;
 }
 
 .view-physical-script-btn:hover,
-.script-manager-btn:hover {
+.script-manager-btn:hover,
+.add-player-btn:hover {
   transform: scale(1.08);
   border-color: #f0d080;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.6), 0 0 14px rgba(200,169,110,0.6);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.6), 0 0 12px rgba(200,169,110,0.6);
 }
 
 .view-physical-script-btn:active,
-.script-manager-btn:active {
+.script-manager-btn:active,
+.add-player-btn:active {
   transform: scale(0.95);
   box-shadow: 0 4px 10px rgba(0,0,0,0.7), 0 0 6px rgba(200,169,110,0.4);
 }
 
 .view-script-icon {
-  width: 28px;
-  height: 28px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   filter: brightness(1.3) sepia(0.3);
 }
 
 .add-player-btn {
   position: fixed;
-  bottom: calc(75px + env(safe-area-inset-bottom, 16px));
-  left: 24px;
-  width: 52px;
-  height: 52px;
+  bottom: calc(30px + env(safe-area-inset-bottom, 16px));
+  left: 12px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: #2a1b15;
-  border: 2px solid #8d6e63;
+  background: rgba(42, 27, 21, 0.85);
+  border: 1.5px solid #8d6e63;
   color: #d4c8b0;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  transition: box-shadow 0.2s ease, transform 0.15s ease, border-color 0.2s ease, opacity 0.3s ease;
+  cursor: pointer;
+}
+
+/* 當有面板開啟時隱藏左下角按鈕群，避免視覺擁擠 */
+.panel-open .view-physical-script-btn,
+.panel-open .script-manager-btn,
+.panel-open .add-player-btn {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .side-action-group {
