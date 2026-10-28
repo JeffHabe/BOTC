@@ -220,6 +220,16 @@
 
           </button>
 
+          <button
+            v-if="gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup'"
+            key="role-assignment"
+            class="menu-btn"
+            @click="uiStore.openPanel('role-assignment'); uiStore.isSideToolbarExpanded = false"
+            title="開局"
+          >
+            <img class="icon" src="/pic/theater.png" />
+          </button>
+
           <button key="night-order" class="menu-btn" @click="uiStore.openPanel('night-order'); uiStore.isSideToolbarExpanded = false" title="夜晚順序">
             <!-- <span class="icon">🌙</span> -->
              <img class="icon" src="/pic/day-and-night.png" />

@@ -96,3 +96,21 @@ test('劇本管理系統 (ScriptEditorPanel) 應以「選取劇本」作為最�
   const createTabIdx = editorContent.indexOf("activeTab === 'create'")
   assert.ok(selectTabIdx > -1 && createTabIdx > -1 && selectTabIdx < createTabIdx, '「選取劇本」分頁按鈕必須位於「建立劇本」左邊')
 })
+
+test('外部工具列 (GrimoireBoard.vue .side-action-group) 應鎖定「開局」按鈕並於首夜階段顯示', () => {
+  const boardPath = path.resolve(__dirname, '../src/components/GrimoireBoard.vue')
+  const boardContent = fs.readFileSync(boardPath, 'utf8')
+
+  assert.ok(
+    boardContent.includes('key="role-assignment"'),
+    '側邊工具列應包含 key="role-assignment" 的開局按鈕'
+  )
+  assert.ok(
+    boardContent.includes("uiStore.openPanel('role-assignment'); uiStore.isSideToolbarExpanded = false"),
+    '點擊開局按鈕應開啟 role-assignment 面板並收起側邊工具列'
+  )
+  assert.ok(
+    boardContent.includes("gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup'"),
+    '工具列開局按鈕應限制於首夜階段顯示'
+  )
+})
