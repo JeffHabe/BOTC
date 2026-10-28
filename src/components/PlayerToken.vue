@@ -30,13 +30,28 @@
       <div class="name-label-box" :class="[namePositionClass, { 'has-reminders': player.reminders.length > 0 }]" :style="nameStyle">
         <span class="seat-num">{{ index + 1 }}.</span>
         <span class="player-name-text">{{ player.name || '' }}</span>
-        <!-- 狀態圖示 (是否有投票權等) 移入姓名標籤中 -->
-        <div class="status-indicators-inline">
-          <span v-if="!player.is_alive && player.has_ghost_vote" class="ghost-vote" title="擁有靈魂投票權">
-            <img src="/pic/grave.png" class="ghost-vote-img" />
+        <!-- 狀態圖示 (白天顯示提名權、被提權、死亡票) -->
+        <div v-if="gameStore.phase === 'Day'" class="status-indicators-inline">
+          <span
+            v-if="player.is_alive && (player.can_nominate || (player.extra_nominations && player.extra_nominations > 0))"
+            class="can-nominate-indicator"
+            title="今日尚有提名權"
+          >
+            <img src="/pic/nomination.png" class="status-indicator-img" />
           </span>
-          <span v-if="!player.can_nominate && !(player.extra_nominations && player.extra_nominations > 0)" class="nominate-lock" title="今日已不能提名">
-            <img src="/pic/nomination.png" class="nominate-lock-img" />
+          <span
+            v-if="!player.is_nominated"
+            class="can-be-nominated-indicator"
+            title="今日尚可被提名"
+          >
+            <img src="/pic/vote.png" class="status-indicator-img" />
+          </span>
+          <span
+            v-if="!player.is_alive && (player.has_ghost_vote || (player.extra_votes && player.extra_votes > 0))"
+            class="ghost-vote"
+            title="擁有死亡票 (靈魂投票權)"
+          >
+            <img src="/pic/grave.png" class="status-indicator-img ghost-vote-img" />
           </span>
         </div>
       </div>
@@ -859,14 +874,8 @@ function getReminderIcon(text: string) {
   line-height: 1;
 }
 
+.status-indicators-inline .status-indicator-img,
 .status-indicators-inline .ghost-vote-img {
-  width: 11px;
-  height: 11px;
-  object-fit: contain;
-  vertical-align: middle;
-}
-
-.status-indicators-inline .nominate-lock-img {
   width: 11px;
   height: 11px;
   object-fit: contain;

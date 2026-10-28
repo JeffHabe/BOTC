@@ -153,3 +153,28 @@ test('玩家令片 (PlayerToken.vue) 死亡標記應使用 /pic/shroud1.png 垂�
     'PlayerToken.vue 不應再包含舊版斜向死亡緞帶 (death-ribbon)'
   )
 })
+
+test('玩家令片 (PlayerToken.vue) 名字後方應於每天白天顯示提名權、被提權、死亡票圖示', () => {
+  const tokenPath = path.resolve(__dirname, '../src/components/PlayerToken.vue')
+  const tokenContent = fs.readFileSync(tokenPath, 'utf8')
+
+  assert.ok(
+    tokenContent.includes('v-if="gameStore.phase === \'Day\'" class="status-indicators-inline"'),
+    'status-indicators-inline 應限定於白天 (Day) 階段顯示'
+  )
+  assert.ok(
+    tokenContent.includes('v-if="player.is_alive && (player.can_nominate || (player.extra_nominations && player.extra_nominations > 0))"') &&
+    tokenContent.includes('src="/pic/nomination.png"'),
+    '存活玩家尚有提名權時應顯示 /pic/nomination.png'
+  )
+  assert.ok(
+    tokenContent.includes('v-if="!player.is_nominated"') &&
+    tokenContent.includes('src="/pic/vote.png"'),
+    '玩家尚有被提權時應顯示 /pic/vote.png'
+  )
+  assert.ok(
+    tokenContent.includes('v-if="!player.is_alive && (player.has_ghost_vote || (player.extra_votes && player.extra_votes > 0))"') &&
+    tokenContent.includes('src="/pic/grave.png"'),
+    '死亡玩家尚有死亡票時應顯示 /pic/grave.png'
+  )
+})
