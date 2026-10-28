@@ -114,3 +114,23 @@ test('外部工具列 (GrimoireBoard.vue .side-action-group) 應鎖定「開局�
     '工具列開局按鈕應限制於首夜階段顯示'
   )
 })
+
+test('左下角 + 號按鈕上方應新增「劇本管理」按鈕，且設置面板內仍保留「劇本管理」', () => {
+  const boardPath = path.resolve(__dirname, '../src/components/GrimoireBoard.vue')
+  const settingsPath = path.resolve(__dirname, '../src/components/SettingsPanel.vue')
+  const boardContent = fs.readFileSync(boardPath, 'utf8')
+  const settingsContent = fs.readFileSync(settingsPath, 'utf8')
+
+  const scriptBtnIdx = boardContent.indexOf('class="script-manager-btn"')
+  const addPlayerBtnIdx = boardContent.indexOf('class="add-player-btn"')
+  assert.ok(scriptBtnIdx > -1, 'GrimoireBoard.vue 應包含 class="script-manager-btn" 的劇本管理按鈕')
+  assert.ok(scriptBtnIdx < addPlayerBtnIdx, '劇本管理按鈕應位於新增玩家 (+號) 按鈕上方')
+  assert.ok(
+    boardContent.includes('@click="uiStore.openPanel(\'script-editor\')"'),
+    '點擊左下角劇本管理按鈕應開啟 script-editor 面板'
+  )
+  assert.ok(
+    settingsContent.includes('@click="openScriptEditor"'),
+    'SettingsPanel.vue 內應繼續保留劇本管理按鈕'
+  )
+})

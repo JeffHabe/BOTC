@@ -186,7 +186,7 @@
     </div>
 
     <!-- 側邊或浮動按鈕 -->
-    <!-- 檢視實體劇本按鈕 (只在有 physical_image 或 physical_image_back 時顯示，位於加號按鈕正上方) -->
+    <!-- 檢視實體劇本按鈕 (只在有 physical_image 或 physical_image_back 時顯示，位於劇本管理按鈕正上方) -->
     <button
       v-if="!showPhysicalImageOverlay && (gameStore.script?.physical_image || gameStore.script?.physical_image_back)"
       class="view-physical-script-btn"
@@ -196,7 +196,17 @@
       <img src="/pic/magic-book.png" class="view-script-icon" />
     </button>
 
-    <button v-if="!showPhysicalImageOverlay" class="add-player-btn" @click="uiStore.addPlayerDialogOpen = true">
+    <!-- 劇本管理按鈕 (位於加號按鈕正上方) -->
+    <button
+      v-if="!showPhysicalImageOverlay"
+      class="script-manager-btn"
+      @click="uiStore.openPanel('script-editor')"
+      title="劇本管理"
+    >
+      <img src="/pic/spellbook.png" class="view-script-icon" />
+    </button>
+
+    <button v-if="!showPhysicalImageOverlay" class="add-player-btn" @click="uiStore.addPlayerDialogOpen = true" title="新增玩家">
       <img src="/pic/plus.png" class="icon" />
     </button>
 
@@ -2116,7 +2126,7 @@ const activePanelComponent = computed(() => {
    ───────────────────────────────────────────────────────────────────────── */
 .view-physical-script-btn {
   position: fixed;
-  bottom: calc(75px + env(safe-area-inset-bottom, 16px) + 60px);
+  bottom: calc(75px + env(safe-area-inset-bottom, 16px) + 120px);
   left: 24px;
   width: 52px;
   height: 52px;
@@ -2133,13 +2143,34 @@ const activePanelComponent = computed(() => {
   cursor: pointer;
 }
 
-.view-physical-script-btn:hover {
+.script-manager-btn {
+  position: fixed;
+  bottom: calc(75px + env(safe-area-inset-bottom, 16px) + 60px);
+  left: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #2a1b15;
+  border: 2px solid #8d6e63;
+  color: #d4c8b0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+  transition: box-shadow 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.view-physical-script-btn:hover,
+.script-manager-btn:hover {
   transform: scale(1.08);
   border-color: #f0d080;
   box-shadow: 0 8px 20px rgba(0,0,0,0.6), 0 0 14px rgba(200,169,110,0.6);
 }
 
-.view-physical-script-btn:active {
+.view-physical-script-btn:active,
+.script-manager-btn:active {
   transform: scale(0.95);
   box-shadow: 0 4px 10px rgba(0,0,0,0.7), 0 0 6px rgba(200,169,110,0.4);
 }
