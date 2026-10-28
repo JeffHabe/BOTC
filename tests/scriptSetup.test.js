@@ -95,6 +95,14 @@ test('劇本管理系統 (ScriptEditorPanel) 應以「選取劇本」作為最�
   const selectTabIdx = editorContent.indexOf("activeTab === 'select'")
   const createTabIdx = editorContent.indexOf("activeTab === 'create'")
   assert.ok(selectTabIdx > -1 && createTabIdx > -1 && selectTabIdx < createTabIdx, '「選取劇本」分頁按鈕必須位於「建立劇本」左邊')
+  assert.ok(
+    editorContent.includes('height: 85vh;') && editorContent.includes('height: 85dvh;'),
+    'ScriptEditorPanel 高度應設為 85vh / 85dvh 以避免手機瀏覽器頂部網址列遮擋關閉按鈕'
+  )
+  assert.ok(
+    editorContent.includes('class="edition-scroll-wrapper" style="margin: 0; padding: 0 16px 8px;"'),
+    '選取劇本分頁的分類篩選列必須覆蓋為 margin: 0 以免第一顆「全部」按鈕貼死左邊界'
+  )
 })
 
 test('外部工具列 (GrimoireBoard.vue .side-action-group) 應鎖定「開局」按鈕並於首夜階段顯示', () => {
@@ -132,6 +140,10 @@ test('左下角 + 號按鈕上方應新增「劇本管理」按鈕，且設置�
   assert.ok(
     settingsContent.includes('@click="openScriptEditor"'),
     'SettingsPanel.vue 內應繼續保留劇本管理按鈕'
+  )
+  assert.ok(
+    boardContent.includes('.script-manager-btn {\n  position: fixed;\n  bottom: calc(30px + env(safe-area-inset-bottom, 16px) + 44px);\n  left: 12px;\n  width: 36px;\n  height: 36px;'),
+    '左下角按鈕應縮小為 36px 並貼齊左下角 (left: 12px, bottom: 30px 基準) 以避開玩家令片'
   )
 })
 

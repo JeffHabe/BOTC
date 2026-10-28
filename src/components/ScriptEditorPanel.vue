@@ -51,7 +51,7 @@
           </div>
 
           <!-- 分類篩選列 -->
-          <div class="edition-scroll-wrapper" style="padding: 0 16px 8px;">
+          <div class="edition-scroll-wrapper" style="margin: 0; padding: 0 16px 8px;">
             <div class="edition-filters-row">
               <button 
                 class="filter-pill-new" 
@@ -1692,8 +1692,10 @@ function moveCategory(index: number, direction: number) {
 .editor-panel {
   width: 100%;
   max-width: 440px;
-  height: 95vh;
-  /* 固定高度，防止分頁切換時面板高度抖動 */
+  height: 85vh;
+  height: 85dvh;
+  max-height: calc(100% - env(safe-area-inset-top, 16px) - 16px);
+  /* 固定高度，防止分頁切換時面板高度抖動，並預留手機瀏覽器頂部網址列空間 */
   display: flex;
   flex-direction: column;
   border-radius: 20px 20px 12px 12px;
