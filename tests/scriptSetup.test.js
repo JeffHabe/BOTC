@@ -391,3 +391,38 @@ test('劇本相剋規則 (conflicts) 前端兼容轉換與保留完整物件驗�
     'gameStore.ts 在 syncState 時必須保留前端完整的 conflicts Jinx 物件'
   )
 })
+
+test('魔像 (Golem) 整場對局僅限提名一次驗證 (VotingPanel 排除、PlayerControlSheet 禁用與說明文字)', () => {
+  // 1. 檢查 VotingPanel.vue 的 canNominate 下拉清單中已過濾已提名的魔像
+  const votingPath = path.resolve(__dirname, '../src/components/VotingPanel.vue')
+  const votingContent = fs.readFileSync(votingPath, 'utf8')
+  assert.ok(
+    votingContent.includes("p.role?.id === 'golem'") &&
+    votingContent.includes("gameStore.nominations.some(n => n.nominator_id === p.id)"),
+    'VotingPanel.vue 必須將整場已發起過提名的魔像從可提名下拉選單中排除'
+  )
+
+  // 2. 檢查 PlayerControlSheet.vue 禁用魔像按鈕與顯示每局限一次提示文字
+  const sheetPath = path.resolve(__dirname, '../src/components/PlayerControlSheet.vue')
+  const sheetContent = fs.readFileSync(sheetPath, 'utf8')
+  assert.ok(
+    sheetContent.includes("p.role?.id === 'golem'") &&
+    sheetContent.includes("gameStore.nominations.some(n => n.nominator_id === p.id)"),
+    'PlayerControlSheet.vue 必須在魔像已有提名紀錄時判定禁用提名按鈕'
+  )
+  assert.ok(
+    sheetContent.includes('每局限一次（已使用）') &&
+    sheetContent.includes('每局限一次（可提名）'),
+    'PlayerControlSheet.vue 必須提供魔像專屬之每局限一次說明文字'
+  )
+
+  // 3. 檢查後端 server/src/game.rs 換天推進時鎖定魔像提名權
+  const gameRsPath = path.resolve(__dirname, '../server/src/game.rs')
+  const gameRsContent = fs.readFileSync(gameRsPath, 'utf8')
+  assert.ok(
+    gameRsContent.includes('r.id == "golem"') &&
+    gameRsContent.includes('has_nominated_before') &&
+    gameRsContent.includes('p.can_nominate = false;'),
+    'server/src/game.rs 在 advance_phase 換天推進時必須鎖定魔像，不重設其提名權'
+  )
+})

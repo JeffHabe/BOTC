@@ -646,10 +646,18 @@ pub fn execute_action(gs: &mut GameState, cmd: &str, args: Value) -> Result<Valu
                 GamePhase::Day => {
                     gs.phase = GamePhase::Night;
                     gs.round += 1;
+                    let past_noms = gs.nominations.clone();
                     for p in gs.players.iter_mut() {
                         p.is_nominated = false;
                         if p.is_alive {
-                            p.can_nominate = true;
+                            // 魔像 (golem) 整場遊戲僅限發起一次提名
+                            let is_golem = p.role.as_ref().map_or(false, |r| r.id == "golem");
+                            let has_nominated_before = past_noms.iter().any(|nom| nom.nominator_id == p.id);
+                            if is_golem && has_nominated_before {
+                                p.can_nominate = false;
+                            } else {
+                                p.can_nominate = true;
+                            }
                         }
                     }
                 }
@@ -722,6 +730,15 @@ pub fn execute_action(gs: &mut GameState, cmd: &str, args: Value) -> Result<Valu
         "nominate" => {
             let nominator_id = args.get("nominator_id").or_else(|| args.get("nominatorId")).and_then(|v| v.as_str()).unwrap_or("");
             let nominee_id = args.get("nominee_id").or_else(|| args.get("nomineeId")).and_then(|v| v.as_str()).unwrap_or("");
+            if let Some(nominator) = gs.players.iter().find(|p| p.id == nominator_id) {
+                if !nominator.can_nominate && nominator.extra_nominations == 0 {
+                    let is_golem = nominator.role.as_ref().map_or(false, |r| r.id == "golem");
+                    if is_golem {
+                        return Err("魔像每場對局僅限發起一次提名".into());
+                    }
+                    return Err("該提名者今日已發起過提名".into());
+                }
+            }
             let threshold = gs.execution_threshold();
             gs.nominations.push(Nomination {
                 nominator_id: nominator_id.to_string(),

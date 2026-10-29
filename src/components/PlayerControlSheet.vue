@@ -105,7 +105,7 @@
                 <div>
                   <div class="t-title">提名權</div>
                   <div class="t-sub">
-                    {{ canPlayerNominate ? (player.extra_nominations ? `剩餘 ${player.extra_nominations + 1} 次` : '可以提名') : '不可提名' }}
+                    {{ nominateSubtext }}
                   </div>
                 </div>
               </div>
@@ -166,7 +166,12 @@ const player = computed(() => {
 const isNominatorDisabled = computed(() => {
   const p = player.value
   if (!p) return true
-  if (p.is_alive) return !p.can_nominate
+  if (p.is_alive) {
+    if (p.role?.id === 'golem' && gameStore.nominations.some(n => n.nominator_id === p.id)) {
+      return true
+    }
+    return !p.can_nominate
+  }
   if (p.role?.id === 'banshee') {
     return !p.can_nominate && !(p.extra_nominations && p.extra_nominations > 0)
   }
@@ -176,6 +181,20 @@ const isNominatorDisabled = computed(() => {
 // 死者不能發起提名 (非報喪女妖特例)，提示燈與提名資格嚴格連動
 const canPlayerNominate = computed(() => {
   return !isNominatorDisabled.value
+})
+
+const nominateSubtext = computed(() => {
+  const p = player.value
+  if (!p) return '不可提名'
+  if (p.role?.id === 'golem') {
+    const hasNominated = gameStore.nominations.some(n => n.nominator_id === p.id)
+    if (hasNominated) return '每局限一次（已使用）'
+    if (canPlayerNominate.value) return '每局限一次（可提名）'
+  }
+  if (canPlayerNominate.value) {
+    return p.extra_nominations ? `剩餘 ${p.extra_nominations + 1} 次` : '可以提名'
+  }
+  return '不可提名'
 })
 
 // 偵測玩家是否處於保護狀態 (僅偵測當晚/當輪設定的標記，且發動者必須狀態正常)

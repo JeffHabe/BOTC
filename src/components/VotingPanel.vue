@@ -319,7 +319,13 @@ function getExecutionStatus(nomIndex: number) {
 }
 
 const canNominate = computed(() =>
-  gameStore.players.filter(p => p.can_nominate)
+  gameStore.players.filter(p => {
+    if (!p.can_nominate) return false
+    if (p.role?.id === 'golem' && gameStore.nominations.some(n => n.nominator_id === p.id)) {
+      return false
+    }
+    return true
+  })
 )
 const notYetNominated = computed(() =>
   gameStore.players.filter(p => !p.is_nominated)
@@ -374,9 +380,14 @@ function pIndex(id: string) {
 const availableNominatorsForEdit = computed(() => {
   if (editingNomIndex.value === null) return []
   const currentNom = nominations.value[editingNomIndex.value]
-  return gameStore.players.filter(p => 
-    p.can_nominate || p.id === currentNom.nominator_id
-  )
+  return gameStore.players.filter(p => {
+    if (p.id === currentNom.nominator_id) return true
+    if (!p.can_nominate) return false
+    if (p.role?.id === 'golem' && gameStore.nominations.some((n, idx) => idx !== editingNomIndex.value && n.nominator_id === p.id)) {
+      return false
+    }
+    return true
+  })
 })
 
 const availableNomineesForEdit = computed(() => {

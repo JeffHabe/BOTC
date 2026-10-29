@@ -437,10 +437,17 @@ pub fn advance_phase(state: State<AppState>) -> GameState {
         GamePhase::Day => {
             // 在進入夜晚時增加輪次
             gs.round += 1;
+            let past_noms = gs.nominations.clone();
             for p in gs.players.iter_mut() {
                 p.is_nominated = false;
                 if p.is_alive {
-                    p.can_nominate = true;
+                    let is_golem = p.role.as_ref().map_or(false, |r| r.id == "golem");
+                    let has_nominated_before = past_noms.iter().any(|nom| nom.nominator_id == p.id);
+                    if is_golem && has_nominated_before {
+                        p.can_nominate = false;
+                    } else {
+                        p.can_nominate = true;
+                    }
                 }
             }
             GamePhase::Night

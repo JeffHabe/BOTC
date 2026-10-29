@@ -731,5 +731,69 @@ mod tests {
         assert_eq!(gs.phase, game::GamePhase::FirstNight);
         assert_eq!(gs.round, 1);
     }
+
+    #[tokio::test]
+    async fn test_golem_once_per_game_nomination_limit() {
+        let mut gs = game::GameState::default();
+        let _ = game::execute_action(&mut gs, "add_player", serde_json::json!({ "name": "魔像玩家" })).unwrap();
+        let _ = game::execute_action(&mut gs, "add_player", serde_json::json!({ "name": "目標玩家" })).unwrap();
+        let golem_id = gs.players[0].id.clone();
+        let target_id = gs.players[1].id.clone();
+
+        // 設定 p0 角色為魔像 (golem)
+        let golem_def = game::CharacterDef {
+            id: "golem".to_string(),
+            name: "魔像".to_string(),
+            name_en: "Golem".to_string(),
+            role_type: game::RoleType::Outsider,
+            ability: "每局限提名一次".to_string(),
+            flavor: None,
+            night_order_first: None,
+            night_order_other: None,
+            reminders: Vec::new(),
+            reminders_global: Vec::new(),
+            setup: false,
+            image: None,
+            first_night_reminder: None,
+            other_night_reminder: None,
+            conflicts: Vec::new(),
+            class: None,
+        };
+        let _ = game::execute_action(&mut gs, "assign_role", serde_json::json!({
+            "playerId": golem_id,
+            "role": golem_def
+        })).unwrap();
+
+        // 推進到第 1 天白天 (FirstNight -> Day 1)
+        let _ = game::execute_action(&mut gs, "advance_phase", serde_json::json!({})).unwrap();
+        assert_eq!(gs.phase, game::GamePhase::Day);
+        assert_eq!(gs.round, 1);
+        assert!(gs.players[0].can_nominate);
+
+        // 1. 魔像發起提名
+        let _ = game::execute_action(&mut gs, "nominate", serde_json::json!({
+            "nominatorId": golem_id,
+            "nomineeId": target_id
+        })).unwrap();
+        assert!(!gs.players[0].can_nominate, "魔像提名後當天失去提名權");
+
+        // 2. 推進至第 2 夜再到第 2 天白天 (Day 1 -> Night 2 -> Day 2)
+        let _ = game::execute_action(&mut gs, "advance_phase", serde_json::json!({})).unwrap();
+        assert_eq!(gs.phase, game::GamePhase::Night);
+        let _ = game::execute_action(&mut gs, "advance_phase", serde_json::json!({})).unwrap();
+        assert_eq!(gs.phase, game::GamePhase::Day);
+        assert_eq!(gs.round, 2);
+
+        // 普通目標玩家在第 2 天提名權應重置，但魔像整場限 1 次，can_nominate 必須維持 false
+        assert!(gs.players[1].can_nominate, "普通存活玩家換天後應恢復提名權");
+        assert!(!gs.players[0].can_nominate, "魔像換天後絕不可恢復提名權");
+
+        // 3. 魔像在第 2 天嘗試再次提名應被阻擋並拒絕
+        let err = game::execute_action(&mut gs, "nominate", serde_json::json!({
+            "nominatorId": golem_id,
+            "nomineeId": target_id
+        })).unwrap_err();
+        assert!(err.contains("魔像每場對局僅限發起一次提名"));
+    }
 }
 
