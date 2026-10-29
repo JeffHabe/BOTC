@@ -545,6 +545,7 @@ mod tests {
         let _ = game::execute_action(&mut gs, "kill_player", serde_json::json!({ "playerId": p3_id })).unwrap();
         assert!(!gs.players[2].is_alive);
         assert!(gs.players[2].has_ghost_vote);
+        assert!(!gs.players[2].can_nominate, "死亡玩家必須失去發起提名權");
 
         // p1 提名 p2 (存活 3 人 -> 門檻 2 票)
         let _ = game::execute_action(

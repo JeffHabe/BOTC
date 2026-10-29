@@ -190,6 +190,7 @@ impl Player {
 
 fn make_player_dead(p: &mut Player) {
     p.is_alive = false;
+    p.can_nominate = false; // 死亡玩家失去發起提名權
     if let Some(ref r) = p.role {
         if r.id == "banshee" {
             p.can_nominate = true;

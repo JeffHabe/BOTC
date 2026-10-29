@@ -105,18 +105,18 @@
                 <div>
                   <div class="t-title">提名權</div>
                   <div class="t-sub">
-                    {{ (player.can_nominate || (player.extra_nominations && player.extra_nominations > 0)) ? (player.extra_nominations ? `剩餘 ${player.extra_nominations + 1} 次` : '可以提名') : '不可提名' }}
+                    {{ canPlayerNominate ? (player.extra_nominations ? `剩餘 ${player.extra_nominations + 1} 次` : '可以提名') : '不可提名' }}
                   </div>
                 </div>
               </div>
               <!-- 提示燈：可以就亮，沒有就暗 -->
               <div 
                 class="nominate-indicator-lamp" 
-                :class="{ 'is-lit': player.can_nominate || (player.extra_nominations && player.extra_nominations > 0) }"
-                :title="(player.can_nominate || (player.extra_nominations && player.extra_nominations > 0)) ? '可以提名' : '不可提名'"
+                :class="{ 'is-lit': canPlayerNominate }"
+                :title="canPlayerNominate ? '可以提名' : '不可提名'"
               >
                 <span class="lamp-bulb"></span>
-                <span class="lamp-text">{{ (player.can_nominate || (player.extra_nominations && player.extra_nominations > 0)) ? '可提名' : '不可' }}</span>
+                <span class="lamp-text">{{ canPlayerNominate ? '可提名' : '不可' }}</span>
               </div>
             </div>
           </div>
@@ -171,6 +171,11 @@ const isNominatorDisabled = computed(() => {
     return !p.can_nominate && !(p.extra_nominations && p.extra_nominations > 0)
   }
   return true
+})
+
+// 死者不能發起提名 (非報喪女妖特例)，提示燈與提名資格嚴格連動
+const canPlayerNominate = computed(() => {
+  return !isNominatorDisabled.value
 })
 
 // 偵測玩家是否處於保護狀態 (僅偵測當晚/當輪設定的標記，且發動者必須狀態正常)

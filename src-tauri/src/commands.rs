@@ -344,6 +344,7 @@ pub fn remove_reminder(
 
 fn make_player_dead(p: &mut Player) {
     p.is_alive = false;
+    p.can_nominate = false;
     if let Some(ref r) = p.role {
         if r.id == "banshee" {
             p.can_nominate = true;

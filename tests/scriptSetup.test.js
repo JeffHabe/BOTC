@@ -372,6 +372,10 @@ test('玩家控制面板 (PlayerControlSheet.vue) 排版驗證 (死亡與變更�
     !content.includes('handleToggleNominate'),
     '今日可提名改為提示燈後，不應再包含切換開關函數 handleToggleNominate'
   )
+  assert.ok(
+    content.includes('canPlayerNominate') && content.includes(":class=\"{ 'is-lit': canPlayerNominate }\""),
+    '提名權提示燈必須綁定 canPlayerNominate，確保死亡玩家絕不亮起可提名綠燈'
+  )
 })
 
 test('劇本相剋規則 (conflicts) 前端兼容轉換與保留完整物件驗證', () => {
