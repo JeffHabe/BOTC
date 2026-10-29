@@ -190,3 +190,51 @@ test('玩家令片 (PlayerToken.vue) 名字後方應於每天白天顯示提名�
     '死亡玩家尚有死亡票時應顯示 /pic/grave.png'
   )
 })
+
+test('劇本標誌 (Logo) 在 Rust 後端、前端狀態同步與魔典畫布應完整支援並保持同步', () => {
+  // 1. 檢查 server/src/game.rs 中的 Script 結構體必須含有 logo 與 name_en
+  const gameRsPath = path.resolve(__dirname, '../server/src/game.rs')
+  const gameRsContent = fs.readFileSync(gameRsPath, 'utf8')
+  assert.ok(
+    gameRsContent.includes('pub logo: Option<String>'),
+    'server/src/game.rs Script 必須包含 pub logo: Option<String>'
+  )
+  assert.ok(
+    gameRsContent.includes('pub name_en: Option<String>'),
+    'server/src/game.rs Script 必須包含 pub name_en: Option<String>'
+  )
+
+  // 2. 檢查 gameStore.ts 中的 syncState 必須保留/還原 logo 與 name_en
+  const gameStorePath = path.resolve(__dirname, '../src/stores/gameStore.ts')
+  const gameStoreContent = fs.readFileSync(gameStorePath, 'utf8')
+  assert.ok(
+    gameStoreContent.includes('newState.script.logo = found.logo') ||
+    gameStoreContent.includes('found.logo'),
+    'gameStore.ts 的 syncState 必須從 found 中還原 logo'
+  )
+
+  // 3. 檢查 GrimoireBoard.vue 中的圖片來源與監聽器
+  const grimoirePath = path.resolve(__dirname, '../src/components/GrimoireBoard.vue')
+  const grimoireContent = fs.readFileSync(grimoirePath, 'utf8')
+  assert.ok(
+    grimoireContent.includes('scriptStore.getScriptImageUrl(gameStore.script.logo)'),
+    'GrimoireBoard.vue 應使用 scriptStore.getScriptImageUrl 解析劇本 logo'
+  )
+  assert.ok(
+    grimoireContent.includes('gameStore.script?.id'),
+    'GrimoireBoard.vue 應監聽 script.id 以重設 logoLoadFailed'
+  )
+})
+
+test('角色相剋規則 (conflicts) 應完整支援 ConflictRule 物件結構以防止《地獄二重奏》等劇本載入失敗', () => {
+  const gameRsPath = path.resolve(__dirname, '../server/src/game.rs')
+  const gameRsContent = fs.readFileSync(gameRsPath, 'utf8')
+  assert.ok(
+    gameRsContent.includes('pub struct ConflictRule'),
+    'server/src/game.rs 必須定義 ConflictRule 結構體'
+  )
+  assert.ok(
+    gameRsContent.includes('pub conflicts: Vec<ConflictRule>'),
+    'server/src/game.rs CharacterDef.conflicts 必須為 Vec<ConflictRule>'
+  )
+})

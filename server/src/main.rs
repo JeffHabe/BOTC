@@ -622,5 +622,41 @@ mod tests {
         assert_eq!(res["script"]["logo"], "https://i0.hdslb.com/bfs/new_dyn/43f12860ef5fe86e9f9bf9d6ea35381844902471.png");
         assert_eq!(res["script"]["name_en"], "Small Bottle");
     }
+
+    #[tokio::test]
+    async fn test_set_script_with_conflicts_diyu_erchongzou() {
+        let mut gs = game::GameState::default();
+        let script_payload = serde_json::json!({
+            "script": {
+                "id": "custom_1780746155710",
+                "name": "地獄二重奏",
+                "name_en": "custom_1780746155710",
+                "author": "社群劇本",
+                "characters": [
+                    {
+                        "id": "balloonist",
+                        "name": "氣球駕駛員",
+                        "name_en": "balloonist",
+                        "role_type": "Townsfolk",
+                        "ability": "每個夜晚，你會得知一名與上個夜晚得知的玩家角色類型不同的玩家。[+0~1外來者]",
+                        "setup": false,
+                        "conflicts": [
+                            {
+                                "target": "marionette",
+                                "desc": "如果提線木偶抽到氣球駕駛員，也可能會+1外來者。"
+                            }
+                        ]
+                    }
+                ],
+                "category": "縫合劇本"
+            }
+        });
+        let res = game::execute_action(&mut gs, "set_script", script_payload).unwrap();
+        assert_eq!(gs.script.name, "地獄二重奏");
+        assert_eq!(gs.script.characters.len(), 1);
+        assert_eq!(gs.script.characters[0].conflicts.len(), 1);
+        assert_eq!(gs.script.characters[0].conflicts[0].target, Some("marionette".to_string()));
+        assert_eq!(res["script"]["characters"][0]["conflicts"][0]["target"], "marionette");
+    }
 }
 

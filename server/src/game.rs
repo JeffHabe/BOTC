@@ -69,6 +69,15 @@ impl ReminderToken {
 
 // ─── 角色定義 ────────────────────────────────────────────────
 
+/// 角色相剋/衝突規則定義
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConflictRule {
+    pub target: Option<String>,
+    #[serde(rename = "charB", alias = "char_b")]
+    pub char_b: Option<String>,
+    pub desc: Option<String>,
+}
+
 /// 角色詳細定義結構 (對應劇本的角色資料庫)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CharacterDef {
@@ -92,7 +101,7 @@ pub struct CharacterDef {
     #[serde(default)]
     pub reminders: Vec<String>,
     /// 全域提醒標籤清單
-    #[serde(default)]
+    #[serde(default, alias = "remindersGlobal")]
     pub reminders_global: Vec<String>,
     /// 是否影響開局配置 (例如改變外來者數量)
     #[serde(default)]
@@ -105,7 +114,7 @@ pub struct CharacterDef {
     pub other_night_reminder: Option<String>,
     /// 與此角色發生衝突或相剋的規則說明
     #[serde(default)]
-    pub conflicts: Vec<String>,
+    pub conflicts: Vec<ConflictRule>,
     /// 角色分類/官方擴充包標籤
     pub class: Option<String>,
 }
@@ -202,6 +211,12 @@ pub struct Script {
     pub custom_first_night_order: Option<Vec<String>>,
     /// 自訂其他夜晚行動順序覆寫列表 (角色 ID 排列)
     pub custom_other_night_order: Option<Vec<String>>,
+    /// 實體劇本正面圖
+    #[serde(default)]
+    pub physical_image: Option<String>,
+    /// 實體劇本背面圖
+    #[serde(default)]
+    pub physical_image_back: Option<String>,
 }
 
 impl Script {
@@ -217,6 +232,8 @@ impl Script {
             category: None,
             custom_first_night_order: None,
             custom_other_night_order: None,
+            physical_image: None,
+            physical_image_back: None,
         }
     }
 }
