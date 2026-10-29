@@ -658,5 +658,53 @@ mod tests {
         assert_eq!(gs.script.characters[0].conflicts[0].target, Some("marionette".to_string()));
         assert_eq!(res["script"]["characters"][0]["conflicts"][0]["target"], "marionette");
     }
+
+    #[tokio::test]
+    async fn test_phase_progression_and_revert_boundary() {
+        let mut gs = game::GameState::default();
+        assert_eq!(gs.phase, game::GamePhase::FirstNight);
+        assert_eq!(gs.round, 1);
+
+        // 1. 首夜執行 revert_phase 必須嚴格鎖定在首夜，不可出現白天
+        let _ = game::execute_action(&mut gs, "revert_phase", serde_json::json!({})).unwrap();
+        assert_eq!(gs.phase, game::GamePhase::FirstNight);
+        assert_eq!(gs.round, 1);
+
+        // 2. 首夜前進 -> 第 1 天 (Day 1)
+        let _ = game::execute_action(&mut gs, "advance_phase", serde_json::json!({})).unwrap();
+        assert_eq!(gs.phase, game::GamePhase::Day);
+        assert_eq!(gs.round, 1);
+
+        // 3. 第 1 天前進 -> 第 2 夜 (Night 2)
+        let _ = game::execute_action(&mut gs, "advance_phase", serde_json::json!({})).unwrap();
+        assert_eq!(gs.phase, game::GamePhase::Night);
+        assert_eq!(gs.round, 2);
+
+        // 4. 第 2 夜前進 -> 第 2 天 (Day 2)
+        let _ = game::execute_action(&mut gs, "advance_phase", serde_json::json!({})).unwrap();
+        assert_eq!(gs.phase, game::GamePhase::Day);
+        assert_eq!(gs.round, 2);
+
+        // 5. 逆向時序回退測試：
+        // Day 2 回退 -> Night 2
+        let _ = game::execute_action(&mut gs, "revert_phase", serde_json::json!({})).unwrap();
+        assert_eq!(gs.phase, game::GamePhase::Night);
+        assert_eq!(gs.round, 2);
+
+        // Night 2 回退 -> Day 1
+        let _ = game::execute_action(&mut gs, "revert_phase", serde_json::json!({})).unwrap();
+        assert_eq!(gs.phase, game::GamePhase::Day);
+        assert_eq!(gs.round, 1);
+
+        // Day 1 回退 -> FirstNight
+        let _ = game::execute_action(&mut gs, "revert_phase", serde_json::json!({})).unwrap();
+        assert_eq!(gs.phase, game::GamePhase::FirstNight);
+        assert_eq!(gs.round, 1);
+
+        // FirstNight 再次回退 -> 依然鎖定在 FirstNight，絕不可變成白天
+        let _ = game::execute_action(&mut gs, "revert_phase", serde_json::json!({})).unwrap();
+        assert_eq!(gs.phase, game::GamePhase::FirstNight);
+        assert_eq!(gs.round, 1);
+    }
 }
 

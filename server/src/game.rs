@@ -645,18 +645,30 @@ pub fn execute_action(gs: &mut GameState, cmd: &str, args: Value) -> Result<Valu
             serde_json::to_value(&*gs).map_err(|e| e.to_string())
         }
 
-        // 逆向回退至上一階段
+        // 逆向回退至上一階段 (嚴格遵循逆向時序，首夜為終點鎖定)
         // 參數: 無
         "revert_phase" => {
             match gs.phase {
-                GamePhase::Night => gs.phase = GamePhase::Day,
-                GamePhase::Day if gs.round > 1 => {
-                    gs.phase = GamePhase::Night;
-                    gs.round -= 1;
+                GamePhase::Day if gs.round <= 1 => {
+                    gs.round = 1;
+                    gs.phase = GamePhase::FirstNight;
                 }
-                GamePhase::Day => gs.phase = GamePhase::FirstNight,
-                GamePhase::FirstNight => gs.phase = GamePhase::Setup,
-                GamePhase::Setup => {}
+                GamePhase::Day => {
+                    // 從 Day N 退回是 Night N (round 不變)
+                    gs.phase = GamePhase::Night;
+                }
+                GamePhase::Night => {
+                    // 從 Night N 退回是 Day (N-1) (round 減 1)
+                    if gs.round > 1 {
+                        gs.round -= 1;
+                    }
+                    gs.phase = GamePhase::Day;
+                }
+                GamePhase::FirstNight | GamePhase::Setup => {
+                    // 首夜或準備階段為遊戲起點，嚴格鎖定於首夜，不可再往前回退至白天
+                    gs.round = 1;
+                    gs.phase = GamePhase::FirstNight;
+                }
             }
             gs.touch();
             serde_json::to_value(&*gs).map_err(|e| e.to_string())

@@ -471,7 +471,9 @@ pub fn revert_phase(state: State<AppState>) -> GameState {
         }
         GamePhase::Night => {
             // 從 Night 2 退回應該是 Day 1，所以 round 減 1
-            gs.round -= 1;
+            if (gs.round > 1) {
+                gs.round -= 1;
+            }
             GamePhase::Day
         }
     };

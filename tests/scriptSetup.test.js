@@ -238,3 +238,26 @@ test('角色相剋規則 (conflicts) 應完整支援 ConflictRule 物件結構�
     'server/src/game.rs CharacterDef.conflicts 必須為 Vec<ConflictRule>'
   )
 })
+
+test('首夜狀態下回退按鈕應禁用且後端回退邏輯應嚴格鎖定首夜以防止跳至白天', () => {
+  // 1. 檢查 StatusBar.vue 左側回退按鈕具備 disabled 屬性與對應樣式
+  const statusBarPath = path.resolve(__dirname, '../src/components/StatusBar.vue')
+  const statusBarContent = fs.readFileSync(statusBarPath, 'utf8')
+  assert.ok(
+    statusBarContent.includes(":disabled=\"gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup'\""),
+    'StatusBar.vue 的 ◀ 按鈕在首夜與準備階段必須設為 disabled'
+  )
+  assert.ok(
+    statusBarContent.includes('.nav-btn:disabled'),
+    'StatusBar.vue 必須包含 .nav-btn:disabled 樣式定義'
+  )
+
+  // 2. 檢查 server/src/game.rs 回退時不會將首夜或準備階段轉為白天
+  const gameRsPath = path.resolve(__dirname, '../server/src/game.rs')
+  const gameRsContent = fs.readFileSync(gameRsPath, 'utf8')
+  assert.ok(
+    gameRsContent.includes('GamePhase::FirstNight | GamePhase::Setup =>') &&
+    gameRsContent.includes('gs.phase = GamePhase::FirstNight;'),
+    'server/src/game.rs 中的 revert_phase 必須在首夜時鎖定，不可退至白天'
+  )
+})

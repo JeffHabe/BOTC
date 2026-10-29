@@ -27,7 +27,12 @@
 
       <!-- 中央：輪次與階段 -->
       <div class="phase-control">
-        <button class="nav-btn" @click="gameStore.revertPhase()" title="退回上個階段">◀</button>
+        <button 
+          class="nav-btn" 
+          :disabled="gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup'"
+          @click="gameStore.revertPhase()" 
+          title="退回上個階段"
+        >◀</button>
         <div class="phase-display" @click="uiStore.togglePanel('settings')" title="開啟設定">
           <div class="phase-badge" :class="`phase-${gameStore.phase.toLowerCase()}`">
             <template v-if="gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup'">
@@ -208,6 +213,14 @@ const totalVotes = computed(() => {
 
 .nav-btn:active {
   transform: scale(0.9);
+}
+
+.nav-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  pointer-events: none;
+  border-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.2);
 }
 
 .stat-item {
