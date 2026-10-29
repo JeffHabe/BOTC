@@ -426,3 +426,37 @@ test('魔像 (Golem) 整場對局僅限提名一次驗證 (VotingPanel 排除、
     'server/src/game.rs 在 advance_phase 換天推進時必須鎖定魔像，不重設其提名權'
   )
 })
+
+test('編輯劇本 (ScriptEditorPanel.vue) 進階設定收合功能驗證 (Logo/圖檔/匯入收合，預設隱藏提升角色瀏覽空間)', () => {
+  const panelPath = path.resolve(__dirname, '../src/components/ScriptEditorPanel.vue')
+  const content = fs.readFileSync(panelPath, 'utf8')
+
+  // 1. 驗證進階設定收合按鈕與命名
+  assert.ok(
+    content.includes('class="advanced-settings-toggle-btn"'),
+    'ScriptEditorPanel.vue 必須包含進階設定收合按鈕'
+  )
+  assert.ok(
+    content.includes('進階設定'),
+    '收合按鈕名稱必須為「進階設定」'
+  )
+
+  // 2. 驗證響應式變數與收合容器
+  assert.ok(
+    content.includes('isAdvancedSettingsExpanded'),
+    'ScriptEditorPanel.vue 必須包含 isAdvancedSettingsExpanded 響應式變數'
+  )
+  assert.ok(
+    content.includes('v-show="isAdvancedSettingsExpanded"'),
+    '進階設定內容區塊必須由 isAdvancedSettingsExpanded 控制顯示與隱藏'
+  )
+
+  // 3. 驗證進階設定收合區塊包含 Logo 網址、匯入 JSON、實體正面與背面圖檔
+  assert.ok(
+    content.includes('newScriptLogo') &&
+    content.includes('triggerJsonImport') &&
+    content.includes('newScriptPhysicalImage') &&
+    content.includes('newScriptPhysicalImageBack'),
+    '進階設定收合區塊必須完整包含 Logo 網址、匯入 JSON、正面圖檔與背面圖檔'
+  )
+})

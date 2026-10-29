@@ -122,46 +122,66 @@
                   </option>
                 </select>
               </div>
-              <div class="form-group">
-                <label class="form-label">劇本圖示 (Logo) 網址</label>
-                <input type="text" v-model="newScriptLogo" placeholder="輸入圖片 URL 連結，例如 https://..." class="form-input" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">官方劇本</label>
-                <button class="import-json-btn" @click="triggerJsonImport">
-                  <img src="/pic/import.png" class="btn-icon-img" />匯入 JSON
-                </button>
-                <input type="file" ref="jsonFileInput" hidden accept=".json" @change="handleJsonFileChange" />
-              </div>
             </div>
-            
-            <div class="form-image-row">
-              <div class="form-section-image">
-                <label class="form-label">實體劇本正面圖檔 </label>
-                <div class="image-upload-wrapper">
-                  <div v-if="newScriptPhysicalImage" class="image-preview-container">
-                    <img :src="scriptStore.getScriptImageUrl(newScriptPhysicalImage) || undefined" class="physical-image-preview" />
-                    <button class="remove-image-btn" @click="newScriptPhysicalImage = null" type="button">✕ 刪除圖檔</button>
-                  </div>
-                  <div v-else class="upload-placeholder" @click="triggerImageUpload">
-                    <img src="/pic/upload.png" class="upload-icon-img" />
-                    <span class="upload-text">上傳正面圖檔</span>
-                    <input type="file" ref="imageFileInput" hidden accept="image/*" @change="handleImageFileChange" />
-                  </div>
+
+            <!-- 進階設定收合按鈕 -->
+            <button 
+              type="button" 
+              class="advanced-settings-toggle-btn" 
+              @click="isAdvancedSettingsExpanded = !isAdvancedSettingsExpanded"
+            >
+              <div class="toggle-btn-left">
+                <img src="/pic/gear.png" class="btn-icon-img" />
+                <span class="toggle-title">進階設定</span>
+                <span v-if="newScriptLogo || newScriptPhysicalImage || newScriptPhysicalImageBack" class="configured-dot" title="已設定自訂圖檔或Logo">●</span>
+              </div>
+              <span class="toggle-arrow">{{ isAdvancedSettingsExpanded ? '▲ 收起' : '▼ 展開' }}</span>
+            </button>
+
+            <!-- 收合的進階設定區塊 (Logo / 匯入 JSON / 實體圖檔) -->
+            <div v-show="isAdvancedSettingsExpanded" class="advanced-settings-content">
+              <div class="form-section advanced-inner-form">
+                <div class="form-group">
+                  <label class="form-label">劇本圖示 (Logo) 網址</label>
+                  <input type="text" v-model="newScriptLogo" placeholder="輸入圖片 URL 連結，例如 https://..." class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">官方劇本</label>
+                  <button class="import-json-btn" @click="triggerJsonImport" type="button">
+                    <img src="/pic/import.png" class="btn-icon-img" />匯入 JSON
+                  </button>
+                  <input type="file" ref="jsonFileInput" hidden accept=".json" @change="handleJsonFileChange" />
                 </div>
               </div>
               
-              <div class="form-section-image">
-                <label class="form-label">實體劇本背面圖檔 </label>
-                <div class="image-upload-wrapper">
-                  <div v-if="newScriptPhysicalImageBack" class="image-preview-container">
-                    <img :src="scriptStore.getScriptImageUrl(newScriptPhysicalImageBack) || undefined" class="physical-image-preview" />
-                    <button class="remove-image-btn" @click="newScriptPhysicalImageBack = null" type="button">✕ 刪除圖檔</button>
+              <div class="form-image-row">
+                <div class="form-section-image">
+                  <label class="form-label">實體劇本正面圖檔 </label>
+                  <div class="image-upload-wrapper">
+                    <div v-if="newScriptPhysicalImage" class="image-preview-container">
+                      <img :src="scriptStore.getScriptImageUrl(newScriptPhysicalImage) || undefined" class="physical-image-preview" />
+                      <button class="remove-image-btn" @click="newScriptPhysicalImage = null" type="button">✕ 刪除圖檔</button>
+                    </div>
+                    <div v-else class="upload-placeholder" @click="triggerImageUpload">
+                      <img src="/pic/upload.png" class="upload-icon-img" />
+                      <span class="upload-text">上傳正面圖檔</span>
+                      <input type="file" ref="imageFileInput" hidden accept="image/*" @change="handleImageFileChange" />
+                    </div>
                   </div>
-                  <div v-else class="upload-placeholder" @click="triggerImageUploadBack">
-                    <img src="/pic/upload.png" class="upload-icon-img" />
-                    <span class="upload-text">上傳背面圖檔</span>
-                    <input type="file" ref="imageFileInputBack" hidden accept="image/*" @change="handleImageFileChangeBack" />
+                </div>
+                
+                <div class="form-section-image">
+                  <label class="form-label">實體劇本背面圖檔 </label>
+                  <div class="image-upload-wrapper">
+                    <div v-if="newScriptPhysicalImageBack" class="image-preview-container">
+                      <img :src="scriptStore.getScriptImageUrl(newScriptPhysicalImageBack) || undefined" class="physical-image-preview" />
+                      <button class="remove-image-btn" @click="newScriptPhysicalImageBack = null" type="button">✕ 刪除圖檔</button>
+                    </div>
+                    <div v-else class="upload-placeholder" @click="triggerImageUploadBack">
+                      <img src="/pic/upload.png" class="upload-icon-img" />
+                      <span class="upload-text">上傳背面圖檔</span>
+                      <input type="file" ref="imageFileInputBack" hidden accept="image/*" @change="handleImageFileChangeBack" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -505,6 +525,7 @@ const characterSearch = ref('')
 const selectedEdition = ref('All')
 const newScriptPhysicalImage = ref<string | null>(null)
 const newScriptPhysicalImageBack = ref<string | null>(null)
+const isAdvancedSettingsExpanded = ref(false)
 
 const jsonFileInput = ref<HTMLInputElement | null>(null)
 const imageFileInput = ref<HTMLInputElement | null>(null)
@@ -1796,6 +1817,57 @@ function moveCategory(index: number, direction: number) {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px 8px;
+}
+
+/* 進階設定收合按鈕與容器 */
+.advanced-settings-toggle-btn {
+  width: calc(100% - 32px);
+  margin: 6px 16px 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: var(--color-gold);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.advanced-settings-toggle-btn:hover {
+  background: rgba(201, 168, 76, 0.1);
+  border-color: rgba(201, 168, 76, 0.3);
+}
+
+.toggle-btn-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.toggle-arrow {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.configured-dot {
+  color: #10b981;
+  font-size: 10px;
+}
+
+.advanced-settings-content {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  margin: 0 16px 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  padding-bottom: 6px;
+}
+
+.advanced-inner-form {
+  padding: 10px 12px 4px;
 }
 
 .form-group {
