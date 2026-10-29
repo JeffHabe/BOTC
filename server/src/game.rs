@@ -69,13 +69,26 @@ impl ReminderToken {
 
 // ─── 角色定義 ────────────────────────────────────────────────
 
-/// 角色相剋/衝突規則定義
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ConflictRule {
-    pub target: Option<String>,
-    #[serde(rename = "charB", alias = "char_b")]
-    pub char_b: Option<String>,
-    pub desc: Option<String>,
+/// 角色相剋/衝突規則定義 (支援物件形式與純文字字串雙模相容)
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
+pub enum ConflictRule {
+    Detailed {
+        target: Option<String>,
+        #[serde(rename = "charB", alias = "char_b")]
+        char_b: Option<String>,
+        desc: Option<String>,
+    },
+    Simple(String),
+}
+
+impl ConflictRule {
+    pub fn target(&self) -> Option<&str> {
+        match self {
+            ConflictRule::Detailed { target, .. } => target.as_deref(),
+            ConflictRule::Simple(_) => None,
+        }
+    }
 }
 
 /// 角色詳細定義結構 (對應劇本的角色資料庫)

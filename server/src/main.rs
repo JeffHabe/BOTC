@@ -655,8 +655,32 @@ mod tests {
         assert_eq!(gs.script.name, "地獄二重奏");
         assert_eq!(gs.script.characters.len(), 1);
         assert_eq!(gs.script.characters[0].conflicts.len(), 1);
-        assert_eq!(gs.script.characters[0].conflicts[0].target, Some("marionette".to_string()));
+        assert_eq!(gs.script.characters[0].conflicts[0].target(), Some("marionette"));
         assert_eq!(res["script"]["characters"][0]["conflicts"][0]["target"], "marionette");
+
+        // 測試純字串 conflicts 也可無縫相容解析
+        let string_conflict_payload = serde_json::json!({
+            "script": {
+                "id": "custom_simple_conflict",
+                "name": "簡單相剋劇本",
+                "characters": [
+                    {
+                        "id": "balloonist",
+                        "name": "氣球駕駛員",
+                        "name_en": "balloonist",
+                        "role_type": "Townsfolk",
+                        "ability": "測試能力",
+                        "setup": false,
+                        "conflicts": [
+                            "純文字相剋說明"
+                        ]
+                    }
+                ]
+            }
+        });
+        let res2 = game::execute_action(&mut gs, "set_script", string_conflict_payload).unwrap();
+        assert_eq!(gs.script.characters[0].conflicts[0], game::ConflictRule::Simple("純文字相剋說明".to_string()));
+        assert_eq!(res2["script"]["characters"][0]["conflicts"][0], "純文字相剋說明");
     }
 
     #[tokio::test]
