@@ -169,6 +169,15 @@ export const useGameStore = defineStore('game', () => {
           if (found.physical_image_back) {
             newState.script.physical_image_back = found.physical_image_back
           }
+          // 保留前端完整 conflicts 物件結構（包含 target 與 charB），防止降級字串影響 Jinx 標籤渲染
+          if (found.characters) {
+            newState.script.characters.forEach(newChar => {
+              const orig = found.characters.find(c => c.id === newChar.id)
+              if (orig?.conflicts && orig.conflicts.length > 0) {
+                newChar.conflicts = orig.conflicts
+              }
+            })
+          }
         } else if (state.value?.script?.id === newState.script.id) {
           if (state.value.script.logo && !newState.script.logo) {
             newState.script.logo = state.value.script.logo
@@ -299,6 +308,13 @@ export const useGameStore = defineStore('game', () => {
       compatScript.characters.forEach(c => {
         c.role_type = (c.role_type || 'townsfolk').toLowerCase() as any
         c.setup = Boolean(c.setup)
+        // 兼容舊版 Rust 後端 (舊版期望純字串，遇到物件會報 invalid type: map, expected a string)
+        if (Array.isArray(c.conflicts)) {
+          c.conflicts = c.conflicts.map((conf: any) => {
+            if (typeof conf === 'string') return conf
+            return conf?.desc || `${conf?.target || conf?.charB || ''}: ${conf?.desc || ''}`.trim()
+          }) as any
+        }
       })
 
       historicalRoleIds.value.clear()

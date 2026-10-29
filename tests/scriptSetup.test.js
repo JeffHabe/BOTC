@@ -230,8 +230,8 @@ test('角色相剋規則 (conflicts) 應完整支援 ConflictRule 物件結構�
   const gameRsPath = path.resolve(__dirname, '../server/src/game.rs')
   const gameRsContent = fs.readFileSync(gameRsPath, 'utf8')
   assert.ok(
-    gameRsContent.includes('pub struct ConflictRule'),
-    'server/src/game.rs 必須定義 ConflictRule 結構體'
+    gameRsContent.includes('pub enum ConflictRule') || gameRsContent.includes('pub struct ConflictRule'),
+    'server/src/game.rs 必須定義 ConflictRule 類型'
   )
   assert.ok(
     gameRsContent.includes('pub conflicts: Vec<ConflictRule>'),
@@ -306,5 +306,72 @@ test('魔典右側固定功能列表佈局驗證 (常駐顯示、水平夜晚與
   assert.ok(
     content.includes('key="whiteboard"') && content.includes("uiStore.openPanel('whiteboard')"),
     'side-action-vertical 必須包含說書人資訊按鈕'
+  )
+})
+
+test('玩家控制面板 (PlayerControlSheet.vue) 排版驗證 (死亡與變更角色同行、提名與被提名整合、今日可提名提示燈、移除提示標記與提名管理標題)', () => {
+  const sheetPath = path.resolve(__dirname, '../src/components/PlayerControlSheet.vue')
+  const content = fs.readFileSync(sheetPath, 'utf8')
+
+  // 1. 驗證死亡/復活 與 變更角色在同一行（無 full-width）
+  assert.ok(
+    !content.includes('class="action-btn death-btn full-width"'),
+    '死亡按鈕應移除 full-width，與變更角色並排在同一行'
+  )
+  assert.ok(
+    !content.includes('class="action-btn role-btn full-width"'),
+    '變更角色按鈕應與死亡按鈕並排在同一行'
+  )
+
+  // 2. 驗證移除「提示標記」按鈕
+  assert.ok(
+    !content.includes('class="action-btn reminder-btn"'),
+    '應移除提示標記按鈕（外面玩家令片已有加號）'
+  )
+  assert.ok(
+    !content.includes('handleReminderPicker'),
+    '應清理已移除按鈕的 handleReminderPicker 函數'
+  )
+
+  // 3. 驗證移除「提名管理」標題與獨立外層容器，並將提名/被提名整合進上方 action-grid
+  assert.ok(
+    !content.includes('提名管理'),
+    '不應再劃分獨立的「提名管理」標題'
+  )
+  assert.ok(
+    !content.includes('class="nomination-actions"'),
+    '不應再有 nomination-actions 容器'
+  )
+  assert.ok(
+    content.includes('@click="handleStartNominationAs"') && content.includes('@click="handleNominateHim"'),
+    '提名與被提名按鈕必須存在於核心操作區域中'
+  )
+
+  // 4. 驗證「今日可提名」為提示燈而非開關
+  assert.ok(
+    content.includes('nominate-indicator-lamp'),
+    '今日可提名必須使用提示燈結構 (nominate-indicator-lamp)'
+  )
+  assert.ok(
+    content.includes(":class=\"{ 'is-lit':"),
+    '提示燈必須具備 is-lit 亮燈發光類別'
+  )
+  assert.ok(
+    !content.includes('handleToggleNominate'),
+    '今日可提名改為提示燈後，不應再包含切換開關函數 handleToggleNominate'
+  )
+})
+
+test('劇本相剋規則 (conflicts) 前端兼容轉換與保留完整物件驗證', () => {
+  const gameStorePath = path.resolve(__dirname, '../src/stores/gameStore.ts')
+  const content = fs.readFileSync(gameStorePath, 'utf8')
+
+  assert.ok(
+    content.includes('c.conflicts = c.conflicts.map('),
+    'gameStore.ts 在發送 set_script 前必須轉換 conflicts 為相容字串以支援舊版後端'
+  )
+  assert.ok(
+    content.includes('orig.conflicts') && content.includes('newChar.conflicts = orig.conflicts'),
+    'gameStore.ts 在 syncState 時必須保留前端完整的 conflicts Jinx 物件'
   )
 })

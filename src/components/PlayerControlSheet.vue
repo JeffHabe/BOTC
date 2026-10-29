@@ -34,37 +34,49 @@
           <div v-if="player.role?.ability && !uiStore.isRolesHidden" class="player-ability-box" v-html="player.role.ability">
           </div>
 
-          <!-- 核心操作網格 (上方死亡滿版，下方並排) -->
+          <!-- 核心操作網格 (第1列：死亡與變更角色並排；第2列：白天提名與被提名並排) -->
           <div class="action-grid">
             <template v-if="player.is_alive">
-              <button class="action-btn death-btn full-width" @click="handleKill">
+              <button class="action-btn death-btn" @click="handleKill">
                 <img src="/pic/suicide.png" class="action-btn-img" />
                 <span class="label">死亡</span>
                 <span v-if="isProtected" class="warning-badge" title="注意：該玩家目前有保護標記">⚠️被保護</span>
               </button>
             </template>
             <template v-else>
-              <button class="action-btn revive-btn full-width" @click="handleRevive">
+              <button class="action-btn revive-btn" @click="handleRevive">
                 <img src="/pic/heart.png" class="action-btn-img" />
                 <span class="label">復活</span>
               </button>
             </template>
 
-            <button class="action-btn reminder-btn" @click="handleReminderPicker">
-              <img src="/pic/reminder1.png" class="action-btn-img" />
-              <span class="label">提示標記</span>
-              <span v-if="!uiStore.isRolesHidden && player.reminders.length > 0" class="rem-count-badge">
-                {{ player.reminders.length }}
-              </span>
-            </button>
-
             <button class="action-btn role-btn" @click="handleRolePicker">
               <img src="/pic/mask.png" class="action-btn-img" />
               <span class="label">變更角色</span>
             </button>
+
+            <!-- 提名操作 (僅白天顯示) -->
+            <template v-if="gameStore.phase === 'Day'">
+              <button 
+                class="action-btn nom-btn" 
+                @click="handleStartNominationAs"
+                :disabled="isNominatorDisabled"
+              >
+                <img src="/pic/vote.png" class="action-btn-img" />
+                <span class="label">提名</span>
+              </button>
+              <button 
+                class="action-btn nom-btn" 
+                @click="handleNominateHim"
+                :disabled="player.is_nominated"
+              >
+                <img src="/pic/nomination.png" class="action-btn-img" />
+                <span class="label">被提名</span>
+              </button>
+            </template>
           </div>
 
-          <!-- 次要切換開關 -->
+          <!-- 次要狀態與切換開關 -->
           <div class="toggle-list">
             <div class="toggle-item" v-if="!player.is_alive">
               <div class="toggle-info">
@@ -91,40 +103,19 @@
                 <div>
                   <div class="t-title">今日可提名</div>
                   <div class="t-sub">
-                    {{ player.can_nominate || (player.extra_nominations && player.extra_nominations > 0) ? (player.extra_nominations ? `剩餘 ${player.extra_nominations + 1} 次` : '可以提名') : '不可提名' }}
+                    {{ (player.can_nominate || (player.extra_nominations && player.extra_nominations > 0)) ? (player.extra_nominations ? `剩餘 ${player.extra_nominations + 1} 次` : '可以提名') : '不可提名' }}
                   </div>
                 </div>
               </div>
-              <button 
-                class="switch" 
-                :class="{ 'active': player.can_nominate }"
-                @click="handleToggleNominate"
+              <!-- 提示燈：可以就亮，沒有就暗 -->
+              <div 
+                class="nominate-indicator-lamp" 
+                :class="{ 'is-lit': player.can_nominate || (player.extra_nominations && player.extra_nominations > 0) }"
+                :title="(player.can_nominate || (player.extra_nominations && player.extra_nominations > 0)) ? '可以提名' : '不可提名'"
               >
-                <div class="switch-dot"></div>
-              </button>
-            </div>
-          </div>
-
-          <!-- 提名操作 (僅白天顯示) -->
-          <div class="nomination-actions" v-if="gameStore.phase === 'Day'">
-            <div class="section-title">提名管理</div>
-            <div class="action-grid mini">
-              <button 
-                class="action-btn nom-btn" 
-                @click="handleStartNominationAs"
-                 :disabled="isNominatorDisabled"
-              >
-                <img src="/pic/vote.png" class="action-btn-img" />
-                <span class="label">由他發起提名</span>
-              </button>
-              <button 
-                class="action-btn nom-btn" 
-                @click="handleNominateHim"
-                :disabled="player.is_nominated"
-              >
-                <img src="/pic/nomination.png" class="action-btn-img" />
-                <span class="label">提名此玩家</span>
-              </button>
+                <span class="lamp-bulb"></span>
+                <span class="lamp-text">{{ (player.can_nominate || (player.extra_nominations && player.extra_nominations > 0)) ? '可提名' : '不可' }}</span>
+              </div>
             </div>
           </div>
 
@@ -255,20 +246,8 @@ function handleRename() {
   }
 }
 
-function handleReminderPicker() {
-  if (player.value) {
-    uiStore.openReminderPicker(player.value.id)
-    uiStore.selectPlayer(null) // 縮回工具列
-  }
-}
-
-
 async function handleToggleGhost() {
   if (player.value) await gameStore.toggleGhostVote(player.value.id)
-}
-
-async function handleToggleNominate() {
-  if (player.value) await gameStore.toggleCanNominate(player.value.id)
 }
 
 function handleRemove() {
@@ -618,26 +597,36 @@ function handleNominateHim() {
   object-fit: contain;
 }
 
-.nomination-actions {
-  margin-bottom: 24px;
-  padding: 16px;
-  background: rgba(201, 168, 76, 0.05);
-  border: 1px solid rgba(201, 168, 76, 0.1);
-  border-radius: 16px;
-}
-
-.nomination-actions .section-title {
-  margin-bottom: 12px;
+.nominate-indicator-lamp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   font-size: 11px;
-  color: var(--color-gold-muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  color: #777;
+  transition: all 0.3s ease;
 }
 
-.action-grid.mini {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+.nominate-indicator-lamp .lamp-bulb {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #555;
+  transition: all 0.3s ease;
+}
+
+.nominate-indicator-lamp.is-lit {
+  color: #a7f3d0;
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(52, 211, 153, 0.35);
+}
+
+.nominate-indicator-lamp.is-lit .lamp-bulb {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981, 0 0 12px rgba(16, 185, 129, 0.6);
 }
 
 .sheet-footer-actions {
