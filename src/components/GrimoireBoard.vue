@@ -210,75 +210,80 @@
       <img src="/pic/plus.png" class="icon" />
     </button>
 
-    <div v-if="!showPhysicalImageOverlay" class="side-action-group" :class="{ 'is-expanded': uiStore.isSideToolbarExpanded }">
-      <!-- 主開關按鈕 -->
-      <button 
-        class="menu-toggle-btn" 
-        @click="uiStore.isSideToolbarExpanded = !uiStore.isSideToolbarExpanded"
-        :title="uiStore.isSideToolbarExpanded ? '收起選單' : '功能選單'"
-      >
-        <img class="icon" v-if="uiStore.isSideToolbarExpanded" src="/pic/close.png"/>
-        <img class="icon" v-else src="/pic/gear.png" />
-      </button>
+    <div v-if="!showPhysicalImageOverlay" class="side-action-group">
+      <!-- 頂部水平橫排：夜晚順序、隱私開關、設置(齒輪) -->
+      <div class="side-action-top-row">
+        <button 
+          key="night-order" 
+          class="menu-btn" 
+          @click="uiStore.openPanel('night-order')" 
+          title="夜晚順序"
+        >
+          <img class="icon" src="/pic/day-and-night.png" />
+        </button>
 
-      <!-- 被收藏的功能項 -->
-      <transition-group name="side-stagger">
-        <template v-if="uiStore.isSideToolbarExpanded">
-          <button key="settings" class="menu-btn" @click="uiStore.openPanel('settings'); uiStore.isSideToolbarExpanded = false" title="設置">
-            <!-- <span class="icon">🛠️</span> -->
-            <img class="icon" src="/pic/magic-wand.png" />
+        <button 
+          key="privacy"
+          class="privacy-btn" 
+          :class="{ 'is-active': uiStore.isRolesHidden }"
+          @click="uiStore.toggleRolesHidden()"
+          :title="uiStore.isRolesHidden ? '顯示角色' : '隱藏角色'"
+        >
+          <div class="privacy-icon-wrapper">
+            <img class="icon" src="/pic/show.png" />
+            <img class="ban-icon" v-if="uiStore.isRolesHidden" src="/pic/hide.png" />
+          </div>
+        </button>
 
-          </button>
+        <button 
+          key="settings" 
+          class="menu-btn" 
+          @click="uiStore.openPanel('settings')" 
+          title="設置"
+        >
+          <img class="icon" src="/pic/gear.png" />
+        </button>
+      </div>
 
-          <button
-            v-if="gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup'"
-            key="role-assignment"
-            class="menu-btn"
-            @click="uiStore.openPanel('role-assignment'); uiStore.isSideToolbarExpanded = false"
-            title="開局"
-          >
-            <img class="icon" src="/pic/theater.png" />
-          </button>
+      <!-- 右側垂直直排：開局、魔典形狀、投票管理、說書人資訊 -->
+      <div class="side-action-vertical">
+        <button
+          v-if="gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup'"
+          key="role-assignment"
+          class="menu-btn"
+          @click="uiStore.openPanel('role-assignment')"
+          title="開局"
+        >
+          <img class="icon" src="/pic/theater.png" />
+        </button>
 
-          <button key="night-order" class="menu-btn" @click="uiStore.openPanel('night-order'); uiStore.isSideToolbarExpanded = false" title="夜晚順序">
-            <!-- <span class="icon">🌙</span> -->
-             <img class="icon" src="/pic/day-and-night.png" />
-          </button>
-
-          <button 
-            key="privacy"
-            class="privacy-btn" 
-            :class="{ 'is-active': uiStore.isRolesHidden }"
-            @click="uiStore.toggleRolesHidden(); uiStore.isSideToolbarExpanded = false"
-            :title="uiStore.isRolesHidden ? '顯示角色' : '隱藏角色'"
-          >
-            <div class="privacy-icon-wrapper">
-              <!-- <span class="icon">👁️</span> -->
-              <img class="icon" src="/pic/show.png" />
-              <!-- <span v-if="uiStore.isRolesHidden" class="ban-icon">🚫</span> -->
-              <img class="ban-icon" v-if="uiStore.isRolesHidden" src="/pic/hide.png" />
-            </div>
-          </button>
-          
-          <button 
-            key="shape"
-            class="side-action-btn" 
-            @click="uiStore.cycleGrimoireShape(); uiStore.isSideToolbarExpanded = false" 
-            :title="`魔典圖形: ${currentShapeLabel}`"
-          >
-            <img class="icon" :src="currentShapeIcon" />
-          </button>
-          
-          <button key="voting" class="menu-btn" @click="uiStore.openPanel('voting'); uiStore.isSideToolbarExpanded = false" title="投票管理">
-            <img class="icon" src="/pic/vote-yes.png" />
-          </button>
-          
-          <button key="whiteboard" class="menu-btn" @click="uiStore.openPanel('whiteboard'); uiStore.isSideToolbarExpanded = false" title="說書人資訊">
-            <!-- <span class="icon">📝</span> -->
-            <img class="icon" src="/pic/whiteboard.png" />
-          </button>
-        </template>
-      </transition-group> 
+        <button 
+          key="shape"
+          class="side-action-btn" 
+          @click="uiStore.cycleGrimoireShape()" 
+          :title="`魔典圖形: ${currentShapeLabel}`"
+        >
+          <img class="icon" :src="currentShapeIcon" />
+        </button>
+        
+        <button 
+          key="voting" 
+          class="menu-btn" 
+          @click="uiStore.openPanel('voting')" 
+          title="投票管理"
+        >
+          <img class="icon" src="/pic/vote-yes.png" />
+        </button>
+        
+        <button 
+          key="whiteboard" 
+          class="menu-btn" 
+          @click="uiStore.openPanel('whiteboard')" 
+          title="說書人資訊"
+        >
+          <img class="icon" src="/pic/whiteboard.png" />
+        </button>
+      </div>
     </div>
 
 
@@ -2213,18 +2218,29 @@ const activePanelComponent = computed(() => {
 
 .side-action-group {
   position: fixed;
-  top: calc(65px + env(safe-area-inset-top, 0px));
-  right: 8px; /* 從 16px 縮小至 8px，配合常駐的 8px padding，使得按鈕離螢幕右邊緣依然保持精準 16px 經典排版 */
+  top: calc(56px + env(safe-area-inset-top, 0px));
+  right: 12px;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 10px;
   z-index: 900;
-  padding: 8px; /* 🚀 常駐 padding！確保展開與收起狀態下，盒模型寬高完全一致，100% 阻絕往左下偏移的跳動 */
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.side-action-group.is-expanded {
-  /* 🚀 隱形排版容器優化：此處不再動態變更 padding，確保原地垂直滑出，視覺極其穩健 */
+.side-action-top-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.side-action-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 32px;
 }
 
 /* 當有面板開啟時，隱藏右上角的功能按鈕，避免干擾 */

@@ -114,8 +114,8 @@ test('外部工具列 (GrimoireBoard.vue .side-action-group) 應鎖定「開局�
     '側邊工具列應包含 key="role-assignment" 的開局按鈕'
   )
   assert.ok(
-    boardContent.includes("uiStore.openPanel('role-assignment'); uiStore.isSideToolbarExpanded = false"),
-    '點擊開局按鈕應開啟 role-assignment 面板並收起側邊工具列'
+    boardContent.includes("uiStore.openPanel('role-assignment')"),
+    '點擊開局按鈕應開啟 role-assignment 面板'
   )
   assert.ok(
     boardContent.includes("gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup'"),
@@ -259,5 +259,52 @@ test('首夜狀態下回退按鈕應禁用且後端回退邏輯應嚴格鎖定�
     gameRsContent.includes('GamePhase::FirstNight | GamePhase::Setup =>') &&
     gameRsContent.includes('gs.phase = GamePhase::FirstNight;'),
     'server/src/game.rs 中的 revert_phase 必須在首夜時鎖定，不可退至白天'
+  )
+})
+
+test('魔典右側固定功能列表佈局驗證 (常駐顯示、水平夜晚與隱私、設置使用齒輪圖示)', () => {
+  const grimoirePath = path.resolve(__dirname, '../src/components/GrimoireBoard.vue')
+  const content = fs.readFileSync(grimoirePath, 'utf8')
+
+  // 1. 驗證不再存在收放控制開關 menu-toggle-btn
+  assert.ok(
+    !content.includes('class="menu-toggle-btn"'),
+    '已暫停收放功能，GrimoireBoard.vue 不應再包含 menu-toggle-btn 開關'
+  )
+
+  // 2. 驗證頂部水平橫排結構與按鈕
+  assert.ok(
+    content.includes('class="side-action-top-row"'),
+    'GrimoireBoard.vue 必須包含 side-action-top-row 橫排容器'
+  )
+  assert.ok(
+    content.includes('key="night-order"') && content.includes('/pic/day-and-night.png'),
+    'side-action-top-row 必須包含夜晚順序按鈕'
+  )
+  assert.ok(
+    content.includes('key="privacy"') && content.includes('uiStore.toggleRolesHidden()'),
+    'side-action-top-row 必須包含隱藏角色/隱私按鈕'
+  )
+  assert.ok(
+    content.includes('key="settings"') && content.includes('/pic/gear.png'),
+    'side-action-top-row 設置按鈕的圖示必須使用齒輪 (/pic/gear.png)'
+  )
+
+  // 3. 驗證右側垂直直排結構與按鈕
+  assert.ok(
+    content.includes('class="side-action-vertical"'),
+    'GrimoireBoard.vue 必須包含 side-action-vertical 垂直排列容器'
+  )
+  assert.ok(
+    content.includes('key="shape"') && content.includes('uiStore.cycleGrimoireShape()'),
+    'side-action-vertical 必須包含魔典圖形切換按鈕'
+  )
+  assert.ok(
+    content.includes('key="voting"') && content.includes("uiStore.openPanel('voting')"),
+    'side-action-vertical 必須包含投票管理按鈕'
+  )
+  assert.ok(
+    content.includes('key="whiteboard"') && content.includes("uiStore.openPanel('whiteboard')"),
+    'side-action-vertical 必須包含說書人資訊按鈕'
   )
 })
