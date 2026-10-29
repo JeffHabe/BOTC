@@ -347,14 +347,26 @@ test('玩家控制面板 (PlayerControlSheet.vue) 排版驗證 (死亡與變更�
     '提名與被提名按鈕必須存在於核心操作區域中'
   )
 
-  // 4. 驗證「今日可提名」為提示燈而非開關
+  // 4. 驗證「今日可提名」與「死亡票」為提示燈而非開關
   assert.ok(
     content.includes('nominate-indicator-lamp'),
-    '今日可提名必須使用提示燈結構 (nominate-indicator-lamp)'
+    '狀態項目必須使用提示燈結構 (nominate-indicator-lamp)'
   )
   assert.ok(
-    content.includes(":class=\"{ 'is-lit':"),
-    '提示燈必須具備 is-lit 亮燈發光類別'
+    content.includes('死亡票'),
+    '靈魂投票權應更名為「死亡票」'
+  )
+  assert.ok(
+    !content.includes('靈魂投票權'),
+    '介面上不應再出現舊名稱「靈魂投票權」'
+  )
+  assert.ok(
+    content.includes(":class=\"{ 'is-lit': player.has_ghost_vote"),
+    '死亡票提示燈必須具備 is-lit 亮燈發光類別綁定'
+  )
+  assert.ok(
+    !content.includes('handleToggleGhost'),
+    '死亡票改為提示燈後，不應再包含切換開關函數 handleToggleGhost'
   )
   assert.ok(
     !content.includes('handleToggleNominate'),

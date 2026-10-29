@@ -62,7 +62,7 @@
                 @click="handleStartNominationAs"
                 :disabled="isNominatorDisabled"
               >
-                <img src="/pic/vote.png" class="action-btn-img" />
+                <img src="/pic/nomination.png" class="action-btn-img" />
                 <span class="label">提名</span>
               </button>
               <button 
@@ -70,38 +70,40 @@
                 @click="handleNominateHim"
                 :disabled="player.is_nominated"
               >
-                <img src="/pic/nomination.png" class="action-btn-img" />
+                <img src="/pic/vote.png" class="action-btn-img" />
                 <span class="label">被提名</span>
               </button>
             </template>
           </div>
 
-          <!-- 次要狀態與切換開關 -->
+          <!-- 次要狀態與提示燈 -->
           <div class="toggle-list">
             <div class="toggle-item" v-if="!player.is_alive">
               <div class="toggle-info">
                 <img src="/pic/grave.png" class="toggle-icon-img" />
                 <div>
-                  <div class="t-title">靈魂投票權</div>
+                  <div class="t-title">死亡票</div>
                   <div class="t-sub">
                     {{ player.has_ghost_vote || (player.extra_votes && player.extra_votes > 0) ? (player.extra_votes ? `剩餘 ${player.extra_votes + 1} 次` : '尚未使用') : '已使用' }}
                   </div>
                 </div>
               </div>
-              <button 
-                class="switch" 
-                :class="{ 'active': player.has_ghost_vote }"
-                @click="handleToggleGhost"
+              <!-- 提示燈：可以就亮，沒有就暗 -->
+              <div 
+                class="nominate-indicator-lamp" 
+                :class="{ 'is-lit': player.has_ghost_vote || (player.extra_votes && player.extra_votes > 0) }"
+                :title="(player.has_ghost_vote || (player.extra_votes && player.extra_votes > 0)) ? '尚未使用' : '已使用'"
               >
-                <div class="switch-dot"></div>
-              </button>
+                <span class="lamp-bulb"></span>
+                <span class="lamp-text">{{ (player.has_ghost_vote || (player.extra_votes && player.extra_votes > 0)) ? '有票' : '已使用' }}</span>
+              </div>
             </div>
 
             <div class="toggle-item">
               <div class="toggle-info">
                 <img src="/pic/nomination.png" class="toggle-icon-img" />
                 <div>
-                  <div class="t-title">今日可提名</div>
+                  <div class="t-title">提名權</div>
                   <div class="t-sub">
                     {{ (player.can_nominate || (player.extra_nominations && player.extra_nominations > 0)) ? (player.extra_nominations ? `剩餘 ${player.extra_nominations + 1} 次` : '可以提名') : '不可提名' }}
                   </div>
@@ -244,10 +246,6 @@ function handleRename() {
     uiStore.openRenameDialog(player.value)
     uiStore.selectPlayer(null) // 縮回工具列
   }
-}
-
-async function handleToggleGhost() {
-  if (player.value) await gameStore.toggleGhostVote(player.value.id)
 }
 
 function handleRemove() {
@@ -549,29 +547,6 @@ function handleNominateHim() {
 .t-icon { font-size: 18px; }
 .t-title { font-size: 14px; color: #eee; font-weight: 500; }
 .t-sub { font-size: 11px; color: #888; }
-
-.switch {
-  width: 44px;
-  height: 24px;
-  background: #333;
-  border-radius: 12px;
-  position: relative;
-  transition: background 0.3s;
-  border: none;
-}
-
-.switch.active { background: var(--color-gold); }
-.switch-dot {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 18px;
-  height: 18px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.3s;
-}
-.switch.active .switch-dot { transform: translateX(20px); }
 
 .remove-btn {
   width: 100%;
