@@ -279,6 +279,73 @@ export const useUIStore = defineStore('ui', () => {
   const nominationNominatorId = ref('')
   const nominationNomineeId = ref('')
 
+  // 魔典直接投票 (In-situ Grimoire Voting) 狀態
+  const isDirectVotingActive = ref(false)
+  const directVotingNomIndex = ref<number | null>(null)
+  const directVotingNomineeId = ref<string | null>(null)
+  const directVotingNominatorId = ref<string | null>(null)
+  const directVotingCurrentVoterIndex = ref(0)
+  const isVotingHudCollapsed = ref(false)
+  const isVotingHudVisible = ref(true)
+
+  // 盤面點擊令片選擇提名步驟 ('none' | 'nominator' | 'nominee')
+  const nominationPickingStep = ref<'none' | 'nominator' | 'nominee'>('none')
+  const pickingNominatorId = ref<string | null>(null)
+
+  function startPickingNomination() {
+    nominationPickingStep.value = 'nominator'
+    pickingNominatorId.value = null
+    isVotingHudCollapsed.value = false
+    isVotingHudVisible.value = true
+  }
+
+  function setPickingNominator(id: string) {
+    pickingNominatorId.value = id
+    nominationPickingStep.value = 'nominee'
+  }
+
+  function cancelPickingNomination() {
+    nominationPickingStep.value = 'none'
+    pickingNominatorId.value = null
+  }
+
+  function startDirectVoting(nomIndex: number, nomineeId: string, nominatorId?: string, initialVoterIndex = 0) {
+    nominationPickingStep.value = 'none'
+    pickingNominatorId.value = null
+    isDirectVotingActive.value = true
+    directVotingNomIndex.value = nomIndex
+    directVotingNomineeId.value = nomineeId
+    directVotingNominatorId.value = nominatorId || ''
+    directVotingCurrentVoterIndex.value = initialVoterIndex
+    isVotingHudCollapsed.value = false
+    isVotingHudVisible.value = true
+  }
+
+  function nextDirectVoter(totalPlayers: number) {
+    if (totalPlayers <= 0) return
+    directVotingCurrentVoterIndex.value = (directVotingCurrentVoterIndex.value + 1) % totalPlayers
+  }
+
+  function prevDirectVoter(totalPlayers: number) {
+    if (totalPlayers <= 0) return
+    directVotingCurrentVoterIndex.value = (directVotingCurrentVoterIndex.value - 1 + totalPlayers) % totalPlayers
+  }
+
+  function setCurrentVoterIndex(index: number) {
+    directVotingCurrentVoterIndex.value = index
+  }
+
+  function endDirectVoting() {
+    isDirectVotingActive.value = false
+    directVotingNomIndex.value = null
+    directVotingNomineeId.value = null
+    directVotingNominatorId.value = null
+  }
+
+  function toggleVotingHud() {
+    isVotingHudCollapsed.value = !isVotingHudCollapsed.value
+  }
+
   function openVotingDetail(index: number) {
     activeNominationIndex.value = index
   }
@@ -901,6 +968,11 @@ export const useUIStore = defineStore('ui', () => {
     // 投票
     activeNominationIndex, nominationNominatorId, nominationNomineeId,
     openVotingDetail, closeVotingDetail, startNomination,
+    // 魔典直接投票
+    isDirectVotingActive, directVotingNomIndex, directVotingNomineeId, directVotingNominatorId,
+    directVotingCurrentVoterIndex, isVotingHudCollapsed, isVotingHudVisible,
+    nominationPickingStep, pickingNominatorId, startPickingNomination, setPickingNominator, cancelPickingNomination,
+    startDirectVoting, nextDirectVoter, prevDirectVoter, setCurrentVoterIndex, endDirectVoting, toggleVotingHud,
     // 確認框
     confirmDialog, showConfirm, showAlert, closeConfirm,
     // 輸入對話框

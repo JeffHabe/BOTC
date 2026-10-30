@@ -79,6 +79,36 @@
         </div>
       </div>
 
+      <!-- 中央時鐘指針系統 (提名選取中或直接投票進行中時顯現) -->
+      <div 
+        v-if="showClockPointers" 
+        class="clock-pointers-container"
+        :style="{ left: '50%', top: `${LAYOUT_CONFIG.yCenter}%` }"
+      >
+        <!-- 提名人短指針 (紅色 clock-small.webp) -->
+        <div 
+          v-if="nominatorPointerVisible" 
+          class="clock-hand hand-nominator"
+          :style="nominatorHandStyle"
+        >
+          <img src="/pic/clock-small.webp" class="clock-pointer-img small-pointer" alt="提名人短指針" />
+        </div>
+
+        <!-- 被提名者長指針 (藍色 clock-big.webp) -->
+        <div 
+          v-if="nomineePointerVisible" 
+          class="clock-hand hand-nominee"
+          :style="nomineeHandStyle"
+        >
+          <img src="/pic/clock-big.webp" class="clock-pointer-img big-pointer" alt="被提名者長指針" />
+        </div>
+
+        <!-- 鐘盤中央底座與羊頭裝飾 (demon-head.webp) -->
+        <div class="clock-hub-plate">
+          <img src="/pic/demon-head.webp" class="clock-demon-head-img" alt="時鐘中央軸心" />
+        </div>
+      </div>
+
       <!-- 玩家令片 (絕對定位) -->
       <div
         v-for="(player, index) in players" 
@@ -269,8 +299,8 @@
         <button 
           key="voting" 
           class="menu-btn" 
-          @click="uiStore.openPanel('voting')" 
-          title="投票管理"
+          @click="handleVotingButtonClick" 
+          title="魔典投票"
         >
           <img class="icon" src="/pic/vote-yes.png" />
         </button>
@@ -460,6 +490,9 @@
         </div>
       </div>
     </transition>
+
+    <!-- 魔典直接投票 HUD 控制器 -->
+    <GrimoireVotingHud />
   </div>
 </template>
 
@@ -479,6 +512,7 @@ import { shareFile } from '@choochmeque/tauri-plugin-sharekit-api'
 import { appLocalDataDir, join } from '@tauri-apps/api/path'
 
 import PlayerToken from './PlayerToken.vue'
+import GrimoireVotingHud from './GrimoireVotingHud.vue'
 import StatusBar from './StatusBar.vue'
 import TimerWidget from './TimerWidget.vue'
 import SettingsPanel from './SettingsPanel.vue'
@@ -1429,6 +1463,120 @@ function getPlayerPosStyle(index: number): CSSProperties {
   }
 }
 
+// --- 魔典直接投票指針座標、角度與動態長度計算 ---
+function getTokenCoord(index: number) {
+  const n = players.value.length
+  if (n === 0 || index < 0 || index >= n) return { x: 50, y: LAYOUT_CONFIG.value.yCenter }
+  const angle = getEquidistantAngle(index, n)
+  const { a, b, nFactor, yCenter } = LAYOUT_CONFIG.value
+  const cosT = Math.cos(angle)
+  const sinT = Math.sin(angle)
+  const x = 50 + a * Math.sign(cosT) * Math.pow(Math.abs(cosT), 2 / nFactor)
+  const y = yCenter + b * Math.sign(sinT) * Math.pow(Math.abs(sinT), 2 / nFactor)
+  return { x, y }
+}
+
+const currentNominatorId = computed(() => {
+  if (uiStore.nominationPickingStep === 'nominee') {
+    return uiStore.pickingNominatorId || ''
+  }
+  if (uiStore.isDirectVotingActive && uiStore.directVotingNomIndex !== null) {
+    const nom = gameStore.nominations[uiStore.directVotingNomIndex]
+    if (nom) return nom.nominator_id
+  }
+  return uiStore.directVotingNominatorId || ''
+})
+
+const currentNomineeId = computed(() => {
+  if (uiStore.isDirectVotingActive && uiStore.directVotingNomIndex !== null) {
+    const nom = gameStore.nominations[uiStore.directVotingNomIndex]
+    if (nom) return nom.nominee_id
+  }
+  return uiStore.directVotingNomineeId || ''
+})
+
+const showClockPointers = computed(() => {
+  return uiStore.isDirectVotingActive || uiStore.nominationPickingStep !== 'none'
+})
+
+const nominatorPointerVisible = computed(() => !!currentNominatorId.value)
+const nomineePointerVisible = computed(() => !!currentNomineeId.value)
+
+function calcPointerAngle(playerId: string) {
+  if (!playerId) return 0
+  const idx = players.value.findIndex(p => p.id === playerId)
+  if (idx === -1) return 0
+
+  const { x, y } = getTokenCoord(idx)
+  const yCenter = LAYOUT_CONFIG.value.yCenter
+
+  const W = windowSize.value.width
+  const H = windowSize.value.height
+  const tokenPxX = (x / 100) * W
+  const tokenPxY = (y / 100) * H
+  const centerPxX = 0.5 * W
+  const centerPxY = (yCenter / 100) * H
+
+  const dx = tokenPxX - centerPxX
+  const dy = tokenPxY - centerPxY
+  return Math.atan2(dy, dx) * 180 / Math.PI + 90
+}
+
+function calcPointerScale() {
+  const targetId = currentNomineeId.value || currentNominatorId.value
+  if (!targetId) return 0.6
+  const idx = players.value.findIndex(p => p.id === targetId)
+  if (idx === -1) return 0.6
+
+  const { x, y } = getTokenCoord(idx)
+  const yCenter = LAYOUT_CONFIG.value.yCenter
+
+  const W = windowSize.value.width
+  const H = windowSize.value.height
+  const tokenPxX = (x / 100) * W
+  const tokenPxY = (y / 100) * H
+  const centerPxX = 0.5 * W
+  const centerPxY = (yCenter / 100) * H
+
+  const dx = tokenPxX - centerPxX
+  const dy = tokenPxY - centerPxY
+  const fullDist = Math.sqrt(dx * dx + dy * dy)
+
+  const n = players.value.length
+  const rawSize = (n > 14 ? 68 : n > 11 ? 80 : n > 8 ? 92 : 105)
+  const baseSize = rawSize * uiStore.grimoireScale
+  // 被提名者藍色長針剛好延伸抵達令片邊緣
+  const targetDist = Math.max(80, fullDist - baseSize * 0.45)
+  // 長針基準針身高度為 300px
+  return targetDist / 300
+}
+
+// 紅色提名人短針 (clock-small.webp: 比例自然為長針的 62%)
+const nominatorHandStyle = computed(() => {
+  const angle = calcPointerAngle(currentNominatorId.value)
+  const scale = calcPointerScale()
+  return {
+    transform: `rotate(${angle}deg) scale(${scale})`
+  }
+})
+
+// 藍色被提名者長針 (clock-big.webp)
+const nomineeHandStyle = computed(() => {
+  const angle = calcPointerAngle(currentNomineeId.value)
+  const scale = calcPointerScale()
+  return {
+    transform: `rotate(${angle}deg) scale(${scale})`
+  }
+})
+
+function handleVotingButtonClick() {
+  if (gameStore.phase !== 'Day') {
+    uiStore.showAlert('投票提示', '僅在白天階段可進行提名與投票。')
+    return
+  }
+  uiStore.isVotingHudVisible = true
+  uiStore.isVotingHudCollapsed = !uiStore.isVotingHudCollapsed
+}
 
 function getCharacterIcon(id: string) {
   const char = scriptStore.rawCharacterList.find(c => c.id === id)
@@ -2594,5 +2742,80 @@ const activePanelComponent = computed(() => {
 .showcase-inner-content .bluff-text-fallback {
   font-size: 52px;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+/* --- 魔典直接投票中央時鐘雙指針 --- */
+.clock-pointers-container {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.clock-hub-plate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 16;
+  pointer-events: none;
+}
+
+.clock-demon-head-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.95));
+}
+
+.clock-hand {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  display: block;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 紅色提名人短指針 (clock-small.webp) */
+.hand-nominator {
+  z-index: 14;
+}
+
+.clock-pointer-img.small-pointer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 66px;
+  height: 460px;
+  transform: translate(-50%, -53.5%);
+  filter: drop-shadow(0 0 6px rgba(231, 76, 60, 0.9));
+}
+
+/* 藍色被提名者長指針 (clock-big.webp) */
+.hand-nominee {
+  z-index: 13;
+}
+
+.clock-pointer-img.big-pointer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 45px;
+  height: 560px;
+  transform: translate(-50%, -53.5%);
+  filter: drop-shadow(0 0 6px rgba(52, 152, 219, 0.9));
 }
 </style>

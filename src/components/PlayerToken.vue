@@ -7,7 +7,10 @@
         'has-role': !!player.role,
         'is-selected': uiStore.selectedPlayerId === player.id,
         'pointer-events-none': renderedPart === 'info',
-        'on-right-side': isOnRightSide
+        'on-right-side': isOnRightSide,
+        'is-direct-voting-nominee': isNomineeToken,
+        'is-direct-voting-nominator': isNominatorToken,
+        'is-picking-selectable': shouldShowPickHand
       },
       `layout-${uiStore.reminderLayout}`
     ]"
@@ -84,6 +87,24 @@
           </textPath>
         </text>
       </svg>
+
+      <!-- 魔典直接投票標記 (✋ 舉手贊成 / ❌ 棄權未投) -->
+      <div 
+        v-if="uiStore.isDirectVotingActive" 
+        class="direct-voting-mark"
+        :class="{ 'is-voting-yes': isVotingYes, 'is-voting-no': !isVotingYes, 'is-spent': isGhostVoteSpent }"
+      >
+        <span v-if="isVotingYes" class="vote-hand-icon">✋</span>
+        <span v-else class="vote-cross-icon">✕</span>
+      </div>
+
+      <!-- 點廣場令片選擇提名手勢標記 (👉 指向手勢，如同影片截圖) -->
+      <div 
+        v-else-if="shouldShowPickHand" 
+        class="nomination-pick-hand-mark"
+      >
+        <span class="pick-hand-icon">👉</span>
+      </div>
       </div>
       
       <!-- 死亡帷幕 (Shroud) -->
@@ -308,10 +329,109 @@ function getSourceChar(sourceName: string) {
 }
 
 
+// 魔典直接投票狀態計算
+const isVotingYes = computed(() => {
+  if (!uiStore.isDirectVotingActive || uiStore.directVotingNomIndex === null) return false
+  const nom = gameStore.nominations[uiStore.directVotingNomIndex]
+  return nom?.votes_for?.includes(props.player.id) ?? false
+})
+
+const isGhostVoteSpent = computed(() => {
+  return !props.player.is_alive && !props.player.has_ghost_vote && !isVotingYes.value
+})
+
+// 盤面點選提名狀態計算
+const canPickAsNominator = computed(() => {
+  if (uiStore.nominationPickingStep !== 'nominator') return false
+  const p = props.player
+  const canNom = p.is_alive
+    ? (p.can_nominate || (p.extra_nominations && p.extra_nominations > 0))
+    : (p.extra_nominations && p.extra_nominations > 0)
+  if (!canNom) return false
+  if (p.role?.id === 'golem' && gameStore.nominations.some(n => n.nominator_id === p.id)) {
+    return false
+  }
+  return true
+})
+
+const canPickAsNominee = computed(() => {
+  if (uiStore.nominationPickingStep !== 'nominee') return false
+  return !props.player.is_nominated
+})
+
+const shouldShowPickHand = computed(() => {
+  if (uiStore.nominationPickingStep === 'nominator') {
+    return canPickAsNominator.value
+  }
+  if (uiStore.nominationPickingStep === 'nominee') {
+    return canPickAsNominee.value
+  }
+  return false
+})
+
+const isNomineeToken = computed(() => {
+  if (uiStore.isDirectVotingActive && uiStore.directVotingNomIndex !== null) {
+    const nom = gameStore.nominations[uiStore.directVotingNomIndex]
+    if (nom) return nom.nominee_id === props.player.id
+  }
+  return uiStore.isDirectVotingActive && uiStore.directVotingNomineeId === props.player.id
+})
+
+const isNominatorToken = computed(() => {
+  if (uiStore.nominationPickingStep === 'nominee' && uiStore.pickingNominatorId === props.player.id) {
+    return true
+  }
+  if (uiStore.isDirectVotingActive) {
+    const nom = uiStore.directVotingNomIndex !== null ? gameStore.nominations[uiStore.directVotingNomIndex] : null
+    const nominatorId = nom?.nominator_id || uiStore.directVotingNominatorId
+    return nominatorId === props.player.id
+  }
+  return false
+})
+
+async function handlePickNominee(nomineeId: string) {
+  const nominatorId = uiStore.pickingNominatorId
+  if (!nominatorId) return
+  await gameStore.nominate(nominatorId, nomineeId)
+  const newIndex = gameStore.nominations.length - 1
+  const nomineeIdx = gameStore.players.findIndex(p => p.id === nomineeId)
+  const initialVoter = nomineeIdx !== -1 ? (nomineeIdx + 1) % gameStore.players.length : 0
+  uiStore.startDirectVoting(newIndex, nomineeId, nominatorId, initialVoter)
+}
+
 function handleClick(e: Event) {
   if (hasTriggeredLongPress || uiStore.isArrangingPlayers) {
     e.preventDefault()
     e.stopPropagation()
+    return
+  }
+  // 1. 盤面點選提名階段攔截
+  if (uiStore.nominationPickingStep === 'nominator') {
+    if (canPickAsNominator.value) {
+      e.preventDefault()
+      e.stopPropagation()
+      uiStore.setPickingNominator(props.player.id)
+    }
+    return
+  }
+  if (uiStore.nominationPickingStep === 'nominee') {
+    if (canPickAsNominee.value) {
+      e.preventDefault()
+      e.stopPropagation()
+      handlePickNominee(props.player.id)
+    }
+    return
+  }
+
+  // 2. 魔典直接投票模式：單擊切換該玩家投票狀態 (指針始終固定指向提名雙方，不順序移動)
+  if (uiStore.isDirectVotingActive && uiStore.directVotingNomIndex !== null) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!props.player.is_alive && !props.player.has_ghost_vote && !isVotingYes.value) {
+      // 亡者無幽靈票無法投贊成票
+      return
+    }
+    gameStore.vote(uiStore.directVotingNomIndex, props.player.id)
     return
   }
   // 手機端單擊改為直接選中
@@ -1104,5 +1224,128 @@ function getReminderIcon(text: string) {
   font-size: 24px;
   text-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.95), 0 0 2.5px rgba(0, 0, 0, 0.95);
   letter-spacing: 0.5px;
+}
+
+/* --- 魔典直接投票光環與標記 (提名人紅針配紅光環，被提名人藍針配藍光環) --- */
+.player-token.is-direct-voting-nominee .token-body {
+  box-shadow: 0 0 0 4px #e74c3c, 0 0 20px rgba(231, 76, 60, 0.8) !important;
+  border-radius: 50%;
+  animation: nominee-pulse 2s infinite ease-in-out;
+}
+
+.player-token.is-direct-voting-nominator .token-body,
+.player-token.is-picking-nominator .token-body {
+  box-shadow: 0 0 0 4px #3498db, 0 0 20px rgba(52, 152, 219, 0.8) !important;
+  border-radius: 50%;
+  animation: nominator-pulse 1.8s infinite ease-in-out;
+}
+
+@keyframes nominee-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px #e74c3c, 0 0 14px rgba(231, 76, 60, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 5px #ff7675, 0 0 24px rgba(255, 118, 117, 0.9);
+  }
+}
+
+@keyframes nominator-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px #3498db, 0 0 14px rgba(52, 152, 219, 0.6);
+
+  }
+  50% {
+    box-shadow: 0 0 0 5px #74b9ff, 0 0 24px rgba(116, 185, 255, 0.9);
+  }
+}
+
+.direct-voting-mark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+  pointer-events: none;
+  animation: mark-pop-in 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.direct-voting-mark.is-voting-yes {
+  background: radial-gradient(circle, rgba(192, 57, 43, 0.85) 0%, rgba(192, 57, 43, 0.5) 70%, transparent 100%);
+  border-radius: 50%;
+}
+
+.direct-voting-mark.is-voting-no {
+  background: radial-gradient(circle, rgba(41, 128, 185, 0.75) 0%, rgba(41, 128, 185, 0.4) 70%, transparent 100%);
+  border-radius: 50%;
+}
+
+.direct-voting-mark.is-spent {
+  opacity: 0.3;
+}
+
+.vote-hand-icon {
+  font-size: 38px;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9));
+  transform: translateY(-2px);
+}
+
+.vote-cross-icon {
+  font-size: 34px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 8px #2980b9;
+}
+
+@keyframes mark-pop-in {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* --- 點選廣場令片提名手勢標記 (如同截圖) --- */
+.player-token.is-picking-selectable {
+  cursor: pointer !important;
+}
+
+.player-token.is-picking-selectable .token-body:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 16px rgba(201, 168, 76, 0.8) !important;
+}
+
+.player-token.is-picking-nominator .token-body {
+  box-shadow: 0 0 0 4px #3498db, 0 0 20px rgba(52, 152, 219, 0.8) !important;
+  border-radius: 50%;
+}
+
+.nomination-pick-hand-mark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  pointer-events: none;
+  animation: pick-hand-bounce 1.2s infinite ease-in-out;
+}
+
+.pick-hand-icon {
+  font-size: 40px;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
+  user-select: none;
+}
+
+@keyframes pick-hand-bounce {
+  0%, 100% {
+    transform: translateX(0) scale(1);
+  }
+  50% {
+    transform: translateX(4px) scale(1.1);
+  }
 }
 </style>
