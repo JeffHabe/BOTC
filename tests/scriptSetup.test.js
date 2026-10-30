@@ -466,3 +466,35 @@ test('編輯劇本 (ScriptEditorPanel.vue) 進階設定收合功能驗證 (Logo/
     '進階設定按鈕必須在收合時呈現劇本名稱與分類之預覽資訊'
   )
 })
+
+test('《入骨相思知不知》劇本角色 ID 正規化與陣營計數驗證 (非 0 正確統計: 鎮民13/外來者4/爪牙4/惡魔4)', () => {
+  // 1. 驗證 default_scripts.json 中《入骨相思知不知》已移除 _custom 後綴
+  const scriptsPath = path.resolve(__dirname, '../public/data/default_scripts.json')
+  const defaultScripts = JSON.parse(fs.readFileSync(scriptsPath, 'utf8'))
+  const rugu = defaultScripts.scripts.find(s => s.name === '入骨相思知不知')
+  assert.ok(rugu, 'default_scripts.json 必須包含《入骨相思知不知》')
+  assert.strictEqual(rugu.characters.length, 25, '《入骨相思知不知》必須具備 25 個角色')
+
+  // 驗證沒有殘留 _custom 後綴
+  const customIds = rugu.characters.filter(c => c.id && c.id.endsWith('_custom'))
+  assert.strictEqual(customIds.length, 0, '《入骨相思知不知》所有官方標準角色 ID 不得帶有 _custom 後綴')
+
+  // 2. 驗證四大陣營角色數量精確分佈
+  const townsfolk = rugu.characters.filter(c => c.role_type.toLowerCase() === 'townsfolk')
+  const outsider = rugu.characters.filter(c => c.role_type.toLowerCase() === 'outsider')
+  const minion = rugu.characters.filter(c => c.role_type.toLowerCase() === 'minion')
+  const demon = rugu.characters.filter(c => c.role_type.toLowerCase() === 'demon')
+
+  assert.strictEqual(townsfolk.length, 13, '鎮民池數量必須為 13')
+  assert.strictEqual(outsider.length, 4, '外來者池數量必須為 4')
+  assert.strictEqual(minion.length, 4, '爪牙池數量必須為 4')
+  assert.strictEqual(demon.length, 4, '惡魔池數量必須為 4')
+
+  // 3. 驗證 ScriptEditorPanel.vue 具備 _custom ID 容錯正規化映射機制
+  const panelPath = path.resolve(__dirname, '../src/components/ScriptEditorPanel.vue')
+  const panelContent = fs.readFileSync(panelPath, 'utf8')
+  assert.ok(
+    panelContent.includes("c.id.endsWith('_custom')") || panelContent.includes("id.endsWith('_custom')"),
+    'ScriptEditorPanel.vue 必須具備 _custom 容錯相容正規化處理'
+  )
+})

@@ -458,7 +458,7 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useScriptStore } from '../stores/scriptStore'
 import { useGameStore } from '../stores/gameStore'
-import type { Script, RoleType } from '../types'
+import type { Script, RoleType, CharacterDef } from '../types'
 import { save, open } from '@tauri-apps/plugin-dialog'
 import { writeTextFile, readFile } from '@tauri-apps/plugin-fs'
 import { simplifyToTraditional, normalizeName } from '../utils/chineseConverter'
@@ -1127,7 +1127,14 @@ const roleStats = computed(() => {
 
   return types.map(t => {
     const selectedCount = selectedRoleIds.value.filter(id => {
-      const char = masterList.find(c => c.id === id)
+      let char = masterList.find(c => c.id === id)
+      if (!char && id.endsWith('_custom')) {
+        const stripped = id.replace(/_custom$/, '')
+        char = masterList.find(c => c.id === stripped)
+      }
+      if (!char) {
+        char = scriptStore.rawCharacterList.find((c: any) => c.id === id)
+      }
       return char && char.role_type === t.key
     }).length
 
@@ -1442,7 +1449,22 @@ function startEditingScript(script: Script) {
   newScriptPhysicalImage.value = script.physical_image || null
   newScriptPhysicalImageBack.value = script.physical_image_back || null
   newScriptLogo.value = script.logo || ''
-  selectedRoleIds.value = script.characters.map(c => c.id)
+  
+  // 智慧正規化映射：若 ID 帶有 _custom 或別名，優先映射回標準角色庫中的正規 ID
+  const masterIds = new Set(scriptStore.masterScript.characters.map(c => c.id))
+  const masterByName = new Map(scriptStore.masterScript.characters.map(c => [c.name, c.id]))
+
+  selectedRoleIds.value = script.characters.map(c => {
+    if (masterIds.has(c.id)) return c.id
+    if (c.id.endsWith('_custom')) {
+      const stripped = c.id.replace(/_custom$/, '')
+      if (masterIds.has(stripped)) return stripped
+    }
+    if (c.name && masterByName.has(c.name)) {
+      return masterByName.get(c.name)!
+    }
+    return c.id
+  })
   activeTab.value = 'create'
 }
 
@@ -1461,9 +1483,12 @@ function cancelEditingScript() {
 async function handleUpdateScript() {
   if (!editingScriptId.value || !newScriptName.value.trim() || selectedRoleIds.value.length === 0) return
   
-  const characters = scriptStore.masterScript.characters.filter(c =>
-    selectedRoleIds.value.includes(c.id)
-  )
+  const masterMap = new Map(scriptStore.masterScript.characters.map(c => [c.id, c]))
+  const origCharMap = new Map((scriptStore.customScripts.find(s => s.id === editingScriptId.value)?.characters || []).map(c => [c.id, c]))
+
+  const characters = selectedRoleIds.value.map(id => {
+    return masterMap.get(id) || origCharMap.get(id) || scriptStore.rawCharacterList.find((c: any) => c.id === id)
+  }).filter((c): c is CharacterDef => Boolean(c))
   
   isSaving.value = true
   await nextTick()
