@@ -101,15 +101,12 @@
         <span v-else class="vote-cross-icon">✕</span>
       </div>
 
-      <!-- 點廣場令片選擇提名手勢標記 (👉 指向手勢，如同影片截圖) -->
+      <!-- 點廣場令片選擇提名手勢標記 (hand.png 點選指示) -->
       <div 
         v-else-if="shouldShowPickHand" 
         class="nomination-pick-hand-mark"
       >
-        <span class="pick-hand-icon"> 
-        <img src="/pic/hand.png" class="vote-hand-ico" />
-
-        </span>
+        <img src="/pic/hand.png" class="pick-hand-icon pick-hand-img" alt="點選提名" />
       </div>
       </div>
       
@@ -1349,21 +1346,27 @@ function getReminderIcon(text: string) {
   justify-content: center;
   z-index: 20;
   pointer-events: none;
-  animation: pick-hand-bounce 1.2s infinite ease-in-out;
 }
 
-.pick-hand-icon {
-  font-size: 40px;
+.pick-hand-img {
+  width: 52%;
+  height: 52%;
+  max-width: 44px;
+  max-height: 44px;
+  object-fit: contain;
+  display: block;
+  margin: auto;
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
   user-select: none;
+  animation: pick-hand-bounce 1.2s infinite ease-in-out;
 }
 
 @keyframes pick-hand-bounce {
   0%, 100% {
-    transform: translateX(0) scale(1);
+    transform: translateY(0) scale(1);
   }
   50% {
-    transform: translateX(4px) scale(1.1);
+    transform: translateY(-4px) scale(1.08);
   }
 }
 </style>

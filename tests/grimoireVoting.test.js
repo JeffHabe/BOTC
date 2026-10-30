@@ -157,7 +157,7 @@ test('盤面點選令片發起提名 (PlayerToken.vue & uiStore.ts): 手勢標�
 
   // 2. 令片 👉 手勢圖示展示
   assert.ok(tokenContent.includes('nomination-pick-hand-mark'), '令片必須包含 nomination-pick-hand-mark 手勢圖示容器')
-  assert.ok(tokenContent.includes('pick-hand-icon') && tokenContent.includes('👉'), '必須包含 👉 手指圖示指示說書人點選')
+  assert.ok(tokenContent.includes('pick-hand-icon') && (tokenContent.includes('hand.png') || tokenContent.includes('👉')), '必須包含手勢圖示指示說書人點選')
   assert.ok(tokenContent.includes('shouldShowPickHand'), '必須動態計算是否展示 👉 手勢')
 
   // 3. 點選提名者 -> 點選被提名者 -> 發起直接投票流程
