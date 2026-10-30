@@ -34,9 +34,6 @@
     <div class="scene-bg" :style="bgStyle">
       <div class="bg-gradient" />
       <div class="bg-gradient" />
-      <div class="fog" />
-      <div class="fog" />
-      <div class="fog fog-2" />
     </div>
 
     <!-- 空場提示 -->
@@ -317,8 +314,12 @@
     </div>
 
 
-    <!-- 縮放按鈕 (底部中央水平排列) -->
-    <div v-if="!showPhysicalImageOverlay" class="zoom-controls-bottom">
+    <!-- 縮放按鈕 (底部水平排列：靠左固定，與右側投票工具展開/收起位置完全一致) -->
+    <div 
+      v-if="!showPhysicalImageOverlay" 
+      class="zoom-controls-bottom"
+      :class="{ 'has-voting-hud': isVotingHudActive }"
+    >
       <button class="side-action-btn" @click="uiStore.zoomOut()" title="縮小">
         <img src="/pic/minus.png" class="icon" />
       </button>
@@ -329,6 +330,9 @@
         <img src="/pic/plus.png" class="icon" />
       </button>
     </div>
+
+    <!-- 魔典直接投票 HUD 控制器 (頂層獨立定位於右下角，展開收合不偏移) -->
+    <GrimoireVotingHud />
 
     <!-- 面板層 -->
     <transition name="fade">
@@ -490,9 +494,6 @@
         </div>
       </div>
     </transition>
-
-    <!-- 魔典直接投票 HUD 控制器 -->
-    <GrimoireVotingHud />
   </div>
 </template>
 
@@ -1569,6 +1570,10 @@ const nomineeHandStyle = computed(() => {
   }
 })
 
+const isVotingHudActive = computed(() => {
+  return gameStore.phase === 'Day' && uiStore.isVotingHudVisible
+})
+
 function handleVotingButtonClick() {
   if (gameStore.phase !== 'Day') {
     uiStore.showAlert('投票提示', '僅在白天階段可進行提名與投票。')
@@ -1706,19 +1711,6 @@ const activePanelComponent = computed(() => {
   font-family: var(--font-title), sans-serif;
   text-shadow: 0 1px 4px rgba(255,255,255,0.8);
 }
-
-.fog {
-  position: absolute;
-  bottom: -20px;
-  width: 100%;
-  height: 120px;
-  background: linear-gradient(to top, rgba(93, 64, 55, 0.35), transparent);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* 移除星星動畫 */
 
 /* ─────────────────────────────────────────────────────────────────────────
    主要令片佈局區域 
@@ -2398,23 +2390,32 @@ const activePanelComponent = computed(() => {
   transform: translateX(20px);
 }
 
+/* 縮放工具列 (底部水平排列) */
 .zoom-controls-bottom {
   position: fixed;
-  bottom: calc(30px + env(safe-area-inset-bottom, 16px));
+  bottom: calc(24px + env(safe-area-inset-bottom, 16px));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 10px; /* 縮減間距 */
-  background: rgba(42, 27, 21, 0.5);
-  padding: 4px 10px; /* 縮減內邊距 */
+  gap: 8px;
+  background: rgba(42, 27, 21, 0.7);
+  padding: 4px 10px;
   border-radius: 20px;
-  border: 1px solid rgba(141, 110, 99, 0.3);
+  border: 1px solid rgba(141, 110, 99, 0.45);
   backdrop-filter: blur(10px);
-  z-index: 100;
   box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-  transition: all 0.3s ease;
+  transition: left 0.3s cubic-bezier(0.25, 1, 0.5, 1), transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.25s ease;
+  height: 38px;
+  box-sizing: border-box;
+  z-index: 100;
+}
+
+/* 當投票 HUD 存在時：縮放列固定靠左 (緊鄰新增玩家按鈕)，無論展開或收起皆保持位置完全一致 */
+.zoom-controls-bottom.has-voting-hud {
+  left: 54px;
+  transform: none;
 }
 
 /* 當有面板打開時隱藏，避免視覺擁擠 */
@@ -2424,8 +2425,8 @@ const activePanelComponent = computed(() => {
 }
 
 .zoom-controls-bottom .side-action-btn {
-  width: 32px; /* 縮小按鈕 */
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: rgba(42, 27, 21, 0.85);
   border: 1px solid #8d6e63;

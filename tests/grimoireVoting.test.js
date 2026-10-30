@@ -135,7 +135,7 @@ test('玩家令片 (PlayerToken.vue): 直接投票狀態標記與點擊攔截驗
 
   // 2. ✋ / ❌ 標記結構
   assert.ok(content.includes('direct-voting-mark'), '令片內部必須渲染 direct-voting-mark 投票標記')
-  assert.ok(content.includes('vote-hand-icon') && content.includes('✋'), '贊成票應顯示 ✋ 圖示')
+  assert.ok(content.includes('vote-hand-icon') && (content.includes('vote-hand') || content.includes('✋')), '贊成票應顯示舉手投票圖示')
   assert.ok(content.includes('vote-cross-icon') && content.includes('✕'), '未投票應顯示 ✕ 圖示')
 
   // 3. 點擊攔截

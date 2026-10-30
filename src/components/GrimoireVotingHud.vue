@@ -354,17 +354,20 @@ function getPlayerColor(playerId: string): string {
 
 <style scoped>
 .grimoire-voting-hud {
-  position: absolute;
-  right: 18px;
-  bottom: 18px;
+  position: fixed;
+  right: 44px; /* 避開右側 32px 偽裝托盤標籤，絕不重疊 */
+  bottom: calc(24px + env(safe-area-inset-bottom, 16px));
   z-index: 120;
-  width: 260px;
+  width: 270px;
   pointer-events: auto;
   user-select: none;
+  transition: width 0.25s ease, opacity 0.2s ease;
 }
 
+/* 收合時寬度自適應為膠囊 */
 .grimoire-voting-hud.is-collapsed {
   width: auto;
+  z-index: 100;
 }
 
 /* 收合膠囊 */
@@ -374,12 +377,15 @@ function getPlayerColor(playerId: string): string {
   gap: 8px;
   background: rgba(18, 18, 22, 0.88);
   border: 1px solid rgba(201, 168, 76, 0.45);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-  padding: 8px 14px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  padding: 6px 14px;
   border-radius: 20px;
   cursor: pointer;
   backdrop-filter: blur(8px);
   transition: all 0.2s ease;
+  height: 38px;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .hud-collapsed-pill:hover {

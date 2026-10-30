@@ -94,7 +94,10 @@
         class="direct-voting-mark"
         :class="{ 'is-voting-yes': isVotingYes, 'is-voting-no': !isVotingYes, 'is-spent': isGhostVoteSpent }"
       >
-        <span v-if="isVotingYes" class="vote-hand-icon">✋</span>
+        <span v-if="isVotingYes" class="vote-hand-icon">
+        <img src="/pic/vote-hand.png" class="vote-hand-ico" />
+
+        </span>
         <span v-else class="vote-cross-icon">✕</span>
       </div>
 
@@ -103,7 +106,10 @@
         v-else-if="shouldShowPickHand" 
         class="nomination-pick-hand-mark"
       >
-        <span class="pick-hand-icon">👉</span>
+        <span class="pick-hand-icon"> 
+        <img src="/pic/hand.png" class="vote-hand-ico" />
+
+        </span>
       </div>
       </div>
       
@@ -1285,9 +1291,21 @@ function getReminderIcon(text: string) {
 }
 
 .vote-hand-icon {
-  font-size: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.vote-hand-ico {
+  width: 54%;
+  height: 54%;
+  max-width: 44px;
+  max-height: 44px;
+  object-fit: contain;
+  display: block;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9));
-  transform: translateY(-2px);
 }
 
 .vote-cross-icon {
