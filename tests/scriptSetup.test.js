@@ -451,12 +451,18 @@ test('編輯劇本 (ScriptEditorPanel.vue) 進階設定收合功能驗證 (Logo/
     '進階設定內容區塊必須由 isAdvancedSettingsExpanded 控制顯示與隱藏'
   )
 
-  // 3. 驗證進階設定收合區塊包含 Logo 網址、匯入 JSON、實體正面與背面圖檔
+  // 3. 驗證進階設定收合區塊完整包含劇本名稱、所屬分類、Logo 網址、匯入 JSON、實體正面與背面圖檔
   assert.ok(
+    content.includes('newScriptName') &&
+    content.includes('newScriptCategory') &&
     content.includes('newScriptLogo') &&
     content.includes('triggerJsonImport') &&
     content.includes('newScriptPhysicalImage') &&
     content.includes('newScriptPhysicalImageBack'),
-    '進階設定收合區塊必須完整包含 Logo 網址、匯入 JSON、正面圖檔與背面圖檔'
+    '進階設定收合區塊必須完整包含劇本名稱、所屬分類、Logo 網址、匯入 JSON、正面圖檔與背面圖檔'
+  )
+  assert.ok(
+    content.includes('toggle-summary') && content.includes('newScriptName'),
+    '進階設定按鈕必須在收合時呈現劇本名稱與分類之預覽資訊'
   )
 })

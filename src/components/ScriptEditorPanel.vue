@@ -109,22 +109,7 @@
         <div v-if="activeTab === 'create'" class="tab-content create-tab">
           <!-- 劇本基本資料 -->
           <div class="form-section-container">
-            <div class="form-section">
-              <div class="form-group">
-                <label class="form-label">劇本名稱</label>
-                <input type="text" v-model="newScriptName" placeholder="例如：藍色眼淚、自訂新劇本..." class="form-input" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">所屬分類</label>
-                <select v-model="newScriptCategory" class="form-select">
-                  <option v-for="cat in scriptStore.categories" :key="cat" :value="cat">
-                    {{ cat }}
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <!-- 進階設定收合按鈕 -->
+            <!-- 進階設定收合按鈕 (含名稱與分類資訊預覽) -->
             <button 
               type="button" 
               class="advanced-settings-toggle-btn" 
@@ -133,14 +118,27 @@
               <div class="toggle-btn-left">
                 <img src="/pic/gear.png" class="btn-icon-img" />
                 <span class="toggle-title">進階設定</span>
+                <span class="toggle-summary" v-if="newScriptName">({{ newScriptName }} · {{ newScriptCategory }})</span>
                 <span v-if="newScriptLogo || newScriptPhysicalImage || newScriptPhysicalImageBack" class="configured-dot" title="已設定自訂圖檔或Logo">●</span>
               </div>
               <span class="toggle-arrow">{{ isAdvancedSettingsExpanded ? '▲ 收起' : '▼ 展開' }}</span>
             </button>
 
-            <!-- 收合的進階設定區塊 (Logo / 匯入 JSON / 實體圖檔) -->
+            <!-- 收合的進階設定區塊 (名稱 / 分類 / Logo / 匯入 JSON / 實體圖檔) -->
             <div v-show="isAdvancedSettingsExpanded" class="advanced-settings-content">
               <div class="form-section advanced-inner-form">
+                <div class="form-group">
+                  <label class="form-label">劇本名稱</label>
+                  <input type="text" v-model="newScriptName" placeholder="例如：藍色眼淚、自訂新劇本..." class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">所屬分類</label>
+                  <select v-model="newScriptCategory" class="form-select">
+                    <option v-for="cat in scriptStore.categories" :key="cat" :value="cat">
+                      {{ cat }}
+                    </option>
+                  </select>
+                </div>
                 <div class="form-group">
                   <label class="form-label">劇本圖示 (Logo) 網址</label>
                   <input type="text" v-model="newScriptLogo" placeholder="輸入圖片 URL 連結，例如 https://..." class="form-input" />
@@ -1822,7 +1820,7 @@ function moveCategory(index: number, direction: number) {
 /* 進階設定收合按鈕與容器 */
 .advanced-settings-toggle-btn {
   width: calc(100% - 32px);
-  margin: 6px 16px 8px;
+  margin: 10px 16px 8px;
   padding: 8px 12px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1846,6 +1844,17 @@ function moveCategory(index: number, direction: number) {
   align-items: center;
   gap: 8px;
   font-weight: 600;
+  overflow: hidden;
+}
+
+.toggle-summary {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: normal;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .toggle-arrow {
