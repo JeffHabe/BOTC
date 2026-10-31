@@ -518,16 +518,16 @@ test('SettingsPanel.vue 設定清單佈局順序：危險區域必須位於資�
   assert.ok(licenseIndex !== -1, 'SettingsPanel.vue 必須包含軟體使用授權')
 
   assert.ok(
+    langIndex < dangerIndex,
+    `語言設置位置 (${langIndex}) 必須在危險區域 (${dangerIndex}) 之前`
+  )
+  assert.ok(
     dangerIndex < dataIndex,
     `危險區域位置 (${dangerIndex}) 必須在資料管理 (${dataIndex}) 之前`
   )
   assert.ok(
-    dataIndex < langIndex,
-    `資料管理位置 (${dataIndex}) 必須在語言設置 (${langIndex}) 之前`
-  )
-  assert.ok(
-    langIndex < licenseIndex,
-    `語言設置位置 (${langIndex}) 必須在軟體使用授權 (${licenseIndex}) 之前`
+    dataIndex < licenseIndex,
+    `資料管理位置 (${dataIndex}) 必須在軟體使用授權 (${licenseIndex}) 之前`
   )
 
   // 驗證危險區域內的功能按鈕完整性
@@ -695,4 +695,22 @@ test('SettingsPanel.vue 圖示全面專屬化與 Emoji 替換驗證', () => {
   assert.ok(content.includes('/pic/office-push-pin.png'), '主要播放音效釘選指示應使用 /pic/office-push-pin.png')
   assert.ok(content.includes('/pic/stop-button.png'), '停止播放按鈕應使用 /pic/stop-button.png')
   assert.ok(content.includes('/pic/play.png'), '播放按鈕應使用 /pic/play.png')
+})
+
+test('uiStore.ts 技能音效按鈕預設隱藏行為驗證：全新手機與未設定時預設關閉/隱藏 (true)', () => {
+  const uiStorePath = path.resolve(__dirname, '../src/stores/uiStore.ts')
+  const content = fs.readFileSync(uiStorePath, 'utf8')
+
+  // 1. 驗證代碼實作邏輯：預設為隱藏 (true)，即 localStorage.getItem('botc-hide-custom-sound-btn') !== 'false'
+  assert.ok(
+    content.includes("localStorage.getItem('botc-hide-custom-sound-btn') !== 'false'"),
+    'uiStore.ts 必須使用 !== "false"，確保全新手機/裝置無記錄 (null) 時預設隱藏主畫面技能音效按鈕'
+  )
+
+  // 2. 邏輯運算模擬驗證
+  const evalHidden = (storedVal) => storedVal !== 'false'
+  assert.strictEqual(evalHidden(null), true, '全新手機/無設定紀錄 (null) 時，應預設為隱藏 (true)')
+  assert.strictEqual(evalHidden(undefined), true, 'undefined 時，應預設為隱藏 (true)')
+  assert.strictEqual(evalHidden('true'), true, '明確設定為 "true" 時，應為隱藏 (true)')
+  assert.strictEqual(evalHidden('false'), false, '明確取消勾選設為 "false" 時，應為顯示/不隱藏 (false)')
 })

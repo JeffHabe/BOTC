@@ -44,7 +44,24 @@
             <span class="stat-card-label">存活人數</span>
           </div>
         </div>
+        <div class="divider" />
 
+        <!-- 語言設置 -->
+        <div class="section-title">語言設置 (Language)</div>
+        <div class="layout-selector-grid cols-2" data-no-lang-convert>
+          <button class="layout-option" :class="{ active: uiStore.language === 'zh-TW' }"
+            @click="uiStore.setLanguage('zh-TW')">
+            <span class="opt-icon">繁</span>
+            <span class="opt-label">繁體中文</span>
+            <div v-if="uiStore.language === 'zh-TW'" class="active-check">✓</div>
+          </button>
+          <button class="layout-option" :class="{ active: uiStore.language === 'zh-CN' }"
+            @click="uiStore.setLanguage('zh-CN')">
+            <span class="opt-icon">简</span>
+            <span class="opt-label">简体中文</span>
+            <div v-if="uiStore.language === 'zh-CN'" class="active-check">✓</div>
+          </button>
+        </div>
         <div class="divider" />
 
         <!-- 遊戲控制 -->
@@ -172,25 +189,6 @@
 
         <div class="divider" />
 
-        <!-- 語言設置 -->
-        <div class="section-title">語言設置 (Language)</div>
-        <div class="layout-selector-grid cols-2" data-no-lang-convert>
-          <button class="layout-option" :class="{ active: uiStore.language === 'zh-TW' }"
-            @click="uiStore.setLanguage('zh-TW')">
-            <span class="opt-icon">繁</span>
-            <span class="opt-label">繁體中文</span>
-            <div v-if="uiStore.language === 'zh-TW'" class="active-check">✓</div>
-          </button>
-          <button class="layout-option" :class="{ active: uiStore.language === 'zh-CN' }"
-            @click="uiStore.setLanguage('zh-CN')">
-            <span class="opt-icon">简</span>
-            <span class="opt-label">简体中文</span>
-            <div v-if="uiStore.language === 'zh-CN'" class="active-check">✓</div>
-          </button>
-        </div>
-
-        <div class="divider" />
-
         <!-- 介面設置 (暫時隱藏，預設為內圈向心) -->
 
         <div class="section-title">提示標記佈局 (Reminder Layout)</div>
@@ -263,7 +261,7 @@
         <div class="divider" />
 
         <!-- 魔典排列圖形 (已移至頂部工具列) -->
-
+        <!-- 
         <div class="section-title">魔典排列圖形 (Grimoire Shape)</div>
         <div class="layout-selector-grid cols-3">
           <button v-for="shape in shapes" :key="shape.id" class="layout-option"
@@ -286,7 +284,8 @@
         </div>
 
         <div class="divider" />
-
+        -->
+        
         <!-- 計時器設置 -->
         <div class="section-title">計時器設置</div>
         <div class="layout-selector-grid cols-2">
@@ -321,10 +320,10 @@
             <span class="sound-toggle-label"><img src="/pic/padlock.png" class="sound-toggle-icon" /> 隱藏主畫面技能音效按鈕</span>
           </div>
 
-          <button class="import-sound-btn" @click="triggerSoundUpload">
+          <!-- <button class="import-sound-btn" @click="triggerSoundUpload">
             <img src="/pic/plus.svg" class="btn-svg-icon" /> 匯入角色技能音效
           </button>
-          <input type="file" ref="soundFileInput" hidden accept="audio/*" @change="handleSoundFileChange" />
+          <input type="file" ref="soundFileInput" hidden accept="audio/*" @change="handleSoundFileChange" /> -->
 
           <!-- 自訂音效清單 -->
           <div v-if="uiStore.customSounds.length === 0" class="no-sounds-tip">
@@ -359,6 +358,11 @@
               </div>
             </div>
           </div>
+           <button class="import-sound-btn" @click="triggerSoundUpload">
+            <img src="/pic/plus.svg" class="btn-svg-icon" /> 匯入角色技能音效
+          </button>
+          <input type="file" ref="soundFileInput" hidden accept="audio/*" @change="handleSoundFileChange" />
+
         </div>
 
         <div class="divider" />
@@ -603,11 +607,13 @@ async function processImage(dataUrl: string): Promise<string> {
   })
 }
 
+/* 魔典排列圖形已移至頂部工具列，此處保留註解以供參考
 const shapes = [
   { id: 'circle', label: '經典正圓', icon: '/pic/circle.png?v=2' },
   { id: 'oval', label: '優雅橢圓', icon: '/pic/oval.png?v=2' },
   { id: 'rect', label: '工整矩形', icon: '/pic/rectangle.png?v=2' },
-]
+] 
+*/
 
 const layouts = [
   { id: 'inner', label: '向心排列', icon: '/pic/reduce.png' },

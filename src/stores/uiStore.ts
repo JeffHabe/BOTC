@@ -491,7 +491,8 @@ export const useUIStore = defineStore('ui', () => {
     { id: 'default-bomb', name: '炸彈人技能 (bomb)' }
   ]
 
-  const isCustomSoundButtonHidden = ref(localStorage.getItem('botc-hide-custom-sound-btn') === 'true')
+  // 預設為隱藏 (true)，僅當使用者明確設定過為 'false' 時才顯示
+  const isCustomSoundButtonHidden = ref(localStorage.getItem('botc-hide-custom-sound-btn') !== 'false')
   function setCustomSoundButtonHidden(hidden: boolean) {
     isCustomSoundButtonHidden.value = hidden
     localStorage.setItem('botc-hide-custom-sound-btn', String(hidden))
