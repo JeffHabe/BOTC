@@ -38,7 +38,7 @@
           <div class="stat-card" title="存活人數">
             <!-- <span class="stat-card-icon">❤️</span> -->
             <span class="stat-icon">
-              <img src="/pic/heart-edge.png" alt="有效票數" class="stat-img img-heart" />
+              <img src="/pic/heart.png" alt="有效票數" class="stat-img img-heart" />
             </span>
             <span class="stat-card-val">{{ gameStore.alive }}</span>
             <span class="stat-card-label">存活人數</span>
