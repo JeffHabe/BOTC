@@ -69,14 +69,14 @@
         <span class="stat-item votes" v-if="gameStore.phase === 'Day'" title="有效票數">
           <!-- <span class="stat-icon">🗳️</span> -->
           <span class="stat-icon">
-            <img src="/pic/vote-tag.png" alt="有效票數" class="stat-img img-vote-yes" />
+            <img src="/pic/vote-tag-edge.png" alt="有效票數" class="stat-img img-vote-yes" />
           </span>
           <span class="stat-num">{{ totalVotes }}</span>
         </span>
         <span class="stat-item alive" title="存活人數">
           <!-- <span class="stat-icon">❤️</span> -->
           <span class="stat-icon">
-            <img src="/pic/heart.png?v=2" alt="有效票數" class="stat-img img-heart" />
+            <img src="/pic/heart-edge.png" alt="有效票數" class="stat-img img-heart" />
           </span>
           <span class="stat-num">{{ gameStore.alive }}</span>
         </span>
@@ -253,7 +253,7 @@ const totalVotes = computed(() => {
 .stat-item.minion    { color: #ec7063; }
 .stat-item.demon     { color: #f1948a; }
 .stat-item.traveler  { color: #b46baf; }
-.stat-item.nominations { color: #f39c12; }
+.stat-item.nominations { color: #ffffff; }
 
 .stat-num {
   font-weight: 700;

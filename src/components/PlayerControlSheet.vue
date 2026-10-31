@@ -38,20 +38,20 @@
           <div class="action-grid">
             <template v-if="player.is_alive">
               <button class="action-btn death-btn" @click="handleKill">
-                <img src="/pic/half.png" class="action-btn-img" />
+                <img src="/pic/skull.png" class="action-btn-img" />
                 <span class="label">死亡</span>
                 <span v-if="isProtected" class="warning-badge" title="注意：該玩家目前有保護標記">⚠️被保護</span>
               </button>
             </template>
             <template v-else>
               <button class="action-btn revive-btn" @click="handleRevive">
-                <img src="/pic/heart.png?v=2" class="action-btn-img" />
+                <img src="/pic/heart-edge.png" class="action-btn-img" />
                 <span class="label">復活</span>
               </button>
             </template>
 
             <button class="action-btn role-btn" @click="handleRolePicker">
-              <img src="/pic/mask.png" class="action-btn-img" />
+              <img src="/pic/mask-edge.png" class="action-btn-img" />
               <span class="label">變更角色</span>
             </button>
 
@@ -70,7 +70,7 @@
                 @click="handleNominateHim"
                 :disabled="player.is_nominated"
               >
-                <img src="/pic/vote-tag.png" class="action-btn-img" />
+                <img src="/pic/vote-tag-edge.png" class="action-btn-img" />
                 <span class="label">被提名</span>
               </button>
             </template>

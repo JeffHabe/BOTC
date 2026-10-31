@@ -4,7 +4,7 @@
       <div class="panel-header">
         <!-- <span class="panel-icon">🎭</span> -->
         <span class="stat-icon">
-            <img src="/pic/mask.png" alt="有效票數" class="stat-img img-mask" />
+            <img src="/pic/mask-edge.png" alt="有效票數" class="stat-img img-mask" />
             </span>
         <h2 class="panel-title">傳說角色設定</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>

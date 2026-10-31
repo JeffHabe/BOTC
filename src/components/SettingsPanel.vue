@@ -30,7 +30,7 @@
           <div class="stat-card" title="有效票數">
             <!-- <span class="stat-icon">🗳️</span> -->
             <span class="stat-icon">
-              <img src="/pic/vote-tag.png" alt="有效票數" class="stat-img img-vote-yes" />
+              <img src="/pic/vote-tag-edge.png" alt="有效票數" class="stat-img img-vote-yes" />
             </span>
             <span class="stat-card-val">{{ totalVotes }}</span>
             <span class="stat-card-label">有效票數</span>
@@ -38,7 +38,7 @@
           <div class="stat-card" title="存活人數">
             <!-- <span class="stat-card-icon">❤️</span> -->
             <span class="stat-icon">
-              <img src="/pic/heart.png?v=2" alt="有效票數" class="stat-img img-heart" />
+              <img src="/pic/heart-edge.png" alt="有效票數" class="stat-img img-heart" />
             </span>
             <span class="stat-card-val">{{ gameStore.alive }}</span>
             <span class="stat-card-label">存活人數</span>
@@ -68,7 +68,7 @@
           </button>
 
           <button class="grid-item" @click="openVoting">
-            <span class="grid-icon"><img src="/pic/vote-tag.png" class="grid-img" /></span>
+            <span class="grid-icon"><img src="/pic/vote-tag-edge.png" class="grid-img" /></span>
             <span class="grid-label">投票面板</span>
           </button>
 
@@ -86,7 +86,7 @@
           </button>
 
           <button class="grid-item" @click="openGameLog">
-            <span class="grid-icon"><img src="/pic/history.png" class="grid-img" /></span>
+            <span class="grid-icon"><img src="/pic/history-edge.png" class="grid-img" /></span>
             <span class="grid-label">對局記錄</span>
           </button>
 
@@ -101,7 +101,7 @@
           </button>
 
           <button class="grid-item" @click="openCharacterEditor">
-            <span class="grid-icon"><img src="/pic/anonymous.png" class="grid-img" /></span>
+            <span class="grid-icon"><img src="/pic/character-lib.png" class="grid-img" /></span>
             <span class="grid-label">自訂庫</span>
           </button>
 
@@ -161,7 +161,7 @@
           </button>
 
           <button class="grid-item" @click="restoreDefaultCharacters">
-            <span class="grid-icon"><img src="/pic/anonymous.png" class="grid-img" /></span>
+            <span class="grid-icon"><img src="/pic/character-lib.png" class="grid-img" /></span>
             <span class="grid-label">重置預設角色</span>
           </button>
 

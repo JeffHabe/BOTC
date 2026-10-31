@@ -2,7 +2,7 @@
   <div class="overlay" @click.self="uiStore.closePanel()">
     <div class="voting-panel panel animate-slide-up">
       <div class="panel-header">
-        <span class="panel-icon"><img src="/pic/vote-tag.png" class="panel-header-icon" /></span>
+        <span class="panel-icon"><img src="/pic/vote-tag-edge.png" class="panel-header-icon" /></span>
         <h2 class="panel-title">投票管理</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
@@ -159,7 +159,7 @@
                   <span v-if="!p.is_alive" class="vote-ghost-icon"><img src="/pic/grave.png" class="vote-ghost-img" /></span>
                   <span class="vote-player" :style="{ color: getPlayerColor(p.id) }">{{ idx + 1 }}. {{ p.name }}</span>
                 </div>
-                <span v-if="nom.votes_for.includes(p.id)" class="vote-mark"><img src="/pic/vote-tag.png" class="vote-yes-img" /></span>
+                <span v-if="nom.votes_for.includes(p.id)" class="vote-mark"><img src="/pic/vote-tag-edge.png" class="vote-yes-img" /></span>
               </button>
             </div>
 

@@ -181,8 +181,8 @@ test('玩家令片 (PlayerToken.vue) 名字後方應於每天白天顯示提名�
   )
   assert.ok(
     tokenContent.includes('v-if="!player.is_nominated"') &&
-    tokenContent.includes('/pic/vote-tag.png'),
-    '玩家尚有被提權時應顯示 /pic/vote-tag.png'
+    tokenContent.includes('/pic/vote-tag-edge.png'),
+    '玩家尚有被提權時應顯示 /pic/vote-tag-edge.png'
   )
   assert.ok(
     tokenContent.includes('v-if="!player.is_alive && (player.has_ghost_vote || (player.extra_votes && player.extra_votes > 0))"') &&
@@ -586,19 +586,42 @@ test('全站核心圖示防快取參數 (?v=) 與新版圖檔路徑全面替換�
   assert.ok(scriptContent.includes('/pic/spell-book.png'), 'ScriptEditorPanel 應改用 /pic/spell-book.png')
 
   assert.ok(timerContent.includes('/pic/silence.png'), 'TimerWidget 應改用 /pic/silence.png')
-  assert.ok(tokenContent.includes('/pic/vote-tag.png'), 'PlayerToken 應改用 /pic/vote-tag.png')
-  assert.ok(sheetContent.includes('/pic/vote-tag.png'), 'PlayerControlSheet 應改用 /pic/vote-tag.png')
-  assert.ok(sheetContent.includes('/pic/half.png'), 'PlayerControlSheet 應改用 /pic/half.png')
-  assert.ok(sheetContent.includes('/pic/heart.png'), 'PlayerControlSheet 應改用 /pic/heart.png')
+  assert.ok(tokenContent.includes('/pic/vote-tag-edge.png'), 'PlayerToken 應改用 /pic/vote-tag-edge.png')
+  assert.ok(sheetContent.includes('/pic/vote-tag-edge.png'), 'PlayerControlSheet 應改用 /pic/vote-tag-edge.png')
+  assert.ok(settingsContent.includes('/pic/half.png'), 'SettingsPanel 應改用 /pic/half.png')
+  assert.ok(sheetContent.includes('/pic/heart-edge.png'), 'PlayerControlSheet 應改用 /pic/heart-edge.png')
 
   assert.ok(statusContent.includes('/pic/half.png'), 'StatusBar 應改用 /pic/half.png')
-  assert.ok(statusContent.includes('/pic/heart.png'), 'StatusBar 應改用 /pic/heart.png')
-  assert.ok(statusContent.includes('/pic/vote-tag.png'), 'StatusBar 應改用 /pic/vote-tag.png')
+  assert.ok(statusContent.includes('/pic/heart-edge.png'), 'StatusBar 應改用 /pic/heart-edge.png')
+  assert.ok(statusContent.includes('/pic/vote-tag-edge.png'), 'StatusBar 應改用 /pic/vote-tag-edge.png')
 
   assert.ok(votingContent.includes('/pic/half.png'), 'VotingPanel 應改用 /pic/half.png')
-  assert.ok(votingContent.includes('/pic/vote-tag.png'), 'VotingPanel 應改用 /pic/vote-tag.png')
-  assert.ok(whiteboardContent.includes('/pic/vote-tag.png'), 'Whiteboard 應改用 /pic/vote-tag.png')
+  assert.ok(votingContent.includes('/pic/vote-tag-edge.png'), 'VotingPanel 應改用 /pic/vote-tag-edge.png')
+  assert.ok(whiteboardContent.includes('/pic/vote-tag-edge.png'), 'Whiteboard 應改用 /pic/vote-tag-edge.png')
+  assert.ok(sheetContent.includes('/pic/mask-edge.png'), 'PlayerControlSheet 應改用 /pic/mask-edge.png')
+  assert.ok(settingsContent.includes('/pic/history-edge.png'), 'SettingsPanel 應改用 /pic/history-edge.png')
+  assert.ok(settingsContent.includes('/pic/character-lib.png'), 'SettingsPanel 應改用 /pic/character-lib.png')
   assert.ok(grimoireContent.includes('/pic/spell-book.png'), 'GrimoireBoard 應改用 /pic/spell-book.png')
   assert.ok(timerContent.includes('/pic/hourglass (1).png'), 'TimerWidget 應改用 /pic/hourglass (1).png')
   assert.ok(votingContent.includes('/pic/hourglass (1).png'), 'VotingPanel 應改用 /pic/hourglass (1).png')
+})
+
+test('UI 字體顏色校驗：偽裝標籤顏色為 #E6C446，狀態列提名權數值顏色同步為白色', () => {
+  const grimoirePath = path.resolve(__dirname, '../src/components/GrimoireBoard.vue')
+  const statusPath = path.resolve(__dirname, '../src/components/StatusBar.vue')
+
+  const grimoireContent = fs.readFileSync(grimoirePath, 'utf8')
+  const statusContent = fs.readFileSync(statusPath, 'utf8')
+
+  // 1. 驗證右下角偽裝標籤字體顏色
+  assert.ok(
+    grimoireContent.includes('.bluffs-toggle-tab') && grimoireContent.includes('color: #E6C446;'),
+    'GrimoireBoard.vue .bluffs-toggle-tab 偽裝標籤字體顏色必須為 #E6C446'
+  )
+
+  // 2. 驗證右上角狀態列提名權數值顏色同步為白色
+  assert.ok(
+    statusContent.includes('.stat-item.nominations { color: #ffffff; }'),
+    'StatusBar.vue .stat-item.nominations 必須設定為白色 (#ffffff)，與其他數據保持視覺一致'
+  )
 })

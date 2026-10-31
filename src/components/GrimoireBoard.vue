@@ -2010,7 +2010,7 @@ const activePanelComponent = computed(() => {
   justify-content: center;
   gap: 4px;
   cursor: pointer;
-  color: #d2b48c;
+  color: #E6C446;
   transition: all 0.3s ease;
   order: 4; /* 最下方 */
 }

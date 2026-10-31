@@ -147,7 +147,7 @@
             :class="{ success: copied }"
           >
             <span class="icon">
-              <img v-if="copied" src="/pic/vote-tag.png" class="btn-image-icon" />
+              <img v-if="copied" src="/pic/vote-tag-edge.png" class="btn-image-icon" />
               <img v-else src="/pic/copy.png" class="btn-image-icon" />
             </span> 
             {{ copied ? '已複製內容' : '複製全部文字' }}
