@@ -16,7 +16,7 @@ test('魔典直接投票 (uiStore.ts): 狀態管理與切換方法完整性驗�
   assert.ok(content.includes('directVotingNomIndex'), 'uiStore 必須包含 directVotingNomIndex 狀態')
   assert.ok(content.includes('directVotingNomineeId'), 'uiStore 必須包含 directVotingNomineeId 狀態')
   assert.ok(content.includes('directVotingCurrentVoterIndex'), 'uiStore 必須包含 directVotingCurrentVoterIndex 狀態')
-  assert.ok(content.includes('isVotingHudCollapsed'), 'uiStore 必須包含 isVotingHudCollapsed 狀態')
+  assert.ok(content.includes('isVotingHudCollapsed = ref(true)'), 'uiStore 中的 isVotingHudCollapsed 預設狀態必須為 true (收合狀態)')
   assert.ok(content.includes('isVotingHudVisible'), 'uiStore 必須包含 isVotingHudVisible 狀態')
 
   // 驗證操作方法
@@ -185,5 +185,32 @@ test('魔典主畫布 (GrimoireBoard.vue) 與設置面板 (SettingsPanel.vue) �
   const settingsPath = path.resolve(__dirname, '../src/components/SettingsPanel.vue')
   const settingsContent = fs.readFileSync(settingsPath, 'utf8')
   assert.ok(settingsContent.includes('openVoting') && settingsContent.includes("uiStore.openPanel('voting')"), '設定頁面必須保留原有投票管理面板的開啟入口')
+
+  // 4. 驗證白天開始時自動收合投票管理
+  assert.ok(
+    grimoireContent.includes("newPhase === 'Day'") && grimoireContent.includes('uiStore.isVotingHudCollapsed = true'),
+    'GrimoireBoard 必須監聽白天階段並在進入白天時自動將投票管理設為收合狀態'
+  )
 })
+
+test('每天白天開始時投票管理收合邏輯驗證', () => {
+  // 驗證白天重置收合判斷演算法：當 phase 變更為 Day 或 round 變更且為 Day 時收合
+  function shouldCollapseOnDayStart(newPhase, oldPhase, newRound, oldRound) {
+    return newPhase === 'Day' && (oldPhase !== 'Day' || newRound !== oldRound)
+  }
+
+  // 1. 從夜晚進入白天 -> 應收合
+  assert.strictEqual(shouldCollapseOnDayStart('Day', 'Night', 2, 1), true)
+  assert.strictEqual(shouldCollapseOnDayStart('Day', 'FirstNight', 1, 0), true)
+
+  // 2. 白天天數推進 -> 應收合
+  assert.strictEqual(shouldCollapseOnDayStart('Day', 'Day', 3, 2), true)
+
+  // 3. 白天期間未換天數 -> 不應強制自動收合（允許使用者手動展開操作）
+  assert.strictEqual(shouldCollapseOnDayStart('Day', 'Day', 2, 2), false)
+
+  // 4. 進入夜晚 -> 不觸發
+  assert.strictEqual(shouldCollapseOnDayStart('Night', 'Day', 2, 2), false)
+})
+
 

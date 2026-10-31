@@ -285,7 +285,7 @@ export const useUIStore = defineStore('ui', () => {
   const directVotingNomineeId = ref<string | null>(null)
   const directVotingNominatorId = ref<string | null>(null)
   const directVotingCurrentVoterIndex = ref(0)
-  const isVotingHudCollapsed = ref(false)
+  const isVotingHudCollapsed = ref(true)
   const isVotingHudVisible = ref(true)
 
   // 盤面點擊令片選擇提名步驟 ('none' | 'nominator' | 'nominee')

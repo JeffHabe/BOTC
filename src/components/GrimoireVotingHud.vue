@@ -168,13 +168,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useGameStore } from '../stores/gameStore'
 import { useUIStore } from '../stores/uiStore'
 import { ROLE_TYPE_COLOR } from '../types'
 
 const gameStore = useGameStore()
 const uiStore = useUIStore()
+
+// 每天白天開始時，投票管理預設為收合狀態
+watch([() => gameStore.phase, () => gameStore.round], ([newPhase, newRound], [oldPhase, oldRound]) => {
+  if (newPhase === 'Day' && (oldPhase !== 'Day' || newRound !== oldRound)) {
+    uiStore.isVotingHudCollapsed = true
+  }
+})
 
 // 當前天數
 const currentRound = computed(() => gameStore.round || 1)

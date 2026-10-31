@@ -554,6 +554,13 @@ function handleLogoError() {
   logoLoadFailed.value = true
 }
 
+// --- 每天白天開始時，投票管理預設為收合狀態 ───
+watch([() => gameStore.phase, () => gameStore.round], ([newPhase, newRound], [oldPhase, oldRound]) => {
+  if (newPhase === 'Day' && (oldPhase !== 'Day' || newRound !== oldRound)) {
+    uiStore.isVotingHudCollapsed = true
+  }
+})
+
 // --- 實體劇本大圖檢視狀態 ───
 const showPhysicalImageOverlay = ref(false)
 const currentViewingSide = ref<'front' | 'back'>('front')
