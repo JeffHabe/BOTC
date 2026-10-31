@@ -45,7 +45,7 @@
             </template>
             <template v-else>
               <button class="action-btn revive-btn" @click="handleRevive">
-                <img src="/pic/heart.png" class="action-btn-img" />
+                <img src="/pic/heart.png?v=2" class="action-btn-img" />
                 <span class="label">復活</span>
               </button>
             </template>

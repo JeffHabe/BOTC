@@ -568,6 +568,7 @@ test('全站核心圖示防快取參數 (?v=) 與新版圖檔路徑全面替換�
     { name: 'reset.png', files: [grimoireContent, settingsContent, timerContent, votingContent] },
     { name: 'show.png', files: [grimoireContent] },
     { name: 'hide.png', files: [grimoireContent] },
+    { name: 'heart.png', files: [sheetContent, settingsContent, statusContent] },
     { name: 'circle.png', files: [grimoireContent, settingsContent] },
     { name: 'oval.png', files: [grimoireContent, settingsContent] },
     { name: 'rectangle.png', files: [grimoireContent, settingsContent] },
