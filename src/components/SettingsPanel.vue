@@ -153,6 +153,22 @@
 
         <div class="divider" />
 
+        <!-- 危險區域 -->
+        <div class="section-title danger-section">危險區域</div>
+        <div class="settings-grid">
+          <button class="grid-item warning" @click="resetStates">
+            <span class="grid-icon"><img src="/pic/reset.png" class="grid-img" /></span>
+            <span class="grid-label">重置狀態</span>
+          </button>
+
+          <button class="grid-item danger" @click="resetGame">
+            <span class="grid-icon"><img src="/pic/close.png" class="grid-img" /></span>
+            <span class="grid-label">重置遊戲</span>
+          </button>
+        </div>
+
+        <div class="divider" />
+
         <!-- 語言設置 -->
         <div class="section-title">語言設置 (Language)</div>
         <div class="layout-selector-grid cols-2" data-no-lang-convert>
@@ -339,22 +355,6 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <div class="divider" />
-
-        <!-- 危險區域 -->
-        <div class="section-title danger-section">危險區域</div>
-        <div class="settings-grid">
-          <button class="grid-item warning" @click="resetStates">
-            <span class="grid-icon"><img src="/pic/reset.png" class="grid-img" /></span>
-            <span class="grid-label">重置狀態</span>
-          </button>
-
-          <button class="grid-item danger" @click="resetGame">
-            <span class="grid-icon"><img src="/pic/close.png" class="grid-img" /></span>
-            <span class="grid-label">重置遊戲</span>
-          </button>
         </div>
 
         <div class="divider" />
