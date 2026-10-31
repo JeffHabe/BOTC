@@ -14,7 +14,7 @@
           <div class="stat-card" title="剩餘提名權">
             <!-- <span class="stat-card-icon">🙋</span> -->
             <span class="stat-icon">
-              <img src="/pic/nomination.png?v=2" alt="提名權" class="stat-img img-nomination" />
+              <img src="/pic/fill-hand.png" alt="提名權" class="stat-img img-nomination" />
             </span>
             <span class="stat-card-val">{{ nominationsRemaining }}</span>
             <span class="stat-card-label">剩餘提名</span>

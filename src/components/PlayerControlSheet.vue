@@ -62,7 +62,7 @@
                 @click="handleStartNominationAs"
                 :disabled="isNominatorDisabled"
               >
-                <img src="/pic/nomination.png?v=2" class="action-btn-img" />
+                <img src="/pic/fill-hand.png" class="action-btn-img" />
                 <span class="label">提名</span>
               </button>
               <button 
@@ -101,7 +101,7 @@
 
             <div class="toggle-item">
               <div class="toggle-info">
-                <img src="/pic/nomination.png?v=2" class="toggle-icon-img" />
+                <img src="/pic/fill-hand.png" class="toggle-icon-img" />
                 <div>
                   <div class="t-title">提名權</div>
                   <div class="t-sub">

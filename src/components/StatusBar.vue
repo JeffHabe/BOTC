@@ -55,7 +55,7 @@
         <span class="stat-item nominations" v-if="gameStore.phase === 'Day'" title="剩餘提名權">
           <!-- <span class="stat-icon">🤚</span> -->
           <span class="stat-icon">
-            <img src="/pic/nomination.png?v=2" alt="提名權" class="stat-img img-nomination" />
+            <img src="/pic/fill-hand.png" alt="提名權" class="stat-img img-nomination" />
           </span>
           <span class="stat-num">{{ nominationsRemaining }}</span>
         </span>

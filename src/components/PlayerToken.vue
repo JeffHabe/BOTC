@@ -40,7 +40,7 @@
             class="can-nominate-indicator"
             title="今日尚有提名權"
           >
-            <img src="/pic/nomination.png?v=2" class="status-indicator-img" />
+            <img src="/pic/fill-hand.png" class="status-indicator-img" />
           </span>
           <span
             v-if="!player.is_nominated"

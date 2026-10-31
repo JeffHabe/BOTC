@@ -128,7 +128,7 @@ async function confirmBatch() {
 .dialog-title {
   font-family: var(--font-title);
   font-size: 16px;
-  color: var(--color-gold);
+  color: #E6C446;
   margin-top: 8px;
   margin-bottom: 4px;
 }

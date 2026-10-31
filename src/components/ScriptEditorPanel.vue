@@ -20,7 +20,7 @@
             <img src="/pic/edit.png" class="btn-icon-img" />編輯劇本
           </template>
           <template v-else>
-            <img src="/pic/plus.png" class="btn-icon-img" />建立劇本
+            <img src="/pic/plus.png?v=2" class="btn-icon-img" />建立劇本
           </template>
         </button>
         <button class="tab-btn" :class="{ active: activeTab === 'list' }" @click="activeTab = 'list'">
@@ -392,7 +392,7 @@
             <input type="text" v-model="newCategoryName" placeholder="新增自訂分類名稱..." class="add-input"
               @keyup.enter="handleCreateCategory" />
             <button class="btn-gold-outline add-btn" :disabled="!newCategoryName.trim()" @click="handleCreateCategory">
-              <img src="/pic/plus.png" class="btn-icon-img" />新增
+              <img src="/pic/plus.png?v=2" class="btn-icon-img" />新增
             </button>
           </div>
         </div>

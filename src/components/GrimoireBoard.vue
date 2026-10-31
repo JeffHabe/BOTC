@@ -234,7 +234,7 @@
     </button>
 
     <button v-if="!showPhysicalImageOverlay" class="add-player-btn" @click="uiStore.addPlayerDialogOpen = true" title="新增玩家">
-      <img src="/pic/plus.png" class="icon" />
+      <img src="/pic/plus.png?v=2" class="icon" />
     </button>
 
     <div v-if="!showPhysicalImageOverlay" class="side-action-group">
@@ -312,13 +312,13 @@
       :class="{ 'has-voting-hud': isVotingHudActive }"
     >
       <button class="side-action-btn" @click="uiStore.zoomOut()" title="縮小">
-        <img src="/pic/minus.png" class="icon" />
+        <img src="/pic/minus.png?v=2" class="icon" />
       </button>
       <button class="side-action-btn reset-btn" @click="uiStore.resetZoom()" title="重置縮放">
         <span class="percentage">{{ Math.round(uiStore.grimoireScale * 100) }}%</span>
       </button>
       <button class="side-action-btn" @click="uiStore.zoomIn()" title="放大">
-        <img src="/pic/plus.png" class="icon" />
+        <img src="/pic/plus.png?v=2" class="icon" />
       </button>
     </div>
 
@@ -465,10 +465,10 @@
             <span>{{ currentViewingSide === 'front' ? '正面' : '背面' }}</span>
           </button>
           <button class="tool-btn" @click="zoomImg(0.2)" title="放大">
-            <img src="/pic/plus.png" class="btn-image-icon" />
+            <img src="/pic/plus.png?v=2" class="btn-image-icon" />
           </button>
           <button class="tool-btn" @click="zoomImg(-0.2)" title="縮小">
-            <img src="/pic/minus.png" class="btn-image-icon" />
+            <img src="/pic/minus.png?v=2" class="btn-image-icon" />
           </button>
           <button class="tool-btn" @click="resetImgZoom" title="重設">
             <img src="/pic/reset.png?v=2" class="btn-image-icon" />
@@ -2321,7 +2321,6 @@ const activePanelComponent = computed(() => {
   width: 18px;
   height: 18px;
   object-fit: contain;
-  filter: brightness(1.3) sepia(0.3);
 }
 
 .add-player-btn {

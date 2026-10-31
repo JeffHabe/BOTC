@@ -176,8 +176,8 @@ test('玩家令片 (PlayerToken.vue) 名字後方應於每天白天顯示提名�
   )
   assert.ok(
     tokenContent.includes('v-if="player.is_alive && (player.can_nominate || (player.extra_nominations && player.extra_nominations > 0))"') &&
-    tokenContent.includes('/pic/nomination.png'),
-    '存活玩家尚有提名權時應顯示 /pic/nomination.png'
+    tokenContent.includes('/pic/fill-hand.png'),
+    '存活玩家尚有提名權時應顯示 /pic/fill-hand.png'
   )
   assert.ok(
     tokenContent.includes('v-if="!player.is_nominated"') &&
@@ -560,7 +560,8 @@ test('全站核心圖示防快取參數 (?v=) 與新版圖檔路徑全面替換�
   const cacheBustImages = [
     { name: 'whiteboard.png', files: [grimoireContent, whiteboardContent] },
     { name: 'gear.png', files: [grimoireContent, settingsContent, scriptContent] },
-    { name: 'nomination.png', files: [sheetContent, tokenContent, settingsContent, statusContent] },
+    { name: 'plus.png', files: [grimoireContent, scriptContent] },
+    { name: 'minus.png', files: [grimoireContent] },
     { name: 'theater.png', files: [grimoireContent, settingsContent] },
     { name: 'search.png', files: [grimoireContent, whiteboardContent] },
     { name: 'play.png', files: [timerContent, votingContent, scriptContent] },
@@ -578,6 +579,10 @@ test('全站核心圖示防快取參數 (?v=) 與新版圖檔路徑全面替換�
   })
 
   // 2. 新檔名替換驗證
+  assert.ok(tokenContent.includes('/pic/fill-hand.png'), 'PlayerToken 應改用 /pic/fill-hand.png')
+  assert.ok(sheetContent.includes('/pic/fill-hand.png'), 'PlayerControlSheet 應改用 /pic/fill-hand.png')
+  assert.ok(settingsContent.includes('/pic/fill-hand.png'), 'SettingsPanel 應改用 /pic/fill-hand.png')
+  assert.ok(statusContent.includes('/pic/fill-hand.png'), 'StatusBar 應改用 /pic/fill-hand.png')
   assert.ok(grimoireContent.includes('/pic/moon.png'), 'GrimoireBoard 應改用 /pic/moon.png')
   assert.ok(settingsContent.includes('/pic/moon.png'), 'SettingsPanel 應改用 /pic/moon.png')
   assert.ok(grimoireContent.includes('/pic/bookshelf.png'), 'GrimoireBoard 應改用 /pic/bookshelf.png')
@@ -607,12 +612,18 @@ test('全站核心圖示防快取參數 (?v=) 與新版圖檔路徑全面替換�
   assert.ok(votingContent.includes('/pic/hourglass (1).png'), 'VotingPanel 應改用 /pic/hourglass (1).png')
 })
 
-test('UI 字體顏色校驗：偽裝標籤顏色為 #E6C446，狀態列提名權數值顏色同步為白色', () => {
+test('UI 字體與圖示顏色校驗：偽裝標籤與新增玩家標題為 #E6C446，加號減號為 #E6C446，書架圖示無泛白濾鏡', () => {
   const grimoirePath = path.resolve(__dirname, '../src/components/GrimoireBoard.vue')
   const statusPath = path.resolve(__dirname, '../src/components/StatusBar.vue')
+  const addPlayerPath = path.resolve(__dirname, '../src/components/AddPlayerDialog.vue')
+  const plusSvgPath = path.resolve(__dirname, '../public/pic/plus.svg')
+  const minusSvgPath = path.resolve(__dirname, '../public/pic/minus.svg')
 
   const grimoireContent = fs.readFileSync(grimoirePath, 'utf8')
   const statusContent = fs.readFileSync(statusPath, 'utf8')
+  const addPlayerContent = fs.readFileSync(addPlayerPath, 'utf8')
+  const plusSvgContent = fs.readFileSync(plusSvgPath, 'utf8')
+  const minusSvgContent = fs.readFileSync(minusSvgPath, 'utf8')
 
   // 1. 驗證右下角偽裝標籤字體顏色
   assert.ok(
@@ -624,5 +635,21 @@ test('UI 字體顏色校驗：偽裝標籤顏色為 #E6C446，狀態列提名權
   assert.ok(
     statusContent.includes('.stat-item.nominations { color: #ffffff; }'),
     'StatusBar.vue .stat-item.nominations 必須設定為白色 (#ffffff)，與其他數據保持視覺一致'
+  )
+
+  // 3. 驗證新增玩家對話框標題顏色為 #E6C446
+  assert.ok(
+    addPlayerContent.includes('.dialog-title') && addPlayerContent.includes('color: #E6C446;'),
+    'AddPlayerDialog.vue .dialog-title 標題顏色必須為 #E6C446'
+  )
+
+  // 4. 驗證加號與減號 SVG stroke 顏色為 #E6C446
+  assert.ok(plusSvgContent.includes('stroke="#E6C446"'), 'plus.svg stroke 必須為 #E6C446')
+  assert.ok(minusSvgContent.includes('stroke="#E6C446"'), 'minus.svg stroke 必須為 #E6C446')
+
+  // 5. 驗證 GrimoireBoard.vue .view-script-icon 移除 brightness(1.3) 避免泛白變淺
+  assert.ok(
+    !grimoireContent.includes('brightness(1.3) sepia(0.3)'),
+    'GrimoireBoard.vue .view-script-icon 不應再包含提亮泛白濾鏡 brightness(1.3) sepia(0.3)'
   )
 })
