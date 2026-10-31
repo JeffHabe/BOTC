@@ -140,21 +140,21 @@
         <div class="settings-grid cols-2">
 
           <button class="grid-item" @click="importGame">
-            <span class="grid-icon"><img src="/pic/downloading.png" class="grid-img" /></span>
+            <span class="grid-icon"><img src="/pic/import_data.png" class="grid-img" /></span>
             <span class="grid-label">匯入遊戲</span>
           </button>
           <button class="grid-item" @click="exportGame">
-            <span class="grid-icon"><img src="/pic/upload.png" class="grid-img" /></span>
+            <span class="grid-icon"><img src="/pic/export_data.png" class="grid-img" /></span>
             <span class="grid-label">匯出遊戲</span>
           </button>
 
           <button class="grid-item" @click="importScripts">
-            <span class="grid-icon"><img src="/pic/import.png" class="grid-img" /></span>
+            <span class="grid-icon"><img src="/pic/import_script.png" class="grid-img" /></span>
             <span class="grid-label">匯入劇本</span>
           </button>
 
            <button class="grid-item" @click="exportAllScripts">
-            <span class="grid-icon"><img src="/pic/export.png" class="grid-img" /></span>
+            <span class="grid-icon"><img src="/pic/export_script.png" class="grid-img" /></span>
             <span class="grid-label">匯出劇本</span>
           </button>
 
@@ -292,13 +292,13 @@
         <div class="layout-selector-grid cols-2">
           <button class="layout-option" :class="{ active: uiStore.isTimerSoundEnabled }"
             @click="uiStore.setTimerSoundEnabled(!uiStore.isTimerSoundEnabled)">
-            <span class="opt-icon">🔔</span>
+            <span class="opt-icon"><img src="/pic/bell.png" class="opt-img-small" /></span>
             <span class="opt-label">到點鐘聲</span>
             <div v-if="uiStore.isTimerSoundEnabled" class="active-check">✓</div>
           </button>
           <button class="layout-option" :class="{ active: uiStore.isTimerNotificationEnabled }"
             @click="uiStore.setTimerNotificationEnabled(!uiStore.isTimerNotificationEnabled)">
-            <span class="opt-icon">🖥️</span>
+            <span class="opt-icon"><img src="/pic/notification.png" class="opt-img-small" /></span>
             <span class="opt-label">桌面通知</span>
             <div v-if="uiStore.isTimerNotificationEnabled" class="active-check">✓</div>
           </button>
@@ -318,11 +318,11 @@
               @change="uiStore.setCustomSoundButtonHidden(($event.target as HTMLInputElement).checked)"
               class="sound-toggle-checkbox"
             />
-            <span class="sound-toggle-label">🔒 隱藏主畫面技能音效按鈕</span>
+            <span class="sound-toggle-label"><img src="/pic/padlock.png" class="sound-toggle-icon" /> 隱藏主畫面技能音效按鈕</span>
           </div>
 
           <button class="import-sound-btn" @click="triggerSoundUpload">
-            ➕ 匯入角色技能音效
+            <img src="/pic/plus.svg" class="btn-svg-icon" /> 匯入角色技能音效
           </button>
           <input type="file" ref="soundFileInput" hidden accept="audio/*" @change="handleSoundFileChange" />
 
@@ -334,7 +334,6 @@
             <div v-for="sound in uiStore.customSounds" :key="sound.id" class="sound-item"
               :class="{ 'is-pinned': uiStore.pinnedSoundId === sound.id }">
               <div class="sound-info">
-                <span class="sound-pin-indicator" v-if="uiStore.pinnedSoundId === sound.id">📌</span>
                 <span class="sound-name">{{ sound.name }}</span>
                 <span class="sound-tag" v-if="uiStore.pinnedSoundId === sound.id">主要播放</span>
               </div>
@@ -342,13 +341,15 @@
                 <!-- 釘選按鈕 -->
                 <button class="action-btn pin-btn" :class="{ active: uiStore.pinnedSoundId === sound.id }"
                   title="釘選為主要播放音效" @click="uiStore.pinSound(sound.id)">
-                  📌
+                  <span class="sound-pin-indicator" v-if="uiStore.pinnedSoundId === sound.id"><img src="/pic/office-push-pin.png" class="sound-pin-img" /></span>
+
                 </button>
                 <!-- 播放/停止按鈕 -->
                 <button class="action-btn play-btn"
                   :class="{ 'is-playing': uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === sound.id }"
                   @click="togglePlaySound(sound.id)">
-                  {{ uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === sound.id ? '⏹️' : '▶️' }}
+                  <img v-if="uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === sound.id" src="/pic/stop-button.png" class="sound-action-img" />
+                  <img v-else src="/pic/play.png?v=2" class="sound-action-img" />
                 </button>
                 <!-- 刪除按鈕 -->
                 <button v-if="!sound.id.startsWith('default-')" class="action-btn delete-btn"
@@ -609,8 +610,8 @@ const shapes = [
 ]
 
 const layouts = [
-  { id: 'inner', label: '向心排列', icon: '/pic/arrows-circle (1).png' },
-  { id: 'arc', label: '環繞排列', icon: '/pic/street-view.png' },
+  { id: 'inner', label: '向心排列', icon: '/pic/reduce.png' },
+  { id: 'arc', label: '環繞排列', icon: '/pic/around.png' },
 ]
 
 function openNightOrder() {
@@ -1890,4 +1891,41 @@ async function handleActivateLicense() {
   cursor: pointer;
   letter-spacing: 0.5px;
 }
+
+.opt-img-small {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: block;
+}
+
+.sound-toggle-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.btn-svg-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.sound-pin-img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.sound-action-img {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
 </style>

@@ -672,3 +672,27 @@ test('SettingsPanel.vue 設定面板選單精簡驗證：角色清單與座位�
     '角色清單 (openCharSheet) 與座位編排 (openPlayerOrder) 必須已被註解隱藏'
   )
 })
+
+test('SettingsPanel.vue 圖示全面專屬化與 Emoji 替換驗證', () => {
+  const settingsPath = path.resolve(__dirname, '../src/components/SettingsPanel.vue')
+  const content = fs.readFileSync(settingsPath, 'utf8')
+
+  // 1. 資料管理按鈕圖示
+  assert.ok(content.includes('/pic/import_data.png'), '匯入遊戲應使用 /pic/import_data.png')
+  assert.ok(content.includes('/pic/export_data.png'), '匯出遊戲應使用 /pic/export_data.png')
+  assert.ok(content.includes('/pic/import_script.png'), '匯入劇本應使用 /pic/import_script.png')
+  assert.ok(content.includes('/pic/export_script.png'), '匯出劇本應使用 /pic/export_script.png')
+
+  // 2. 佈局排列圖示
+  assert.ok(content.includes('/pic/reduce.png'), '向心排列應使用 /pic/reduce.png')
+  assert.ok(content.includes('/pic/around.png'), '環繞排列應使用 /pic/around.png')
+
+  // 3. 計時器與音效管理圖示
+  assert.ok(content.includes('/pic/bell.png'), '到點鐘聲應使用 /pic/bell.png')
+  assert.ok(content.includes('/pic/notification.png'), '桌面通知應使用 /pic/notification.png')
+  assert.ok(content.includes('/pic/padlock.png'), '隱藏主畫面技能音效按鈕應使用 /pic/padlock.png')
+  assert.ok(content.includes('/pic/plus.svg'), '匯入角色技能音效按鈕應使用 /pic/plus.svg')
+  assert.ok(content.includes('/pic/office-push-pin.png'), '主要播放音效釘選指示應使用 /pic/office-push-pin.png')
+  assert.ok(content.includes('/pic/stop-button.png'), '停止播放按鈕應使用 /pic/stop-button.png')
+  assert.ok(content.includes('/pic/play.png'), '播放按鈕應使用 /pic/play.png')
+})
