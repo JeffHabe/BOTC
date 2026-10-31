@@ -14,6 +14,12 @@
             @click="resetNightOrder"
           >🔄 預設</button>
           <button
+            class="filter-order-btn"
+            :class="{ 'filter-active': showAllRoles }"
+            :title="showAllRoles ? '目前：顯示全劇本角色（點擊切換為僅已派發）' : '目前：僅顯示已派發角色（點擊切換為全部角色）'"
+            @click="toggleFilterMode"
+          >{{ showAllRoles ? '📜 全部角色' : '👥 僅已派發' }}</button>
+          <button
             class="whiteboard-btn"
             title="開啟白板"
             @click="uiStore.openPanel('whiteboard')"
@@ -113,7 +119,8 @@
             :class="{
               'order-item-active': isActiveInGame(char),
               'order-item-evil': isEvilRole(char),
-              'order-item-pressable': char.player
+              'order-item-pressable': char.player,
+              'order-item-unassigned': !char.player && !char.is_system
             }"
             @mousedown="char.player && startLongPress(char.player.id)"
             @mouseup="cancelLongPress"
@@ -150,6 +157,9 @@
                 <!-- 玩家名稱 (若已指派角色) -->
                 <div class="order-player" v-if="char.player">
                   <span class="order-player-name">👤 {{ char.player.name }}</span>
+                </div>
+                <div class="order-player" v-else-if="!char.is_system">
+                  <span class="order-player-unassigned">未派發</span>
                 </div>
               </div>
 
@@ -210,6 +220,16 @@ const SYSTEM_ACTIONS: any[] = [
 const activeTab = ref<'first' | 'other'>(
   (gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup') ? 'first' : 'other'
 )
+
+/**
+ * 是否顯示全劇本角色順序 (false = 僅顯示已派發角色; true = 顯示全劇本角色順序)
+ */
+const showAllRoles = ref(localStorage.getItem('botc-night-order-show-all') === 'true')
+
+function toggleFilterMode() {
+  showAllRoles.value = !showAllRoles.value
+  localStorage.setItem('botc-night-order-show-all', String(showAllRoles.value))
+}
 
 const hasCustomOrder = computed(() => {
   const s = gameStore.script
@@ -485,15 +505,23 @@ const currentOrder = computed(() => {
 
   if (!isFirst) {
     const expandedOrder: any[] = []
-    gameStore.otherNightOrder.forEach(char => {
+    gameStore.otherNightOrder.forEach((char, idx) => {
       const playersWithThisRole = rolePlayersMap.get(char.id) || []
-      playersWithThisRole.forEach((player, pIdx) => {
+      if (playersWithThisRole.length > 0) {
+        playersWithThisRole.forEach((player, pIdx) => {
+          expandedOrder.push({
+            ...char,
+            uniqueKey: `${char.id}_${player.id}_${pIdx}`,
+            player: player
+          })
+        })
+      } else if (showAllRoles.value) {
         expandedOrder.push({
           ...char,
-          uniqueKey: `${char.id}_${player.id}_${pIdx}`,
-          player: player
+          uniqueKey: `${char.id}_unassigned_${idx}`,
+          player: null
         })
-      })
+      }
     })
     return expandedOrder
   }
@@ -518,6 +546,12 @@ const currentOrder = computed(() => {
             uniqueKey: `${char.id}_${player.id}_${pIdx}`,
             player: player
           })
+        })
+      } else if (showAllRoles.value) {
+        expandedOrder.push({
+          ...char,
+          uniqueKey: `${char.id}_unassigned_${idx}`,
+          player: null
         })
       }
     }
@@ -679,6 +713,7 @@ function cancelLongPress() {
   border-color: rgba(229, 115, 115, 0.3);
 }
 
+.filter-order-btn,
 .whiteboard-btn,
 .edit-order-btn {
   font-size: 11px;
@@ -691,6 +726,18 @@ function cancelLongPress() {
   font-weight: 600;
   white-space: nowrap;
   transition: all var(--transition-fast);
+}
+
+.filter-order-btn:hover {
+  background: rgba(201, 168, 76, 0.25);
+  border-color: var(--color-gold);
+}
+
+.filter-order-btn.filter-active {
+  background: rgba(201, 168, 76, 0.25);
+  border-color: var(--color-gold);
+  color: #f7e6a7;
+  box-shadow: 0 0 8px rgba(201, 168, 76, 0.3);
 }
 
 .whiteboard-btn:hover {
@@ -863,6 +910,19 @@ function cancelLongPress() {
   padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid rgba(201, 168, 76, 0.2);
+}
+
+.order-player-unassigned {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+.order-item.order-item-unassigned {
+  opacity: 0.72;
 }
 
 .order-player-dead-img {
