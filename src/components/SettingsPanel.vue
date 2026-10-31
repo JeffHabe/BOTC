@@ -116,6 +116,22 @@
 
         <div class="divider" />
 
+        <!-- 危險區域 -->
+        <div class="section-title danger-section">危險區域</div>
+        <div class="settings-grid">
+          <button class="grid-item warning" @click="resetStates">
+            <span class="grid-icon"><img src="/pic/reset.png" class="grid-img" /></span>
+            <span class="grid-label">重置狀態</span>
+          </button>
+
+          <button class="grid-item danger" @click="resetGame">
+            <span class="grid-icon"><img src="/pic/close.png" class="grid-img" /></span>
+            <span class="grid-label">重置遊戲</span>
+          </button>
+        </div>
+
+        <div class="divider" />
+
         <!-- 資料管理 -->
         <div class="section-title">資料管理</div>
         <div class="settings-grid cols-2">
@@ -149,22 +165,6 @@
             <span class="grid-label">重置預設角色</span>
           </button>
 
-        </div>
-
-        <div class="divider" />
-
-        <!-- 危險區域 -->
-        <div class="section-title danger-section">危險區域</div>
-        <div class="settings-grid">
-          <button class="grid-item warning" @click="resetStates">
-            <span class="grid-icon"><img src="/pic/reset.png" class="grid-img" /></span>
-            <span class="grid-label">重置狀態</span>
-          </button>
-
-          <button class="grid-item danger" @click="resetGame">
-            <span class="grid-icon"><img src="/pic/close.png" class="grid-img" /></span>
-            <span class="grid-label">重置遊戲</span>
-          </button>
         </div>
 
         <div class="divider" />

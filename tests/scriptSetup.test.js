@@ -503,21 +503,27 @@ test('《入骨相思知不知》劇本角色 ID 正規化與陣營計數驗證 
   )
 })
 
-test('SettingsPanel.vue 設定清單佈局順序：危險區域必須位於語言設置之前', () => {
+test('SettingsPanel.vue 設定清單佈局順序：危險區域必須位於資料管理之前', () => {
   const settingsPanelPath = path.resolve(__dirname, '../src/components/SettingsPanel.vue')
   const content = fs.readFileSync(settingsPanelPath, 'utf8')
 
   const dangerIndex = content.indexOf('<!-- 危險區域 -->')
+  const dataIndex = content.indexOf('<!-- 資料管理 -->')
   const langIndex = content.indexOf('<!-- 語言設置 -->')
   const licenseIndex = content.indexOf('<!-- 軟體使用授權 -->')
 
   assert.ok(dangerIndex !== -1, 'SettingsPanel.vue 必須包含危險區域')
+  assert.ok(dataIndex !== -1, 'SettingsPanel.vue 必須包含資料管理')
   assert.ok(langIndex !== -1, 'SettingsPanel.vue 必須包含語言設置')
   assert.ok(licenseIndex !== -1, 'SettingsPanel.vue 必須包含軟體使用授權')
 
   assert.ok(
-    dangerIndex < langIndex,
-    `危險區域位置 (${dangerIndex}) 必須在語言設置 (${langIndex}) 之前`
+    dangerIndex < dataIndex,
+    `危險區域位置 (${dangerIndex}) 必須在資料管理 (${dataIndex}) 之前`
+  )
+  assert.ok(
+    dataIndex < langIndex,
+    `資料管理位置 (${dataIndex}) 必須在語言設置 (${langIndex}) 之前`
   )
   assert.ok(
     langIndex < licenseIndex,
