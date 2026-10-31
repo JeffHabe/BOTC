@@ -2,7 +2,7 @@
   <div class="overlay" @click.self="uiStore.closePanel()">
     <div class="voting-panel panel animate-slide-up">
       <div class="panel-header">
-        <span class="panel-icon"><img src="/pic/vote.png" class="panel-header-icon" /></span>
+        <span class="panel-icon"><img src="/pic/vote-tag.png" class="panel-header-icon" /></span>
         <h2 class="panel-title">投票管理</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
@@ -10,18 +10,18 @@
       <!-- 頂部倒數計時器 -->
       <div class="voting-timer-bar">
         <div class="voting-timer-display" :class="{ 'is-urgent': isTimerUrgent, 'is-running': uiStore.isTimerRunning }">
-          <img src="/pic/hourglass.png" class="timer-icon" />
+          <img src="/pic/hourglass (1).png" class="timer-icon" />
           <span class="timer-time">{{ formattedTimerTime }}</span>
         </div>
         <div class="voting-timer-actions">
           <button v-if="!uiStore.isTimerRunning" class="v-timer-btn play-btn" @click="uiStore.startTimer()" title="開始計時">
-            <img src="/pic/play.png" class="btn-img" />
+            <img src="/pic/play.png?v=2" class="btn-img" />
           </button>
           <button v-else class="v-timer-btn pause-btn" @click="uiStore.pauseTimer()" title="暫停計時">
             <img src="/pic/pause.png" class="btn-img" />
           </button>
           <button class="v-timer-btn reset-btn" @click="uiStore.resetTimer()" title="重置計時">
-            <img src="/pic/reset.png" class="btn-img" />
+            <img src="/pic/reset.png?v=2" class="btn-img" />
           </button>
           <div class="quick-add-group">
             <button class="v-timer-btn add-btn" @click="uiStore.addTimerSeconds(30)">+30秒</button>
@@ -159,7 +159,7 @@
                   <span v-if="!p.is_alive" class="vote-ghost-icon"><img src="/pic/grave.png" class="vote-ghost-img" /></span>
                   <span class="vote-player" :style="{ color: getPlayerColor(p.id) }">{{ idx + 1 }}. {{ p.name }}</span>
                 </div>
-                <span v-if="nom.votes_for.includes(p.id)" class="vote-mark"><img src="/pic/vote-yes.png" class="vote-yes-img" /></span>
+                <span v-if="nom.votes_for.includes(p.id)" class="vote-mark"><img src="/pic/vote-tag.png" class="vote-yes-img" /></span>
               </button>
             </div>
 
@@ -194,7 +194,7 @@
 
           <!-- 已執行或歷史記錄的樣式 -->
           <div class="nom-executed-badge" v-else-if="nom.executed">
-            <span class="status"><img src="/pic/suicide.png" class="executed-img" /> 已處決</span>
+            <span class="status"><img src="/pic/half.png" class="executed-img" /> 已處決</span>
             <span class="final-score">(今日最終票數: {{ Math.max(0, nom.votes_for.length + (nom.extra_votes || 0)) }})</span>
             <button class="btn-undo" @click.stop="doUndoExecute(index)">撤銷</button>
           </div>

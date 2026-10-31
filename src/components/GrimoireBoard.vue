@@ -156,7 +156,7 @@
         <!-- 檢視按鈕 (僅展開時顯示) -->
         <button v-if="uiStore.isBluffsExpanded" class="bluffs-showcase-btn" @click="uiStore.isBluffsShowcase = true" title="展示給惡魔/瘋子">
           <!-- <span class="icon">👁️</span> -->
-          <img class="icon" src="/pic/search.png" />
+          <img class="btn-image-icon" src="/pic/search.png?v=2" />
         </button>
 
         <!-- 惡魔分頁 (僅展開時顯示) -->
@@ -220,7 +220,7 @@
       @click="openPhysicalImageOverlay"
       title="檢視實體劇本"
     >
-      <img src="/pic/magic-book.png" class="view-script-icon" />
+      <img src="/pic/spell-book.png" class="view-script-icon" />
     </button>
 
     <!-- 劇本管理按鈕 (位於加號按鈕正上方) -->
@@ -230,7 +230,7 @@
       @click="uiStore.openPanel('script-editor')"
       title="劇本管理"
     >
-      <img src="/pic/spellbook.png" class="view-script-icon" />
+      <img src="/pic/bookshelf.png" class="view-script-icon" />
     </button>
 
     <button v-if="!showPhysicalImageOverlay" class="add-player-btn" @click="uiStore.addPlayerDialogOpen = true" title="新增玩家">
@@ -246,7 +246,7 @@
           @click="uiStore.openPanel('night-order')" 
           title="夜晚順序"
         >
-          <img class="icon" src="/pic/day-and-night.png" />
+          <img class="icon" src="/pic/moon.png" />
         </button>
 
         <button 
@@ -257,8 +257,8 @@
           :title="uiStore.isRolesHidden ? '顯示角色' : '隱藏角色'"
         >
           <div class="privacy-icon-wrapper">
-            <img class="icon" src="/pic/show.png" />
-            <img class="ban-icon" v-if="uiStore.isRolesHidden" src="/pic/hide.png" />
+            <img class="icon" src="/pic/show.png?v=2" />
+            <img class="ban-icon" v-if="uiStore.isRolesHidden" src="/pic/hide.png?v=2" />
           </div>
         </button>
 
@@ -268,7 +268,7 @@
           @click="uiStore.openPanel('settings')" 
           title="設置"
         >
-          <img class="icon" src="/pic/gear.png" />
+          <img class="icon" src="/pic/gear.png?v=2" />
         </button>
       </div>
 
@@ -281,7 +281,7 @@
           @click="uiStore.openPanel('role-assignment')"
           title="開局"
         >
-          <img class="icon" src="/pic/theater.png" />
+          <img class="icon" src="/pic/theater.png?v=2" />
         </button>
 
         <button 
@@ -299,7 +299,7 @@
           @click="uiStore.openPanel('whiteboard')" 
           title="說書人資訊"
         >
-          <img class="icon" src="/pic/whiteboard.png" />
+          <img class="icon" src="/pic/whiteboard.png?v=2" />
         </button>
       </div>
     </div>
@@ -471,14 +471,14 @@
             <img src="/pic/minus.png" class="btn-image-icon" />
           </button>
           <button class="tool-btn" @click="resetImgZoom" title="重設">
-            <img src="/pic/reset.png" class="btn-image-icon" />
+            <img src="/pic/reset.png?v=2" class="btn-image-icon" />
           </button>
           <button class="tool-btn export-link" @click="shareOrExportImage" title="分享圖檔">
             <img src="/pic/send.png" class="btn-image-icon" />
             <span>分享</span>
           </button>
           <button class="tool-btn settings-link" @click="openScriptSettingsFromOverlay" title="劇本設定">
-            <img src="/pic/gear.png" class="btn-image-icon" />
+            <img src="/pic/gear.png?v=2" class="btn-image-icon" />
             <span>設定</span>
           </button>
           <button class="tool-btn close-link" @click="showPhysicalImageOverlay = false" title="關閉">✕</button>
@@ -1294,11 +1294,11 @@ function onTokenMouseUp() {
 
 const currentShapeIcon = computed(() => {
   const map = { 
-    circle: '/pic/circle.png', 
-    oval: '/pic/oval.png', 
-    rect: '/pic/rectangle.png' 
+    circle: '/pic/circle.png?v=2', 
+    oval: '/pic/oval.png?v=2', 
+    rect: '/pic/rectangle.png?v=2' 
   }
-  return map[uiStore.grimoireShape as keyof typeof map] || '/pic/circle.png'
+  return map[uiStore.grimoireShape as keyof typeof map] || '/pic/circle.png?v=2'
 })
 
 const currentShapeLabel = computed(() => {
@@ -2014,7 +2014,12 @@ const activePanelComponent = computed(() => {
   transition: all 0.3s ease;
   order: 4; /* 最下方 */
 }
-
+.btn-image-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: middle;
+}
 .bluffs-tab-btn {
   width: 32px;
   height: 48px;

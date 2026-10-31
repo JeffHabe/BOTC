@@ -176,13 +176,13 @@ test('玩家令片 (PlayerToken.vue) 名字後方應於每天白天顯示提名�
   )
   assert.ok(
     tokenContent.includes('v-if="player.is_alive && (player.can_nominate || (player.extra_nominations && player.extra_nominations > 0))"') &&
-    tokenContent.includes('src="/pic/nomination.png"'),
+    tokenContent.includes('/pic/nomination.png'),
     '存活玩家尚有提名權時應顯示 /pic/nomination.png'
   )
   assert.ok(
     tokenContent.includes('v-if="!player.is_nominated"') &&
-    tokenContent.includes('src="/pic/vote.png"'),
-    '玩家尚有被提權時應顯示 /pic/vote.png'
+    tokenContent.includes('/pic/vote-tag.png'),
+    '玩家尚有被提權時應顯示 /pic/vote-tag.png'
   )
   assert.ok(
     tokenContent.includes('v-if="!player.is_alive && (player.has_ghost_vote || (player.extra_votes && player.extra_votes > 0))"') &&
@@ -278,7 +278,7 @@ test('魔典右側固定功能列表佈局驗證 (常駐顯示、水平夜晚與
     'GrimoireBoard.vue 必須包含 side-action-top-row 橫排容器'
   )
   assert.ok(
-    content.includes('key="night-order"') && content.includes('/pic/day-and-night.png'),
+    content.includes('key="night-order"') && content.includes('/pic/moon.png'),
     'side-action-top-row 必須包含夜晚順序按鈕'
   )
   assert.ok(
@@ -533,4 +533,72 @@ test('SettingsPanel.vue 設定清單佈局順序：危險區域必須位於資�
   // 驗證危險區域內的功能按鈕完整性
   assert.ok(content.includes('@click="resetStates"'), '危險區域必須包含重置狀態按鈕')
   assert.ok(content.includes('@click="resetGame"'), '危險區域必須包含重置遊戲按鈕')
+})
+
+test('全站核心圖示防快取參數 (?v=) 與新版圖檔路徑全面替換驗證', () => {
+  const grimoirePath = path.resolve(__dirname, '../src/components/GrimoireBoard.vue')
+  const settingsPath = path.resolve(__dirname, '../src/components/SettingsPanel.vue')
+  const tokenPath = path.resolve(__dirname, '../src/components/PlayerToken.vue')
+  const sheetPath = path.resolve(__dirname, '../src/components/PlayerControlSheet.vue')
+  const statusPath = path.resolve(__dirname, '../src/components/StatusBar.vue')
+  const scriptPath = path.resolve(__dirname, '../src/components/ScriptEditorPanel.vue')
+  const timerPath = path.resolve(__dirname, '../src/components/TimerWidget.vue')
+  const votingPath = path.resolve(__dirname, '../src/components/VotingPanel.vue')
+  const whiteboardPath = path.resolve(__dirname, '../src/components/Whiteboard.vue')
+
+  const grimoireContent = fs.readFileSync(grimoirePath, 'utf8')
+  const settingsContent = fs.readFileSync(settingsPath, 'utf8')
+  const tokenContent = fs.readFileSync(tokenPath, 'utf8')
+  const sheetContent = fs.readFileSync(sheetPath, 'utf8')
+  const statusContent = fs.readFileSync(statusPath, 'utf8')
+  const scriptContent = fs.readFileSync(scriptPath, 'utf8')
+  const timerContent = fs.readFileSync(timerPath, 'utf8')
+  const votingContent = fs.readFileSync(votingPath, 'utf8')
+  const whiteboardContent = fs.readFileSync(whiteboardPath, 'utf8')
+
+  // 1. 同名更換圖檔必須帶有防快取參數 (?v=2)
+  const cacheBustImages = [
+    { name: 'whiteboard.png', files: [grimoireContent, whiteboardContent] },
+    { name: 'gear.png', files: [grimoireContent, settingsContent, scriptContent] },
+    { name: 'nomination.png', files: [sheetContent, tokenContent, settingsContent, statusContent] },
+    { name: 'theater.png', files: [grimoireContent, settingsContent] },
+    { name: 'search.png', files: [grimoireContent, whiteboardContent] },
+    { name: 'play.png', files: [timerContent, votingContent, scriptContent] },
+    { name: 'reset.png', files: [grimoireContent, settingsContent, timerContent, votingContent] },
+    { name: 'show.png', files: [grimoireContent] },
+    { name: 'hide.png', files: [grimoireContent] },
+    { name: 'circle.png', files: [grimoireContent, settingsContent] },
+    { name: 'oval.png', files: [grimoireContent, settingsContent] },
+    { name: 'rectangle.png', files: [grimoireContent, settingsContent] },
+  ]
+  cacheBustImages.forEach(({ name, files }) => {
+    files.forEach(f => {
+      assert.ok(f.includes(`/pic/${name}?v=`), `${name} 必須包含 ?v= 防快取版本參數`)
+    })
+  })
+
+  // 2. 新檔名替換驗證
+  assert.ok(grimoireContent.includes('/pic/moon.png'), 'GrimoireBoard 應改用 /pic/moon.png')
+  assert.ok(settingsContent.includes('/pic/moon.png'), 'SettingsPanel 應改用 /pic/moon.png')
+  assert.ok(grimoireContent.includes('/pic/bookshelf.png'), 'GrimoireBoard 應改用 /pic/bookshelf.png')
+  assert.ok(settingsContent.includes('/pic/bookshelf.png'), 'SettingsPanel 應改用 /pic/bookshelf.png')
+  assert.ok(scriptContent.includes('/pic/bookshelf.png'), 'ScriptEditorPanel 應改用 /pic/bookshelf.png')
+  assert.ok(scriptContent.includes('/pic/spell-book.png'), 'ScriptEditorPanel 應改用 /pic/spell-book.png')
+
+  assert.ok(timerContent.includes('/pic/silence.png'), 'TimerWidget 應改用 /pic/silence.png')
+  assert.ok(tokenContent.includes('/pic/vote-tag.png'), 'PlayerToken 應改用 /pic/vote-tag.png')
+  assert.ok(sheetContent.includes('/pic/vote-tag.png'), 'PlayerControlSheet 應改用 /pic/vote-tag.png')
+  assert.ok(sheetContent.includes('/pic/half.png'), 'PlayerControlSheet 應改用 /pic/half.png')
+  assert.ok(sheetContent.includes('/pic/heart.png'), 'PlayerControlSheet 應改用 /pic/heart.png')
+
+  assert.ok(statusContent.includes('/pic/half.png'), 'StatusBar 應改用 /pic/half.png')
+  assert.ok(statusContent.includes('/pic/heart.png'), 'StatusBar 應改用 /pic/heart.png')
+  assert.ok(statusContent.includes('/pic/vote-tag.png'), 'StatusBar 應改用 /pic/vote-tag.png')
+
+  assert.ok(votingContent.includes('/pic/half.png'), 'VotingPanel 應改用 /pic/half.png')
+  assert.ok(votingContent.includes('/pic/vote-tag.png'), 'VotingPanel 應改用 /pic/vote-tag.png')
+  assert.ok(whiteboardContent.includes('/pic/vote-tag.png'), 'Whiteboard 應改用 /pic/vote-tag.png')
+  assert.ok(grimoireContent.includes('/pic/spell-book.png'), 'GrimoireBoard 應改用 /pic/spell-book.png')
+  assert.ok(timerContent.includes('/pic/hourglass (1).png'), 'TimerWidget 應改用 /pic/hourglass (1).png')
+  assert.ok(votingContent.includes('/pic/hourglass (1).png'), 'VotingPanel 應改用 /pic/hourglass (1).png')
 })

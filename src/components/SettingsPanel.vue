@@ -2,7 +2,7 @@
   <div class="overlay" @click.self="uiStore.closePanel()">
     <div class="settings-panel panel animate-slide-up">
       <div class="panel-header">
-        <span class="panel-icon"><img src="/pic/gear.png" class="panel-header-icon" /></span>
+        <span class="panel-icon"><img src="/pic/gear.png?v=2" class="panel-header-icon" /></span>
         <h2 class="panel-title">設置選項</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
@@ -14,7 +14,7 @@
           <div class="stat-card" title="剩餘提名權">
             <!-- <span class="stat-card-icon">🙋</span> -->
             <span class="stat-icon">
-              <img src="/pic/nomination.png" alt="提名權" class="stat-img img-nomination" />
+              <img src="/pic/nomination.png?v=2" alt="提名權" class="stat-img img-nomination" />
             </span>
             <span class="stat-card-val">{{ nominationsRemaining }}</span>
             <span class="stat-card-label">剩餘提名</span>
@@ -22,7 +22,7 @@
           <div class="stat-card" title="處決門檻">
             <!-- <span class="stat-card-icon">⚔️</span> -->
             <span class="stat-icon">
-              <img src="/pic/suicide.png" alt="處決門檻" class="stat-img img-guillotine" />
+              <img src="/pic/half.png" alt="處決門檻" class="stat-img img-guillotine" />
             </span>
             <span class="stat-card-val">{{ gameStore.threshold }}</span>
             <span class="stat-card-label">處決門檻</span>
@@ -30,7 +30,7 @@
           <div class="stat-card" title="有效票數">
             <!-- <span class="stat-icon">🗳️</span> -->
             <span class="stat-icon">
-              <img src="/pic/vote-yes.png" alt="有效票數" class="stat-img img-vote-yes" />
+              <img src="/pic/vote-tag.png" alt="有效票數" class="stat-img img-vote-yes" />
             </span>
             <span class="stat-card-val">{{ totalVotes }}</span>
             <span class="stat-card-label">有效票數</span>
@@ -38,7 +38,7 @@
           <div class="stat-card" title="存活人數">
             <!-- <span class="stat-card-icon">❤️</span> -->
             <span class="stat-icon">
-              <img src="/pic/heart.png" alt="有效票數" class="stat-img img-heart" />
+              <img src="/pic/heart.png?v=2" alt="有效票數" class="stat-img img-heart" />
             </span>
             <span class="stat-card-val">{{ gameStore.alive }}</span>
             <span class="stat-card-label">存活人數</span>
@@ -54,7 +54,7 @@
           <button v-if="gameStore.phase === 'FirstNight'" class="grid-item" @click="openAssignment">
             <!-- <span class="grid-icon">🎭</span> -->
             <span class="stat-icon">
-              <img src="/pic/theater.png" alt="開局" class="stat-img img-theater" />
+              <img src="/pic/theater.png?v=2" alt="開局" class="stat-img img-theater" />
             </span>
             <span class="grid-label">開局</span>
           </button>
@@ -62,13 +62,13 @@
           <button class="grid-item" @click="openScriptEditor">
             <!-- <span class="grid-icon">📜</span> -->
             <span class="stat-icon">
-              <img src="/pic/spellbook.png" alt="劇本管理" class="stat-img img-theater" />
+              <img src="/pic/bookshelf.png" alt="劇本管理" class="stat-img img-theater" />
             </span>
             <span class="grid-label">劇本管理</span>
           </button>
 
           <button class="grid-item" @click="openVoting">
-            <span class="grid-icon"><img src="/pic/vote.png" class="grid-img" /></span>
+            <span class="grid-icon"><img src="/pic/vote-tag.png" class="grid-img" /></span>
             <span class="grid-label">投票面板</span>
           </button>
 
@@ -81,7 +81,7 @@
           </button>
 
           <button class="grid-item" @click="openNightOrder">
-            <span class="grid-icon"><img src="/pic/day-and-night.png" class="grid-img" /></span>
+            <span class="grid-icon"><img src="/pic/moon.png" class="grid-img" /></span>
             <span class="grid-label">夜晚順序</span>
           </button>
 
@@ -120,7 +120,7 @@
         <div class="section-title danger-section">危險區域</div>
         <div class="settings-grid">
           <button class="grid-item warning" @click="resetStates">
-            <span class="grid-icon"><img src="/pic/reset.png" class="grid-img" /></span>
+            <span class="grid-icon"><img src="/pic/reset.png?v=2" class="grid-img" /></span>
             <span class="grid-label">重置狀態</span>
           </button>
 
@@ -156,7 +156,7 @@
           </button>
 
           <button class="grid-item" @click="restoreDefaultScripts">
-            <span class="grid-icon"><img src="/pic/spellbook.png" class="grid-img" /></span>
+            <span class="grid-icon"><img src="/pic/bookshelf.png" class="grid-img" /></span>
             <span class="grid-label">還原預設劇本</span>
           </button>
 
@@ -600,9 +600,9 @@ async function processImage(dataUrl: string): Promise<string> {
 }
 
 const shapes = [
-  { id: 'circle', label: '經典正圓', icon: '/pic/circle.png' },
-  { id: 'oval', label: '優雅橢圓', icon: '/pic/oval.png' },
-  { id: 'rect', label: '工整矩形', icon: '/pic/rectangle.png' },
+  { id: 'circle', label: '經典正圓', icon: '/pic/circle.png?v=2' },
+  { id: 'oval', label: '優雅橢圓', icon: '/pic/oval.png?v=2' },
+  { id: 'rect', label: '工整矩形', icon: '/pic/rectangle.png?v=2' },
 ]
 
 const layouts = [

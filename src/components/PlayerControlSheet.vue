@@ -38,14 +38,14 @@
           <div class="action-grid">
             <template v-if="player.is_alive">
               <button class="action-btn death-btn" @click="handleKill">
-                <img src="/pic/suicide.png" class="action-btn-img" />
+                <img src="/pic/half.png" class="action-btn-img" />
                 <span class="label">死亡</span>
                 <span v-if="isProtected" class="warning-badge" title="注意：該玩家目前有保護標記">⚠️被保護</span>
               </button>
             </template>
             <template v-else>
               <button class="action-btn revive-btn" @click="handleRevive">
-                <img src="/pic/heart.png" class="action-btn-img" />
+                <img src="/pic/heart.png?v=2" class="action-btn-img" />
                 <span class="label">復活</span>
               </button>
             </template>
@@ -62,7 +62,7 @@
                 @click="handleStartNominationAs"
                 :disabled="isNominatorDisabled"
               >
-                <img src="/pic/nomination.png" class="action-btn-img" />
+                <img src="/pic/nomination.png?v=2" class="action-btn-img" />
                 <span class="label">提名</span>
               </button>
               <button 
@@ -70,7 +70,7 @@
                 @click="handleNominateHim"
                 :disabled="player.is_nominated"
               >
-                <img src="/pic/vote.png" class="action-btn-img" />
+                <img src="/pic/vote-tag.png" class="action-btn-img" />
                 <span class="label">被提名</span>
               </button>
             </template>
@@ -101,7 +101,7 @@
 
             <div class="toggle-item">
               <div class="toggle-info">
-                <img src="/pic/nomination.png" class="toggle-icon-img" />
+                <img src="/pic/nomination.png?v=2" class="toggle-icon-img" />
                 <div>
                   <div class="t-title">提名權</div>
                   <div class="t-sub">

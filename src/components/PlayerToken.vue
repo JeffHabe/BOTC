@@ -40,14 +40,14 @@
             class="can-nominate-indicator"
             title="今日尚有提名權"
           >
-            <img src="/pic/nomination.png" class="status-indicator-img" />
+            <img src="/pic/nomination.png?v=2" class="status-indicator-img" />
           </span>
           <span
             v-if="!player.is_nominated"
             class="can-be-nominated-indicator"
             title="今日尚可被提名"
           >
-            <img src="/pic/vote.png" class="status-indicator-img" />
+            <img src="/pic/vote-tag.png" class="status-indicator-img" />
           </span>
           <span
             v-if="!player.is_alive && (player.has_ghost_vote || (player.extra_votes && player.extra_votes > 0))"
@@ -98,7 +98,9 @@
         <img src="/pic/vote-hand.png" class="vote-hand-ico" />
 
         </span>
-        <span v-else class="vote-cross-icon">✕</span>
+        <span v-else class="vote-cross-icon">
+          <img src="/pic/close.png" class="vote-cross-icon" />
+          </span>
       </div>
 
       <!-- 點廣場令片選擇提名手勢標記 (hand.png 點選指示) -->

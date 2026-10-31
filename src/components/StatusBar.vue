@@ -55,13 +55,13 @@
         <span class="stat-item nominations" v-if="gameStore.phase === 'Day'" title="剩餘提名權">
           <!-- <span class="stat-icon">🤚</span> -->
           <span class="stat-icon">
-            <img src="/pic/nomination.png" alt="提名權" class="stat-img img-nomination" />
+            <img src="/pic/nomination.png?v=2" alt="提名權" class="stat-img img-nomination" />
           </span>
           <span class="stat-num">{{ nominationsRemaining }}</span>
         </span>
         <span class="stat-item threshold" v-if="gameStore.phase === 'Day'" title="門檻">
           <span class="stat-icon">
-            <img src="/pic/suicide.png" alt="處決門檻" class="stat-img img-suicide" />
+            <img src="/pic/half.png" alt="處決門檻" class="stat-img img-suicide" />
           </span>
           <!-- <span class="stat-icon">⚔️</span> -->
           <span class="stat-num">{{ gameStore.threshold }}</span>
@@ -69,14 +69,14 @@
         <span class="stat-item votes" v-if="gameStore.phase === 'Day'" title="有效票數">
           <!-- <span class="stat-icon">🗳️</span> -->
           <span class="stat-icon">
-            <img src="/pic/vote-yes.png" alt="有效票數" class="stat-img img-vote-yes" />
+            <img src="/pic/vote-tag.png" alt="有效票數" class="stat-img img-vote-yes" />
           </span>
           <span class="stat-num">{{ totalVotes }}</span>
         </span>
         <span class="stat-item alive" title="存活人數">
           <!-- <span class="stat-icon">❤️</span> -->
           <span class="stat-icon">
-            <img src="/pic/heart.png" alt="有效票數" class="stat-img img-heart" />
+            <img src="/pic/heart.png?v=2" alt="有效票數" class="stat-img img-heart" />
           </span>
           <span class="stat-num">{{ gameStore.alive }}</span>
         </span>

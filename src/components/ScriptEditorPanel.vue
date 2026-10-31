@@ -4,7 +4,7 @@
       <div class="panel-header">
         <!-- <span class="panel-icon">📜</span> -->
         <span class="stat-icon">
-          <img src="/pic/spellbook.png" alt="劇本管理" class="stat-img img-theater" />
+          <img src="/pic/bookshelf.png" alt="劇本管理" class="stat-img img-theater" />
         </span>
         <h2 class="panel-title">劇本管理系統</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
@@ -13,7 +13,7 @@
       <!-- 分頁切換 Tabs -->
       <div class="panel-tabs">
         <button class="tab-btn" :class="{ active: activeTab === 'select' }" @click="activeTab = 'select'">
-          <img src="/pic/spellbook.png" class="btn-icon-img" />選取劇本
+          <img src="/pic/bookshelf.png" class="btn-icon-img" />選取劇本
         </button>
         <button class="tab-btn" :class="{ active: activeTab === 'create' }" @click="activeTab = 'create'">
           <template v-if="editingScriptId">
@@ -24,7 +24,7 @@
           </template>
         </button>
         <button class="tab-btn" :class="{ active: activeTab === 'list' }" @click="activeTab = 'list'">
-          <img src="/pic/book.png" class="btn-icon-img" />劇本清單
+          <img src="/pic/spell-book.png" class="btn-icon-img" />劇本清單
         </button>
         <button class="tab-btn" :class="{ active: activeTab === 'categories' }" @click="activeTab = 'categories'">
           <img src="/pic/category.png" class="btn-icon-img" />劇本分類
@@ -81,7 +81,7 @@
               @click="handleSelectMainScript(script)"
             >
               <div class="script-info">
-                <img src="/pic/spellbook.png" class="script-icon-img" />
+                <img src="/pic/bookshelf.png" class="script-icon-img" />
                 <div class="script-details">
                   <div class="script-name">
                     {{ script.id === 'all_character_sort' ? '全角色大全 (所有角色)' : script.name }}
@@ -116,7 +116,7 @@
               @click="isAdvancedSettingsExpanded = !isAdvancedSettingsExpanded"
             >
               <div class="toggle-btn-left">
-                <img src="/pic/gear.png" class="btn-icon-img" />
+                <img src="/pic/gear.png?v=2" class="btn-icon-img" />
                 <span class="toggle-title">進階設定</span>
                 <span class="toggle-summary" v-if="newScriptName">({{ newScriptName }} · {{ newScriptCategory }})</span>
                 <span v-if="newScriptLogo || newScriptPhysicalImage || newScriptPhysicalImageBack" class="configured-dot" title="已設定自訂圖檔或Logo">●</span>
@@ -205,7 +205,7 @@
               </div>
               <div class="batch-actions">
                 <button class="action-btn-mini success" @click="selectAllFilteredRoles" title="全選當前篩選的角色">
-                  <img src="/pic/vote-yes.png" class="btn-icon-img" />全選
+                  <img src="/pic/vote-tag.png" class="btn-icon-img" />全選
                 </button>
                 <button class="action-btn-mini danger" @click="clearAllFilteredRoles" title="清空當前篩選的角色">
                   <img src="/pic/rubber.png" class="btn-icon-img" />清空
@@ -278,7 +278,7 @@
                 <img src="/pic/notes.png" class="btn-icon-img" />確認儲存變更
               </template>
               <template v-else>
-                <img src="/pic/play.png" class="btn-icon-img" />確認建立劇本
+                <img src="/pic/play.png?v=2" class="btn-icon-img" />確認建立劇本
               </template>
             </button>
           </div>
@@ -301,7 +301,7 @@
           <div class="scripts-categorize-list">
             <div v-for="script in filteredCategorizeScripts" :key="script.id" class="script-cat-item">
               <div class="script-info">
-                <img src="/pic/book.png" class="script-icon-img" />
+                <img src="/pic/spell-book.png" class="script-icon-img" />
                 <div class="script-details">
                   <div class="script-name">{{ script.name }}</div>
                   <div class="script-meta">{{ script.characters.length }} 個角色 | {{ script.id.startsWith('custom_') ?

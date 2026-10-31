@@ -45,7 +45,7 @@
               <img src="/pic/import.png" class="btn-icon-img" />
             </button>
             <button class="btn-ghost btn-icon-only" @click="resetToDefault" title="恢復成官方預設全庫">
-              <img src="/pic/reset.png" class="btn-icon-img" />
+              <img src="/pic/reset.png?v=2" class="btn-icon-img" />
             </button>
           </div>
         </div>

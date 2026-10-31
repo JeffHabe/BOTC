@@ -2,7 +2,7 @@
   <div class="overlay" @click.self="uiStore.closePanel()">
     <div class="whiteboard-panel panel animate-slide-up">
       <div class="panel-header">
-        <span class="panel-icon"><img src="/pic/whiteboard.png" class="panel-header-icon" /></span>
+        <span class="panel-icon"><img src="/pic/whiteboard.png?v=2" class="panel-header-icon" /></span>
         <h2 class="panel-title">說書人資訊</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
@@ -139,7 +139,7 @@
 
         <div class="whiteboard-footer">
           <button class="view-btn" @click="isFullscreenView = true" title="放大到全螢幕檢視">
-            <span class="icon"><img src="/pic/search.png" class="btn-image-icon" /></span> 檢視
+            <span class="icon"><img src="/pic/search.png?v=2" class="btn-image-icon" /></span> 檢視
           </button>
           <button 
             class="copy-btn" 
@@ -147,7 +147,7 @@
             :class="{ success: copied }"
           >
             <span class="icon">
-              <img v-if="copied" src="/pic/vote-yes.png" class="btn-image-icon" />
+              <img v-if="copied" src="/pic/vote-tag.png" class="btn-image-icon" />
               <img v-else src="/pic/copy.png" class="btn-image-icon" />
             </span> 
             {{ copied ? '已複製內容' : '複製全部文字' }}

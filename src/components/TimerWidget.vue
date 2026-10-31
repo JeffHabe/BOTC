@@ -11,7 +11,7 @@
       <div class="timer-mini" :class="{ 'bell-playing-mini': uiStore.isBellPlaying }" @click="handleMiniClick">
         <img 
           class="icon" 
-          :src="uiStore.isBellPlaying ? '/pic/silent.png' : '/pic/hourglass.png'" 
+          :src="uiStore.isBellPlaying ? '/pic/silence.png' : '/pic/hourglass (1).png'" 
         />
         <span class="time-text">
           <img v-if="uiStore.isBellPlaying" class="stop-bell-icon" src="/pic/stop-button.png" />
@@ -31,7 +31,7 @@
       >
         <img 
           class="icon" 
-          :src="uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === uiStore.pinnedSoundId ? '/pic/stop-button.png' : '/pic/play.png'" 
+          :src="uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === uiStore.pinnedSoundId ? '/pic/stop-button.png' : '/pic/play.png?v=2'" 
         />
         <span class="text" v-if="uiStore.pinnedSoundShortName">{{ uiStore.pinnedSoundShortName }}</span>
       </button>
@@ -85,7 +85,7 @@
 
         <div class="timer-controls">
           <button v-if="!uiStore.isTimerRunning" class="control-btn play" @click="uiStore.startTimer()">
-            <img class="btn-icon" src="/pic/play.png" />
+            <img class="btn-icon" src="/pic/play.png?v=2" />
             <!-- <span>開始</span> -->
           </button>
           <button v-else class="control-btn pause" @click="uiStore.pauseTimer()">
@@ -93,7 +93,7 @@
             <!-- <span>暫停</span> -->
           </button>
           <button class="control-btn reset" @click="uiStore.resetTimer()">
-            <img class="btn-icon" src="/pic/reset.png" />
+            <img class="btn-icon" src="/pic/reset.png?v=2" />
             <!-- <span>重置</span> -->
           </button>
         </div>
