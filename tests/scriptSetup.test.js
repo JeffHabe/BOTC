@@ -181,8 +181,8 @@ test('玩家令片 (PlayerToken.vue) 名字後方應於每天白天顯示提名�
   )
   assert.ok(
     tokenContent.includes('v-if="!player.is_nominated"') &&
-    tokenContent.includes('/pic/vote-tag-edge.png'),
-    '玩家尚有被提權時應顯示 /pic/vote-tag-edge.png'
+    tokenContent.includes('/pic/vote-tag.png'),
+    '玩家尚有被提權時應顯示 /pic/vote-tag.png'
   )
   assert.ok(
     tokenContent.includes('v-if="!player.is_alive && (player.has_ghost_vote || (player.extra_votes && player.extra_votes > 0))"') &&
@@ -586,18 +586,18 @@ test('全站核心圖示防快取參數 (?v=) 與新版圖檔路徑全面替換�
   assert.ok(scriptContent.includes('/pic/spell-book.png'), 'ScriptEditorPanel 應改用 /pic/spell-book.png')
 
   assert.ok(timerContent.includes('/pic/silence.png'), 'TimerWidget 應改用 /pic/silence.png')
-  assert.ok(tokenContent.includes('/pic/vote-tag-edge.png'), 'PlayerToken 應改用 /pic/vote-tag-edge.png')
-  assert.ok(sheetContent.includes('/pic/vote-tag-edge.png'), 'PlayerControlSheet 應改用 /pic/vote-tag-edge.png')
+  assert.ok(tokenContent.includes('/pic/vote-tag.png'), 'PlayerToken 應改用 /pic/vote-tag.png')
+  assert.ok(sheetContent.includes('/pic/vote-tag.png'), 'PlayerControlSheet 應改用 /pic/vote-tag.png')
   assert.ok(settingsContent.includes('/pic/half.png'), 'SettingsPanel 應改用 /pic/half.png')
   assert.ok(sheetContent.includes('/pic/heart-edge.png'), 'PlayerControlSheet 應改用 /pic/heart-edge.png')
 
   assert.ok(statusContent.includes('/pic/half.png'), 'StatusBar 應改用 /pic/half.png')
   assert.ok(statusContent.includes('/pic/heart-edge.png'), 'StatusBar 應改用 /pic/heart-edge.png')
-  assert.ok(statusContent.includes('/pic/vote-tag-edge.png'), 'StatusBar 應改用 /pic/vote-tag-edge.png')
+  assert.ok(statusContent.includes('/pic/vote-tag.png'), 'StatusBar 應改用 /pic/vote-tag.png')
 
   assert.ok(votingContent.includes('/pic/half.png'), 'VotingPanel 應改用 /pic/half.png')
-  assert.ok(votingContent.includes('/pic/vote-tag-edge.png'), 'VotingPanel 應改用 /pic/vote-tag-edge.png')
-  assert.ok(whiteboardContent.includes('/pic/vote-tag-edge.png'), 'Whiteboard 應改用 /pic/vote-tag-edge.png')
+  assert.ok(votingContent.includes('/pic/vote-tag.png'), 'VotingPanel 應改用 /pic/vote-tag.png')
+  assert.ok(whiteboardContent.includes('/pic/vote-tag.png'), 'Whiteboard 應改用 /pic/vote-tag.png')
   assert.ok(sheetContent.includes('/pic/mask-edge.png'), 'PlayerControlSheet 應改用 /pic/mask-edge.png')
   assert.ok(settingsContent.includes('/pic/history-edge.png'), 'SettingsPanel 應改用 /pic/history-edge.png')
   assert.ok(settingsContent.includes('/pic/character-lib.png'), 'SettingsPanel 應改用 /pic/character-lib.png')

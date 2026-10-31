@@ -47,7 +47,7 @@
             class="can-be-nominated-indicator"
             title="今日尚可被提名"
           >
-            <img src="/pic/vote-tag-edge.png" class="status-indicator-img" />
+            <img src="/pic/vote-tag.png?v=2" class="status-indicator-img" />
           </span>
           <span
             v-if="!player.is_alive && (player.has_ghost_vote || (player.extra_votes && player.extra_votes > 0))"

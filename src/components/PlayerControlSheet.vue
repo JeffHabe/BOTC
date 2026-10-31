@@ -70,7 +70,7 @@
                 @click="handleNominateHim"
                 :disabled="player.is_nominated"
               >
-                <img src="/pic/vote-tag-edge.png" class="action-btn-img" />
+                <img src="/pic/vote-tag.png?v=2" class="action-btn-img" />
                 <span class="label">被提名</span>
               </button>
             </template>

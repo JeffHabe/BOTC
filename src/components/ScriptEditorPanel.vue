@@ -205,7 +205,7 @@
               </div>
               <div class="batch-actions">
                 <button class="action-btn-mini success" @click="selectAllFilteredRoles" title="全選當前篩選的角色">
-                  <img src="/pic/vote-tag-edge.png" class="btn-icon-img" />全選
+                  <img src="/pic/vote-tag.png?v=2" class="btn-icon-img" />全選
                 </button>
                 <button class="action-btn-mini danger" @click="clearAllFilteredRoles" title="清空當前篩選的角色">
                   <img src="/pic/rubber.png" class="btn-icon-img" />清空

@@ -69,7 +69,7 @@
         <span class="stat-item votes" v-if="gameStore.phase === 'Day'" title="有效票數">
           <!-- <span class="stat-icon">🗳️</span> -->
           <span class="stat-icon">
-            <img src="/pic/vote-tag-edge.png" alt="有效票數" class="stat-img img-vote-yes" />
+            <img src="/pic/vote-tag.png?v=2" alt="有效票數" class="stat-img img-vote-yes" />
           </span>
           <span class="stat-num">{{ totalVotes }}</span>
         </span>

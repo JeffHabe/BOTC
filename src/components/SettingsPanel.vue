@@ -30,7 +30,7 @@
           <div class="stat-card" title="有效票數">
             <!-- <span class="stat-icon">🗳️</span> -->
             <span class="stat-icon">
-              <img src="/pic/vote-tag-edge.png" alt="有效票數" class="stat-img img-vote-yes" />
+              <img src="/pic/vote-tag.png?v=2" alt="有效票數" class="stat-img img-vote-yes" />
             </span>
             <span class="stat-card-val">{{ totalVotes }}</span>
             <span class="stat-card-label">有效票數</span>
@@ -68,7 +68,7 @@
           </button>
 
           <button class="grid-item" @click="openVoting">
-            <span class="grid-icon"><img src="/pic/vote-tag-edge.png" class="grid-img" /></span>
+            <span class="grid-icon"><img src="/pic/vote-tag.png?v=2" class="grid-img" /></span>
             <span class="grid-label">投票面板</span>
           </button>
 
