@@ -2373,6 +2373,7 @@ const activePanelComponent = computed(() => {
   gap: 10px;
   z-index: 900;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none; /* 穿透空白容器，防止在 15 人局遮擋右上角 2 號令片等點擊 */
 }
 
 .side-action-top-row {
@@ -2380,6 +2381,7 @@ const activePanelComponent = computed(() => {
   flex-direction: row;
   align-items: center;
   gap: 10px;
+  pointer-events: auto; /* 恢復頂部功能按鈕點擊事件 */
 }
 
 .side-action-vertical {
@@ -2388,6 +2390,7 @@ const activePanelComponent = computed(() => {
   align-items: center;
   gap: 10px;
   width: 32px;
+  pointer-events: auto; /* 恢復直列按鈕組點擊事件 */
 }
 
 /* 當有面板開啟時，隱藏右上角的功能按鈕，避免干擾 */

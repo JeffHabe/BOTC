@@ -191,6 +191,20 @@ test('魔典主畫布 (GrimoireBoard.vue) 與設置面板 (SettingsPanel.vue) �
     grimoireContent.includes("newPhase === 'Day'") && grimoireContent.includes('uiStore.isVotingHudCollapsed = true'),
     'GrimoireBoard 必須監聽白天階段並在進入白天時自動將投票管理設為收合狀態'
   )
+
+  // 5. 驗證右上角功能操作群組穿透設定 (防止 15 人局遮擋右上角 2 號位令片點擊)
+  assert.ok(
+    grimoireContent.includes('.side-action-group') && grimoireContent.includes('pointer-events: none'),
+    'side-action-group 必須具備 pointer-events: none 以穿透透明空白區域，避免 15 人局 2 號位被遮擋'
+  )
+  assert.ok(
+    grimoireContent.includes('.side-action-top-row') && grimoireContent.includes('pointer-events: auto'),
+    'side-action-top-row 必須具備 pointer-events: auto 以保留按鈕點擊功能'
+  )
+  assert.ok(
+    grimoireContent.includes('.side-action-vertical') && grimoireContent.includes('pointer-events: auto'),
+    'side-action-vertical 必須具備 pointer-events: auto 以保留按鈕點擊功能'
+  )
 })
 
 test('每天白天開始時投票管理收合邏輯驗證', () => {
