@@ -1550,16 +1550,17 @@ function calcPointerScale() {
   return targetDist / 300
 }
 
-// 紅色提名人短針 (clock-small.webp: 比例自然為長針的 62%)
+// 提名人短針 (clock-small.webp: 藍色短指針，尺寸固定為點選被提名人後的精緻短針大小，避免開始點選與選定後尺寸突變)
 const nominatorHandStyle = computed(() => {
   const angle = calcPointerAngle(currentNominatorId.value)
-  const scale = calcPointerScale()
+  // 固定採用與點選被提名人後一致的短針比例 (0.52)，使開始點選與選定後尺寸完全一致
+  const scale = 0.52 * Math.min(1.2, Math.max(0.8, uiStore.grimoireScale))
   return {
     transform: `rotate(${angle}deg) scale(${scale})`
   }
 })
 
-// 藍色被提名者長針 (clock-big.webp)
+// 被提名者長針 (clock-big.webp: 動態延伸至被提名者令片邊緣)
 const nomineeHandStyle = computed(() => {
   const angle = calcPointerAngle(currentNomineeId.value)
   const scale = calcPointerScale()

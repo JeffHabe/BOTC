@@ -205,6 +205,12 @@ test('魔典主畫布 (GrimoireBoard.vue) 與設置面板 (SettingsPanel.vue) �
     grimoireContent.includes('.side-action-vertical') && grimoireContent.includes('pointer-events: auto'),
     'side-action-vertical 必須具備 pointer-events: auto 以保留按鈕點擊功能'
   )
+
+  // 6. 驗證提名人短針 (藍色指針) 尺寸一致性 (點選開始與選定被提名人後尺寸保持一致)
+  assert.ok(
+    grimoireContent.includes('nominatorHandStyle') && grimoireContent.includes('0.52'),
+    'nominatorHandStyle 必須固定採用點選被提名人後的精緻短針尺寸比例 (0.52)，避免開始點選時尺寸過大'
+  )
 })
 
 test('每天白天開始時投票管理收合邏輯驗證', () => {
