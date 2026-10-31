@@ -90,6 +90,8 @@
             <span class="grid-label">對局記錄</span>
           </button>
 
+          <!-- 角色清單與座位編排在主頁面上已有直覺入口與操作，避免重複故隱藏 -->
+          <!--
           <button class="grid-item" @click="openCharSheet">
             <span class="grid-icon"><img src="/pic/skin.png" class="grid-img" /></span>
             <span class="grid-label">角色清單</span>
@@ -99,6 +101,7 @@
             <span class="grid-icon"><img src="/pic/throne.png" class="grid-img" /></span>
             <span class="grid-label">座位編排</span>
           </button>
+          -->
 
           <button class="grid-item" @click="openCharacterEditor">
             <span class="grid-icon"><img src="/pic/character-lib.png" class="grid-img" /></span>
@@ -618,17 +621,21 @@ function openGameLog() {
   uiStore.openPanel('game-log')
 }
 
+/* 角色清單與座位編排在主介面已有入口，對應方法隨按鈕隱藏
 function openCharSheet() {
   uiStore.openPanel('character-sheet')
 }
+*/
 
 function openVoting() {
   uiStore.openPanel('voting')
 }
 
+/*
 function openPlayerOrder() {
   uiStore.openPanel('player-order')
 }
+*/
 
 function openAssignment() {
   uiStore.openPanel('role-assignment')
