@@ -3,7 +3,7 @@
     <div class="night-order-panel panel animate-slide-up">
       <div class="panel-header">
         <div class="panel-header-title-group">
-          <span class="panel-icon">🌙</span>
+          <span class="panel-icon"><img src="/pic/moon.png" class="panel-header-icon" alt="夜晚" /></span>
           <h2 class="panel-title">夜晚行動順序</h2>
         </div>
         <div class="panel-header-actions">
@@ -12,30 +12,43 @@
             class="reset-order-btn"
             title="恢復官方預設順序"
             @click="resetNightOrder"
-          >🔄 預設</button>
+          ><img src="/pic/reset.png?v=2" class="btn-icon-img" />預設</button>
           <button
             class="filter-order-btn"
             :class="{ 'filter-active': showAllRoles }"
             :title="showAllRoles ? '目前：顯示全劇本角色（點擊切換為僅已派發）' : '目前：僅顯示已派發角色（點擊切換為全部角色）'"
             @click="toggleFilterMode"
-          >{{ showAllRoles ? '📜 全部角色' : '👥 僅已派發' }}</button>
+          >
+            <template v-if="showAllRoles">
+              <img src="/pic/script.png" class="btn-icon-img" />全部角色
+            </template>
+            <template v-else>
+              <img src="/pic/group.png" class="btn-icon-img" />僅已派發
+            </template>
+          </button>
           <button
             class="whiteboard-btn"
             title="開啟白板"
             @click="uiStore.openPanel('whiteboard')"
-          >📋 白板</button>
+          ><img src="/pic/whiteboard.png?v=2" class="btn-icon-img" />白板</button>
           <button
             class="edit-order-btn"
             :class="{ 'editing-active': isEditing }"
             @click="isEditing = !isEditing"
-          >{{ isEditing ? '✓ 完成' : '✏️ 調整順序' }}</button>
+          >
+            <template v-if="isEditing">✓ 完成</template>
+            <template v-else>
+              <img src="/pic/pen.png" class="btn-icon-img" />調整順序
+            </template>
+          </button>
           <button class="close-btn" @click="uiStore.closePanel()">✕</button>
         </div>
       </div>
 
       <!-- 提示條 -->
       <div v-if="isEditing" class="edit-hint-bar">
-        <span>✏️ 正在調整「{{ gameStore.script?.name || '當前劇本' }}」之順序（僅獨立影響本劇本）</span>
+        <img src="/pic/pen.png" class="btn-icon-img" />
+        <span>正在調整「{{ gameStore.script?.name || '當前劇本' }}」之順序（僅獨立影響本劇本）</span>
       </div>
 
       <!-- 標籤切換 (根據階段自動隱藏無關標籤) -->
@@ -156,7 +169,7 @@
                 </div>
                 <!-- 玩家名稱 (若已指派角色) -->
                 <div class="order-player" v-if="char.player">
-                  <span class="order-player-name">👤 {{ char.player.name }}</span>
+                  <span class="order-player-name"><img src="/pic/user.png" class="player-user-icon" />{{ char.player.name }}</span>
                 </div>
                 <div class="order-player" v-else-if="!char.is_system">
                   <span class="order-player-unassigned">未派發</span>
@@ -675,6 +688,22 @@ function cancelLongPress() {
 .panel-icon {
   font-size: 18px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.panel-header-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.btn-icon-img {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 4px;
 }
 
 .panel-title {
@@ -910,6 +939,15 @@ function cancelLongPress() {
   padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid rgba(201, 168, 76, 0.2);
+  display: inline-flex;
+  align-items: center;
+}
+
+.player-user-icon {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  margin-right: 4px;
 }
 
 .order-player-unassigned {

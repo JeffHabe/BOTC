@@ -22,9 +22,16 @@ test('夜晚行動順序面板 (NightOrder.vue) 右上角角色過濾按鈕與�
     'filter-order-btn 必須綁定 toggleFilterMode 點擊切換事件'
   )
   assert.ok(
-    content.includes("showAllRoles ? '📜 全部角色' : '👥 僅已派發'"),
-    '過濾按鈕應依據 showAllRoles 切換顯示「全部角色」或「僅已派發」'
+    content.includes('/pic/script.png') && content.includes('/pic/group.png'),
+    '過濾按鈕應使用 /pic/script.png (全部角色) 與 /pic/group.png (僅已派發)'
   )
+
+  // 1.1 驗證其他圖示路徑替換
+  assert.ok(content.includes('/pic/moon.png'), '面板標題應使用 /pic/moon.png')
+  assert.ok(content.includes('/pic/reset.png'), '預設按鈕應使用 /pic/reset.png')
+  assert.ok(content.includes('/pic/whiteboard.png'), '白板按鈕應使用 /pic/whiteboard.png')
+  assert.ok(content.includes('/pic/pen.png'), '調整順序按鈕與提示列應使用 /pic/pen.png')
+  assert.ok(content.includes('/pic/user.png'), '玩家姓名標籤應使用 /pic/user.png')
 
   // 2. 驗證支援持久化存儲 (localStorage)
   assert.ok(

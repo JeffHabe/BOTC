@@ -62,4 +62,24 @@ test('白板全螢幕檢視與完成閱讀功能驗證 (Whiteboard.vue)', () => 
   assert.ok(content.includes('isFullscreenView = false'), '完成閱讀與關閉按鈕點擊應關閉全螢幕檢視')
 })
 
+test('說書人資訊白板 (Whiteboard.vue) 圖示與 SVG 向量圖替換驗證', () => {
+  const whiteboardPath = path.resolve(__dirname, '../src/components/Whiteboard.vue')
+  const content = fs.readFileSync(whiteboardPath, 'utf8')
+
+  // 1. 設定控制展開/收起圖示
+  assert.ok(content.includes('/pic/caret-arrow-up.png'), '收起設定應使用 /pic/caret-arrow-up.png')
+  assert.ok(content.includes('/pic/gear.png'), '展開設定應使用 /pic/gear.png')
+
+  // 2. 標題與提示卡圖示
+  assert.ok(content.includes('/pic/theater.png'), '填入劇本角色應使用 /pic/theater.png')
+  assert.ok(content.includes('/pic/bulb.png'), '提示卡應使用 /pic/bulb.png')
+
+  // 3. 新增提示卡按鈕圖示
+  assert.ok(content.includes('/pic/plus.svg'), '新增提示卡應使用 /pic/plus.svg')
+
+  // 4. 底部複製與清除按鈕圖示
+  assert.ok(content.includes('/pic/files-copy.png'), '複製全部文字應使用 /pic/files-copy.png')
+  assert.ok(content.includes('/pic/rubber-gold.png'), '清除全部內容應使用 /pic/rubber-gold.png')
+})
+
 

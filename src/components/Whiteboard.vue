@@ -18,7 +18,10 @@
             @click="isControlsExpanded = !isControlsExpanded"
             :title="isControlsExpanded ? '收起設定' : '字體與顏色設定'"
           >
-            <span class="icon">{{ isControlsExpanded ? '🔼' : '⚙️' }}</span>
+            <span class="icon">
+              <img v-if="isControlsExpanded" src="/pic/caret-arrow-up.png" class="btn-image-icon" />
+              <img v-else src="/pic/gear.png?v=2" class="btn-image-icon" />
+            </span>
             <span class="label">{{ isControlsExpanded ? '收起設定' : '設定' }}</span>
           </button>
         </div>
@@ -81,7 +84,7 @@
         <!-- 劇本角色快捷填入區域 -->
         <div v-if="scriptCharacters.length > 0" class="script-chars-section">
           <div class="hint-cards-header">
-            <span class="hint-title">🎭 填入劇本角色 ({{ scriptCharacters.length }})</span>
+            <span class="hint-title"><img src="/pic/theater.png?v=2" class="hint-title-icon" />填入劇本角色 ({{ scriptCharacters.length }})</span>
           </div>
           <div class="hint-cards-scroll">
             <button
@@ -99,7 +102,7 @@
         <!-- 提示卡區域 -->
         <div class="hint-cards-section">
           <div class="hint-cards-header">
-            <span class="hint-title">💡 提示卡</span>
+            <span class="hint-title"><img src="/pic/bulb.png" class="hint-title-icon" />提示卡</span>
             <button 
               class="edit-mode-btn" 
               :class="{ active: isEditMode }"
@@ -120,7 +123,7 @@
               <span v-if="isEditMode" class="delete-badge" @click.stop="gameStore.removeHintTemplate(index)">✕</span>
             </button>
             <button class="add-hint-btn" @click="addNewTemplate">
-              ➕ 新增
+              <img src="/pic/plus.svg" class="btn-image-icon" />新增
             </button>
           </div>
         </div>
@@ -148,12 +151,12 @@
           >
             <span class="icon">
               <img v-if="copied" src="/pic/vote-tag.png?v=2" class="btn-image-icon" />
-              <img v-else src="/pic/copy.png" class="btn-image-icon" />
+              <img v-else src="/pic/files-copy.png" class="btn-image-icon" />
             </span> 
             {{ copied ? '已複製內容' : '複製全部文字' }}
           </button>
           <button class="clear-btn" @click="gameStore.setNightNotes('')">
-            <span class="icon"><img src="/pic/rubber.png" class="btn-image-icon" /></span> 清除全部內容
+            <span class="icon"><img src="/pic/rubber-gold.png" class="btn-image-icon" /></span> 清除全部內容
           </button>
         </div>
       </div>
@@ -653,9 +656,19 @@ const copyToClipboard = async () => {
 }
 
 .hint-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 13px;
   color: var(--color-gold);
   font-weight: 600;
+}
+
+.hint-title-icon {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 .edit-mode-btn {
@@ -718,6 +731,9 @@ const copyToClipboard = async () => {
 }
 
 .add-hint-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
   padding: 5px 12px;
   background: rgba(255, 255, 255, 0.05);
@@ -894,7 +910,7 @@ const copyToClipboard = async () => {
   vertical-align: middle;
 }
 
-.whiteboard-footer .btn-image-icon {
+.btn-image-icon {
   width: 14px;
   height: 14px;
   object-fit: contain;
