@@ -25,11 +25,20 @@ export const useGameStore = defineStore('game', () => {
   const nightNotes = ref(localStorage.getItem('botc-night-notes') || '')
   const nightNotesFontSize = ref(Number(localStorage.getItem('botc-night-notes-font-size')) || 24)
   const nightNotesColor = ref(localStorage.getItem('botc-night-notes-color') || '#e5b54f')
-  
+
   const defaultHintTemplates = [
     '該角色能力對你生效...',
     '這些角色不在場...',
-    '你是...'
+    '你是...',
+    '你需要對這個角色瘋狂',
+    '是',
+    '否',
+    '你的陣營是',
+    '善良',
+    '邪惡',
+    '相同',
+    '不同',
+    '錯誤',
   ]
   const savedHintTemplates = localStorage.getItem('botc-hint-templates')
   const hintTemplates = ref<string[]>(savedHintTemplates ? JSON.parse(savedHintTemplates) : [...defaultHintTemplates])
@@ -113,7 +122,7 @@ export const useGameStore = defineStore('game', () => {
     const firstOrder = uniqueRoles
       .filter(r => r.night_order_first != null)
       .sort((a, b) => (a.night_order_first ?? 0) - (b.night_order_first ?? 0))
-    
+
     // 計算其他夜晚相對順序
     const otherOrder = uniqueRoles
       .filter(r => r.night_order_other != null)
@@ -149,7 +158,7 @@ export const useGameStore = defineStore('game', () => {
         const { useScriptStore } = await import('./scriptStore')
         const scriptStore = useScriptStore()
         const found = scriptStore.customScripts.find(s => s.id === newState.script.id) ||
-                      (scriptStore.masterScript.id === newState.script.id ? scriptStore.masterScript : null)
+          (scriptStore.masterScript.id === newState.script.id ? scriptStore.masterScript : null)
         if (found) {
           if (found.logo) {
             newState.script.logo = found.logo
@@ -372,7 +381,7 @@ export const useGameStore = defineStore('game', () => {
     const player = players.value.find(p => p.id === playerId)
     const oldRole = player?.role?.name || '無'
     const newRole = role?.name || '無'
-    
+
     const gs = await callCommand<GameState>('assign_role', { playerId, role })
     if (gs) {
       if (role) historicalRoleIds.value.add(role.id)

@@ -108,7 +108,7 @@
               {{ isEditMode ? '完成編輯' : '✎ 編輯' }}
             </button>
           </div>
-          <div class="hint-cards-scroll">
+          <div class="hint-cards-wrap">
             <button 
               v-for="(template, index) in gameStore.hintTemplates" 
               :key="index"
@@ -327,10 +327,10 @@ const copyToClipboard = async () => {
   border-radius: 20px 20px 12px 12px;
   display: flex;
   flex-direction: column;
-  overflow: visible;
-  height: 80vh; /* 固定面板總高度，確保收放時高度一致 */
+  overflow: hidden;
+  height: min(650px, 82vh); /* 自動隨螢幕尺寸調節高度 */
   box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 32px); /* 留空間給傳統的系統工具列，+12px 為可調整的紅線間距 */
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
 }
 
 .panel-header {
@@ -540,6 +540,7 @@ const copyToClipboard = async () => {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .whiteboard-desc {
@@ -585,6 +586,7 @@ const copyToClipboard = async () => {
   overflow: hidden;
   transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s;
   margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 .whiteboard-controls-wrapper.expanded {
@@ -593,18 +595,20 @@ const copyToClipboard = async () => {
   overflow: visible;
 }
 
-/* 提示卡樣式 */
+/* 提示卡樣式 (全部換行平鋪展示，不用左右滑動) */
 .hint-cards-section {
   display: flex;
   flex-direction: column;
-  gap: 4px; /* 收窄標題與卡片的距離 */
+  gap: 4px;
   margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .hint-cards-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .hint-title {
@@ -629,14 +633,21 @@ const copyToClipboard = async () => {
   border-color: rgba(139, 26, 26, 0.2);
 }
 
+.hint-cards-wrap {
+  display: flex;
+  flex-wrap: wrap; /* 自動換行全部顯示，徹底無需左右拖拉 */
+  gap: 6px 8px;
+  padding-top: 6px;
+  padding-bottom: 4px;
+}
+
 .hint-cards-scroll {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-top: 8px; /* 避免叉叉被上方裁切 */
+  padding-top: 8px;
   padding-bottom: 8px;
-  margin-top: -4px; /* 抵銷 padding 造成的視覺位移 */
-  /* 隱藏捲軸 */
+  margin-top: -4px;
   scrollbar-width: none;
 }
 
@@ -647,7 +658,7 @@ const copyToClipboard = async () => {
 .hint-chip {
   position: relative;
   flex-shrink: 0;
-  padding: 6px 12px;
+  padding: 5px 12px;
   background: rgba(201, 168, 76, 0.1);
   border: 1px solid rgba(201, 168, 76, 0.3);
   border-radius: 16px;
@@ -667,7 +678,7 @@ const copyToClipboard = async () => {
 
 .add-hint-btn {
   flex-shrink: 0;
-  padding: 6px 12px;
+  padding: 5px 12px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px dashed rgba(201, 168, 76, 0.3);
   border-radius: 16px;
@@ -714,19 +725,21 @@ const copyToClipboard = async () => {
 
 .whiteboard-input {
   width: 100%;
-  flex: 1; /* 自動填滿剩餘空間 */
+  flex: 1 1 0%; /* 自動依照剩餘可用空間動態調整高度 */
+  min-height: 80px;
   background: #000000;
   border: 1.5px solid rgba(201, 168, 76, 0.25);
   border-radius: 12px;
   color: var(--color-gold-bright);
-  padding: 16px;
+  padding: 14px 16px;
   font-size: 18px; 
   font-family: inherit;
   resize: none;
   outline: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
   box-shadow: inset 0 4px 12px rgba(0,0,0,0.6);
   line-height: 1.6;
+  overflow-y: auto;
 }
 
 .whiteboard-input:focus {
@@ -744,7 +757,9 @@ const copyToClipboard = async () => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding-top: 20px;
+  padding-top: 10px;
+  padding-bottom: 2px;
+  flex-shrink: 0;
 }
 
 .copy-btn, .clear-btn {
@@ -789,7 +804,8 @@ const copyToClipboard = async () => {
 .copy-btn .icon, .clear-btn .icon { font-size: 14px; }
 
 .script-chars-section {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .char-chip {
