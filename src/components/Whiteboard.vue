@@ -139,7 +139,7 @@
 
         <div class="whiteboard-footer">
           <button class="view-btn" @click="isFullscreenView = true" title="放大到全螢幕檢視">
-            <span class="icon"><img src="/pic/show.png" class="btn-image-icon" /></span> 檢視
+            <span class="icon"><img src="/pic/search.png" class="btn-image-icon" /></span> 檢視
           </button>
           <button 
             class="copy-btn" 
