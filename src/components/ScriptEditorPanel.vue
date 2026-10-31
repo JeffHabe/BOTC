@@ -81,7 +81,7 @@
               @click="handleSelectMainScript(script)"
             >
               <div class="script-info">
-                <img src="/pic/bookshelf.png" class="script-icon-img" />
+                <img src="/pic/spell-book.png" class="script-icon-img" />
                 <div class="script-details">
                   <div class="script-name">
                     {{ script.id === 'all_character_sort' ? '全角色大全 (所有角色)' : script.name }}

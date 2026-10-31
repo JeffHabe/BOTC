@@ -584,6 +584,7 @@ test('全站核心圖示防快取參數 (?v=) 與新版圖檔路徑全面替換�
   assert.ok(settingsContent.includes('/pic/bookshelf.png'), 'SettingsPanel 應改用 /pic/bookshelf.png')
   assert.ok(scriptContent.includes('/pic/bookshelf.png'), 'ScriptEditorPanel 應改用 /pic/bookshelf.png')
   assert.ok(scriptContent.includes('/pic/spell-book.png'), 'ScriptEditorPanel 應改用 /pic/spell-book.png')
+  assert.ok(scriptContent.includes('<img src="/pic/spell-book.png" class="script-icon-img" />'), 'ScriptEditorPanel 選取劇本列表項目圖示應為 /pic/spell-book.png')
 
   assert.ok(timerContent.includes('/pic/silence.png'), 'TimerWidget 應改用 /pic/silence.png')
   assert.ok(tokenContent.includes('/pic/vote-tag.png'), 'PlayerToken 應改用 /pic/vote-tag.png')
