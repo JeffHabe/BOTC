@@ -138,6 +138,9 @@
         ></textarea>
 
         <div class="whiteboard-footer">
+          <button class="view-btn" @click="isFullscreenView = true" title="放大到全螢幕檢視">
+            <span class="icon"><img src="/pic/show.png" class="btn-image-icon" /></span> 檢視
+          </button>
           <button 
             class="copy-btn" 
             @click="copyToClipboard"
@@ -151,6 +154,38 @@
           </button>
           <button class="clear-btn" @click="gameStore.setNightNotes('')">
             <span class="icon"><img src="/pic/rubber.png" class="btn-image-icon" /></span> 清除全部內容
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 全螢幕放大檢視層 -->
+    <div 
+      v-if="isFullscreenView" 
+      class="fullscreen-view-overlay animate-fade-in"
+      @click.self="isFullscreenView = false"
+    >
+      <div class="fullscreen-view-container">
+        <div class="fullscreen-view-header">
+          <span class="fullscreen-header-title">📖 資訊展示</span>
+          <button class="fullscreen-close-btn" @click="isFullscreenView = false" title="關閉">✕</button>
+        </div>
+
+        <div class="fullscreen-view-body">
+          <div 
+            class="fullscreen-view-text"
+            :style="{ 
+              fontSize: fullscreenFontSize + 'px',
+              color: gameStore.nightNotesColor || 'var(--color-gold-bright)'
+            }"
+          >
+            {{ gameStore.nightNotes || '（目前無文字內容）' }}
+          </div>
+        </div>
+
+        <div class="fullscreen-view-footer">
+          <button class="finish-reading-btn" @click="isFullscreenView = false">
+            完成閱讀
           </button>
         </div>
       </div>
@@ -212,8 +247,10 @@ onBeforeUnmount(() => {
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' || e.key === 'Esc') {
     e.stopImmediatePropagation()
-    // 智慧退回：若展開了顏色挑選器或控制項，優先收起；否則關閉面板
-    if (showColorPicker.value) {
+    // 智慧退回：若開啟全螢幕檢視，優先退出檢視；若展開了顏色挑選器或控制項，收起；否則關閉面板
+    if (isFullscreenView.value) {
+      isFullscreenView.value = false
+    } else if (showColorPicker.value) {
       showColorPicker.value = false
     } else if (isControlsExpanded.value) {
       isControlsExpanded.value = false
@@ -223,6 +260,10 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+const isFullscreenView = ref(false)
+const fullscreenFontSize = computed(() => {
+  return Math.max(Math.round(gameStore.nightNotesFontSize * 1.5), 32)
+})
 const isControlsExpanded = ref(false)
 const showColorPicker = ref(false)
 const isEditMode = ref(false)
@@ -756,21 +797,34 @@ const copyToClipboard = async () => {
 .whiteboard-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 8px;
   padding-top: 10px;
   padding-bottom: 2px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
-.copy-btn, .clear-btn {
+.view-btn, .copy-btn, .clear-btn {
   display: flex;
   align-items: center;
-  gap: 50px;
-  padding: 8px 16px;
+  gap: 6px;
+  padding: 8px 12px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.view-btn {
+  background: rgba(201, 168, 76, 0.15);
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  color: var(--color-gold-bright);
+}
+
+.view-btn:active {
+  background: rgba(201, 168, 76, 0.28);
+  transform: scale(0.95);
 }
 
 .copy-btn {
@@ -801,7 +855,7 @@ const copyToClipboard = async () => {
   transform: scale(0.95);
 }
 
-.copy-btn .icon, .clear-btn .icon { font-size: 14px; }
+.view-btn .icon, .copy-btn .icon, .clear-btn .icon { font-size: 14px; }
 
 .script-chars-section {
   margin-bottom: 8px;
@@ -845,5 +899,109 @@ const copyToClipboard = async () => {
   height: 14px;
   object-fit: contain;
   vertical-align: middle;
+}
+
+/* 全螢幕放大檢視層樣式 */
+.fullscreen-view-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  background: #000000;
+  display: flex;
+  flex-direction: column;
+}
+
+.fullscreen-view-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.fullscreen-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(20, 20, 24, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.fullscreen-header-title {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 1px;
+}
+
+.fullscreen-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fullscreen-close-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.fullscreen-view-body {
+  flex: 1 1 0%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fullscreen-view-text {
+  width: 100%;
+  max-width: 800px;
+  text-align: center;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.fullscreen-view-footer {
+  padding: 16px 20px calc(env(safe-area-inset-bottom, 0px) + 24px);
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(10, 10, 12, 0.8);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.finish-reading-btn {
+  min-width: 220px;
+  padding: 14px 36px;
+  background: linear-gradient(135deg, #c9a84c 0%, #9a7628 100%);
+  color: #121318;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 225, 120, 0.5);
+  box-shadow: 0 4px 20px rgba(201, 168, 76, 0.35);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.finish-reading-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 10px rgba(201, 168, 76, 0.2);
 }
 </style>

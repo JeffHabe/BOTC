@@ -42,3 +42,24 @@ test('提示卡資料範本與管理方法驗證 (gameStore.ts)', () => {
   assert.ok(content.includes('resetHintTemplates'), '必須包含 resetHintTemplates 方法')
 })
 
+test('白板全螢幕檢視與完成閱讀功能驗證 (Whiteboard.vue)', () => {
+  const whiteboardPath = path.resolve(__dirname, '../src/components/Whiteboard.vue')
+  const content = fs.readFileSync(whiteboardPath, 'utf8')
+
+  // 1. 底部按鈕區必須包含「檢視」按鈕
+  assert.ok(content.includes('class="view-btn"'), '底部工具列必須包含 view-btn 檢視按鈕')
+  assert.ok(content.includes('isFullscreenView = true'), '檢視按鈕點擊應開啟全螢幕檢視')
+  assert.ok(content.includes('檢視'), '按鈕文字必須包含「檢視」')
+
+  // 2. 全螢幕檢視層架構
+  assert.ok(content.includes('fullscreen-view-overlay'), '必須包含全螢幕檢視遮罩層 fullscreen-view-overlay')
+  assert.ok(content.includes('fullscreen-view-text'), '必須包含放大顯示的文字節點 fullscreen-view-text')
+  assert.ok(content.includes('fullscreenFontSize'), '必須具備放大文字計算邏輯 fullscreenFontSize')
+
+  // 3. 關閉與「完成閱讀」按鈕
+  assert.ok(content.includes('finish-reading-btn'), '必須包含 finish-reading-btn 完成閱讀按鈕')
+  assert.ok(content.includes('完成閱讀'), '按鈕文字必須包含「完成閱讀」')
+  assert.ok(content.includes('isFullscreenView = false'), '完成閱讀與關閉按鈕點擊應關閉全螢幕檢視')
+})
+
+
