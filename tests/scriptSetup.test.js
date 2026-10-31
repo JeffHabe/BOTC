@@ -300,8 +300,12 @@ test('魔典右側固定功能列表佈局驗證 (常駐顯示、水平夜晚與
     'side-action-vertical 必須包含魔典圖形切換按鈕'
   )
   assert.ok(
-    content.includes('key="voting"') && (content.includes("handleVotingButtonClick") || content.includes("uiStore.openPanel('voting')")),
-    'side-action-vertical 必須包含投票按鈕'
+    !content.includes('key="voting"'),
+    'side-action-vertical 已取消右上角重複的投票管理按鈕'
+  )
+  assert.ok(
+    content.includes('GrimoireVotingHud'),
+    '魔典主畫布必須保留右下角的 GrimoireVotingHud'
   )
   assert.ok(
     content.includes('key="whiteboard"') && content.includes("uiStore.openPanel('whiteboard')"),

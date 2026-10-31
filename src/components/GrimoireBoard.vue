@@ -294,15 +294,6 @@
         </button>
         
         <button 
-          key="voting" 
-          class="menu-btn" 
-          @click="handleVotingButtonClick" 
-          title="魔典投票"
-        >
-          <img class="icon" src="/pic/vote-yes.png" />
-        </button>
-        
-        <button 
           key="whiteboard" 
           class="menu-btn" 
           @click="uiStore.openPanel('whiteboard')" 
@@ -1580,15 +1571,6 @@ const nomineeHandStyle = computed(() => {
 const isVotingHudActive = computed(() => {
   return gameStore.phase === 'Day' && uiStore.isVotingHudVisible
 })
-
-function handleVotingButtonClick() {
-  if (gameStore.phase !== 'Day') {
-    uiStore.showAlert('投票提示', '僅在白天階段可進行提名與投票。')
-    return
-  }
-  uiStore.isVotingHudVisible = true
-  uiStore.isVotingHudCollapsed = !uiStore.isVotingHudCollapsed
-}
 
 function getCharacterIcon(id: string) {
   const char = scriptStore.rawCharacterList.find(c => c.id === id)
