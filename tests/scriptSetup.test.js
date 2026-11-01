@@ -714,3 +714,30 @@ test('uiStore.ts 技能音效按鈕預設隱藏行為驗證：全新手機與未
   assert.strictEqual(evalHidden('true'), true, '明確設定為 "true" 時，應為隱藏 (true)')
   assert.strictEqual(evalHidden('false'), false, '明確取消勾選設為 "false" 時，應為顯示/不隱藏 (false)')
 })
+
+test('SettingsPanel.vue 次要區塊收合功能驗證：提示標記佈局、自訂背景、自訂角色技能音效、計時器設置均支援預設收合與展開', () => {
+  const settingsPath = path.resolve(__dirname, '../src/components/SettingsPanel.vue')
+  const content = fs.readFileSync(settingsPath, 'utf8')
+
+  // 1. 驗證 4 個收合狀態定義與預設為 false (收合)
+  assert.ok(content.includes('const isReminderLayoutExpanded = ref(false)'), '提示標記佈局應預設收合 (false)')
+  assert.ok(content.includes('const isCustomBgExpanded = ref(false)'), '自訂背景應預設收合 (false)')
+  assert.ok(content.includes('const isCustomSoundExpanded = ref(false)'), '自訂角色技能音效應預設收合 (false)')
+  assert.ok(content.includes('const isTimerSettingsExpanded = ref(false)'), '計時器設置應預設收合 (false)')
+
+  // 2. 驗證 4 個區塊的標題點擊切換事件
+  assert.ok(content.includes('@click="isReminderLayoutExpanded = !isReminderLayoutExpanded"'), '提示標記佈局標題應支援點擊展開/收合')
+  assert.ok(content.includes('@click="isCustomBgExpanded = !isCustomBgExpanded"'), '自訂背景標題應支援點擊展開/收合')
+  assert.ok(content.includes('@click="isCustomSoundExpanded = !isCustomSoundExpanded"'), '自訂角色技能音效標題應支援點擊展開/收合')
+  assert.ok(content.includes('@click="isTimerSettingsExpanded = !isTimerSettingsExpanded"'), '計時器設置標題應支援點擊展開/收合')
+
+  // 3. 驗證 4 個區塊內容皆受 v-show 控制
+  assert.ok(content.includes('v-show="isReminderLayoutExpanded"'), '提示標記佈局內容應綁定 v-show')
+  assert.ok(content.includes('v-show="isCustomBgExpanded"'), '自訂背景內容應綁定 v-show')
+  assert.ok(content.includes('v-show="isCustomSoundExpanded"'), '自訂角色技能音效內容應綁定 v-show')
+  assert.ok(content.includes('v-show="isTimerSettingsExpanded"'), '計時器設置內容應綁定 v-show')
+
+  // 4. 驗證收合樣式類別與箭頭指示器
+  assert.ok(content.includes('.collapsible-title'), 'SettingsPanel.vue 應具備 .collapsible-title 樣式')
+  assert.ok(content.includes('collapse-toggle-icon'), '應具備收合指示圖示 collapse-toggle-icon')
+})

@@ -189,184 +189,182 @@
 
         <div class="divider" />
 
-        <!-- 介面設置 (暫時隱藏，預設為內圈向心) -->
-
-        <div class="section-title">提示標記佈局 (Reminder Layout)</div>
-        <div class="layout-selector-grid cols-2">
-          <button v-for="mode in layouts" :key="mode.id" class="layout-option"
-            :class="{ active: uiStore.reminderLayout === mode.id }" @click="uiStore.setReminderLayout(mode.id as any)">
-            <span class="opt-icon">
-              <img v-if="mode.icon.startsWith('/')" :src="mode.icon" :alt="mode.label" class="opt-img" />
-              <template v-else>{{ mode.icon }}</template>
-            </span>
-
-            <span class="opt-label">{{ mode.label }}</span>
-
-            <div v-if="uiStore.reminderLayout === mode.id" class="active-check">✓</div>
-          </button>
+        <!-- 介面設置 (提示標記佈局與收納上限) -->
+        <div 
+          class="section-title collapsible-title" 
+          @click="isReminderLayoutExpanded = !isReminderLayoutExpanded"
+        >
+          <span>提示標記佈局 (Reminder Layout)</span>
+          <span class="collapse-toggle-icon">{{ isReminderLayoutExpanded ? '▲' : '▼' }}</span>
         </div>
+        <div v-show="isReminderLayoutExpanded" class="collapsible-content">
+          <div class="layout-selector-grid cols-2">
+            <button v-for="mode in layouts" :key="mode.id" class="layout-option"
+              :class="{ active: uiStore.reminderLayout === mode.id }" @click="uiStore.setReminderLayout(mode.id as any)">
+              <span class="opt-icon">
+                <img v-if="mode.icon.startsWith('/')" :src="mode.icon" :alt="mode.label" class="opt-img" />
+                <template v-else>{{ mode.icon }}</template>
+              </span>
 
-        <!-- 提示標記收納上限計數器 -->
-        <div class="section-title">提示標記收納上限</div>
-        <div class="threshold-slider-box">
-          <div class="threshold-counter">
-            <button class="counter-btn" type="button" :disabled="uiStore.reminderCollapseThreshold <= 1"
-              @click="uiStore.setReminderCollapseThreshold(uiStore.reminderCollapseThreshold - 1)">
-              －
-            </button>
-            <span class="counter-value">{{ uiStore.reminderCollapseThreshold }}</span>
-            <button class="counter-btn" type="button" :disabled="uiStore.reminderCollapseThreshold >= 8"
-              @click="uiStore.setReminderCollapseThreshold(uiStore.reminderCollapseThreshold + 1)">
-              ＋
+              <span class="opt-label">{{ mode.label }}</span>
+
+              <div v-if="uiStore.reminderLayout === mode.id" class="active-check">✓</div>
             </button>
           </div>
-          <div class="slider-labels text-center">
-            <span class="threshold-tip">當玩家提示標記多於此數量時，自動摺疊為鎖頭</span>
+
+          <!-- 提示標記收納上限計數器 -->
+          <div class="section-title sub-title">提示標記收納上限</div>
+          <div class="threshold-slider-box">
+            <div class="threshold-counter">
+              <button class="counter-btn" type="button" :disabled="uiStore.reminderCollapseThreshold <= 1"
+                @click="uiStore.setReminderCollapseThreshold(uiStore.reminderCollapseThreshold - 1)">
+                －
+              </button>
+              <span class="counter-value">{{ uiStore.reminderCollapseThreshold }}</span>
+              <button class="counter-btn" type="button" :disabled="uiStore.reminderCollapseThreshold >= 8"
+                @click="uiStore.setReminderCollapseThreshold(uiStore.reminderCollapseThreshold + 1)">
+                ＋
+              </button>
+            </div>
+            <div class="slider-labels text-center">
+              <span class="threshold-tip">當玩家提示標記多於此數量時，自動摺疊為鎖頭</span>
+            </div>
           </div>
         </div>
 
         <div class="divider" />
 
-
         <!-- 自定義背景 -->
-        <div class="section-title">自定義佈景</div>
-        <div class="background-settings-grid">
-          <div class="bg-setting-item">
-            <div class="bg-preview"
-              :style="uiStore.customDayBackground ? { backgroundImage: `url(${uiStore.customDayBackground})` } : {}">
-              <div v-if="!uiStore.customDayBackground" class="bg-placeholder">預設白天</div>
-              <div class="bg-overlay">
-                <button class="bg-btn" @click="triggerFile('day')">匯入圖檔</button>
-                <button v-if="uiStore.customDayBackground" class="bg-btn reset"
-                  @click="uiStore.setDayBackground(null)">重置</button>
+        <div 
+          class="section-title collapsible-title" 
+          @click="isCustomBgExpanded = !isCustomBgExpanded"
+        >
+          <span>自訂背景</span>
+          <span class="collapse-toggle-icon">{{ isCustomBgExpanded ? '▲' : '▼' }}</span>
+        </div>
+        <div v-show="isCustomBgExpanded" class="collapsible-content">
+          <div class="background-settings-grid">
+            <div class="bg-setting-item">
+              <div class="bg-preview"
+                :style="uiStore.customDayBackground ? { backgroundImage: `url(${uiStore.customDayBackground})` } : {}">
+                <div v-if="!uiStore.customDayBackground" class="bg-placeholder">預設白天</div>
+                <div class="bg-overlay">
+                  <button class="bg-btn" @click="triggerFile('day')">匯入圖檔</button>
+                  <button v-if="uiStore.customDayBackground" class="bg-btn reset"
+                    @click="uiStore.setDayBackground(null)">重置</button>
+                </div>
               </div>
+              <div class="bg-name">白天背景</div>
             </div>
-            <div class="bg-name">白天背景</div>
-          </div>
-          <div class="bg-setting-item">
-            <div class="bg-preview"
-              :style="uiStore.customNightBackground ? { backgroundImage: `url(${uiStore.customNightBackground})` } : {}">
-              <div v-if="!uiStore.customNightBackground" class="bg-placeholder night">預設夜晚</div>
-              <div class="bg-overlay">
-                <button class="bg-btn" @click="triggerFile('night')">匯入圖檔</button>
-                <button v-if="uiStore.customNightBackground" class="bg-btn reset"
-                  @click="uiStore.setNightBackground(null)">重置</button>
+            <div class="bg-setting-item">
+              <div class="bg-preview"
+                :style="uiStore.customNightBackground ? { backgroundImage: `url(${uiStore.customNightBackground})` } : {}">
+                <div v-if="!uiStore.customNightBackground" class="bg-placeholder night">預設夜晚</div>
+                <div class="bg-overlay">
+                  <button class="bg-btn" @click="triggerFile('night')">匯入圖檔</button>
+                  <button v-if="uiStore.customNightBackground" class="bg-btn reset"
+                    @click="uiStore.setNightBackground(null)">重置</button>
+                </div>
               </div>
+              <div class="bg-name">夜晚背景</div>
             </div>
-            <div class="bg-name">夜晚背景</div>
           </div>
         </div>
         <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" />
 
         <div class="divider" />
 
-        <!-- 魔典排列圖形 (已移至頂部工具列) -->
-        <!-- 
-        <div class="section-title">魔典排列圖形 (Grimoire Shape)</div>
-        <div class="layout-selector-grid cols-3">
-          <button v-for="shape in shapes" :key="shape.id" class="layout-option"
-            :class="{ active: uiStore.grimoireShape === shape.id }" @click="uiStore.setGrimoireShape(shape.id as any)">
-            <img class="opt-icon" :src="shape.icon" />
-            <span class="opt-label">{{ shape.label }}</span>
-            <div v-if="uiStore.grimoireShape === shape.id" class="active-check">✓</div>
-          </button>
-        </div>
-
-        <div class="section-title">魔典縮放 (Inverted Zoom)</div>
-        <div class="zoom-slider-box">
-          <input type="range" min="0.5" max="2.0" step="0.05" :value="uiStore.grimoireScale"
-            @input="e => uiStore.setGrimoireScale(parseFloat((e.target as HTMLInputElement).value))"
-            class="settings-slider" />
-          <div class="slider-labels">
-            <span>調整玩家令片顯示大小</span>
-            <span class="scale-val">{{ Math.round(uiStore.grimoireScale * 100) }}%</span>
-          </div>
-        </div>
-
-        <div class="divider" />
-        -->
-        
-        <!-- 計時器設置 -->
-        <div class="section-title">計時器設置</div>
-        <div class="layout-selector-grid cols-2">
-          <button class="layout-option" :class="{ active: uiStore.isTimerSoundEnabled }"
-            @click="uiStore.setTimerSoundEnabled(!uiStore.isTimerSoundEnabled)">
-            <span class="opt-icon"><img src="/pic/bell.png" class="opt-img-small" /></span>
-            <span class="opt-label">到點鐘聲</span>
-            <div v-if="uiStore.isTimerSoundEnabled" class="active-check">✓</div>
-          </button>
-          <button class="layout-option" :class="{ active: uiStore.isTimerNotificationEnabled }"
-            @click="uiStore.setTimerNotificationEnabled(!uiStore.isTimerNotificationEnabled)">
-            <span class="opt-icon"><img src="/pic/notification.png" class="opt-img-small" /></span>
-            <span class="opt-label">桌面通知</span>
-            <div v-if="uiStore.isTimerNotificationEnabled" class="active-check">✓</div>
-          </button>
-        </div>
-
-        <div class="divider" />
-
         <!-- 自訂角色技能音效 -->
-        <div class="section-title">自訂角色技能音效</div>
-        <div class="sound-manager-box">
-          <!-- 隱藏主介面技能音效按鈕選項 -->
-          <div class="sound-toggle-row" @click="uiStore.setCustomSoundButtonHidden(!uiStore.isCustomSoundButtonHidden)">
-            <input 
-              type="checkbox" 
-              :checked="uiStore.isCustomSoundButtonHidden" 
-              @click.stop
-              @change="uiStore.setCustomSoundButtonHidden(($event.target as HTMLInputElement).checked)"
-              class="sound-toggle-checkbox"
-            />
-            <span class="sound-toggle-label"><img src="/pic/padlock.png" class="sound-toggle-icon" /> 隱藏主畫面技能音效按鈕</span>
-          </div>
+        <div 
+          class="section-title collapsible-title" 
+          @click="isCustomSoundExpanded = !isCustomSoundExpanded"
+        >
+          <span>自訂角色技能音效</span>
+          <span class="collapse-toggle-icon">{{ isCustomSoundExpanded ? '▲' : '▼' }}</span>
+        </div>
+        <div v-show="isCustomSoundExpanded" class="collapsible-content">
+          <div class="sound-manager-box">
+            <!-- 隱藏主介面技能音效按鈕選項 -->
+            <div class="sound-toggle-row" @click="uiStore.setCustomSoundButtonHidden(!uiStore.isCustomSoundButtonHidden)">
+              <input 
+                type="checkbox" 
+                :checked="uiStore.isCustomSoundButtonHidden" 
+                @click.stop
+                @change="uiStore.setCustomSoundButtonHidden(($event.target as HTMLInputElement).checked)"
+                class="sound-toggle-checkbox"
+              />
+              <span class="sound-toggle-label"><img src="/pic/padlock.png" class="sound-toggle-icon" /> 隱藏主畫面技能音效按鈕</span>
+            </div>
 
-          <!-- <button class="import-sound-btn" @click="triggerSoundUpload">
-            <img src="/pic/plus.svg" class="btn-svg-icon" /> 匯入角色技能音效
-          </button>
-          <input type="file" ref="soundFileInput" hidden accept="audio/*" @change="handleSoundFileChange" /> -->
+            <!-- 自訂音效清單 -->
+            <div v-if="uiStore.customSounds.length === 0" class="no-sounds-tip">
+              暫無自訂技能音效，請點擊上方按鈕匯入
+            </div>
+            <div v-else class="sounds-list">
+              <div v-for="sound in uiStore.customSounds" :key="sound.id" class="sound-item"
+                :class="{ 'is-pinned': uiStore.pinnedSoundId === sound.id }">
+                <div class="sound-info">
+                  <span class="sound-name">{{ sound.name }}</span>
+                  <span class="sound-tag" v-if="uiStore.pinnedSoundId === sound.id">主要播放</span>
+                </div>
+                <div class="sound-actions">
+                  <!-- 釘選按鈕 -->
+                  <button class="action-btn pin-btn" :class="{ active: uiStore.pinnedSoundId === sound.id }"
+                    title="釘選為主要播放音效" @click="uiStore.pinSound(sound.id)">
+                    <span class="sound-pin-indicator" v-if="uiStore.pinnedSoundId === sound.id"><img src="/pic/office-push-pin.png" class="sound-pin-img" /></span>
 
-          <!-- 自訂音效清單 -->
-          <div v-if="uiStore.customSounds.length === 0" class="no-sounds-tip">
-            暫無自訂技能音效，請點擊上方按鈕匯入
-          </div>
-          <div v-else class="sounds-list">
-            <div v-for="sound in uiStore.customSounds" :key="sound.id" class="sound-item"
-              :class="{ 'is-pinned': uiStore.pinnedSoundId === sound.id }">
-              <div class="sound-info">
-                <span class="sound-name">{{ sound.name }}</span>
-                <span class="sound-tag" v-if="uiStore.pinnedSoundId === sound.id">主要播放</span>
-              </div>
-              <div class="sound-actions">
-                <!-- 釘選按鈕 -->
-                <button class="action-btn pin-btn" :class="{ active: uiStore.pinnedSoundId === sound.id }"
-                  title="釘選為主要播放音效" @click="uiStore.pinSound(sound.id)">
-                  <span class="sound-pin-indicator" v-if="uiStore.pinnedSoundId === sound.id"><img src="/pic/office-push-pin.png" class="sound-pin-img" /></span>
-
-                </button>
-                <!-- 播放/停止按鈕 -->
-                <button class="action-btn play-btn"
-                  :class="{ 'is-playing': uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === sound.id }"
-                  @click="togglePlaySound(sound.id)">
-                  <img v-if="uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === sound.id" src="/pic/stop-button.png" class="sound-action-img" />
-                  <img v-else src="/pic/play.png?v=2" class="sound-action-img" />
-                </button>
-                <!-- 刪除按鈕 -->
-                <button v-if="!sound.id.startsWith('default-')" class="action-btn delete-btn"
-                  @click="deleteCustomSound(sound.id, sound.name)">
-                  🗑️
-                </button>
+                  </button>
+                  <!-- 播放/停止按鈕 -->
+                  <button class="action-btn play-btn"
+                    :class="{ 'is-playing': uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === sound.id }"
+                    @click="togglePlaySound(sound.id)">
+                    <img v-if="uiStore.isCustomSoundPlaying && uiStore.playingCustomSoundId === sound.id" src="/pic/stop-button.png" class="sound-action-img" />
+                    <img v-else src="/pic/play.png?v=2" class="sound-action-img" />
+                  </button>
+                  <!-- 刪除按鈕 -->
+                  <button v-if="!sound.id.startsWith('default-')" class="action-btn delete-btn"
+                    @click="deleteCustomSound(sound.id, sound.name)">
+                    🗑️
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-           <button class="import-sound-btn" @click="triggerSoundUpload">
-            <img src="/pic/plus.svg" class="btn-svg-icon" /> 匯入角色技能音效
-          </button>
-          <input type="file" ref="soundFileInput" hidden accept="audio/*" @change="handleSoundFileChange" />
+             <button class="import-sound-btn" @click="triggerSoundUpload">
+              <img src="/pic/plus.svg" class="btn-svg-icon" /> 匯入角色技能音效
+            </button>
+            <input type="file" ref="soundFileInput" hidden accept="audio/*" @change="handleSoundFileChange" />
 
+          </div>
         </div>
 
         <div class="divider" />
 
+        <!-- 計時器設置 -->
+        <div 
+          class="section-title collapsible-title" 
+          @click="isTimerSettingsExpanded = !isTimerSettingsExpanded"
+        >
+          <span>計時器設置</span>
+          <span class="collapse-toggle-icon">{{ isTimerSettingsExpanded ? '▲' : '▼' }}</span>
+        </div>
+        <div v-show="isTimerSettingsExpanded" class="collapsible-content">
+          <div class="layout-selector-grid cols-2">
+            <button class="layout-option" :class="{ active: uiStore.isTimerSoundEnabled }"
+              @click="uiStore.setTimerSoundEnabled(!uiStore.isTimerSoundEnabled)">
+              <span class="opt-icon"><img src="/pic/bell.png" class="opt-img-small" /></span>
+              <span class="opt-label">到點鐘聲</span>
+              <div v-if="uiStore.isTimerSoundEnabled" class="active-check">✓</div>
+            </button>
+            <button class="layout-option" :class="{ active: uiStore.isTimerNotificationEnabled }"
+              @click="uiStore.setTimerNotificationEnabled(!uiStore.isTimerNotificationEnabled)">
+              <span class="opt-icon"><img src="/pic/notification.png" class="opt-img-small" /></span>
+              <span class="opt-label">桌面通知</span>
+              <div v-if="uiStore.isTimerNotificationEnabled" class="active-check">✓</div>
+            </button>
+          </div>
+        </div>
+
+        <div class="divider" />
         <!-- 軟體使用授權 -->
         <div class="section-title">軟體使用授權</div>
         <div class="license-settings-box">
@@ -437,6 +435,12 @@ function handleKeydown(e: KeyboardEvent) {
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const uploadTarget = ref<'day' | 'night'>('day')
+
+// 4 個次要設置區塊的收合狀態 (預設皆為收合 false)
+const isReminderLayoutExpanded = ref(false)
+const isCustomBgExpanded = ref(false)
+const isCustomSoundExpanded = ref(false)
+const isTimerSettingsExpanded = ref(false)
 
 // 自訂音效管理
 const soundFileInput = ref<HTMLInputElement | null>(null)
@@ -985,6 +989,31 @@ async function handleActivateLicense() {
   color: var(--color-text-muted);
   letter-spacing: 1.5px;
   text-transform: uppercase;
+}
+
+
+.collapsible-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--transition-fast, 0.2s);
+}
+
+.collapsible-title:hover {
+  color: var(--color-gold, #e6c446);
+}
+
+.collapsible-title .collapse-toggle-icon {
+  font-size: 10px;
+  color: var(--color-gold, #e6c446);
+  opacity: 0.85;
+  padding-right: 4px;
+}
+
+.sub-title {
+  padding-top: 14px;
 }
 
 .danger-section {

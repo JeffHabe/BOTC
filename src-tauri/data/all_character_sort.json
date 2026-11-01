@@ -3728,7 +3728,7 @@
     "name": "真心人",
     "name_en": "Truelove",
     "role_type": "Townsfolk",
-    "ability": "在你的首個白天，你可以邀请說書人見證你與一名玩家互通角色，說書人會秘密告诉你是否有人說謊。",
+    "ability": "在你的首個白天，你可以邀請說書人見證你與一名玩家互通角色，說書人會秘密告訴你是否有人說謊。",
     "reminders": [
       "失去能力"
     ],
@@ -3743,14 +3743,14 @@
     "name": "牧師",
     "name_en": "Priest",
     "role_type": "Townsfolk",
-    "ability": "每個夜晚，你要選擇除你和旅行者以外的兩名玩家:你會得知他們皆不属於哪種角色类型。",
+    "ability": "每個夜晚，你要選擇除你和旅行者以外的兩名玩家:你會得知他們皆不屬於哪種角色類型。",
     "firstNight": 17,
     "otherNight": 16,
     "reminders": [],
     "setup": false,
     "image": "https://www.bloodstar.xyz/p/humlet/che/30_che.png",
-    "firstNightReminder": "喚醒他并让他選擇2名玩家，告知他選擇的玩家皆不属於哪種角色类型。",
-    "otherNightReminder": "喚醒他并让他選擇2名玩家，告知他選擇的玩家皆不属於哪種角色类型。",
+    "firstNightReminder": "喚醒他并讓他選擇2名玩家，告知他選擇的玩家皆不屬於哪種角色類型。",
+    "otherNightReminder": "喚醒他并讓他選擇2名玩家，告知他選擇的玩家皆不屬於哪種角色類型。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -3760,9 +3760,9 @@
     "name": "神秘學家",
     "name_en": "Occultist",
     "role_type": "Townsfolk",
-    "ability": "每個白天，你可以私下詢問說書人并得知一條正確信息。如果因你的能力導致減少了一名外來者，你獲得的信息會是錯误的。[-1或-0外來者]",
+    "ability": "每個白天，你可以私下詢問說書人并得知一條正確信息。如果因你的能力導致減少了一名外來者，你獲得的信息會是錯誤的。[-1或-0外來者]",
     "reminders": [
-      "錯误信息"
+      "錯誤信息"
     ],
     "setup": true,
     "image": "https://www.bloodstar.xyz/p/humlet/che/5_che.png",
@@ -3799,7 +3799,7 @@
     ],
     "setup": false,
     "image": "https://botchomebrew.wiki/assets/art/lunar-knight.png",
-    "otherNightReminder": "無人死於處決，喚醒月光騎士并让他選擇一名玩家。",
+    "otherNightReminder": "無人死於處決，喚醒月光騎士并讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -3827,14 +3827,14 @@
     "name": "空中飛人",
     "name_en": "Aerialist",
     "role_type": "Townsfolk",
-    "ability": "你死亡的當晚會被喚醒并得知所有角色类型的玩家各一名。你死於善良玩家髮起的提名處決或能力時你醉酒。",
+    "ability": "你死亡的當晚會被喚醒并得知所有角色類型的玩家各一名。你死於善良玩家髮起的提名處決或能力時你醉酒。",
     "otherNight": 18,
     "reminders": [
       "醉酒"
     ],
     "setup": false,
     "image": "https://botchomebrew.wiki/assets/art/aerialist.png",
-    "otherNightReminder": "如果死亡喚醒他，并告知他所有类型的玩家（除旅行者）各一名。",
+    "otherNightReminder": "如果死亡喚醒他，并告知他所有類型的玩家（除旅行者）各一名。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -3844,17 +3844,17 @@
     "name": "囚犯",
     "name_en": "Prisoner",
     "role_type": "Outsider",
-    "ability": "在你的首個夜晚，你會得知一個不在場角色。如果超過半數玩家同意释放你，你會變成這個角色和對应的陣营。你不能投票。",
+    "ability": "在你的首個夜晚，你會得知一個不在場角色。如果超過半數玩家同意釋放你，你會變成這個角色和對應的陣營。你不能投票。",
     "firstNight": 13,
     "otherNight": 2,
     "reminders": [
       "得知",
-      "释放"
+      "釋放"
     ],
     "setup": false,
     "image": "https://www.bloodstar.xyz/p/humlet/che/64_che.png",
     "firstNightReminder": "喚醒囚犯并向他出示一個不在場的角色標記。誠然，并不推薦向其出示惡魔標記。",
-    "otherNightReminder": "如果“释放”標記被放置在場上，且他没有被告知過自己的角色转變，告知他现在的陣营與角色。",
+    "otherNightReminder": "如果“釋放”標記被放置在場上，且他沒有被告知過自己的角色轉變，告知他現在的陣營與角色。",
     "conflicts": [],
     "is_custom": false,
     "is_temp": false
@@ -3883,11 +3883,11 @@
     "otherNight": 13,
     "reminders": [
       "死亡",
-      "靈魂抽离"
+      "靈魂抽離"
     ],
     "setup": true,
     "image": "https://botchomebrew.wiki/assets/art/dark-knight.png",
-    "otherNightReminder": "如果今天在喚醒亡靈騎士之前有外來者死亡，喚醒亡靈騎士，告知他死亡的外來者玩家是誰，并让他猜測具體角色，如果他猜中至少一名，標記一名玩家死亡，然後去除所有的“离魂抽离”標記。",
+    "otherNightReminder": "如果今天在喚醒亡靈騎士之前有外來者死亡，喚醒亡靈騎士，告知他死亡的外來者玩家是誰，并讓他猜測具體角色，如果他猜中至少一名，標記一名玩家死亡，然後去除所有的“離魂抽離”標記。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -3917,7 +3917,7 @@
     "name": "亞瑟王",
     "name_en": "Arthur",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你要選擇一名玩家:他死亡。被该能力殺死的爪牙改為與你交換角色且會有2名玩家代替他死亡，但每局遊戲僅能成功转化一次。",
+    "ability": "每個夜晚*，你要選擇一名玩家:他死亡。被該能力殺死的爪牙改為與你交換角色且會有2名玩家代替他死亡，但每局遊戲僅能成功轉化一次。",
     "otherNight": 8,
     "reminders": [
       "死亡",
@@ -3925,7 +3925,7 @@
     ],
     "setup": false,
     "image": "https://botchomebrew.wiki/assets/art/arthur.png",
-    "otherNightReminder": "让亞瑟王選擇一名玩家。標記那名玩家死亡。如果他是爪牙且可以被亞瑟王殺死，為他放置“王車易位”標記然後為亞瑟王和爪牙交換角色且會有2名玩家代替他死亡。",
+    "otherNightReminder": "讓亞瑟王選擇一名玩家。標記那名玩家死亡。如果他是爪牙且可以被亞瑟王殺死，為他放置“王車易位”標記然後為亞瑟王和爪牙交換角色且會有2名玩家代替他死亡。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -3943,7 +3943,7 @@
     ],
     "setup": false,
     "image": "https://botchomebrew.wiki/assets/art/cerberus.png",
-    "otherNightReminder": "喚醒刻耳柏洛斯選擇一名玩家，如果是邪惡的爪牙，殺死他并保留他的能力，再让刻耳柏洛斯選擇一名玩家。",
+    "otherNightReminder": "喚醒刻耳柏洛斯選擇一名玩家，如果是邪惡的爪牙，殺死他并保留他的能力，再讓刻耳柏洛斯選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -3953,15 +3953,15 @@
     "name": "塞壬",
     "name_en": "Siren",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你要選擇一名玩家：他死亡，且你要選擇是否永久失去你的下一條能力。鎮民玩家的能力都會產生錯误信息。",
+    "ability": "每個夜晚*，你要選擇一名玩家：他死亡，且你要選擇是否永久失去你的下一條能力。鎮民玩家的能力都會產生錯誤信息。",
     "otherNight": 10,
     "reminders": [
       "死亡",
-      "谢幕"
+      "謝幕"
     ],
     "setup": false,
     "image": "https://botchomebrew.wiki/assets/art/siren.png",
-    "otherNightReminder": "喚醒塞壬選擇一名玩家，為该玩家標記死亡，然後让塞壬選擇是否谢幕，如果他點头，為他放置“谢幕”標記。",
+    "otherNightReminder": "喚醒塞壬選擇一名玩家，為該玩家標記死亡，然後讓塞壬選擇是否謝幕，如果他點頭，為他放置“謝幕”標記。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -3971,15 +3971,15 @@
     "name": "惡墮",
     "name_en": "Corruptus",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你要選擇一名玩家：他死亡，即使因為任何原因让他不會死亡。死亡的外來者胜負條件反转，即使你已死亡。[固定2名外來者]",
+    "ability": "每個夜晚*，你要選擇一名玩家：他死亡，即使因為任何原因讓他不會死亡。死亡的外來者勝負條件反轉，即使你已死亡。[固定2名外來者]",
     "otherNight": 7,
     "reminders": [
       "死亡",
-      "胜負反转"
+      "勝負反轉"
     ],
     "setup": true,
     "image": "https://botchomebrew.wiki/assets/art/corruptus.png",
-    "otherNightReminder": "让惡墮選擇一名玩家。標記那名玩家死亡。",
+    "otherNightReminder": "讓惡墮選擇一名玩家。標記那名玩家死亡。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -3989,7 +3989,7 @@
     "name": "決鬥（可選）",
     "name_en": "35_che",
     "role_type": "Fabled",
-    "ability": "即將被處決者可以向說書人申请與提名者展开“決鬥”。如果說書人同意，提名者與被處決者要輪流公开宣稱一個邪惡角色，宣稱不在場角色的玩家可能被立即處決。",
+    "ability": "即將被處決者可以向說書人申請與提名者展開“決鬥”。如果說書人同意，提名者與被處決者要輪流公開宣稱一個邪惡角色，宣稱不在場角色的玩家可能被立即處決。",
     "reminders": [
       "髮起決鬥",
       "被決鬥"
@@ -4005,7 +4005,7 @@
     "name": "治安官",
     "name_en": "Constable",
     "role_type": "Townsfolk",
-    "ability": "在你的首個夜晚，你會得知一名外來者或爪牙玩家。如果你在夜晚死亡，你會得知一名外來者或爪牙玩家（角色类型與上次不同）。［+1外來者］",
+    "ability": "在你的首個夜晚，你會得知一名外來者或爪牙玩家。如果你在夜晚死亡，你會得知一名外來者或爪牙玩家（角色類型與上次不同）。［+1外來者］",
     "firstNight": 14,
     "otherNight": 14,
     "reminders": [],
@@ -4022,7 +4022,7 @@
     "name": "畫家",
     "name_en": "Painter",
     "role_type": "Townsfolk",
-    "ability": "在你的首個夜晚，你會得知一個在場角色。每個白天你可以进行一次猜測，每當你猜對誰是你最近得知的角色，當晚你會得知另一個在場角色。",
+    "ability": "在你的首個夜晚，你會得知一個在場角色。每個白天你可以進行一次猜測，每當你猜對誰是你最近得知的角色，當晚你會得知另一個在場角色。",
     "firstNight": 16,
     "otherNight": 16,
     "reminders": [
@@ -4030,8 +4030,8 @@
     ],
     "setup": false,
     "image": "https://botchomebrew.wiki/assets/art/painter.png",
-    "firstNightReminder": "得知一個在場角色，并在该玩家角色旁放置“得知”標記",
-    "otherNightReminder": "若白天她猜對，得知另一個在場角色，并在该玩家角色旁放置“得知”標記",
+    "firstNightReminder": "得知一個在場角色，并在該玩家角色旁放置“得知”標記",
+    "otherNightReminder": "若白天她猜對，得知另一個在場角色，并在該玩家角色旁放置“得知”標記",
     "conflicts": [],
     "is_custom": false,
     "is_temp": false
@@ -4041,7 +4041,7 @@
     "name": "獵魔人",
     "name_en": "Witcher",
     "role_type": "Townsfolk",
-    "ability": "每局遊戲限一次，在夜晚時*，你可以選擇一名玩家：他死亡且當晚惡魔不會造成死亡。如果你殺死了惡魔，你和他交換陣营和角色。",
+    "ability": "每局遊戲限一次，在夜晚時*，你可以選擇一名玩家：他死亡且當晚惡魔不會造成死亡。如果你殺死了惡魔，你和他交換陣營和角色。",
     "otherNight": 7,
     "reminders": [
       "死亡",
@@ -4056,10 +4056,10 @@
   },
   {
     "id": "votive",
-    "name": "祈愿妖精",
+    "name": "祈願妖精",
     "name_en": "Votive",
     "role_type": "Townsfolk",
-    "ability": "在你的首個白天，你要拜訪說書人并描述“那麼......”，說書人會告诉你“如果......”。“如果......”加“那麼......”是你的能力的完整描述。",
+    "ability": "在你的首個白天，你要拜訪說書人并描述“那麼......”，說書人會告訴你“如果......”。“如果......”加“那麼......”是你的能力的完整描述。",
     "otherNight": 2,
     "reminders": [
       "？"
@@ -4091,7 +4091,7 @@
     "name": "斯芬克斯",
     "name_en": "Sphinx",
     "role_type": "Minion",
-    "ability": "每個夜晚，你可以選擇一名玩家：下個提名階段，說書人會首先提名该玩家并問他一個是非問题，如果他答錯那麼他可能會被處決。",
+    "ability": "每個夜晚，你可以選擇一名玩家：下個提名階段，說書人會首先提名該玩家并問他一個是非問題，如果他答錯那麼他可能會被處決。",
     "firstNight": 13,
     "otherNight": 13,
     "reminders": [],
@@ -4108,10 +4108,10 @@
     "name": "麻風侏儒",
     "name_en": "Leper_Gnome",
     "role_type": "Minion",
-    "ability": "在夜晚使用自身能力選擇你的鎮民會變成麻風侏儒，然後你中毒。鎮民變成的麻風侏儒胜負條件反转。你死後保留能力。",
+    "ability": "在夜晚使用自身能力選擇你的鎮民會變成麻風侏儒，然後你中毒。鎮民變成的麻風侏儒勝負條件反轉。你死後保留能力。",
     "reminders": [
       "中毒",
-      "胜負反转",
+      "勝負反轉",
       "保留能力"
     ],
     "setup": false,
@@ -4123,13 +4123,13 @@
   {
     "id": "bard",
     "image": "https://www.bloodstar.xyz/p/humlet/Dafenqi/9_dafenqi.png",
-    "otherNightReminder": "如果遊歌者在白天公开選擇了，喚醒并告知他此刻場上因他醉酒的人數。",
+    "otherNightReminder": "如果遊歌者在白天公開選擇了，喚醒并告知他此刻場上因他醉酒的人數。",
     "reminders": [
       "醉酒"
     ],
     "name": "遊歌者",
     "team": "townsfolk",
-    "ability": "每個白天，你可以公开選擇任意名存活玩家：其中的鎮民會醉酒直到你再次選擇。當晚你會得知正因你醉酒的人數。",
+    "ability": "每個白天，你可以公開選擇任意名存活玩家：其中的鎮民會醉酒直到你再次選擇。當晚你會得知正因你醉酒的人數。",
     "attribution": "太一",
     "flavor": "被我指尖点中的灵魂都将坠入梦境。当你们在酒精里踉跄时，我正数着震动的丝弦…三根？五根？这些数字会告诉我，究竟有多少‘诚实者’在甜梦里露出了谎言的形状。",
     "otherNight": 18
@@ -4163,18 +4163,18 @@
     ],
     "setup": false,
     "image": "https://botchomebrew.wiki/assets/art/perfumer.png",
-    "firstNightReminder": "調香師可以摇头或指向一名玩家或指向一個邪惡角色。如果他這麼做，則喚醒那名玩家，告知其xx在場。",
-    "otherNightReminder": "調香師可以摇头或指向一名玩家或指向一個邪惡角色。如果他這麼做，則喚醒那名玩家，告知其xx在場。",
+    "firstNightReminder": "調香師可以搖頭或指向一名玩家或指向一個邪惡角色。如果他這麼做，則喚醒那名玩家，告知其xx在場。",
+    "otherNightReminder": "調香師可以搖頭或指向一名玩家或指向一個邪惡角色。如果他這麼做，則喚醒那名玩家，告知其xx在場。",
     "conflicts": [],
     "is_custom": false,
     "is_temp": false
   },
   {
     "id": "27_baobao",
-    "name": "银匠",
+    "name": "銀匠",
     "name_en": "27_baobao",
     "role_type": "Townsfolk",
-    "ability": "最後一個白天的處決髮生前，說書人會让你選擇一名存活玩家：他立即被處決。如果你在夜晚即將死亡，可能會有一名其他玩家代替你死亡。",
+    "ability": "最後一個白天的處決髮生前，說書人會讓你選擇一名存活玩家：他立即被處決。如果你在夜晚即將死亡，可能會有一名其他玩家代替你死亡。",
     "reminders": [],
     "setup": false,
     "image": "https://www.bloodstar.xyz/p/humlet/baobao/27_baobao.png",
@@ -4229,7 +4229,7 @@
     "name": "倒吊人",
     "name_en": " 041",
     "role_type": "Townsfolk",
-    "ability": "當遊戲結束時，如果你使用過投票標記投票，對調胜負結果。",
+    "ability": "當遊戲結束時，如果你使用過投票標記投票，對調勝負結果。",
     "reminders": [],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/m6b412kjz4crnz1ced44epim.png",
@@ -4242,7 +4242,7 @@
     "name": "公證人",
     "name_en": " 094",
     "role_type": "Townsfolk",
-    "ability": "每個夜晚*，你會得知當天死於處決的玩家與提名他的玩家是否為同一陣营。",
+    "ability": "每個夜晚*，你會得知當天死於處決的玩家與提名他的玩家是否為同一陣營。",
     "otherNight": 11710,
     "reminders": [
       "相同",
@@ -4260,7 +4260,7 @@
     "name": "聖騎士",
     "name_en": "075",
     "role_type": "Townsfolk",
-    "ability": "每個夜晚，你會得知兩名玩家：他們要麼都不是爪牙，要麼都不是惡魔。兩类線索每夜交替。",
+    "ability": "每個夜晚，你會得知兩名玩家：他們要麼都不是爪牙，要麼都不是惡魔。兩類線索每夜交替。",
     "firstNight": 7911,
     "otherNight": 11011,
     "reminders": [
@@ -4280,7 +4280,7 @@
     "name": "天平師",
     "name_en": " 092",
     "role_type": "Townsfolk",
-    "ability": "在你的首個夜晚，你會得知一名玩家：该玩家與他對立陣营的兩名玩家距离相等。",
+    "ability": "在你的首個夜晚，你會得知一名玩家：該玩家與他對立陣營的兩名玩家距離相等。",
     "firstNight": 8410,
     "reminders": [],
     "setup": false,
@@ -4295,7 +4295,7 @@
     "name": "德魯伊",
     "name_en": " 067",
     "role_type": "Townsfolk",
-    "ability": "如果與你鄰近的兩名存活玩家的陣营相同，惡魔隻能攻擊他們。",
+    "ability": "如果與你鄰近的兩名存活玩家的陣營相同，惡魔隻能攻擊他們。",
     "reminders": [],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/fvclt1xnc9ek6vzzodbzejeb.png",
@@ -4362,7 +4362,7 @@
     "name": "敲鐘人",
     "name_en": "085",
     "role_type": "Townsfolk",
-    "ability": "在你首次髮起提名時，你可以公开质問一次被提名的玩家他是否為某個角色：如果他說謊，你立即被處決。",
+    "ability": "在你首次髮起提名時，你可以公開質問一次被提名的玩家他是否為某個角色：如果他說謊，你立即被處決。",
     "reminders": [
       "失去能力"
     ],
@@ -4383,8 +4383,8 @@
     "reminders": [],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/vq1x05ebacm32doyk41rlcff.png",
-    "firstNightReminder": "让她選擇除她自己以外的兩名相互鄰座的玩家。",
-    "otherNightReminder": "让她選擇除她自己以外的兩名相互鄰座的玩家。",
+    "firstNightReminder": "讓她選擇除她自己以外的兩名相互鄰座的玩家。",
+    "otherNightReminder": "讓她選擇除她自己以外的兩名相互鄰座的玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4413,7 +4413,7 @@
     "name": "半人馬",
     "name_en": " 090",
     "role_type": "Townsfolk",
-    "ability": "每個夜晚，你要選擇一名其他玩家（與上個夜晚不同）：如果他的角色类型與你上個夜晚選擇的玩家相同，他死亡。",
+    "ability": "每個夜晚，你要選擇一名其他玩家（與上個夜晚不同）：如果他的角色類型與你上個夜晚選擇的玩家相同，他死亡。",
     "firstNight": 10710,
     "otherNight": 9501,
     "reminders": [
@@ -4422,8 +4422,8 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/rg8xi8e0d153ejq255gsstyf.png",
-    "firstNightReminder": "喚醒他并让他選擇一名玩家。",
-    "otherNightReminder": "喚醒他并让他選擇一名玩家。",
+    "firstNightReminder": "喚醒他并讓他選擇一名玩家。",
+    "otherNightReminder": "喚醒他并讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4446,7 +4446,7 @@
     "name": "死眠少女",
     "name_en": " 109",
     "role_type": "Townsfolk",
-    "ability": "當你首次被惡魔攻擊時，你不會死亡，并會得知该惡魔的角色。",
+    "ability": "當你首次被惡魔攻擊時，你不會死亡，并會得知該惡魔的角色。",
     "reminders": [
       "失去能力"
     ],
@@ -4461,7 +4461,7 @@
     "name": "海女",
     "name_en": " 072",
     "role_type": "Townsfolk",
-    "ability": "在你的首個夜晚，你會得知一名邪惡玩家與你的距离。",
+    "ability": "在你的首個夜晚，你會得知一名邪惡玩家與你的距離。",
     "firstNight": 8410,
     "reminders": [],
     "setup": false,
@@ -4484,7 +4484,7 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/qklb4xv1l24fgdo8mrzlrk4e.png",
-    "otherNightReminder": "如果當天有與遊俠鄰近的存活玩家死亡，让他選擇一名玩家。",
+    "otherNightReminder": "如果當天有與遊俠鄰近的存活玩家死亡，讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4494,7 +4494,7 @@
     "name": "木乃伊",
     "name_en": " 043",
     "role_type": "Townsfolk",
-    "ability": "如果你死於邪惡玩家髮起的提名處決或能力，审判日降臨時，你復活。",
+    "ability": "如果你死於邪惡玩家髮起的提名處決或能力，審判日降臨時，你復活。",
     "reminders": [
       "等待復活"
     ],
@@ -4527,7 +4527,7 @@
     "name": "美人魚",
     "name_en": " 101",
     "role_type": "Townsfolk",
-    "ability": "每個白天，你可以公开接受一名其他玩家對你的赞美：邪惡角色的能力對他無效，直到你接受了另一名玩家的赞美。",
+    "ability": "每個白天，你可以公開接受一名其他玩家對你的贊美：邪惡角色的能力對他無效，直到你接受了另一名玩家的贊美。",
     "reminders": [
       "免疫邪惡"
     ],
@@ -4539,7 +4539,7 @@
   },
   {
     "id": "098",
-    "name": "维京人",
+    "name": "維京人",
     "name_en": "098",
     "role_type": "Townsfolk",
     "ability": "當你在死後首次投票時，當前被提名的玩家立即被處決。",
@@ -4555,7 +4555,7 @@
     "name": "紋章官",
     "name_en": " 004",
     "role_type": "Townsfolk",
-    "ability": "每局遊戲限一次，在夜晚時，你可以選擇一名其他玩家：你會得知兩名玩家。這三名玩家的角色类型各不相同。[+1外來者]",
+    "ability": "每局遊戲限一次，在夜晚時，你可以選擇一名其他玩家：你會得知兩名玩家。這三名玩家的角色類型各不相同。[+1外來者]",
     "firstNight": 8610,
     "otherNight": 11910,
     "reminders": [
@@ -4563,8 +4563,8 @@
     ],
     "setup": true,
     "image": "https://user-images.klutzbanana.com/k0w1gcog043pppq7n5c93fgj.png",
-    "firstNightReminder": "让他選擇一名其他玩家，然後告知他兩名玩家。",
-    "otherNightReminder": "让他選擇一名其他玩家，然後告知他兩名玩家。",
+    "firstNightReminder": "讓他選擇一名其他玩家，然後告知他兩名玩家。",
+    "otherNightReminder": "讓他選擇一名其他玩家，然後告知他兩名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4582,7 +4582,7 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/u3ow4f1t83ry202m79e8r6y3.png",
-    "otherNightReminder": "如果當天獵人提名的玩家死亡，喚醒獵人并让他選擇一名玩家。",
+    "otherNightReminder": "如果當天獵人提名的玩家死亡，喚醒獵人并讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4630,12 +4630,12 @@
     "name": "貓貓探險隊",
     "name_en": " 029",
     "role_type": "Townsfolk",
-    "ability": "每個白天，一名未探險過的玩家可以公开申请探險。在當晚，如果他存活，你會得知一名與他陣营對立的玩家。",
+    "ability": "每個白天，一名未探險過的玩家可以公開申請探險。在當晚，如果他存活，你會得知一名與他陣營對立的玩家。",
     "otherNight": 11710,
     "reminders": [],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/iaw04l1gkxuq8y1l6636l4ni.png",
-    "otherNightReminder": "如果當天的探險者存活，喚他并告知一名與探險者陣营對立的玩家。",
+    "otherNightReminder": "如果當天的探險者存活，喚他并告知一名與探險者陣營對立的玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4645,19 +4645,19 @@
     "name": "王牌",
     "name_en": " 042",
     "role_type": "Townsfolk",
-    "ability": "每個夜晚，你要選擇一名其他玩家：你會得知他是什麼花色。四種花色秘密對应着四種角色类型。",
+    "ability": "每個夜晚，你要選擇一名其他玩家：你會得知他是什麼花色。四種花色秘密對應着四種角色類型。",
     "firstNight": 9010,
     "otherNight": 12110,
     "reminders": [
       "紅心",
-      "方块",
+      "方塊",
       "黑桃",
       "梅花"
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/jllgi4qwgjtbl251ovocqq97.png",
-    "firstNightReminder": "喚醒他并让他選擇一名其他玩家，告知他该玩家對应的花色。",
-    "otherNightReminder": "喚醒他并让他選擇一名其他玩家，告知他该玩家對应的花色。",
+    "firstNightReminder": "喚醒他并讓他選擇一名其他玩家，告知他該玩家對應的花色。",
+    "otherNightReminder": "喚醒他并讓他選擇一名其他玩家，告知他該玩家對應的花色。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4667,7 +4667,7 @@
     "name": "皮匠",
     "name_en": "105",
     "role_type": "Townsfolk",
-    "ability": "在你的首個夜晚，你會得知一個距离你最近的邪惡角色。",
+    "ability": "在你的首個夜晚，你會得知一個距離你最近的邪惡角色。",
     "firstNight": 7710,
     "reminders": [],
     "setup": false,
@@ -4682,7 +4682,7 @@
     "name": "藝伎",
     "name_en": "100",
     "role_type": "Townsfolk",
-    "ability": "在你存活與死亡的首個夜晚，你會分別得知一名存活玩家：他們的陣营對立。",
+    "ability": "在你存活與死亡的首個夜晚，你會分別得知一名存活玩家：他們的陣營對立。",
     "firstNight": 8610,
     "otherNight": 11910,
     "reminders": [
@@ -4701,7 +4701,7 @@
     "name": "見聞家",
     "name_en": " 069",
     "role_type": "Townsfolk",
-    "ability": "每個白天，你可以从說書人處得知一條正確信息（關於某種角色类型）。如果该类型的玩家數量异常，你改為得知錯误信息。",
+    "ability": "每個白天，你可以從說書人處得知一條正確信息（關於某種角色類型）。如果該類型的玩家數量異常，你改為得知錯誤信息。",
     "reminders": [],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/b8ddooyr1b496uilsqaedky1.png",
@@ -4720,8 +4720,8 @@
     "reminders": [],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/l2vvqxvm7lekk959sf8p16vg.png",
-    "firstNightReminder": "喚醒惡魔让他選擇一名玩家，告知惡魔该玩家是什麼角色。让惡魔入睡，再喚醒超感者告知该玩家是什麼角色。",
-    "otherNightReminder": "喚醒惡魔让他選擇一名玩家，告知惡魔该玩家是什麼角色。让惡魔入睡，再喚醒超感者告知该玩家是什麼角色。",
+    "firstNightReminder": "喚醒惡魔讓他選擇一名玩家，告知惡魔該玩家是什麼角色。讓惡魔入睡，再喚醒超感者告知該玩家是什麼角色。",
+    "otherNightReminder": "喚醒惡魔讓他選擇一名玩家，告知惡魔該玩家是什麼角色。讓惡魔入睡，再喚醒超感者告知該玩家是什麼角色。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4739,7 +4739,7 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/n7xhsgxufw3yalr2m3hsd2bq.png",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4749,7 +4749,7 @@
     "name": "通靈師",
     "name_en": "102",
     "role_type": "Townsfolk",
-    "ability": "每個夜晚*，你要選擇一名玩家：如果他已死亡，你會得知他的陣营。",
+    "ability": "每個夜晚*，你要選擇一名玩家：如果他已死亡，你會得知他的陣營。",
     "otherNight": 11710,
     "reminders": [],
     "setup": false,
@@ -4764,14 +4764,14 @@
     "name": "近衛",
     "name_en": " 082",
     "role_type": "Townsfolk",
-    "ability": "审判日降臨前的每個夜晚*，你要選擇：你當晚不會死亡；或與你鄰近的兩名存活玩家當晚不會死亡。",
+    "ability": "審判日降臨前的每個夜晚*，你要選擇：你當晚不會死亡；或與你鄰近的兩名存活玩家當晚不會死亡。",
     "otherNight": 1810,
     "reminders": [
       "不會死亡"
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/rphsabb6k05qcoxvqqq9xys9.png",
-    "otherNightReminder": "让他指向自己或身邊的玩家。",
+    "otherNightReminder": "讓他指向自己或身邊的玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4781,7 +4781,7 @@
     "name": "謎語人",
     "name_en": "070",
     "role_type": "Townsfolk",
-    "ability": "每個白天，你可以从說書人處得知一條謎語。謎語的謎底指向一個在場角色。",
+    "ability": "每個白天，你可以從說書人處得知一條謎語。謎語的謎底指向一個在場角色。",
     "reminders": [],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/qe3qzybbl9qdcyu19ub9ofd6.png",
@@ -4824,7 +4824,7 @@
     "name": "化妝師",
     "name_en": "099",
     "role_type": "Outsider",
-    "ability": "如果你提名的或提名你的玩家是爪牙或惡魔，當晚他可以選擇變成不在場的同类型角色，即使你已死亡。",
+    "ability": "如果你提名的或提名你的玩家是爪牙或惡魔，當晚他可以選擇變成不在場的同類型角色，即使你已死亡。",
     "otherNight": 810,
     "reminders": [
       "換妝"
@@ -4841,12 +4841,12 @@
     "name": "雙面人",
     "name_en": " 053",
     "role_type": "Outsider",
-    "ability": "每個夜晚*，你會转變為與上個死於處決的玩家對立的陣营。",
+    "ability": "每個夜晚*，你會轉變為與上個死於處決的玩家對立的陣營。",
     "otherNight": 140,
     "reminders": [],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/yl7f4ekl6gr81tixcw5yssvd.png",
-    "otherNightReminder": "如果當天死於處決的玩家陣营與他不同，喚醒他并告知他的新陣营。",
+    "otherNightReminder": "如果當天死於處決的玩家陣營與他不同，喚醒他并告知他的新陣營。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4856,7 +4856,7 @@
     "name": "地獄棄子",
     "name_en": "032",
     "role_type": "Outsider",
-    "ability": "每個白天提名开始前，爪牙可以公开擁立地獄棄子：你立即转變為邪惡并與惡魔交換角色，然後他醉酒。",
+    "ability": "每個白天提名開始前，爪牙可以公開擁立地獄棄子：你立即轉變為邪惡并與惡魔交換角色，然後他醉酒。",
     "reminders": [
       "罷黜（醉酒）"
     ],
@@ -4868,10 +4868,10 @@
   },
   {
     "id": "033",
-    "name": "堂吉诃德",
+    "name": "堂吉訶德",
     "name_en": "033",
     "role_type": "Outsider",
-    "ability": "一名玩家會被鎮民玩家的能力當做惡魔角色（風車），即使你已死亡。你可以从說書人處得知風車是誰，然後風車會改為另一名玩家。",
+    "ability": "一名玩家會被鎮民玩家的能力當做惡魔角色（風車），即使你已死亡。你可以從說書人處得知風車是誰，然後風車會改為另一名玩家。",
     "reminders": [
       "風車"
     ],
@@ -4893,7 +4893,7 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/l95nf0k8bb9yiifxn0sho0wm.png",
-    "otherNightReminder": "喚醒他并让他選擇一名玩家。",
+    "otherNightReminder": "喚醒他并讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4903,7 +4903,7 @@
     "name": "搗蛋鬼",
     "name_en": "096",
     "role_type": "Outsider",
-    "ability": "在你的首個夜晚與首個白天，鎮民玩家的能力一定會產生錯误信息。",
+    "ability": "在你的首個夜晚與首個白天，鎮民玩家的能力一定會產生錯誤信息。",
     "reminders": [
       "搗蛋"
     ],
@@ -4918,15 +4918,15 @@
     "name": "殉情者",
     "name_en": "097",
     "role_type": "Outsider",
-    "ability": "在你的首個夜晚，你要選擇一名其他玩家：你或他死亡之後，另一人随時可能死亡。",
+    "ability": "在你的首個夜晚，你要選擇一名其他玩家：你或他死亡之後，另一人隨時可能死亡。",
     "firstNight": 8110,
     "reminders": [
-      "恋人",
+      "戀人",
       "死亡"
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/m97ccgewdehusqmsww38bsgq.png",
-    "firstNightReminder": "让他選擇一名玩家。",
+    "firstNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4936,7 +4936,7 @@
     "name": "河童",
     "name_en": "107",
     "role_type": "Outsider",
-    "ability": "在审判日，你可以从說書人處得知外來者玩家的數量。[任意數量外來者]",
+    "ability": "在審判日，你可以從說書人處得知外來者玩家的數量。[任意數量外來者]",
     "reminders": [],
     "setup": true,
     "image": "https://user-images.klutzbanana.com/vxbtargu9trpgc33oe0m88l6.png",
@@ -4949,7 +4949,7 @@
     "name": "泰坦",
     "name_en": " 066",
     "role_type": "Outsider",
-    "ability": "在首個夜晚，你转變為邪惡，并獲得所有不在場爪牙的能力。[泰坦在配置時被當作爪牙]",
+    "ability": "在首個夜晚，你轉變為邪惡，并獲得所有不在場爪牙的能力。[泰坦在配置時被當作爪牙]",
     "firstNight": 141,
     "reminders": [
       "爪牙1",
@@ -4959,7 +4959,7 @@
     ],
     "setup": true,
     "image": "https://user-images.klutzbanana.com/gayzrb3of6waizd6j40oh7r7.png",
-    "firstNightReminder": "喚醒泰坦并告知他转變為邪惡陣营，并向他展示所有不在場的爪牙角色標記。",
+    "firstNightReminder": "喚醒泰坦并告知他轉變為邪惡陣營，并向他展示所有不在場的爪牙角色標記。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -4969,7 +4969,7 @@
     "name": "海貓王",
     "name_en": "055",
     "role_type": "Outsider",
-    "ability": "死亡玩家可以上交投票標記成為尋寶人。审判日降臨時，如果你已經死亡，所有尋寶人平分12枚投票標記。",
+    "ability": "死亡玩家可以上交投票標記成為尋寶人。審判日降臨時，如果你已經死亡，所有尋寶人平分12枚投票標記。",
     "reminders": [],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/dlv8cgmwpx6won55a6gw6ali.png",
@@ -4987,7 +4987,7 @@
     "reminders": [],
     "setup": true,
     "image": "https://user-images.klutzbanana.com/p0lgcotfe9ini6tntvir3cmg.png",
-    "otherNightReminder": "如果狼孩在白天转變角色，喚醒他并告知他的角色及陣营變化。",
+    "otherNightReminder": "如果狼孩在白天轉變角色，喚醒他并告知他的角色及陣營變化。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5013,7 +5013,7 @@
     "name": "盜血者",
     "name_en": "052",
     "role_type": "Outsider",
-    "ability": "审判日降臨前，唯一存活的邪惡玩家死亡時，你變成他的角色與陣营。",
+    "ability": "審判日降臨前，唯一存活的邪惡玩家死亡時，你變成他的角色與陣營。",
     "reminders": [
       "是惡魔"
     ],
@@ -5028,7 +5028,7 @@
     "name": "石像鬼",
     "name_en": "059",
     "role_type": "Outsider",
-    "ability": "當你首次被其他玩家提名時，他死亡。如果你殺死了邪惡玩家，你變成他的角色與陣营。",
+    "ability": "當你首次被其他玩家提名時，他死亡。如果你殺死了邪惡玩家，你變成他的角色與陣營。",
     "reminders": [
       "失去能力"
     ],
@@ -5043,7 +5043,7 @@
     "name": "稻草人",
     "name_en": "095",
     "role_type": "Outsider",
-    "ability": "你以為你是一個鎮民角色，但其实你不是。如果你死亡，下次處決不會造成死亡。",
+    "ability": "你以為你是一個鎮民角色，但其實你不是。如果你死亡，下次處決不會造成死亡。",
     "reminders": [
       "稻草人",
       "保護"
@@ -5070,41 +5070,6 @@
     "is_temp": false
   },
   {
-    "id": "026",
-    "name": "雪怪",
-    "name_en": "026",
-    "role_type": "Outsider",
-    "ability": "每局遊戲限一次，惡魔可以公开猜測你是雪怪，如果猜中，當天他被處決時你會代替他被處決。如果白天没人被處決，你的陣营落败。",
-    "reminders": [
-      "已猜測",
-      "被猜中"
-    ],
-    "setup": false,
-    "image": "https://user-images.klutzbanana.com/ba32w4se4x4d5jdrh5q9uo4s.png",
-    "conflicts": [],
-    "is_custom": true,
-    "is_temp": true
-  },
-  {
-    "id": " 054",
-    "name": "黑幫律師",
-    "name_en": " 054",
-    "role_type": "Outsider",
-    "ability": "每個夜晚，你會得知一名玩家：下個白天，如果你和他中有人被處決，另一人可能會替代其被處決。",
-    "firstNight": 8110,
-    "otherNight": 11210,
-    "reminders": [
-      "當事人"
-    ],
-    "setup": false,
-    "image": "https://user-images.klutzbanana.com/gy84y0sdsmowltclbgannq8q.png",
-    "firstNightReminder": "喚醒黑幫律師， 然後指向標記了“當事人”的一名玩家。",
-    "otherNightReminder": "喚醒黑幫律師， 然後指向標記了“當事人”的一名玩家。",
-    "conflicts": [],
-    "is_custom": true,
-    "is_temp": true
-  },
-  {
     "id": "035",
     "name": "代號X",
     "name_en": "035",
@@ -5118,8 +5083,8 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/dscx9f2uzdri5ln0bv77ib5d.png",
-    "firstNightReminder": "當晚是他入場的第幾個夜晚，就让他選擇幾次（玩家）。",
-    "otherNightReminder": "當晚是他入場的第幾個夜晚，就让他選擇幾次（玩家）。",
+    "firstNightReminder": "當晚是他入場的第幾個夜晚，就讓他選擇幾次（玩家）。",
+    "otherNightReminder": "當晚是他入場的第幾個夜晚，就讓他選擇幾次（玩家）。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5137,17 +5102,17 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/pb08jt5nszp837m2k1mzyx67.png",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
   },
   {
     "id": " 037",
-    "name": "雙头巨人",
+    "name": "雙頭巨人",
     "name_en": " 037",
     "role_type": "Minion",
-    "ability": "如果你死亡，其他雙头巨人會在當晚死亡。隻有所有雙头巨人一起投票，他們的投票才有效。[+1雙头巨人（你決定誰是）]",
+    "ability": "如果你死亡，其他雙頭巨人會在當晚死亡。隻有所有雙頭巨人一起投票，他們的投票才有效。[+1雙頭巨人（你決定誰是）]",
     "firstNight": 1010,
     "otherNight": 9510,
     "reminders": [
@@ -5155,8 +5120,8 @@
     ],
     "setup": true,
     "image": "https://user-images.klutzbanana.com/ke74vy68hyeui8ux0nab5ixm.png",
-    "firstNightReminder": "让他選擇一名玩家。如果選中爪牙或惡魔，让他重新選擇。",
-    "otherNightReminder": "如果當天有雙头巨人死亡，让其他雙头巨人也死亡。",
+    "firstNightReminder": "讓他選擇一名玩家。如果選中爪牙或惡魔，讓他重新選擇。",
+    "otherNightReminder": "如果當天有雙頭巨人死亡，讓其他雙頭巨人也死亡。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5174,7 +5139,7 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/kvf3b7pvfs227p6he8gjttkd.png",
-    "otherNightReminder": "让他選擇一名被放置了“結怨”提示標記的玩家。",
+    "otherNightReminder": "讓他選擇一名被放置了“結怨”提示標記的玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5193,8 +5158,8 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/t0xq1wql6uuz4ymphso1rnng.png",
-    "firstNightReminder": "让他選擇一名玩家。",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "firstNightReminder": "讓他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5204,7 +5169,7 @@
     "name": "雙生花",
     "name_en": "112",
     "role_type": "Minion",
-    "ability": "你以為你是一個鎮民角色，但其实你不是。[+1雙生花，兩名雙生花鄰座]",
+    "ability": "你以為你是一個鎮民角色，但其實你不是。[+1雙生花，兩名雙生花鄰座]",
     "reminders": [],
     "setup": true,
     "image": "https://user-images.klutzbanana.com/p32e6pg1m5wvp07js2j4iro8.png",
@@ -5217,7 +5182,7 @@
     "name": "帕克",
     "name_en": " 034",
     "role_type": "Minion",
-    "ability": "每局遊戲限一次，在夜晚時*，你可以選擇一個非惡魔角色：他死亡。如果该角色不在場，你要再選擇一名玩家：他變成该角色。",
+    "ability": "每局遊戲限一次，在夜晚時*，你可以選擇一個非惡魔角色：他死亡。如果該角色不在場，你要再選擇一名玩家：他變成該角色。",
     "otherNight": 1310,
     "reminders": [
       "失去能力",
@@ -5225,7 +5190,7 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/ndmxqw6eogtcvgmbqla361od.png",
-    "otherNightReminder": "让他選擇一個角色。如果這個角色不在場，让他再選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一個角色。如果這個角色不在場，讓他再選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5235,7 +5200,7 @@
     "name": "幻",
     "name_en": " 064",
     "role_type": "Minion",
-    "ability": "如果與你鄰座的玩家都是存活的，鎮民玩家的能力一定會產生錯误信息。",
+    "ability": "如果與你鄰座的玩家都是存活的，鎮民玩家的能力一定會產生錯誤信息。",
     "reminders": [
       "信息必錯"
     ],
@@ -5250,7 +5215,7 @@
     "name": "毒尾",
     "name_en": " 061",
     "role_type": "Minion",
-    "ability": "你顺時针方向上最近的1+X名鎮民中毒。[無外來者在場，X為因你減去的外來者數量]",
+    "ability": "你順時針方向上最近的1+X名鎮民中毒。[無外來者在場，X為因你減去的外來者數量]",
     "reminders": [
       "中毒"
     ],
@@ -5265,7 +5230,7 @@
     "name": "百臂巨人",
     "name_en": "046",
     "role_type": "Minion",
-    "ability": "如果你在死於處決後，立即公开声明你是百臂巨人，你下一次投票的票數會記作你今天獲得的票數。",
+    "ability": "如果你在死於處決後，立即公開聲明你是百臂巨人，你下一次投票的票數會記作你今天獲得的票數。",
     "reminders": [
       "復仇"
     ],
@@ -5286,8 +5251,8 @@
     "reminders": [],
     "setup": true,
     "image": "https://user-images.klutzbanana.com/p9ov5j6imxkygwqr4s5qz22y.png",
-    "firstNightReminder": "让他選擇一名玩家。",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "firstNightReminder": "讓他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5297,14 +5262,14 @@
     "name": "狐妖",
     "name_en": " 084",
     "role_type": "Minion",
-    "ability": "每個夜晚*，你要選擇一名玩家和一個外來者角色：如果该角色不在場，他變成该角色。如果他是该角色，他死亡。[-1或+1外來者]",
+    "ability": "每個夜晚*，你要選擇一名玩家和一個外來者角色：如果該角色不在場，他變成該角色。如果他是該角色，他死亡。[-1或+1外來者]",
     "otherNight": 1310,
     "reminders": [
       "死亡"
     ],
     "setup": true,
     "image": "https://user-images.klutzbanana.com/s0sxwocdol2e2p255fw7j596.png",
-    "otherNightReminder": "让他選擇一個角色及一名玩家。",
+    "otherNightReminder": "讓他選擇一個角色及一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5314,7 +5279,7 @@
     "name": "毒爆",
     "name_en": " 111",
     "role_type": "Minion",
-    "ability": "當有玩家被處決時，與他鄰近的兩名鎮民中毒直到明天黃昏。如果白天没人被處決，所有鎮民中毒直到明天黃昏。",
+    "ability": "當有玩家被處決時，與他鄰近的兩名鎮民中毒直到明天黃昏。如果白天沒人被處決，所有鎮民中毒直到明天黃昏。",
     "reminders": [
       "中毒"
     ],
@@ -5329,7 +5294,7 @@
     "name": "曉",
     "name_en": " 083",
     "role_type": "Minion",
-    "ability": "善良陣营在你存活時無法獲胜。死於處決的惡魔會在黎明時重獲能力。",
+    "ability": "善良陣營在你存活時無法獲勝。死於處決的惡魔會在黎明時重獲能力。",
     "reminders": [
       "重獲能力"
     ],
@@ -5344,14 +5309,14 @@
     "name": "薩滿",
     "name_en": " 071",
     "role_type": "Minion",
-    "ability": "每局遊戲限一次，在夜晚時*，你可以選擇四個不同类型的角色：對每個不在場的角色，一名同类型的玩家會變成该角色。",
+    "ability": "每局遊戲限一次，在夜晚時*，你可以選擇四個不同類型的角色：對每個不在場的角色，一名同類型的玩家會變成該角色。",
     "otherNight": 1310,
     "reminders": [
       "失去能力"
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/m1ypbbtj16u0b8abisxktj4g.png",
-    "otherNightReminder": "让他選擇一個角色。",
+    "otherNightReminder": "讓他選擇一個角色。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5361,7 +5326,7 @@
     "name": "達摩",
     "name_en": "113",
     "role_type": "Minion",
-    "ability": "如果其他玩家回答了你的問题，他可能會死亡。如果你回答了其他玩家的問题，你可能會死亡。你不會死於其他原因。",
+    "ability": "如果其他玩家回答了你的問題，他可能會死亡。如果你回答了其他玩家的問題，你可能會死亡。你不會死於其他原因。",
     "reminders": [
       "死亡"
     ],
@@ -5376,7 +5341,7 @@
     "name": "逆蝶",
     "name_en": " 074",
     "role_type": "Minion",
-    "ability": "在第X個夜晚，你要選擇是否令與你距离為X的玩家中毒直到下個黃昏。",
+    "ability": "在第X個夜晚，你要選擇是否令與你距離為X的玩家中毒直到下個黃昏。",
     "firstNight": 4610,
     "otherNight": 1410,
     "reminders": [
@@ -5384,8 +5349,8 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/tqz3cj1pbgcrn7u61hlhqgr7.png",
-    "firstNightReminder": "喚醒逆蝶，他要點头或摇头。",
-    "otherNightReminder": "喚醒逆蝶，他要點头或摇头。",
+    "firstNightReminder": "喚醒逆蝶，他要點頭或搖頭。",
+    "otherNightReminder": "喚醒逆蝶，他要點頭或搖頭。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5404,8 +5369,8 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/k94vj6m1i82s2ekhqhebfgwp.png",
-    "firstNightReminder": "让他選擇一名玩家。",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "firstNightReminder": "讓他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5415,7 +5380,7 @@
     "name": "騷客",
     "name_en": " 073",
     "role_type": "Minion",
-    "ability": "每個夜晚，你會得知一個字（均出自同一句詩词）。首次有玩家吟诵這句詩词時，他立即被處決，即使你已死亡。",
+    "ability": "每個夜晚，你會得知一個字（均出自同一句詩詞）。首次有玩家吟誦這句詩詞時，他立即被處決，即使你已死亡。",
     "firstNight": 6010,
     "otherNight": 1440,
     "reminders": [
@@ -5442,7 +5407,7 @@
     ],
     "setup": true,
     "image": "https://user-images.klutzbanana.com/fw52tezyu3pejdu2i2ly4efj.png",
-    "otherNightReminder": "喚醒他并指向當天死亡的外來者玩家，让他猜測外來者角色。",
+    "otherNightReminder": "喚醒他并指向當天死亡的外來者玩家，讓他猜測外來者角色。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5460,7 +5425,7 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/k569iq3ztb83ly4g7v2mzz5l.png",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5470,7 +5435,7 @@
     "name": "克拉肯",
     "name_en": " 089",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你可以選擇一名玩家：他死亡。如果你在审判日降臨前死亡，改為你假死，且你能力中的“一名玩家”改為“一名與你鄰近的存活玩家”。",
+    "ability": "每個夜晚*，你可以選擇一名玩家：他死亡。如果你在審判日降臨前死亡，改為你假死，且你能力中的“一名玩家”改為“一名與你鄰近的存活玩家”。",
     "otherNight": 4910,
     "reminders": [
       "死亡",
@@ -5478,7 +5443,7 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/jmeiojk7awtvw1bdnzn0vkbu.png",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5495,7 +5460,7 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/p91l6gbxe27vql8hgf5neeep.png",
-    "otherNightReminder": "由說書人決定，让哪一名玩家死亡。",
+    "otherNightReminder": "由說書人決定，讓哪一名玩家死亡。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5505,14 +5470,14 @@
     "name": "回響",
     "name_en": " 088",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你要選擇一個角色：他死亡。如果该角色不在場，下個夜晚你要額外選擇一個角色（可疊加）。",
+    "ability": "每個夜晚*，你要選擇一個角色：他死亡。如果該角色不在場，下個夜晚你要額外選擇一個角色（可疊加）。",
     "otherNight": 6210,
     "reminders": [
       "死亡"
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/yujirbr1i40x0kgimn1fsjqf.png",
-    "otherNightReminder": "让他選擇一個角色。",
+    "otherNightReminder": "讓他選擇一個角色。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5522,7 +5487,7 @@
     "name": "大巫妖",
     "name_en": " 038",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你要選擇一名玩家：他死亡。每個死亡玩家首次被大巫妖選擇時，该玩家要選擇兩名玩家：他們死亡。",
+    "ability": "每個夜晚*，你要選擇一名玩家：他死亡。每個死亡玩家首次被大巫妖選擇時，該玩家要選擇兩名玩家：他們死亡。",
     "otherNight": 5210,
     "reminders": [
       "已觸髮",
@@ -5530,7 +5495,7 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/znsl7tpmb0q6x57c3669him4.png",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5540,12 +5505,12 @@
     "name": "奇美拉",
     "name_en": " 040",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你要選擇一個除奇美拉以外的惡魔角色（與前兩次的選擇均不同）：你獲得该角色的能力直到下個黃昏。[-1外來者]",
+    "ability": "每個夜晚*，你要選擇一個除奇美拉以外的惡魔角色（與前兩次的選擇均不同）：你獲得該角色的能力直到下個黃昏。[-1外來者]",
     "otherNight": 4510,
     "reminders": [],
     "setup": true,
     "image": "https://user-images.klutzbanana.com/mi4t6qbeh1427ydh5bixh9x9.png",
-    "otherNightReminder": "让他選擇一個除奇美拉以外的惡魔角色。",
+    "otherNightReminder": "讓他選擇一個除奇美拉以外的惡魔角色。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5555,7 +5520,7 @@
     "name": "奸奇",
     "name_en": "065",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你要選擇一名玩家：他死亡。當你得知惡魔信息時，會有更多的偽装，你要選擇其中一個：你獲得该角色的能力。",
+    "ability": "每個夜晚*，你要選擇一名玩家：他死亡。當你得知惡魔信息時，會有更多的偽裝，你要選擇其中一個：你獲得該角色的能力。",
     "firstNight": 3001,
     "otherNight": 4910,
     "reminders": [
@@ -5563,8 +5528,8 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/upt7rqmnlgrjj2kspp467405.png",
-    "firstNightReminder": "让他从三個偽装角色中挑選一個。",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "firstNightReminder": "讓他從三個偽裝角色中挑選一個。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5582,7 +5547,7 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/rssemf5g2rshezv6tth2qhym.png",
-    "otherNightReminder": "让他選擇兩名玩家。",
+    "otherNightReminder": "讓他選擇兩名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5592,14 +5557,14 @@
     "name": "海之子",
     "name_en": " 058",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你要選擇一名玩家：他死亡。說書人決定自己擁有哪些爪牙的能力，并會尽可能地幫助你獲胜。[無爪牙在場，任意數量外來者]",
+    "ability": "每個夜晚*，你要選擇一名玩家：他死亡。說書人決定自己擁有哪些爪牙的能力，并會盡可能地幫助你獲勝。[無爪牙在場，任意數量外來者]",
     "otherNight": 5710,
     "reminders": [
       "死亡"
     ],
     "setup": true,
     "image": "https://user-images.klutzbanana.com/ncs6j05uxrb62avvwi6p5p3z.png",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5609,14 +5574,14 @@
     "name": "海德拉",
     "name_en": " 039",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你要選擇一名玩家：他死亡。如果你在审判日降臨前死於處決，一名善良玩家與一名邪惡玩家會變成海德拉。",
+    "ability": "每個夜晚*，你要選擇一名玩家：他死亡。如果你在審判日降臨前死於處決，一名善良玩家與一名邪惡玩家會變成海德拉。",
     "otherNight": 7210,
     "reminders": [
       "死亡"
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/x6yqhe6xjeakt2p4kqyy8zms.png",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5626,19 +5591,19 @@
     "name": "米諾陶",
     "name_en": "106",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你要選擇一名存活玩家：他死亡。审判日降臨前，如果所有邪惡玩家均死於處決，你的陣营獲胜。",
+    "ability": "每個夜晚*，你要選擇一名存活玩家：他死亡。審判日降臨前，如果所有邪惡玩家均死於處決，你的陣營獲勝。",
     "otherNight": 4910,
     "reminders": [],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/puvum1yuz7r22kwq5u9oklhw.png",
-    "otherNightReminder": "让他選擇一名存活玩家。",
+    "otherNightReminder": "讓他選擇一名存活玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
   },
   {
     "id": " 108",
-    "name": "纳垢",
+    "name": "納垢",
     "name_en": " 108",
     "role_type": "Demon",
     "ability": "每個夜晚*，你要選擇一名玩家：他死亡，且與他鄰座的玩家們會中毒直到你下次攻擊前。",
@@ -5649,7 +5614,7 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/zgxuoidou6g18ogoo9hqlls0.png",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
@@ -5659,7 +5624,7 @@
     "name": "色孽",
     "name_en": "114",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你要選擇一名玩家：他死亡，且你可以让他得知你是色孽。最近一名得知你是色孽的玩家胜負條件與你相同，即使你已死亡。",
+    "ability": "每個夜晚*，你要選擇一名玩家：他死亡，且你可以讓他得知你是色孽。最近一名得知你是色孽的玩家勝負條件與你相同，即使你已死亡。",
     "otherNight": 4910,
     "reminders": [
       "死亡",
@@ -5667,51 +5632,51 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/yoy1gzkyrybbckv4rwbdhudb.png",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
   },
   {
     "id": " 047",
-    "name": "骷髅王",
+    "name": "骷髏王",
     "name_en": " 047",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你要選擇一名玩家：他死亡。當你以通常條件獲胜時，曾上交投票標記的鎮民也會獲胜。[+1外來者]",
+    "ability": "每個夜晚*，你要選擇一名玩家：他死亡。當你以通常條件獲勝時，曾上交投票標記的鎮民也會獲勝。[+1外來者]",
     "otherNight": 5710,
     "reminders": [
       "死亡"
     ],
     "setup": true,
     "image": "https://user-images.klutzbanana.com/smf4hl25ay1lckoalbzlts2e.png",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
   },
   {
     "id": " 078",
-    "name": "龙卷",
+    "name": "龍捲",
     "name_en": " 078",
     "role_type": "Demon",
-    "ability": "每個夜晚*，你要選擇一名玩家：他死亡。每個黃昏*，你會與你顺時针方向上最近的存活邪惡玩家交換角色。",
+    "ability": "每個夜晚*，你要選擇一名玩家：他死亡。每個黃昏*，你會與你順時針方向上最近的存活邪惡玩家交換角色。",
     "otherNight": 4910,
     "reminders": [
       "死亡"
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/jn0wk1vyv0skuzvpl9mr59zf.png",
-    "otherNightReminder": "让他選擇一名玩家。",
+    "otherNightReminder": "讓他選擇一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
   },
   {
     "id": "0005",
-    "name": "地獄輪盘",
+    "name": "地獄輪盤",
     "name_en": "0005",
     "role_type": "Fabled",
-    "ability": "玩家在髮起提名後要掷出一個六面骰：如果掷出的點數已存在，他死亡，并移除所有已掷的骰子。",
+    "ability": "玩家在髮起提名後要擲出一個六面骰：如果擲出的點數已存在，他死亡，并移除所有已擲的骰子。",
     "reminders": [],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/wtj1hiphgtm2gqvta6kptp0m.png",
@@ -5737,7 +5702,7 @@
     "name": "忘川",
     "name_en": " 0003",
     "role_type": "Fabled",
-    "ability": "可能出现：惡魔與爪牙會以為自己是善良角色，說書人會替代他們使用能力。有且隻有所有邪惡玩家均死亡時，遊戲才會結束，所有玩家獲胜。",
+    "ability": "可能出現：惡魔與爪牙會以為自己是善良角色，說書人會替代他們使用能力。有且隻有所有邪惡玩家均死亡時，遊戲才會結束，所有玩家獲勝。",
     "reminders": [],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/xg2cvfpxz6x098g34t3rwuhy.png",
@@ -5750,7 +5715,7 @@
     "name": "探戈",
     "name_en": " 0001",
     "role_type": "Fabled",
-    "ability": "在初始设置時，說書人會公开指定一個角色：如果该角色在場，會增加或減少一個外來者。",
+    "ability": "在初始設置時，說書人會公開指定一個角色：如果該角色在場，會增加或減少一個外來者。",
     "reminders": [],
     "setup": true,
     "image": "https://user-images.klutzbanana.com/pb0dq7iuzz11e3gsb2hd82hc.png",
@@ -5783,7 +5748,42 @@
     ],
     "setup": false,
     "image": "https://user-images.klutzbanana.com/th5f8692k48z9gs5c0oiqogd.png",
-    "otherNightReminder": "告知她所有當晚即將死亡的玩家有哪些，并让她選擇是否同意。",
+    "otherNightReminder": "告知她所有當晚即將死亡的玩家有哪些，并讓她選擇是否同意。",
+    "conflicts": [],
+    "is_custom": true,
+    "is_temp": false
+  },
+  {
+    "id": "026",
+    "name": "雪怪",
+    "name_en": "026",
+    "role_type": "Outsider",
+    "ability": "每局遊戲限一次，惡魔可以公開猜測你是雪怪，如果猜中，當天他被處決時你會代替他被處決。如果白天沒人被處決，你的陣營落敗。",
+    "reminders": [
+      "已猜測",
+      "被猜中"
+    ],
+    "setup": false,
+    "image": "https://user-images.klutzbanana.com/ba32w4se4x4d5jdrh5q9uo4s.png",
+    "conflicts": [],
+    "is_custom": true,
+    "is_temp": false
+  },
+  {
+    "id": " 054",
+    "name": "黑幫律師",
+    "name_en": " 054",
+    "role_type": "Outsider",
+    "ability": "每個夜晚，你會得知一名玩家：下個白天，如果你和他中有人被處決，另一人可能會替代其被處決。",
+    "firstNight": 8110,
+    "otherNight": 11210,
+    "reminders": [
+      "當事人"
+    ],
+    "setup": false,
+    "image": "https://user-images.klutzbanana.com/gy84y0sdsmowltclbgannq8q.png",
+    "firstNightReminder": "喚醒黑幫律師， 然後指向標記了“當事人”的一名玩家。",
+    "otherNightReminder": "喚醒黑幫律師， 然後指向標記了“當事人”的一名玩家。",
     "conflicts": [],
     "is_custom": true,
     "is_temp": false
