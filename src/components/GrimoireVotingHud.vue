@@ -8,7 +8,7 @@
   >
     <!-- 收合狀態小掛件 -->
     <div v-if="uiStore.isVotingHudCollapsed" class="hud-collapsed-pill" @click="uiStore.toggleVotingHud()">
-      <span class="pill-badge">第 {{ currentRound }} 天</span>
+      <span class="pill-badge">{{ uiStore.language === 'en' ? 'Day ' + currentRound : '第 ' + currentRound + ' 天' }}</span>
       <span class="pill-title">{{ hudTitle }}</span>
       <span class="pill-expand-icon">‹</span>
     </div>
@@ -17,7 +17,7 @@
     <div v-else class="hud-card">
       <!-- 頂部資訊列：天數、計時器、收合鈕 -->
       <div class="hud-header">
-        <div class="hud-day-title">第 {{ currentRound }} 天</div>
+        <div class="hud-day-title">{{ uiStore.language === 'en' ? 'Day ' + currentRound : '第 ' + currentRound + ' 天' }}</div>
         
         <div class="hud-timer-wrap" @click="toggleTimer">
           <span 
@@ -29,7 +29,7 @@
           >
             {{ timerText }}
           </span>
-          <button class="hud-timer-quick-btn" @click.stop="quickAddTimer" title="加60秒">+1分</button>
+          <button class="hud-timer-quick-btn" @click.stop="quickAddTimer" title="加60秒">{{ uiStore.language === 'en' ? '+1m' : '+1分' }}</button>
         </div>
 
         <button class="hud-collapse-btn" @click="uiStore.toggleVotingHud()" title="收合面板">
@@ -101,19 +101,19 @@
       <div v-else class="hud-list-mode">
         <!-- 待處決狀態提示 -->
         <div class="hud-execution-status">
-          <span class="exec-label">待處決:</span>
+          <span class="exec-label">{{ uiStore.language === 'en' ? 'Pending:' : '待處決:' }}</span>
           <span v-if="executionCandidate" class="exec-player-name">
             {{ formatPlayerSeat(executionCandidate.nom.nominee_id) }} ({{ executionCandidate.votes }} 票)
           </span>
           <span v-else class="exec-none">
-            {{ tieCandidate ? '平票 (暫不處決)' : '無人達處決門檻' }}
+            {{ uiStore.language === 'en' ? (tieCandidate ? 'Tied (No execution)' : 'None reached threshold') : (tieCandidate ? '平票 (暫不處決)' : '無人達處決門檻') }}
           </span>
         </div>
 
         <!-- 歷史提名記錄列表 -->
         <div class="hud-nom-list-scroll">
           <div v-if="dayNominations.length === 0" class="hud-empty-noms">
-            今日尚無提名記錄
+            {{ uiStore.language === 'en' ? 'No nominations today' : '今日尚無提名記錄' }}
           </div>
           <div 
             v-for="item in dayNominations" 
@@ -152,14 +152,14 @@
         <!-- 底部大按鈕：[提名] 與 [處決] -->
         <div class="hud-list-actions">
           <button class="btn-hud-nominate" @click="uiStore.startPickingNomination()">
-            提名
+            {{ uiStore.language === 'en' ? 'Nominate' : '提名' }}
           </button>
           <button 
             class="btn-hud-execute" 
             :disabled="!executionCandidate" 
             @click="executeCandidate"
           >
-            處決
+            {{ uiStore.language === 'en' ? 'Execute' : '處決' }}
           </button>
         </div>
       </div>
@@ -189,18 +189,22 @@ const currentRound = computed(() => gameStore.round || 1)
 // 收合時標題
 const hudTitle = computed(() => {
   if (uiStore.isDirectVotingActive && activeNomination.value) {
-    return `${formatPlayerSeat(activeNomination.value.nominee_id)} 投票中`
+    return uiStore.language === 'en'
+      ? `${formatPlayerSeat(activeNomination.value.nominee_id)} Voting`
+      : `${formatPlayerSeat(activeNomination.value.nominee_id)} 投票中`
   }
   if (executionCandidate.value) {
-    return `待處決: ${formatPlayerSeat(executionCandidate.value.nom.nominee_id)}`
+    return uiStore.language === 'en'
+      ? `Pending: ${formatPlayerSeat(executionCandidate.value.nom.nominee_id)}`
+      : `待處決: ${formatPlayerSeat(executionCandidate.value.nom.nominee_id)}`
   }
-  return '投票管理'
+  return uiStore.language === 'en' ? 'Voting' : '投票管理'
 })
 
 // 計時文字
 const timerText = computed(() => {
   if (uiStore.timerRemaining === 0 && !uiStore.isTimerRunning) {
-    return '時間到'
+    return uiStore.language === 'en' ? "Time's up" : '時間到'
   }
   const m = Math.floor(uiStore.timerRemaining / 60)
   const s = uiStore.timerRemaining % 60

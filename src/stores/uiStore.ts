@@ -101,9 +101,9 @@ export const useUIStore = defineStore('ui', () => {
     nightOrderScrollPos.value = pos
   }
 
-  // --- 語言設置 (繁體中文 / 簡體中文) ---
+  // --- 語言設置 (繁體中文 / 簡體中文 / 英文) ---
   const savedLang = localStorage.getItem('botc-language')
-  const language = ref<AppLanguage>(savedLang === 'zh-CN' ? 'zh-CN' : 'zh-TW')
+  const language = ref<AppLanguage>(savedLang === 'zh-CN' || savedLang === 'en' ? savedLang : 'zh-TW')
 
   function setLanguage(lang: AppLanguage) {
     language.value = lang

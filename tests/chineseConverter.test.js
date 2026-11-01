@@ -79,12 +79,102 @@ assert.strictEqual(t2s('處決門檻'), '处决门槛', '處決門檻繁轉簡�
 assert.strictEqual(t2s('鎮民、外來者、爪牙、惡魔、旅行者、傳說、奇遇'), '镇民、外来者、爪牙、恶魔、旅行者、传说、奇遇', '陣營名稱繁轉簡應正確');
 console.log('✔ 測試 4 通過：繁轉簡 (traditionalToSimplified) 關鍵詞彙轉換正確');
 
-// 測試 5：驗證 SettingsPanel 與 uiStore 具備簡體語言切換功能
+// 測試 5：驗證 SettingsPanel 與 uiStore 具備繁/簡/英三語系切換功能與精簡無標籤佈局
 const settingsContent = fs.readFileSync(path.resolve(__dirname, '../src/components/SettingsPanel.vue'), 'utf8');
 const uiStoreContent = fs.readFileSync(path.resolve(__dirname, '../src/stores/uiStore.ts'), 'utf8');
 assert.strictEqual(settingsContent.includes("uiStore.setLanguage('zh-CN')"), true, 'SettingsPanel 必須包含切換為 zh-CN 的按鈕');
 assert.strictEqual(settingsContent.includes("uiStore.setLanguage('zh-TW')"), true, 'SettingsPanel 必須包含切換為 zh-TW 的按鈕');
-assert.strictEqual(uiStoreContent.includes("localStorage.setItem('botc-language', lang)"), true, 'uiStore 必須持久化語言設定至 localStorage');
-console.log('✔ 測試 5 通過：SettingsPanel 與 uiStore 簡繁語言切換整合完整');
+assert.strictEqual(settingsContent.includes("uiStore.setLanguage('en')"), true, 'SettingsPanel 必須包含切換為 en 英文版的按鈕');
 
-console.log('🎉 所有簡繁字典校驗測試全數通過！\n');
+// 驗證移除 opt-label 以節省垂直空間
+const langSectionMatch = settingsContent.match(/<!-- 語言設置 -->[\s\S]*?<!-- 遊戲控制 -->/);
+assert.ok(langSectionMatch, '必須存在語言設置區塊');
+assert.strictEqual(langSectionMatch[0].includes('opt-label'), false, '語言設置區塊不應再包含 opt-label 標籤以節省空間');
+assert.strictEqual(langSectionMatch[0].includes('cols-3'), true, '語言設置應採用 cols-3 三列精簡佈局');
+
+assert.strictEqual(uiStoreContent.includes("localStorage.setItem('botc-language', lang)"), true, 'uiStore 必須持久化語言設定至 localStorage');
+console.log('✔ 測試 5 通過：SettingsPanel 與 uiStore 繁/簡/英三語系切換與精簡佈局整合完整');
+
+// 測試 6：驗證 UI 中英翻譯器 (traditionalToEnglish) 轉換精準性
+const enPairsMatch = content.match(/export const UI_EN_PAIRS:\s*\[string,\s*string\]\[\]\s*=\s*(\[[\s\S]*?\];\n)/);
+assert.ok(enPairsMatch, 'chineseConverter.ts 必須匯出 UI_EN_PAIRS 字典');
+
+// 測試關鍵詞彙英文化映射
+const sampleEnTranslations = [
+  ['設置選項', 'Settings'],
+  ['存活人數', 'Alive'],
+  ['處決門檻', 'Threshold'],
+  ['有效票數', 'Votes'],
+  ['重置遊戲', 'Reset Game'],
+  ['重置狀態', 'Reset States'],
+  ['資料管理', 'Data Management'],
+  ['匯入遊戲', 'Import Game'],
+  ['匯出遊戲', 'Export Game'],
+  ['夜晚行動順序', 'Night Order'],
+  ['說書人白板', 'Whiteboard'],
+  ['白板', 'Whiteboard'],
+  ['自訂角色技能音效', 'Custom Skill Sounds'],
+  ['隱藏主畫面技能音效按鈕', 'Hide Skill Sound Button'],
+  ['自訂背景', 'Custom Background'],
+  ['計時器設置', 'Timer Settings'],
+  ['到點鐘聲', 'Bell Sound'],
+  ['桌面通知', 'Desktop Notification'],
+  ['鎮民', 'Townsfolk'],
+  ['惡魔', 'Demon'],
+  ['首個夜晚', 'First Night'],
+  ['空座位', 'Empty'],
+  ['對局記錄', 'Game Log'],
+  ['自訂庫', 'Custom Library'],
+  ['惡魔的偽裝', 'Demon Bluffs'],
+  ['今日尚無提名記錄', 'No nominations today'],
+  ['設定倒數時間', 'Set Timer'],
+  ['確認提名', 'Confirm Nomination'],
+  ['說書人資訊', 'Storyteller Whiteboard'],
+  ['字體大小', 'Font Size'],
+  ['文字顏色', 'Text Color'],
+  ['填入劇本角色', 'Insert Script Role'],
+  ['提示卡', 'Hint Cards'],
+  ['調整順序', 'Adjust Order'],
+  ['此劇本無夜晚行動角色', 'No night action roles in this script'],
+  ['發起提名', 'Nominate'],
+  ['提名者', 'Nominator'],
+  ['被提名者', 'Nominee'],
+  ['清除所有日誌', 'Clear All Logs'],
+  ['匯出 JSON', 'Export JSON']
+];
+
+for (const [zh, expectedEn] of sampleEnTranslations) {
+  assert.ok(
+    content.includes(`['${zh}', '${expectedEn}']`),
+    `UI_EN_PAIRS 字典中必須包含 [${zh} -> ${expectedEn}] 對映`
+  );
+}
+console.log(`✔ 測試 6 通過：UI 中英對照字典完整涵蓋關鍵 UI、設置選單與遊戲狀態`);
+
+// 測試 7：驗證核心介面元件（狀態列、投票HUD、偽裝抽屜、計時器、設定面板、白板、夜晚順序、對局日誌）具備英文直出渲染支援
+const statusBarContent = fs.readFileSync(path.resolve(__dirname, '../src/components/StatusBar.vue'), 'utf8');
+const votingHudContent = fs.readFileSync(path.resolve(__dirname, '../src/components/GrimoireVotingHud.vue'), 'utf8');
+const grimoireContent = fs.readFileSync(path.resolve(__dirname, '../src/components/GrimoireBoard.vue'), 'utf8');
+const timerWidgetContent = fs.readFileSync(path.resolve(__dirname, '../src/components/TimerWidget.vue'), 'utf8');
+const gameLogContent = fs.readFileSync(path.resolve(__dirname, '../src/components/GameLogPanel.vue'), 'utf8');
+const whiteboardContent = fs.readFileSync(path.resolve(__dirname, '../src/components/Whiteboard.vue'), 'utf8');
+const nightOrderContent = fs.readFileSync(path.resolve(__dirname, '../src/components/NightOrder.vue'), 'utf8');
+const votingPanelContent = fs.readFileSync(path.resolve(__dirname, '../src/components/VotingPanel.vue'), 'utf8');
+const playerTokenContent = fs.readFileSync(path.resolve(__dirname, '../src/components/PlayerToken.vue'), 'utf8');
+
+assert.ok(statusBarContent.includes("uiStore.language === 'en' ? 'T' : '鎮'"), 'StatusBar 應具備英文陣營縮寫 T/O/M/D');
+assert.ok(votingHudContent.includes("uiStore.language === 'en' ? 'Day ' + currentRound"), 'VotingHud 應具備英文 Day X 標記');
+assert.ok(votingHudContent.includes("uiStore.language === 'en' ? 'No nominations today'"), 'VotingHud 應具備英文無提名提示');
+assert.ok(grimoireContent.includes("uiStore.language === 'en' ? 'Bluffs' : '偽裝'"), 'GrimoireBoard 應具備英文 Bluffs 抽屜標籤');
+assert.ok(timerWidgetContent.includes("uiStore.language === 'en' ? 'Set Timer' : '設定倒數時間'"), 'TimerWidget 應具備英文 Set Timer 標題');
+assert.ok(gameLogContent.includes("uiStore.language === 'en' ? 'Game Log' : '對局記錄回顧'"), 'GameLogPanel 應具備英文 Game Log 標題');
+assert.ok(gameLogContent.includes("uiStore.language === 'en' ? 'Clear All Logs' : '清除所有日誌'"), 'GameLogPanel 應具備英文清除按鈕');
+assert.ok(whiteboardContent.includes("uiStore.language === 'en' ? 'Storyteller Whiteboard' : '說書人資訊'"), 'Whiteboard 應具備英文白板標題');
+assert.ok(nightOrderContent.includes("uiStore.language === 'en' ? 'Night Order' : '夜晚行動順序'"), 'NightOrder 應具備英文夜晚順序標題');
+assert.ok(nightOrderContent.includes("uiStore.language === 'en' ? 'Assigned Only' : '僅已派發'"), 'NightOrder 應具備英文僅已派發篩選按鈕');
+assert.ok(votingPanelContent.includes("uiStore.language === 'en' ? 'Confirm Nomination' : '確認提名'"), 'VotingPanel 應具備英文確認提名按鈕');
+assert.ok(playerTokenContent.includes("uiStore.language === 'en' && player.name === '空座位' ? 'Empty' : (player.name || '')"), 'PlayerToken 應具備空座位英文 Empty 直出');
+
+console.log(`✔ 測試 7 通過：核心元件具備英文直出渲染與雙重翻譯保障`);
+
+console.log('🎉 所有簡繁字典與中英翻譯校驗測試全數通過！\n');

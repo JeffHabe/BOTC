@@ -48,32 +48,35 @@
 
         <!-- 語言設置 -->
         <div class="section-title">語言設置 (Language)</div>
-        <div class="layout-selector-grid cols-2" data-no-lang-convert>
-          <button class="layout-option" :class="{ active: uiStore.language === 'zh-TW' }"
-            @click="uiStore.setLanguage('zh-TW')">
+        <div class="layout-selector-grid cols-3 lang-selector-grid" data-no-lang-convert>
+          <button class="layout-option lang-option" :class="{ active: uiStore.language === 'zh-TW' }"
+            @click="uiStore.setLanguage('zh-TW')" title="繁體中文">
             <span class="opt-icon">繁</span>
-            <span class="opt-label">繁體中文</span>
             <div v-if="uiStore.language === 'zh-TW'" class="active-check">✓</div>
           </button>
-          <button class="layout-option" :class="{ active: uiStore.language === 'zh-CN' }"
-            @click="uiStore.setLanguage('zh-CN')">
+          <button class="layout-option lang-option" :class="{ active: uiStore.language === 'zh-CN' }"
+            @click="uiStore.setLanguage('zh-CN')" title="简体中文">
             <span class="opt-icon">简</span>
-            <span class="opt-label">简体中文</span>
             <div v-if="uiStore.language === 'zh-CN'" class="active-check">✓</div>
+          </button>
+          <button class="layout-option lang-option" :class="{ active: uiStore.language === 'en' }"
+            @click="uiStore.setLanguage('en')" title="English">
+            <span class="opt-icon">EN</span>
+            <div v-if="uiStore.language === 'en'" class="active-check">✓</div>
           </button>
         </div>
         <div class="divider" />
 
         <!-- 遊戲控制 -->
 
-        <div class="section-title">遊戲控制</div>
+        <div class="section-title">{{ uiStore.language === 'en' ? 'Game Control' : '遊戲控制' }}</div>
         <div class="settings-grid">
           <button v-if="gameStore.phase === 'FirstNight'" class="grid-item" @click="openAssignment">
             <!-- <span class="grid-icon">🎭</span> -->
             <span class="stat-icon">
               <img src="/pic/theater.png?v=2" alt="開局" class="stat-img img-theater" />
             </span>
-            <span class="grid-label">開局</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Setup' : '開局' }}</span>
           </button>
 
           <button class="grid-item" @click="openScriptEditor">
@@ -81,12 +84,12 @@
             <span class="stat-icon">
               <img src="/pic/bookshelf.png" alt="劇本管理" class="stat-img img-theater" />
             </span>
-            <span class="grid-label">劇本管理</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Script Manager' : '劇本管理' }}</span>
           </button>
 
           <button class="grid-item" @click="openVoting">
             <span class="grid-icon"><img src="/pic/vote-tag.png?v=2" class="grid-img" /></span>
-            <span class="grid-label">投票面板</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Voting' : '投票面板' }}</span>
           </button>
 
           <button class="grid-item" @click="openFabled">
@@ -94,17 +97,17 @@
               <img src="/pic/Fabled_new.png" alt="傳說" class="double-img fabled-img" />
               <img src="/pic/Loric.png" alt="奇遇" class="double-img lorica-img" />
             </div>
-            <span class="grid-label">傳說奇遇</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Fabled & Jinx' : '傳說奇遇' }}</span>
           </button>
 
           <button class="grid-item" @click="openNightOrder">
             <span class="grid-icon"><img src="/pic/moon.png" class="grid-img" /></span>
-            <span class="grid-label">夜晚順序</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Night Order' : '夜晚順序' }}</span>
           </button>
 
           <button class="grid-item" @click="openGameLog">
             <span class="grid-icon"><img src="/pic/history-edge.png" class="grid-img" /></span>
-            <span class="grid-label">對局記錄</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Game Log' : '對局記錄' }}</span>
           </button>
 
           <!-- 角色清單與座位編排在主頁面上已有直覺入口與操作，避免重複故隱藏 -->
@@ -122,7 +125,7 @@
 
           <button class="grid-item" @click="openCharacterEditor">
             <span class="grid-icon"><img src="/pic/character-lib.png" class="grid-img" /></span>
-            <span class="grid-label">自訂庫</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Custom Library' : '自訂庫' }}</span>
           </button>
 
 
@@ -1090,6 +1093,20 @@ async function handleActivateLicense() {
 
 .layout-selector-grid.cols-4 {
   grid-template-columns: repeat(4, 1fr);
+}
+
+.lang-selector-grid {
+  padding-bottom: 8px;
+}
+
+.lang-option {
+  padding: 8px 4px;
+}
+
+.lang-option .opt-icon {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
 .layout-option {

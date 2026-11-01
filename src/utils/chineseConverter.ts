@@ -120,11 +120,338 @@ export function traditionalToSimplified(str: string): string {
   return str.split('').map(char => t2sTable[char] || char).join('')
 }
 
-// --- 全域 DOM 簡繁語言自動轉換器 ---
-export type AppLanguage = 'zh-TW' | 'zh-CN'
 
-const origTextMap = new WeakMap<Text, { tw: string; cn: string }>()
-const origAttrMap = new WeakMap<Element, Record<string, { tw: string; cn: string }>>()
+// --- 核心 UI 中英對照翻譯字典 (繁體中文 -> 英文) ---
+export const UI_EN_PAIRS: [string, string][] = [
+  // 設置面板與次要區塊
+  ['提示標記佈局 (Reminder Layout)', 'Reminder Layout'],
+  ['提示標記佈局', 'Reminder Layout'],
+  ['提示標記收納上限', 'Reminder Limit'],
+  ['當玩家提示標記多於此數量時，自動摺疊為鎖頭', 'Auto-collapse reminders exceeding limit'],
+  ['自訂角色技能音效', 'Custom Skill Sounds'],
+  ['隱藏主畫面技能音效按鈕', 'Hide Skill Sound Button'],
+  ['匯入角色技能音效', 'Import Skill Sound'],
+  ['主要播放音效', 'Pinned Sound'],
+  ['主要播放', 'Pinned'],
+  ['暫無自訂技能音效，請點擊上方按鈕匯入', 'No custom sounds yet, click above to import'],
+  ['自定義背景', 'Custom Background'],
+  ['自訂背景', 'Custom Background'],
+  ['白天背景', 'Day Background'],
+  ['夜晚背景', 'Night Background'],
+  ['預設白天', 'Default Day'],
+  ['預設夜晚', 'Default Night'],
+  ['匯入圖檔', 'Import Image'],
+  ['計時器設置', 'Timer Settings'],
+  ['到點鐘聲', 'Bell Sound'],
+  ['桌面通知', 'Desktop Notification'],
+  ['語言設置 (Language)', 'Language'],
+  ['語言設置', 'Language'],
+  ['軟體使用授權', 'Software License'],
+  ['裝置識別碼：', 'Device ID: '],
+  ['裝置識別碼', 'Device ID'],
+  ['授權截止：', 'Expiration: '],
+  ['授權截止', 'Expiration'],
+  ['請貼上 24 位授權金鑰', 'Paste 24-digit License Key'],
+  ['啟用中', 'Activating...'],
+  ['啟用', 'Activate'],
+  ['危險區域', 'Danger Zone'],
+  ['重置狀態', 'Reset States'],
+  ['重置遊戲', 'Reset Game'],
+  ['資料管理', 'Data Management'],
+  ['匯入遊戲', 'Import Game'],
+  ['匯出遊戲', 'Export Game'],
+  ['匯入劇本', 'Import Script'],
+  ['匯出劇本', 'Export Script'],
+  ['還原預設劇本', 'Restore Default Scripts'],
+  ['重置預設角色', 'Reset Default Characters'],
+  ['遊戲控制', 'Game Control'],
+  ['設置選項', 'Settings'],
+  ['投票面板', 'Voting Panel'],
+  ['歷史日誌', 'Game Log'],
+  ['夜晚行動順序', 'Night Order'],
+  ['夜晚順序', 'Night Order'],
+  ['說書人白板', 'Whiteboard'],
+  ['白板', 'Whiteboard'],
+  ['劇本管理系統', 'Script Manager'],
+  ['劇本管理', 'Script Manager'],
+  ['選取劇本', 'Select Script'],
+  ['建立劇本', 'Create Script'],
+  ['劇本清單', 'Script List'],
+  ['劇本分類', 'Script Categories'],
+  ['角色清單', 'Character List'],
+  ['座位編排', 'Seat Arrangement'],
+  ['開局', 'Setup'],
+  ['向心排列', 'Inward'],
+  ['環繞排列', 'Around'],
+
+  // 魔典頂部狀態列與數據看板
+  ['剩餘提名權', 'Nominations'],
+  ['剩餘提名', 'Nominations'],
+  ['處決門檻', 'Threshold'],
+  ['有效票數', 'Votes'],
+  ['有效票', 'Vote'],
+  ['存活人數', 'Alive'],
+  ['存活', 'Alive'],
+  ['已死亡', 'Dead'],
+  ['死亡', 'Dead'],
+  ['幽靈票', 'Ghost Vote'],
+  ['死亡票', 'Ghost Vote'],
+
+  // 投票面板與階段控制
+  ['首個夜晚', 'First Night'],
+  ['其他夜晚', 'Other Night'],
+  ['白天階段', 'Day Phase'],
+  ['夜晚階段', 'Night Phase'],
+  ['白天', 'Day'],
+  ['夜晚', 'Night'],
+  ['首夜', 'First Night'],
+  ['今日可提名', 'Can Nominate'],
+  ['今日已被提名', 'Nominated'],
+  ['發起提名', 'Nominate'],
+  ['進行投票', 'Vote'],
+  ['直接投票', 'Direct Vote'],
+  ['處決死', 'Executed'],
+  ['處決', 'Execute'],
+  ['復活', 'Revive'],
+  ['變更角色', 'Change Role'],
+  ['贊成票', 'Yes'],
+  ['贊成', 'Yes'],
+  ['反對', 'No'],
+  ['棄權', 'Abstain'],
+  ['投票結果', 'Vote Result'],
+  ['通過處決', 'Executed'],
+  ['未達門檻', 'Below Threshold'],
+  ['平票', 'Tied'],
+
+  // 陣營與類別
+  ['鎮民', 'Townsfolk'],
+  ['外來者', 'Outsider'],
+  ['爪牙', 'Minion'],
+  ['惡魔', 'Demon'],
+  ['旅行者', 'Traveler'],
+  ['傳說角色', 'Fabled'],
+  ['傳奇角色', 'Fabled'],
+  ['傳說', 'Fabled'],
+  ['奇遇', 'Jinx'],
+  ['善良陣營', 'Good'],
+  ['邪惡陣營', 'Evil'],
+  ['善良', 'Good'],
+  ['邪惡', 'Evil'],
+
+  // 通用控制按鈕
+  ['確認新增', 'Confirm Add'],
+  ['新增玩家', 'Add Player'],
+  ['補足名額', 'Fill Seats'],
+  ['輸入玩家姓名...', 'Enter player name...'],
+  ['確認', 'Confirm'],
+  ['取消', 'Cancel'],
+  ['關閉', 'Close'],
+  ['儲存', 'Save'],
+  ['保存', 'Save'],
+  ['編輯', 'Edit'],
+  ['刪除', 'Delete'],
+  ['重置', 'Reset'],
+  ['搜尋', 'Search'],
+  ['複製', 'Copy'],
+  ['開始計時', 'Start'],
+  ['結束計時', 'End'],
+  ['暫停計時', 'Pause'],
+  ['開始', 'Start'],
+  ['暫停', 'Pause'],
+  ['結束', 'End'],
+  ['全選', 'Select All'],
+  ['清空', 'Clear'],
+  ['展開', 'Expand'],
+  ['收起', 'Collapse'],
+  ['全部角色', 'All Roles'],
+  ['僅已派發', 'Assigned Only'],
+  ['隱私模式', 'Privacy Mode'],
+  ['隱私', 'Privacy'],
+  // 設置選項與更多選單補充
+  ['劇本管理系統', 'Script Manager'],
+  ['劇本管理', 'Script Manager'],
+  ['投票面板', 'Voting'],
+  ['投票面闆', 'Voting'],
+  ['對局記錄回顧', 'Game Log'],
+  ['對局記錄', 'Game Log'],
+  ['對局紀錄', 'Game Log'],
+  ['自訂庫', 'Custom Library'],
+  ['傳說奇遇', 'Fabled & Jinx'],
+  ['夜晚順序', 'Night Order'],
+  ['開局', 'Setup'],
+
+  // 令片與盤面
+  ['空座位', 'Empty'],
+  ['空座', 'Empty'],
+
+  // 偽裝抽屜
+  ['DEMON的偽裝', 'Demon Bluffs'],
+  ['Demon的偽裝', 'Demon Bluffs'],
+  ['惡魔的偽裝', 'Demon Bluffs'],
+  ['狂人的偽裝', 'Lunatic Bluffs'],
+  ['瘋子的偽裝', 'Lunatic Bluffs'],
+  ['的偽裝', ' Bluffs'],
+  ['偽裝', 'Bluffs'],
+
+  // 投票 HUD 與投票面板
+  ['待處決: 無人達處決門檻', 'Pending: None reached threshold'],
+  ['待處決：無人達到處決門檻', 'Pending: None reached threshold'],
+  ['待處決: 無人達門檻', 'Pending: None reached threshold'],
+  ['待處決: 無人達Threshold', 'Pending: None reached threshold'],
+  ['待Execute: 無人達Threshold', 'Pending: None reached threshold'],
+  ['待處決:', 'Pending: '],
+  ['待處決：', 'Pending: '],
+  ['待處決', 'Pending'],
+  ['待Execute:', 'Pending: '],
+  ['無人達處決門檻', 'None reached threshold'],
+  ['無人達門檻', 'None reached threshold'],
+  ['無人達到處決門檻', 'None reached threshold'],
+  ['無人達Threshold', 'None reached threshold'],
+  ['平票 (暫不處決)', 'Tied (No execution)'],
+  ['今日尚無提名記錄', 'No nominations today'],
+  ['今日尚未有任何提名', 'No nominations today'],
+  ['今日尚無提名', 'No nominations today'],
+  ['確認提名', 'Confirm Nomination'],
+  ['Confirm提名', 'Confirm Nomination'],
+  ['發起提名', 'Nominate'],
+  ['提名者', 'Nominator'],
+  ['被提名者', 'Nominee'],
+  ['選擇玩家...', 'Select player...'],
+  ['選擇玩家', 'Select player'],
+  ['提名記錄', 'Nomination Records'],
+  ['提名紀錄', 'Nomination Records'],
+  ['提名了', 'nominated'],
+  ['提名', 'Nominate'],
+  ['記錄票數', 'Record Votes'],
+  ['額外票數:', 'Extra votes:'],
+  ['額外票數', 'Extra votes'],
+  ['撤銷', 'Undo'],
+  ['投票管理', 'Voting'],
+  ['時間到！', "Time's up!"],
+  ['時間到', "Time's up"],
+  ['+1分', '+1m'],
+  ['+30秒', '+30s'],
+
+  // 計時器彈窗
+  ['設定倒數時間', 'Set Timer'],
+  ['設定倒數', 'Set Timer'],
+  ['倒數計時', 'Countdown'],
+  ['停止鐘聲', 'Stop Bell'],
+  ['重設計時', 'Reset Timer'],
+
+  // Game Log 對局記錄
+  ['GAME LOG回顧', 'Game Log'],
+  ['Game Log回顧', 'Game Log'],
+  ['在此輸入手動筆記...', 'Enter manual note here...'],
+  ['手動筆記', 'Manual Note'],
+  ['新增筆記', 'Add Note'],
+  ['目前尚無對局記錄', 'No game logs yet'],
+  ['清除所有日誌', 'Clear All Logs'],
+  ['清除日誌', 'Clear Logs'],
+  ['匯出 JSON', 'Export JSON'],
+  ['匯出JSON', 'Export JSON'],
+  ['切換階段: ', 'Change phase: '],
+  ['切換階段:', 'Change phase: '],
+  ['切換階段', 'Change phase'],
+  [' 上新增標記: ', ' added reminder: '],
+  [' 上新增標記：', ' added reminder: '],
+  [' 上移除標記: ', ' removed reminder: '],
+  [' 上移除標記：', ' removed reminder: '],
+
+  // 說書人白板 Whiteboard
+  ['說書人資訊', 'Storyteller Whiteboard'],
+  ['在下方輸入資訊後，可將手機展示給玩家查看。', 'Enter info below to showcase to players.'],
+  ['在下方輸入資訊後，可將手機展示給玩家查看', 'Enter info below to showcase to players.'],
+  ['Collapse設定', 'Collapse Settings'],
+  ['Expand設定', 'Expand Settings'],
+  ['收起設定', 'Collapse Settings'],
+  ['展開設定', 'Expand Settings'],
+  ['字體大小', 'Font Size'],
+  ['文字顏色', 'Text Color'],
+  ['字體與顏色設定', 'Font and Color Settings'],
+  ['填入劇本角色', 'Insert Script Role'],
+  ['提示卡', 'Hint Cards'],
+  ['完成編輯', 'Done'],
+  ['✎ 編輯', '✎ Edit'],
+  ['✎ Edit', '✎ Edit'],
+  ['該角色能力對你生效...', "This character's ability works on you..."],
+  ['該角色能力對你生效', "This character's ability works on you"],
+  ['這些角色不在場...', 'These characters are not in play...'],
+  ['這些角色不在場', 'These characters are not in play'],
+  ['你需要對這個角色瘋狂', 'You must be mad about this character'],
+  ['你的陣營是', 'Your alignment is'],
+  ['你的角色為', 'Your character is'],
+  ['你是...', 'You are...'],
+  ['你是', 'You are'],
+  ['相同', 'Same'],
+  ['不同', 'Different'],
+  ['錯誤', 'False'],
+  ['正確', 'True'],
+  ['放大到全螢幕檢視', 'Full screen view'],
+  ['已複製內容', 'Copied'],
+  ['複製全部文字', 'Copy All Text'],
+  ['Copy全部文字', 'Copy All Text'],
+  ['清除全部內容', 'Clear Content'],
+  ['清空全部內容', 'Clear Content'],
+  ['檢視', 'View'],
+
+  // 夜晚行動順序 Night Order
+  ['僅已派發', 'Assigned Only'],
+  ['全部角色', 'All Roles'],
+  ['恢復官方預設順序', 'Restore default order'],
+  ['調整順序', 'Adjust Order'],
+  ['此劇本無Night行動角色', 'No night action roles in this script'],
+  ['此劇本無夜晚行動角色', 'No night action roles in this script'],
+  ['此劇本無行動角色', 'No night action roles in this script'],
+  ['按住拖拽排序', 'Drag to reorder'],
+  ['白問', 'Whiteboard'],
+
+];
+
+// 長詞優先排序，避免子詞提前替換
+const sortedEnPairs = [...UI_EN_PAIRS].sort((a, b) => b[0].length - a[0].length);
+
+/**
+ * 將中文介面詞彙翻譯為英文
+ * @param str 輸入繁體或簡體字串
+ * @returns 轉換後的英文字串
+ */
+export function traditionalToEnglish(str: string): string {
+  if (!str) return '';
+  // 先統一轉為繁體再查字典
+  let result = simplifyToTraditional(str);
+
+  // 動態天數、夜數與輪數匹配
+  result = result.replace(/第\s*(\d+)\s*天/g, 'Day $1');
+  result = result.replace(/第\s*(\d+)\s*夜/g, 'Night $1');
+  result = result.replace(/第\s*(\d+)\s*輪/g, 'Round $1');
+  result = result.replace(/ROUND\s*(\d+)/gi, 'Round $1');
+
+  // 陣營統計格式：鎮7 外2 爪2 惡1 -> T 7 O 2 M 2 D 1
+  result = result.replace(/鎮\s*(\d+)\s*外\s*(\d+)\s*爪\s*(\d+)\s*惡\s*(\d+)/g, 'T $1 O $2 M $3 D $4');
+
+  // 動態時間單位匹配：0 分 0 秒 -> 0m 0s
+  result = result.replace(/(\d+)\s*分/g, '$1m');
+  result = result.replace(/(\d+)\s*秒/g, '$1s');
+
+  for (const [zh, en] of sortedEnPairs) {
+    if (result.includes(zh)) {
+      result = result.split(zh).join(en);
+    }
+  }
+  return result;
+}
+
+// --- 全域 DOM 簡繁與語言自動轉換器 ---
+export type AppLanguage = 'zh-TW' | 'zh-CN' | 'en'
+
+interface CachedText {
+  tw: string
+  cn: string
+  en: string
+}
+const origTextMap = new WeakMap<Text, CachedText>()
+const origAttrMap = new WeakMap<Element, Record<string, CachedText>>()
 const CONVERT_ATTRS = ['placeholder', 'title', 'aria-label']
 
 function shouldSkipElement(el: Element | null): boolean {
@@ -140,18 +467,21 @@ function convertTextNode(node: Text, lang: AppLanguage) {
   const val = node.nodeValue
   if (!val || !val.trim()) return
 
-  const cached = origTextMap.get(node)
-  if (lang === 'zh-CN') {
-    if (cached && val === cached.cn) return
-    const cn = traditionalToSimplified(val)
-    origTextMap.set(node, { tw: val, cn })
-    if (cn !== val) {
-      node.nodeValue = cn
-    }
-  } else {
-    if (cached && val === cached.cn) {
-      node.nodeValue = cached.tw
-    }
+  let cached = origTextMap.get(node)
+  if (!cached || (val !== cached.tw && val !== cached.cn && val !== cached.en)) {
+    const tw = simplifyToTraditional(val)
+    const cn = traditionalToSimplified(tw)
+    const en = traditionalToEnglish(tw)
+    cached = { tw, cn, en }
+    origTextMap.set(node, cached)
+  }
+
+  let targetVal = cached.tw
+  if (lang === 'zh-CN') targetVal = cached.cn
+  else if (lang === 'en') targetVal = cached.en
+
+  if (node.nodeValue !== targetVal) {
+    node.nodeValue = targetVal
   }
 }
 
@@ -167,18 +497,21 @@ function convertElementAttrs(el: Element, lang: AppLanguage) {
       attrRecord = {}
       origAttrMap.set(el, attrRecord)
     }
-    const cached = attrRecord[attr]
-    if (lang === 'zh-CN') {
-      if (cached && val === cached.cn) continue
-      const cn = traditionalToSimplified(val)
-      attrRecord[attr] = { tw: val, cn }
-      if (cn !== val) {
-        el.setAttribute(attr, cn)
-      }
-    } else {
-      if (cached && val === cached.cn) {
-        el.setAttribute(attr, cached.tw)
-      }
+    let cached = attrRecord[attr]
+    if (!cached || (val !== cached.tw && val !== cached.cn && val !== cached.en)) {
+      const tw = simplifyToTraditional(val)
+      const cn = traditionalToSimplified(tw)
+      const en = traditionalToEnglish(tw)
+      cached = { tw, cn, en }
+      attrRecord[attr] = cached
+    }
+
+    let targetVal = cached.tw
+    if (lang === 'zh-CN') targetVal = cached.cn
+    else if (lang === 'en') targetVal = cached.en
+
+    if (el.getAttribute(attr) !== targetVal) {
+      el.setAttribute(attr, targetVal)
     }
   }
 }
@@ -212,7 +545,9 @@ let domObserver: MutationObserver | null = null
 export function syncDocumentLanguage(lang: AppLanguage, getLang: () => AppLanguage) {
   if (typeof document === 'undefined') return
   document.documentElement.lang = lang
-  document.title = lang === 'zh-CN' ? traditionalToSimplified('染鐘樓謎團魔典') : '染鐘樓謎團魔典'
+  document.title = lang === 'zh-CN' 
+    ? traditionalToSimplified('血染鐘樓謎團魔典') 
+    : (lang === 'en' ? 'Blood on the Clocktower Grimoire' : '血染鐘樓謎團魔典')
   if (document.body) {
     applyLanguageToSubtree(document.body, lang)
   }
@@ -220,7 +555,7 @@ export function syncDocumentLanguage(lang: AppLanguage, getLang: () => AppLangua
   if (!domObserver && typeof MutationObserver !== 'undefined' && document.body) {
     domObserver = new MutationObserver((mutations) => {
       const currentLang = getLang()
-      if (currentLang !== 'zh-CN') return
+      if (currentLang === 'zh-TW') return
       for (const m of mutations) {
         if (m.type === 'characterData') {
           convertTextNode(m.target as Text, currentLang)

@@ -3,7 +3,7 @@
     <div class="log-panel panel animate-slide-up">
       <div class="panel-header">
         <span class="panel-icon">📋</span>
-        <h2 class="panel-title">對局記錄回顧</h2>
+        <h2 class="panel-title">{{ uiStore.language === 'en' ? 'Game Log' : '對局記錄回顧' }}</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
 
@@ -12,15 +12,15 @@
         <input 
           v-model="noteContent" 
           type="text" 
-          placeholder="在此輸入手動筆記..." 
+          :placeholder="uiStore.language === 'en' ? 'Enter manual note here...' : '在此輸入手動筆記...'" 
           @keyup.enter="handleAddNote"
         />
-        <button class="add-note-btn" @click="handleAddNote">新增</button>
+        <button class="add-note-btn" @click="handleAddNote">{{ uiStore.language === 'en' ? 'Add' : '新增' }}</button>
       </div>
 
       <div class="log-content" ref="logContainer">
         <div v-if="gameStore.logs.length === 0" class="empty-log">
-          目前尚無對局記錄
+          {{ uiStore.language === 'en' ? 'No game logs yet' : '目前尚無對局記錄' }}
         </div>
         
         <div v-for="log in sortedLogs" :key="log.id" class="log-item" :class="log.type">
@@ -37,8 +37,8 @@
       </div>
 
       <div class="panel-footer">
-        <button class="footer-btn secondary" @click="clearLogs">清除所有日誌</button>
-        <button class="footer-btn primary" @click="exportGame">匯出 JSON</button>
+        <button class="footer-btn secondary" @click="clearLogs">{{ uiStore.language === 'en' ? 'Clear All Logs' : '清除所有日誌' }}</button>
+        <button class="footer-btn primary" @click="exportGame">{{ uiStore.language === 'en' ? 'Export JSON' : '匯出 JSON' }}</button>
       </div>
     </div>
   </div>
@@ -81,6 +81,17 @@ function formatTime(ts: number) {
 }
 
 function typeLabel(type: string) {
+  if (uiStore.language === 'en') {
+    const labelsEn: Record<string, string> = {
+      phase: 'Phase',
+      action: 'System',
+      death: 'Status',
+      assignment: 'Role',
+      note: 'Note',
+      reminder: 'Reminder'
+    }
+    return labelsEn[type] || 'Other'
+  }
   const labels: Record<string, string> = {
     phase: '階段',
     action: '系統',

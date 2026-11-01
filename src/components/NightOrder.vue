@@ -4,41 +4,41 @@
       <div class="panel-header">
         <div class="panel-header-title-group">
           <span class="panel-icon"><img src="/pic/moon.png" class="panel-header-icon" alt="夜晚" /></span>
-          <h2 class="panel-title">夜晚行動順序</h2>
+          <h2 class="panel-title">{{ uiStore.language === 'en' ? 'Night Order' : '夜晚行動順序' }}</h2>
         </div>
         <div class="panel-header-actions">
           <button
             v-if="hasCustomOrder"
             class="reset-order-btn"
-            title="恢復官方預設順序"
+            :title="uiStore.language === 'en' ? 'Restore default order' : '恢復官方預設順序'"
             @click="resetNightOrder"
-          ><img src="/pic/reset.png?v=2" class="btn-icon-img" />預設</button>
+          ><img src="/pic/reset.png?v=2" class="btn-icon-img" />{{ uiStore.language === 'en' ? 'Default' : '預設' }}</button>
           <button
             class="filter-order-btn"
             :class="{ 'filter-active': showAllRoles }"
-            :title="showAllRoles ? '目前：顯示全劇本角色（點擊切換為僅已派發）' : '目前：僅顯示已派發角色（點擊切換為全部角色）'"
+            :title="showAllRoles ? (uiStore.language === 'en' ? 'Showing all roles (Click for assigned only)' : '目前：顯示全劇本角色（點擊切換為僅已派發）') : (uiStore.language === 'en' ? 'Showing assigned only (Click for all roles)' : '目前：僅顯示已派發角色（點擊切換為全部角色）')"
             @click="toggleFilterMode"
           >
             <template v-if="showAllRoles">
-              <img src="/pic/script.png" class="btn-icon-img" />全部角色
+              <img src="/pic/script.png" class="btn-icon-img" />{{ uiStore.language === 'en' ? 'All Roles' : '全部角色' }}
             </template>
             <template v-else>
-              <img src="/pic/group.png" class="btn-icon-img" />僅已派發
+              <img src="/pic/group.png" class="btn-icon-img" />{{ uiStore.language === 'en' ? 'Assigned Only' : '僅已派發' }}
             </template>
           </button>
           <button
             class="whiteboard-btn"
-            title="開啟白板"
+            :title="uiStore.language === 'en' ? 'Open Whiteboard' : '開啟白板'"
             @click="uiStore.openPanel('whiteboard')"
-          ><img src="/pic/whiteboard.png?v=2" class="btn-icon-img" />白板</button>
+          ><img src="/pic/whiteboard.png?v=2" class="btn-icon-img" />{{ uiStore.language === 'en' ? 'Whiteboard' : '白板' }}</button>
           <button
             class="edit-order-btn"
             :class="{ 'editing-active': isEditing }"
             @click="isEditing = !isEditing"
           >
-            <template v-if="isEditing">✓ 完成</template>
+            <template v-if="isEditing">{{ uiStore.language === 'en' ? '✓ Done' : '✓ 完成' }}</template>
             <template v-else>
-              <img src="/pic/pen.png" class="btn-icon-img" />調整順序
+              <img src="/pic/pen.png" class="btn-icon-img" />{{ uiStore.language === 'en' ? 'Adjust Order' : '調整順序' }}
             </template>
           </button>
           <button class="close-btn" @click="uiStore.closePanel()">✕</button>
@@ -48,7 +48,7 @@
       <!-- 提示條 -->
       <div v-if="isEditing" class="edit-hint-bar">
         <img src="/pic/pen.png" class="btn-icon-img" />
-        <span>正在調整「{{ gameStore.script?.name || '當前劇本' }}」之順序（僅獨立影響本劇本）</span>
+        <span>{{ uiStore.language === 'en' ? `Adjusting order for "${gameStore.script?.name || 'Current Script'}"` : `正在調整「${gameStore.script?.name || '當前劇本'}」之順序（僅獨立影響本劇本）` }}</span>
       </div>
 
       <!-- 標籤切換 (根據階段自動隱藏無關標籤) -->
@@ -58,13 +58,13 @@
           class="tab-btn"
           :class="{ 'tab-active': activeTab === 'first' }"
           @click="activeTab = 'first'"
-        >首個夜晚</button>
+        >{{ uiStore.language === 'en' ? 'First Night' : '首個夜晚' }}</button>
         <button
           v-if="gameStore.phase !== 'FirstNight' && gameStore.phase !== 'Setup'"
           class="tab-btn"
           :class="{ 'tab-active': activeTab === 'other' }"
           @click="activeTab = 'other'"
-        >其他夜晚</button>
+        >{{ uiStore.language === 'en' ? 'Other Night' : '其他夜晚' }}</button>
       </div>
 
       <!-- 順序列表 (編輯模式顯示全劇本夜間角色列表，普通模式顯示遊戲即時列表) -->
@@ -75,7 +75,7 @@
         @scroll="handleScroll"
       >
         <div class="order-empty" v-if="(isEditing ? localOrderList : currentOrder).length === 0">
-          <span>此劇本無夜晚行動角色</span>
+          <span>{{ uiStore.language === 'en' ? 'No night action roles in this script' : '此劇本無夜晚行動角色' }}</span>
         </div>
 
         <!-- 編輯模式列表 (支援滑鼠與手機觸控 Pointer Events 拖拽) -->

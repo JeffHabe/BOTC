@@ -24,8 +24,8 @@
             <img src="/pic/reset.png?v=2" class="btn-img" />
           </button>
           <div class="quick-add-group">
-            <button class="v-timer-btn add-btn" @click="uiStore.addTimerSeconds(30)">+30秒</button>
-            <button class="v-timer-btn add-btn" @click="uiStore.addTimerSeconds(60)">+1分</button>
+            <button class="v-timer-btn add-btn" @click="uiStore.addTimerSeconds(30)">{{ uiStore.language === 'en' ? '+30s' : '+30秒' }}</button>
+            <button class="v-timer-btn add-btn" @click="uiStore.addTimerSeconds(60)">{{ uiStore.language === 'en' ? '+1m' : '+1分' }}</button>
           </div>
           <button v-if="uiStore.isBellPlaying" class="v-timer-btn stop-bell-btn" @click="uiStore.stopBell()" title="停止鐘聲">
             🔕 靜音
@@ -35,12 +35,12 @@
 
       <!-- 發起提名 -->
       <div class="nominate-section" v-if="gameStore.phase === 'Day'">
-        <div class="section-title">發起提名</div>
+        <div class="section-title">{{ uiStore.language === 'en' ? 'Nominate' : '發起提名' }}</div>
         <div class="nominate-row">
           <div class="select-wrap">
-            <label class="select-label">提名者</label>
+            <label class="select-label">{{ uiStore.language === 'en' ? 'Nominator' : '提名者' }}</label>
             <select v-model="nominatorId" class="player-select">
-              <option value="" disabled>選擇玩家...</option>
+              <option value="" disabled>{{ uiStore.language === 'en' ? 'Select player...' : '選擇玩家...' }}</option>
               <option v-for="p in canNominate" :key="p.id" :value="p.id">
                 {{ !p.is_alive ? '💀 ' : '' }}{{ gameStore.players.findIndex(pl => pl.id === p.id) + 1 }}. {{ p.name }}
               </option>
@@ -48,9 +48,9 @@
           </div>
           <div class="nominate-arrow">提名</div>
           <div class="select-wrap">
-            <label class="select-label">被提名者</label>
+            <label class="select-label">{{ uiStore.language === 'en' ? 'Nominee' : '被提名者' }}</label>
             <select v-model="nomineeId" class="player-select">
-              <option value="" disabled>選擇玩家...</option>
+              <option value="" disabled>{{ uiStore.language === 'en' ? 'Select player...' : '選擇玩家...' }}</option>
               <option v-for="p in notYetNominated" :key="p.id" :value="p.id">
                 {{ !p.is_alive ? '💀 ' : '' }}{{ gameStore.players.findIndex(pl => pl.id === p.id) + 1 }}. {{ p.name }}
               </option>
@@ -62,13 +62,13 @@
           :disabled="!nominatorId || !nomineeId"
           @click="doNominate"
         >
-          確認提名
+          {{ uiStore.language === 'en' ? 'Confirm Nomination' : '確認提名' }}
         </button>
       </div>
 
       <!-- 提名列表 -->
       <div class="nominations-list">
-        <div class="section-title">提名記錄 (第 {{ currentRound }} 輪)</div>
+        <div class="section-title">{{ uiStore.language === 'en' ? (`Nomination Records (Round ${currentRound})`) : (`提名記錄 (第 ${currentRound} 輪)`) }}</div>
 
         <!-- 邪惡勢力統計 (僅說書人可見，若隱藏角色則不顯示) -->
         <div class="evil-stats-bar" v-if="!uiStore.isRolesHidden && displayNominations.length > 0">
@@ -84,7 +84,7 @@
         </div>
         
         <div v-if="displayNominations.length === 0" class="empty-nominations">
-          今日尚未有任何提名
+          {{ uiStore.language === 'en' ? 'No nominations today' : '今日尚未有任何提名' }}
         </div>
 
         <div 
@@ -98,9 +98,9 @@
             <!-- 一般檢視模式 -->
             <template v-if="editingNomIndex !== index">
               <div class="nom-names">
-                <span class="nom-round-tag">第 {{ nom.round }} 輪</span>
+                <span class="nom-round-tag">{{ uiStore.language === 'en' ? (`Round ${nom.round}`) : (`第 ${nom.round} 輪`) }}</span>
                 <span :style="{ color: getPlayerColor(nom.nominator_id) }">{{ playerName(nom.nominator_id) }}</span> 
-                <span class="nom-verb">提名了</span> 
+                <span class="nom-verb">{{ uiStore.language === 'en' ? 'nominated' : '提名了' }}</span> 
                 <span :style="{ color: getPlayerColor(nom.nominee_id) }">{{ playerName(nom.nominee_id) }}</span>
                 
                 <button 

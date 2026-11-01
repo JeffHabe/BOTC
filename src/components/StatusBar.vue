@@ -4,23 +4,23 @@
       <!-- 左側：角色類型計數 (統計配置) -->
       <div class="stat-group stats-config" :class="{ 'is-hidden': uiStore.isRolesHidden }">
         <span class="stat-item townsfolk">
-          <span class="label">鎮</span>
+          <span class="label">{{ uiStore.language === 'en' ? 'T' : '鎮' }}</span>
           <span class="stat-num">{{ townCount }}</span>
         </span>
         <span class="stat-item outsider">
-          <span class="label">外</span>
+          <span class="label">{{ uiStore.language === 'en' ? 'O' : '外' }}</span>
           <span class="stat-num">{{ outsiderCount }}</span>
         </span>
         <span class="stat-item minion">
-          <span class="label">爪</span>
+          <span class="label">{{ uiStore.language === 'en' ? 'M' : '爪' }}</span>
           <span class="stat-num">{{ minionCount }}</span>
         </span>
         <span class="stat-item demon">
-          <span class="label">惡</span>
+          <span class="label">{{ uiStore.language === 'en' ? 'D' : '惡' }}</span>
           <span class="stat-num">{{ demonCount }}</span>
         </span>
         <span v-if="travelerCount > 0" class="stat-item traveler">
-          <span class="label">旅</span>
+          <span class="label">{{ uiStore.language === 'en' ? 'Tr' : '旅' }}</span>
           <span class="stat-num">{{ travelerCount }}</span>
         </span>
       </div>
@@ -36,10 +36,13 @@
         <div class="phase-display" @click="uiStore.togglePanel('settings')" title="開啟設定">
           <div class="phase-badge" :class="`phase-${gameStore.phase.toLowerCase()}`">
             <template v-if="gameStore.phase === 'FirstNight' || gameStore.phase === 'Setup'">
-              <span class="phase-text">首夜</span>
+              <span class="phase-text">{{ uiStore.language === 'en' ? 'First Night' : '首夜' }}</span>
             </template>
             <template v-else>
-              <span class="phase-text">
+              <span class="phase-text" v-if="uiStore.language === 'en'">
+                {{ gameStore.phase === 'Day' ? `Day ${gameStore.round}` : `Night ${gameStore.round}` }}
+              </span>
+              <span class="phase-text" v-else>
                 第 {{ gameStore.round }}
                 <template v-if="gameStore.phase === 'Day' && gameStore.round > 0">天</template>
                 <template v-if="gameStore.phase === 'Night' && gameStore.round > 0">夜</template>

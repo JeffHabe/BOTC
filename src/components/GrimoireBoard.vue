@@ -173,13 +173,13 @@
         <!-- 收納按鈕 -->
         <button class="bluffs-toggle-tab" @click="uiStore.isBluffsExpanded = !uiStore.isBluffsExpanded">
           <span class="tab-icon">{{ uiStore.isBluffsExpanded ? '›' : '‹' }}</span>
-          <span class="tab-text">偽裝</span>
+          <span class="tab-text">{{ uiStore.language === 'en' ? 'Bluffs' : '偽裝' }}</span>
         </button>
       </div>
 
       <div class="bluffs-box-fixed">
         <div class="bluffs-title">
-          {{ uiStore.activeBluffTab === 'lunatic' ? '瘋子的偽裝' : '惡魔的偽裝' }}
+          {{ uiStore.language === 'en' ? (uiStore.activeBluffTab === 'lunatic' ? 'Lunatic Bluffs' : 'Demon Bluffs') : (uiStore.activeBluffTab === 'lunatic' ? '瘋子的偽裝' : '惡魔的偽裝') }}
         </div>
         <div class="bluffs-list">
           <div 

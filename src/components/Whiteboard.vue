@@ -3,26 +3,26 @@
     <div class="whiteboard-panel panel animate-slide-up">
       <div class="panel-header">
         <span class="panel-icon"><img src="/pic/whiteboard.png?v=2" class="panel-header-icon" /></span>
-        <h2 class="panel-title">說書人資訊</h2>
+        <h2 class="panel-title">{{ uiStore.language === 'en' ? 'Storyteller Whiteboard' : '說書人資訊' }}</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
 
       <div class="whiteboard-content">
         <div class="content-toolbar">
           <div class="whiteboard-desc">
-            在下方輸入資訊後，可將手機展示給玩家查看。
+            {{ uiStore.language === 'en' ? 'Enter info below to showcase to players.' : '在下方輸入資訊後，可將手機展示給玩家查看。' }}
           </div>
           <button 
             class="config-toggle-btn" 
             :class="{ active: isControlsExpanded }"
             @click="isControlsExpanded = !isControlsExpanded"
-            :title="isControlsExpanded ? '收起設定' : '字體與顏色設定'"
+            :title="isControlsExpanded ? (uiStore.language === 'en' ? 'Collapse Settings' : '收起設定') : (uiStore.language === 'en' ? 'Font and Color Settings' : '字體與顏色設定')"
           >
             <span class="icon">
               <img v-if="isControlsExpanded" src="/pic/caret-arrow-up.png" class="btn-image-icon" />
               <img v-else src="/pic/gear.png?v=2" class="btn-image-icon" />
             </span>
-            <span class="label">{{ isControlsExpanded ? '收起設定' : '設定' }}</span>
+            <span class="label">{{ isControlsExpanded ? (uiStore.language === 'en' ? 'Collapse' : '收起設定') : (uiStore.language === 'en' ? 'Settings' : '設定') }}</span>
           </button>
         </div>
 
@@ -30,7 +30,7 @@
         <div class="whiteboard-controls-wrapper" :class="{ expanded: isControlsExpanded }">
           <div class="whiteboard-controls" v-if="isControlsExpanded">
             <div class="control-group">
-            <span class="control-label">字體大小</span>
+            <span class="control-label">{{ uiStore.language === 'en' ? 'Font Size' : '字體大小' }}</span>
             <div class="size-control">
               <button 
                 class="step-btn" 
@@ -63,7 +63,7 @@
           </div>
 
           <div class="control-group">
-            <span class="control-label">文字顏色</span>
+            <span class="control-label">{{ uiStore.language === 'en' ? 'Text Color' : '文字顏色' }}</span>
             <div class="color-control-wrapper">
               <div class="color-picker-trigger" @click="showColorPicker = !showColorPicker">
                 <div class="color-preview" :style="{ backgroundColor: gameStore.nightNotesColor }"></div>
@@ -73,7 +73,7 @@
               <div v-if="showColorPicker" class="color-picker-popup animate-fade-in">
                 <ColorPicker v-model="gameStore.nightNotesColor" />
                 <div class="picker-footer">
-                  <button class="picker-done-btn" @click="showColorPicker = false">完成</button>
+                  <button class="picker-done-btn" @click="showColorPicker = false">{{ uiStore.language === 'en' ? 'Done' : '完成' }}</button>
                 </div>
               </div>
             </div>
@@ -84,7 +84,7 @@
         <!-- 劇本角色快捷填入區域 -->
         <div v-if="scriptCharacters.length > 0" class="script-chars-section">
           <div class="hint-cards-header">
-            <span class="hint-title"><img src="/pic/theater.png?v=2" class="hint-title-icon" />填入劇本角色 ({{ scriptCharacters.length }})</span>
+            <span class="hint-title"><img src="/pic/theater.png?v=2" class="hint-title-icon" />{{ uiStore.language === 'en' ? 'Insert Script Role' : '填入劇本角色' }} ({{ scriptCharacters.length }})</span>
           </div>
           <div class="hint-cards-scroll">
             <button
@@ -102,13 +102,13 @@
         <!-- 提示卡區域 -->
         <div class="hint-cards-section">
           <div class="hint-cards-header">
-            <span class="hint-title"><img src="/pic/bulb.png" class="hint-title-icon" />提示卡</span>
+            <span class="hint-title"><img src="/pic/bulb.png" class="hint-title-icon" />{{ uiStore.language === 'en' ? 'Hint Cards' : '提示卡' }}</span>
             <button 
               class="edit-mode-btn" 
               :class="{ active: isEditMode }"
               @click="isEditMode = !isEditMode"
             >
-              {{ isEditMode ? '完成編輯' : '✎ 編輯' }}
+              {{ isEditMode ? (uiStore.language === 'en' ? 'Done' : '完成編輯') : (uiStore.language === 'en' ? '✎ Edit' : '✎ 編輯') }}
             </button>
           </div>
           <div class="hint-cards-wrap">
@@ -123,7 +123,7 @@
               <span v-if="isEditMode" class="delete-badge" @click.stop="gameStore.removeHintTemplate(index)">✕</span>
             </button>
             <button class="add-hint-btn" @click="addNewTemplate">
-              <img src="/pic/plus.svg" class="btn-image-icon" />新增
+              <img src="/pic/plus.svg" class="btn-image-icon" />{{ uiStore.language === 'en' ? 'Add' : '新增' }}
             </button>
           </div>
         </div>
@@ -131,7 +131,7 @@
         <textarea 
           ref="textareaRef"
           class="whiteboard-input" 
-          placeholder="在此輸入要展示給玩家看的資訊...&#10;(例如：你的角色為【廚師】)"
+          :placeholder="uiStore.language === 'en' ? 'Enter info here to showcase to players...\n(e.g.: Your role is [Chef])' : '在此輸入要展示給玩家看的資訊...\n(例如：你的角色為【廚師】)'"
           v-model="gameStore.nightNotes"
           @input="gameStore.setNightNotes(gameStore.nightNotes)"
           :style="{ 
@@ -141,8 +141,8 @@
         ></textarea>
 
         <div class="whiteboard-footer">
-          <button class="view-btn" @click="isFullscreenView = true" title="放大到全螢幕檢視">
-            <span class="icon"><img src="/pic/search.png?v=2" class="btn-image-icon" /></span> 檢視
+          <button class="view-btn" @click="isFullscreenView = true" :title="uiStore.language === 'en' ? 'Full screen view' : '放大到全螢幕檢視'">
+            <span class="icon"><img src="/pic/search.png?v=2" class="btn-image-icon" /></span> {{ uiStore.language === 'en' ? 'View' : '檢視' }}
           </button>
           <button 
             class="copy-btn" 
@@ -153,10 +153,10 @@
               <img v-if="copied" src="/pic/vote-tag.png?v=2" class="btn-image-icon" />
               <img v-else src="/pic/files-copy.png" class="btn-image-icon" />
             </span> 
-            {{ copied ? '已複製內容' : '複製全部文字' }}
+            {{ copied ? (uiStore.language === 'en' ? 'Copied' : '已複製內容') : (uiStore.language === 'en' ? 'Copy All Text' : '複製全部文字') }}
           </button>
           <button class="clear-btn" @click="gameStore.setNightNotes('')">
-            <span class="icon"><img src="/pic/rubber-gold.png" class="btn-image-icon" /></span> 清除全部內容
+            <span class="icon"><img src="/pic/rubber-gold.png" class="btn-image-icon" /></span> {{ uiStore.language === 'en' ? 'Clear Content' : '清除全部內容' }}
           </button>
         </div>
       </div>

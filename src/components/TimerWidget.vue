@@ -41,7 +41,7 @@
     <transition name="timer-panel-fade">
       <div v-if="uiStore.isTimerExpanded" class="timer-panel">
         <div class="timer-header">
-          <span>設定倒數時間</span>
+          <span>{{ uiStore.language === 'en' ? 'Set Timer' : '設定倒數時間' }}</span>
           <button class="close-btn" @click="uiStore.isTimerExpanded = false">✕</button>
         </div>
         
@@ -67,7 +67,7 @@
               placeholder="00"
               :disabled="uiStore.isTimerRunning"
             />
-            <span class="time-label">分</span>
+            <span class="time-label">{{ uiStore.language === 'en' ? 'm' : '分' }}</span>
           </div>
           <div class="time-input-group">
             <input 
@@ -79,7 +79,7 @@
               placeholder="00"
               :disabled="uiStore.isTimerRunning"
             />
-            <span class="time-label">秒</span>
+            <span class="time-label">{{ uiStore.language === 'en' ? 's' : '秒' }}</span>
           </div>
         </div>
 

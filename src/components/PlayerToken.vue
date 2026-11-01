@@ -32,7 +32,7 @@
       <!-- 玩家姓名與編號標籤 -->
       <div class="name-label-box" :class="[namePositionClass, { 'has-reminders': player.reminders.length > 0 }]" :style="nameStyle">
         <span class="seat-num">{{ index + 1 }}.</span>
-        <span class="player-name-text">{{ player.name || '' }}</span>
+        <span class="player-name-text">{{ uiStore.language === 'en' && player.name === '空座位' ? 'Empty' : (player.name || '') }}</span>
         <!-- 狀態圖示 (白天顯示提名權、被提權、死亡票) -->
         <div v-if="gameStore.phase === 'Day'" class="status-indicators-inline">
           <span
