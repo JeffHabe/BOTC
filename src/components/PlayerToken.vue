@@ -265,6 +265,10 @@ import { useScriptStore } from '../stores/scriptStore'
 import { useGameStore } from '../stores/gameStore'
 import type { Player } from '../types'
 
+const emit = defineEmits<{
+  (e: 'start-arrange', payload: { clientX: number, clientY: number }): void
+}>()
+
 const props = withDefaults(defineProps<{
   player: Player
   index: number
@@ -470,6 +474,7 @@ function onPointerDown(e: MouseEvent | TouchEvent) {
     hasTriggeredLongPress = true
     uiStore.isArrangingPlayers = true
     if ('vibrate' in navigator) navigator.vibrate(50)
+    emit('start-arrange', { clientX, clientY })
   }, 400) // 縮短時間至400ms，確保在系統的contextmenu(通常500ms)之前觸發
 }
 
@@ -669,6 +674,9 @@ function getReminderIcon(text: string) {
 
 <style scoped>
 .player-token {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
   display: flex;
   flex-direction: column;
   align-items: center;

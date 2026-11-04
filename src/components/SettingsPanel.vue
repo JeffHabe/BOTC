@@ -109,10 +109,12 @@
             <span class="grid-icon"><img src="/pic/history-edge.png" class="grid-img" /></span>
             <span class="grid-label">{{ uiStore.language === 'en' ? 'Game Log' : '對局記錄' }}</span>
           </button>
+          <!-- 座位編排在主頁面上已有直覺的長按拖拉操作，避免選單重複冗長故隱藏 -->
+          <!-- 
           <button class="grid-item" @click="openPlayerOrder">
             <span class="grid-icon"><img src="/pic/throne.png" class="grid-img" /></span>
             <span class="grid-label">{{ uiStore.language === 'en' ? 'Seat Arrangement' : '座位編排' }}</span>
-          </button>
+          </button> -->
 
           <button class="grid-item" @click="openCharacterEditor">
             <span class="grid-icon"><img src="/pic/character-lib.png" class="grid-img" /></span>
@@ -636,9 +638,11 @@ function openVoting() {
   uiStore.openPanel('voting')
 }
 
+/*
 function openPlayerOrder() {
   uiStore.openPanel('player-order')
 }
+*/
 
 function openAssignment() {
   uiStore.openPanel('role-assignment')

@@ -366,7 +366,7 @@ function getPlayerColor(playerId: string): string {
 <style scoped>
 .grimoire-voting-hud {
   position: fixed;
-  right: 44px; /* 避開右側 32px 偽裝托盤標籤，絕不重疊 */
+  right: 36px; /* 避開右側 32px 偽裝托盤標籤，並維持與縮放工具列舒適間隔 */
   bottom: calc(24px + env(safe-area-inset-bottom, 16px));
   z-index: 120;
   width: 270px;
@@ -385,11 +385,11 @@ function getPlayerColor(playerId: string): string {
 .hud-collapsed-pill {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: rgba(18, 18, 22, 0.88);
   border: 1px solid rgba(201, 168, 76, 0.45);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-  padding: 6px 14px;
+  padding: 5px 11px;
   border-radius: 20px;
   cursor: pointer;
   backdrop-filter: blur(8px);

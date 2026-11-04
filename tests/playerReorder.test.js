@@ -76,19 +76,33 @@ test('座位編排面板 (PlayerOrderPanel.vue) 支援上下移動按鈕與跨�
   assert.ok(panelContent.includes("uiStore.language === 'en' ? 'Close' : '關閉'"), '關閉按鈕必須支援雙語切換');
 });
 
-test('設置面板 (SettingsPanel.vue) 恢復「座位編排」入口按鈕與中英雙語', () => {
+test('設置面板 (SettingsPanel.vue) 依需求隱藏「座位編排」圖示，維持主選單精簡', () => {
   const settingsPath = path.resolve(__dirname, '../src/components/SettingsPanel.vue');
   const settingsContent = fs.readFileSync(settingsPath, 'utf8');
 
-  assert.ok(settingsContent.includes('@click="openPlayerOrder"'), '設置面板必須提供開啟 openPlayerOrder 的按鈕入口');
+  const activeTemplateSection = settingsContent.split('危險區域')[0];
   assert.ok(
-    settingsContent.includes("uiStore.language === 'en' ? 'Seat Arrangement' : '座位編排'"),
-    '按鈕標籤必須支援中英雙語直出'
+    activeTemplateSection.includes('<!--') && activeTemplateSection.includes('openPlayerOrder'),
+    '座位編排按鈕已在設置面板中註解隱藏'
   );
-  assert.ok(
-    settingsContent.includes("function openPlayerOrder() {\n  uiStore.openPanel('player-order')\n}"),
-    'openPlayerOrder 必須呼叫 uiStore.openPanel("player-order")'
-  );
+});
+
+test('魔典主畫布 (GrimoireBoard.vue) 與令片 (PlayerToken.vue) 支援長按無縫拖曳與高效換位靈敏度', () => {
+  const grimoirePath = path.resolve(__dirname, '../src/components/GrimoireBoard.vue');
+  const grimoireContent = fs.readFileSync(grimoirePath, 'utf8');
+  const tokenPath = path.resolve(__dirname, '../src/components/PlayerToken.vue');
+  const tokenContent = fs.readFileSync(tokenPath, 'utf8');
+
+  // 1. 令片長按無縫派發拖曳事件
+  assert.ok(tokenContent.includes("emit('start-arrange'"), 'PlayerToken 長按震動時應立即 emit start-arrange');
+  assert.ok(grimoireContent.includes('@start-arrange="onStartArrange'), 'GrimoireBoard 應監聽 @start-arrange 無縫切換為拖曳');
+
+  // 2. 換位距離靈敏度提升至 16%
+  assert.ok(grimoireContent.includes('minDist < 16'), '換位感應距離閾值應為 16% 以確保滑動交換靈敏度');
+
+  // 3. 手勢 touch-action: none 保障
+  assert.ok(tokenContent.includes('touch-action: none'), 'PlayerToken 樣式應具備 touch-action: none 防滾動手勢打斷');
+  assert.ok(grimoireContent.includes('touch-action: none'), 'token-wrapper 樣式應具備 touch-action: none');
 });
 
 test('玩家令片 (PlayerToken.vue) 長按觸控判定具備抗微震容差 (10px)', () => {

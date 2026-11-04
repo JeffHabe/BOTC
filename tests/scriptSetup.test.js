@@ -657,17 +657,18 @@ test('UI 字體與圖示顏色校驗：偽裝標籤與新增玩家標題為 #E6C
   )
 })
 
-test('SettingsPanel.vue 設定面板選單驗證：角色清單已隱藏，座位編排 (PlayerOrder) 正式提供並支援雙語', () => {
+test('SettingsPanel.vue 設定面板選單精簡驗證：角色清單與座位編排已隱藏避免與主介面重複', () => {
   const settingsPath = path.resolve(__dirname, '../src/components/SettingsPanel.vue')
   const content = fs.readFileSync(settingsPath, 'utf8')
 
+  const activeTemplateSection = content.split('危險區域')[0]
   assert.ok(
-    content.includes('openCharSheet'),
-    '角色清單 (openCharSheet) 應維持註解避免與面板重複'
+    activeTemplateSection.includes('openCharSheet') || content.includes('openCharSheet'),
+    '角色清單 (openCharSheet) 應維持隱藏'
   )
   assert.ok(
-    content.includes('openPlayerOrder') && content.includes("uiStore.language === 'en' ? 'Seat Arrangement' : '座位編排'"),
-    '座位編排 (openPlayerOrder) 應開放並具備雙語 Seat Arrangement / 座位編排'
+    activeTemplateSection.includes('<!--') && activeTemplateSection.includes('openPlayerOrder'),
+    '座位編排 (openPlayerOrder) 按鈕在設定選項中已註解隱藏'
   )
 })
 

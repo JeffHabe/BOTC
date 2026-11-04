@@ -234,3 +234,20 @@ test('每天白天開始時投票管理收合邏輯驗證', () => {
 })
 
 
+
+test('魔典底部控制列佈局防碰撞驗證：縮放列與投票膠囊保持充裕間距', () => {
+  const grimoirePath = path.resolve(__dirname, '../src/components/GrimoireBoard.vue')
+  const grimoireContent = fs.readFileSync(grimoirePath, 'utf8')
+  const hudPath = path.resolve(__dirname, '../src/components/GrimoireVotingHud.vue')
+  const hudContent = fs.readFileSync(hudPath, 'utf8')
+
+  // 1. 驗證縮放控制列靠左佈局與精簡寬度設定
+  assert.ok(grimoireContent.includes('.zoom-controls-bottom.has-voting-hud'), '必須定義 has-voting-hud 靠左定位')
+  assert.ok(grimoireContent.includes('left: 50px'), '縮放列靠左定位應設為 50px 以避免過度向右擠壓')
+  assert.ok(grimoireContent.includes('width: 28px'), '縮放按鈕直徑應精簡為 28px 以騰出中間間隔')
+  assert.ok(grimoireContent.includes('width: 40px'), '縮放百分比按鈕應設為 40px')
+
+  // 2. 驗證投票管理收合膠囊右側定位與內距精簡
+  assert.ok(hudContent.includes('right: 36px'), '投票膠囊右距應設為 36px 避開偽裝標籤並拉開中間間隔')
+  assert.ok(hudContent.includes('padding: 5px 11px'), '收合膠囊應使用緊湊內距 5px 11px 防範邊界擠壓')
+})

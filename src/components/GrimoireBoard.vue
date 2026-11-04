@@ -121,6 +121,7 @@
           :index="index" 
           :is-on-right-side="getIsRightSide(index)"
           :angle="getEquidistantAngle(index, players.length)"
+          @start-arrange="onStartArrange(player, index, $event)"
         />
       </div>
 
@@ -1145,6 +1146,33 @@ const allTokenStyles = computed(() => {
   })
 })
 
+
+function onStartArrange(player: any, index: number, coord: { clientX: number, clientY: number }) {
+  dragState.isDragging = true
+  dragState.playerId = player.id
+  dragState.index = index
+
+  const container = document.querySelector('.tokens-fixed-area')
+  if (container) {
+    cachedContainerRect = container.getBoundingClientRect()
+  }
+  if (trashZoneRef.value) {
+    cachedTrashZoneRect = trashZoneRef.value.getBoundingClientRect()
+  }
+
+  dragState.clientX = coord.clientX
+  dragState.clientY = coord.clientY
+  if (cachedContainerRect) {
+    dragState.xPercent = ((coord.clientX - cachedContainerRect.left) / cachedContainerRect.width) * 100
+    dragState.yPercent = ((coord.clientY - cachedContainerRect.top) / cachedContainerRect.height) * 100
+  }
+
+  window.addEventListener('mousemove', onTokenMouseMove)
+  window.addEventListener('touchmove', onTokenMouseMove, { passive: false })
+  window.addEventListener('mouseup', onTokenMouseUp)
+  window.addEventListener('touchend', onTokenMouseUp)
+}
+
 function onTokenMouseDown(e: MouseEvent | TouchEvent, player: any, index: number) {
   if (!uiStore.isArrangingPlayers) return
   e.preventDefault()
@@ -1244,7 +1272,7 @@ function checkDragSwap() {
   }
 
   // 觸發交換的距離閾值 (百分比)
-  if (closestIndex !== -1 && minDist < 10) {
+  if (closestIndex !== -1 && minDist < 16) {
     swapPlayersLocally(dragState.index, closestIndex)
     dragState.index = closestIndex
     if ('vibrate' in navigator) (navigator as any).vibrate(15)
@@ -1725,6 +1753,9 @@ const activePanelComponent = computed(() => {
 .token-wrapper {
   pointer-events: auto;
   z-index: 10;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* 中央劇本標誌 */
@@ -2396,9 +2427,9 @@ const activePanelComponent = computed(() => {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   background: rgba(42, 27, 21, 0.7);
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 20px;
   border: 1px solid rgba(141, 110, 99, 0.45);
   backdrop-filter: blur(10px);
@@ -2409,9 +2440,9 @@ const activePanelComponent = computed(() => {
   z-index: 100;
 }
 
-/* 當投票 HUD 存在時：縮放列固定靠左 (緊鄰新增玩家按鈕)，無論展開或收起皆保持位置完全一致 */
+/* 當投票 HUD 存在時：縮放列固定靠左 (緊鄰新增玩家按鈕)，保留充裕間距防碰撞 */
 .zoom-controls-bottom.has-voting-hud {
-  left: 54px;
+  left: 50px;
   transform: none;
 }
 
@@ -2422,8 +2453,8 @@ const activePanelComponent = computed(() => {
 }
 
 .zoom-controls-bottom .side-action-btn {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: rgba(42, 27, 21, 0.85);
   border: 1px solid #8d6e63;
@@ -2481,7 +2512,7 @@ const activePanelComponent = computed(() => {
 }
 
 .zoom-controls-bottom .reset-btn {
-  width: 46px; /* 同步縮小寬度 */
+  width: 40px; /* 精簡寬度，給右側投票膠囊留出呼吸空間 */
   border-radius: 12px;
 }
 
