@@ -31,7 +31,7 @@
           </div>
           <div class="log-body">
             <div class="log-type-tag">{{ typeLabel(log.type) }}</div>
-            <div class="log-text">{{ log.content }}</div>
+            <div class="log-text">{{ uiStore.language === 'en' ? traditionalToEnglish(log.content) : log.content }}</div>
           </div>
         </div>
       </div>
@@ -48,6 +48,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useUIStore } from '../stores/uiStore'
 import { useGameStore } from '../stores/gameStore'
+import { traditionalToEnglish } from '../utils/chineseConverter'
 import { save } from '@tauri-apps/plugin-dialog'
 import { writeTextFile } from '@tauri-apps/plugin-fs'
 

@@ -94,7 +94,7 @@
               :class="char.role_type?.toLowerCase()"
               @click="insertCharacterTag(char.name)"
             >
-              {{ char.name }}
+              {{ uiStore.language === 'en' ? (char.name_en || char.name) : char.name }}
             </button>
           </div>
         </div>
@@ -119,7 +119,7 @@
               :class="{ 'shake': isEditMode }"
               @click="handleTemplateClick(template)"
             >
-              {{ template }}
+              {{ uiStore.language === 'en' ? traditionalToEnglish(template) : template }}
               <span v-if="isEditMode" class="delete-badge" @click.stop="gameStore.removeHintTemplate(index)">✕</span>
             </button>
             <button class="add-hint-btn" @click="addNewTemplate">
@@ -199,6 +199,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useGameStore } from '../stores/gameStore'
+import { traditionalToEnglish } from '../utils/chineseConverter'
 import { useUIStore } from '../stores/uiStore'
 import ColorPicker from './ColorPicker.vue'
 

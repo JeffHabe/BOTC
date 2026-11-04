@@ -522,6 +522,31 @@ pub fn execute_action(gs: &mut GameState, cmd: &str, args: Value) -> Result<Valu
             serde_json::to_value(&*gs).map_err(|e| e.to_string())
         }
 
+        // 重新編排所有玩家順序
+        // 參數: { "player_ids": ["id1", "id2", ...] } 或 { "playerIds": [...] }
+        "reorder_players" => {
+            let player_ids_val = args.get("player_ids").or_else(|| args.get("playerIds"));
+            if let Some(arr) = player_ids_val.and_then(|v| v.as_array()) {
+                let id_list: Vec<String> = arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect();
+                let mut new_players = Vec::with_capacity(gs.players.len());
+                for id in id_list {
+                    if let Some(pos) = gs.players.iter().position(|p| p.id == id) {
+                        let p = gs.players.remove(pos);
+                        new_players.push(p);
+                    }
+                }
+                for p in gs.players.drain(..) {
+                    new_players.push(p);
+                }
+                for (i, p) in new_players.iter_mut().enumerate() {
+                    p.seat = (i + 1) as u32;
+                }
+                gs.players = new_players;
+                gs.touch();
+            }
+            serde_json::to_value(&*gs).map_err(|e| e.to_string())
+        }
+
         // ─── 3. 角色指派與身份管理 ──────────────────────────────
 
         // 為單一玩家指派身分卡 (傳 null 則為移除身分)

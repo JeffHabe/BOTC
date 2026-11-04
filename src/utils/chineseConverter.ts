@@ -395,6 +395,13 @@ export const UI_EN_PAIRS: [string, string][] = [
   ['清空全部內容', 'Clear Content'],
   ['檢視', 'View'],
 
+  // 劇本名稱
+  ['瓦釜雷鳴', 'Trouble Brewing'],
+  ['暗流湧動', 'Trouble Brewing'],
+  ['黯月初升', 'Bad Moon Rising'],
+  ['教派與紫羅蘭', 'Sects & Violets'],
+  ['無劇本', 'No Script'],
+
   // 夜晚行動順序 Night Order
   ['僅已派發', 'Assigned Only'],
   ['全部角色', 'All Roles'],
@@ -405,6 +412,7 @@ export const UI_EN_PAIRS: [string, string][] = [
   ['此劇本無行動角色', 'No night action roles in this script'],
   ['按住拖拽排序', 'Drag to reorder'],
   ['白問', 'Whiteboard'],
+  ['日間', 'Day'],
 
 ];
 

@@ -16,12 +16,12 @@
     ]"
     @contextmenu.prevent="openContextMenu"
     @click="handleClick"
-    @mousedown="onPointerDown"
-    @touchstart="onPointerDown"
+    @mousedown="onPointerDown($event)"
+    @touchstart="onPointerDown($event)"
     @mouseup="onPointerUp"
     @touchend="onPointerUp"
     @touchcancel="onPointerUp"
-    @touchmove="onPointerMove"
+    @touchmove="onPointerMove($event)"
     @mouseleave="onPointerUp"
   >
     <!-- 背景光暈 -->
@@ -455,10 +455,17 @@ function openContextMenu(e: Event) {
 
 let longPressTimer: any = null
 let hasTriggeredLongPress = false
+let touchStartX = 0
+let touchStartY = 0
 
-function onPointerDown() {
+function onPointerDown(e: MouseEvent | TouchEvent) {
   if (uiStore.isArrangingPlayers) return
   hasTriggeredLongPress = false
+  const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+  const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+  touchStartX = clientX
+  touchStartY = clientY
+
   longPressTimer = setTimeout(() => {
     hasTriggeredLongPress = true
     uiStore.isArrangingPlayers = true
@@ -466,9 +473,14 @@ function onPointerDown() {
   }, 400) // 縮短時間至400ms，確保在系統的contextmenu(通常500ms)之前觸發
 }
 
-function onPointerMove() {
-  // 如果手指滑動了，取消長按判定
-  if (longPressTimer) {
+function onPointerMove(e: MouseEvent | TouchEvent) {
+  if (!longPressTimer) return
+  const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+  const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+  const dx = clientX - touchStartX
+  const dy = clientY - touchStartY
+  // 增加 10px 容差，防止行動裝置手指自然微震誤判為滑動而中斷長按
+  if (Math.hypot(dx, dy) > 10) {
     clearTimeout(longPressTimer)
     longPressTimer = null
   }

@@ -3,7 +3,7 @@
     <div class="voting-panel panel animate-slide-up">
       <div class="panel-header">
         <span class="panel-icon"><img src="/pic/vote-tag.png?v=2" class="panel-header-icon" /></span>
-        <h2 class="panel-title">投票管理</h2>
+        <h2 class="panel-title">{{ uiStore.language === 'en' ? 'Voting' : '投票管理' }}</h2>
         <button class="close-btn" @click="uiStore.closePanel()">✕</button>
       </div>
 
@@ -46,7 +46,7 @@
               </option>
             </select>
           </div>
-          <div class="nominate-arrow">提名</div>
+          <div class="nominate-arrow">{{ uiStore.language === 'en' ? 'nominates' : '提名' }}</div>
           <div class="select-wrap">
             <label class="select-label">{{ uiStore.language === 'en' ? 'Nominee' : '被提名者' }}</label>
             <select v-model="nomineeId" class="player-select">
@@ -125,7 +125,7 @@
                     {{ !p.is_alive ? '💀 ' : '' }}{{ pIndex(p.id) }}. {{ p.name }}
                   </option>
                 </select>
-                <span class="nominate-arrow">提名</span>
+                <span class="nominate-arrow">{{ uiStore.language === 'en' ? 'nominates' : '提名' }}</span>
                 <select v-model="editNomineeId" class="player-select mini">
                   <option v-for="p in availableNomineesForEdit" :key="p.id" :value="p.id">
                     {{ !p.is_alive ? '💀 ' : '' }}{{ pIndex(p.id) }}. {{ p.name }}
@@ -133,8 +133,8 @@
                 </select>
               </div>
               <div class="edit-actions">
-                <button class="btn-primary mini-btn" @click="saveEditNomination">儲存</button>
-                <button class="btn-danger mini-btn" @click="cancelEditNomination">取消</button>
+                <button class="btn-primary mini-btn" @click="saveEditNomination">{{ uiStore.language === 'en' ? 'Save' : '儲存' }}</button>
+                <button class="btn-danger mini-btn" @click="cancelEditNomination">{{ uiStore.language === 'en' ? 'Cancel' : '取消' }}</button>
               </div>
               <div v-if="editError" class="edit-error">{{ editError }}</div>
             </div>
@@ -166,7 +166,7 @@
             <div class="nom-actions">
               <!-- 自由調整當下票數控制項 -->
               <div class="extra-votes-control" @click.stop>
-                <span class="control-label">額外票數:</span>
+                <span class="control-label">{{ uiStore.language === 'en' ? 'Extra votes:' : '額外票數:' }}</span>
                 <button class="btn-vote-adjust" @click="changeExtraVotes(index, -1)">-</button>
                 <span class="extra-votes-val" :class="{ 'val-positive': (nom.extra_votes || 0) > 0, 'val-negative': (nom.extra_votes || 0) < 0 }">
                   {{ (nom.extra_votes || 0) > 0 ? '+' : '' }}{{ nom.extra_votes || 0 }}
@@ -194,9 +194,9 @@
 
           <!-- 已執行或歷史記錄的樣式 -->
           <div class="nom-executed-badge" v-else-if="nom.executed">
-            <span class="status"><img src="/pic/half.png" class="executed-img" /> 已處決</span>
+            <span class="status"><img src="/pic/half.png" class="executed-img" /> {{ uiStore.language === 'en' ? 'Executed' : '已處決' }}</span>
             <span class="final-score">(今日最終票數: {{ Math.max(0, nom.votes_for.length + (nom.extra_votes || 0)) }})</span>
-            <button class="btn-undo" @click.stop="doUndoExecute(index)">撤銷</button>
+            <button class="btn-undo" @click.stop="doUndoExecute(index)">{{ uiStore.language === 'en' ? 'Undo' : '撤銷' }}</button>
           </div>
           
           <div class="nom-history-badge" v-if="nom.executed || nom.round < currentRound || expandedNoms.has(index)">
@@ -207,7 +207,7 @@
                 <span v-if="vIdx < nom.votes_for.length - 1" class="voter-sep">, </span>
               </span>
             </div>
-            <div class="vote-summary" v-else>今日無人投贊成票</div>
+            <div class="vote-summary" v-else>{{ uiStore.language === 'en' ? 'No one voted yes today' : '今日無人投贊成票' }}</div>
           </div>
         </div>
       </div>

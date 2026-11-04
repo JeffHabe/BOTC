@@ -109,19 +109,10 @@
             <span class="grid-icon"><img src="/pic/history-edge.png" class="grid-img" /></span>
             <span class="grid-label">{{ uiStore.language === 'en' ? 'Game Log' : '對局記錄' }}</span>
           </button>
-
-          <!-- 角色清單與座位編排在主頁面上已有直覺入口與操作，避免重複故隱藏 -->
-          <!--
-          <button class="grid-item" @click="openCharSheet">
-            <span class="grid-icon"><img src="/pic/skin.png" class="grid-img" /></span>
-            <span class="grid-label">角色清單</span>
-          </button>
-
           <button class="grid-item" @click="openPlayerOrder">
             <span class="grid-icon"><img src="/pic/throne.png" class="grid-img" /></span>
-            <span class="grid-label">座位編排</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Seat Arrangement' : '座位編排' }}</span>
           </button>
-          -->
 
           <button class="grid-item" @click="openCharacterEditor">
             <span class="grid-icon"><img src="/pic/character-lib.png" class="grid-img" /></span>
@@ -140,52 +131,52 @@
         <div class="divider" />
 
         <!-- 危險區域 -->
-        <div class="section-title danger-section">危險區域</div>
+        <div class="section-title danger-section">{{ uiStore.language === 'en' ? 'Danger Zone' : '危險區域' }}</div>
         <div class="settings-grid">
           <button class="grid-item warning" @click="resetStates">
             <span class="grid-icon"><img src="/pic/reset.png?v=2" class="grid-img" /></span>
-            <span class="grid-label">重置狀態</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Reset States' : '重置狀態' }}</span>
           </button>
 
           <button class="grid-item danger" @click="resetGame">
             <span class="grid-icon"><img src="/pic/close.png" class="grid-img" /></span>
-            <span class="grid-label">重置遊戲</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Reset Game' : '重置遊戲' }}</span>
           </button>
         </div>
 
         <div class="divider" />
 
         <!-- 資料管理 -->
-        <div class="section-title">資料管理</div>
+        <div class="section-title">{{ uiStore.language === 'en' ? 'Data Management' : '資料管理' }}</div>
         <div class="settings-grid cols-2">
 
           <button class="grid-item" @click="importGame">
             <span class="grid-icon"><img src="/pic/import_data.png" class="grid-img" /></span>
-            <span class="grid-label">匯入遊戲</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Import Game' : '匯入遊戲' }}</span>
           </button>
           <button class="grid-item" @click="exportGame">
             <span class="grid-icon"><img src="/pic/export_data.png" class="grid-img" /></span>
-            <span class="grid-label">匯出遊戲</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Export Game' : '匯出遊戲' }}</span>
           </button>
 
           <button class="grid-item" @click="importScripts">
             <span class="grid-icon"><img src="/pic/import_script.png" class="grid-img" /></span>
-            <span class="grid-label">匯入劇本</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Import Script' : '匯入劇本' }}</span>
           </button>
 
            <button class="grid-item" @click="exportAllScripts">
             <span class="grid-icon"><img src="/pic/export_script.png" class="grid-img" /></span>
-            <span class="grid-label">匯出劇本</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Export Script' : '匯出劇本' }}</span>
           </button>
 
           <button class="grid-item" @click="restoreDefaultScripts">
             <span class="grid-icon"><img src="/pic/bookshelf.png" class="grid-img" /></span>
-            <span class="grid-label">還原預設劇本</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Restore Default Scripts' : '還原預設劇本' }}</span>
           </button>
 
           <button class="grid-item" @click="restoreDefaultCharacters">
             <span class="grid-icon"><img src="/pic/character-lib.png" class="grid-img" /></span>
-            <span class="grid-label">重置預設角色</span>
+            <span class="grid-label">{{ uiStore.language === 'en' ? 'Reset Default Characters' : '重置預設角色' }}</span>
           </button>
 
         </div>
@@ -645,11 +636,9 @@ function openVoting() {
   uiStore.openPanel('voting')
 }
 
-/*
 function openPlayerOrder() {
   uiStore.openPanel('player-order')
 }
-*/
 
 function openAssignment() {
   uiStore.openPanel('role-assignment')

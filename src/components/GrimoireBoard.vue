@@ -349,7 +349,7 @@
     <transition name="showcase-fade">
       <div v-if="uiStore.isBluffsShowcase" class="bluffs-showcase-overlay" @click="uiStore.isBluffsShowcase = false">
         <div class="showcase-header">
-          <h2 class="showcase-title">惡魔的偽裝</h2>
+          <h2 class="showcase-title">{{ uiStore.language === 'en' ? 'Demon Bluffs' : '惡魔的偽裝' }}</h2>
           <p class="showcase-hint">隨時點擊空白處返回魔典</p>
         </div>
         
