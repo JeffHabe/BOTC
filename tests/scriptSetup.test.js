@@ -740,3 +740,20 @@ test('SettingsPanel.vue 次要區塊收合功能驗證：提示標記佈局、�
   assert.ok(content.includes('.collapsible-title'), 'SettingsPanel.vue 應具備 .collapsible-title 樣式')
   assert.ok(content.includes('collapse-toggle-icon'), '應具備收合指示圖示 collapse-toggle-icon')
 })
+
+test('SettingsPanel.vue 設定清單高度調降與關閉按鈕觸控區域防接觸不良驗證', () => {
+  const settingsPath = path.resolve(__dirname, '../src/components/SettingsPanel.vue')
+  const content = fs.readFileSync(settingsPath, 'utf8')
+
+  // 1. 驗證設定面板高度降低至 75vh / 75dvh，防手機上緣手勢/頂部瀏海衝突
+  assert.ok(
+    content.includes('max-height: 75vh;') && content.includes('max-height: 75dvh;'),
+    'SettingsPanel 高度應設為 75vh / 75dvh 以避免螢幕頂端邊緣死區導致接觸不良'
+  )
+
+  // 2. 驗證右上角關閉按鈕觸控熱區擴充
+  assert.ok(content.includes('min-width: 38px;'), '關閉按鈕應設定 min-width 確保充足觸控接觸面積')
+  assert.ok(content.includes('min-height: 38px;'), '關閉按鈕應設定 min-height 確保充足觸控接觸面積')
+  assert.ok(content.includes('touch-action: manipulation;'), '關閉按鈕應具備 touch-action: manipulation 防止手勢延遲')
+})
+

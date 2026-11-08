@@ -938,7 +938,8 @@ async function handleActivateLicense() {
 .settings-panel {
   width: 100%;
   max-width: 440px;
-  max-height: 85vh;
+  max-height: 75vh;
+  max-height: 75dvh;
   display: flex;
   flex-direction: column;
   border-radius: 20px 20px 12px 12px;
@@ -967,9 +968,25 @@ async function handleActivateLicense() {
 
 .close-btn {
   color: var(--color-text-muted);
-  font-size: 16px;
+  font-size: 18px;
   background: none;
-  padding: 4px 8px;
+  border: none;
+  padding: 6px;
+  min-width: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  border-radius: 50%;
+  transition: color var(--transition-fast, 0.2s), background-color var(--transition-fast, 0.2s);
+}
+
+.close-btn:hover,
+.close-btn:active {
+  color: var(--color-gold);
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .settings-content {
