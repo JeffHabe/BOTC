@@ -795,5 +795,54 @@ mod tests {
         })).unwrap_err();
         assert!(err.contains("魔像每場對局僅限發起一次提名"));
     }
+
+    #[tokio::test]
+    async fn test_reminder_add_update_remove() {
+        let mut gs = game::GameState::default();
+        let _ = game::execute_action(&mut gs, "add_player", serde_json::json!({ "name": "測試玩家" })).unwrap();
+        assert_eq!(gs.players.len(), 1);
+        let player_id = gs.players[0].id.clone();
+
+        // 1. 新增提示標籤
+        let _ = game::execute_action(
+            &mut gs,
+            "add_reminder",
+            serde_json::json!({
+                "playerId": player_id,
+                "text": "中毒",
+                "sourceRole": "自定義"
+            }),
+        )
+        .unwrap();
+        assert_eq!(gs.players[0].reminders.len(), 1);
+        assert_eq!(gs.players[0].reminders[0].text, "中毒");
+        let reminder_id = gs.players[0].reminders[0].id.clone();
+
+        // 2. 更新提示標籤內容
+        let _ = game::execute_action(
+            &mut gs,
+            "update_reminder",
+            serde_json::json!({
+                "playerId": player_id,
+                "reminderId": reminder_id,
+                "newText": "大醉"
+            }),
+        )
+        .unwrap();
+        assert_eq!(gs.players[0].reminders.len(), 1);
+        assert_eq!(gs.players[0].reminders[0].text, "大醉", "提示詞內容必須能成功更新");
+
+        // 3. 移除提示標籤
+        let _ = game::execute_action(
+            &mut gs,
+            "remove_reminder",
+            serde_json::json!({
+                "playerId": player_id,
+                "reminderId": reminder_id
+            }),
+        )
+        .unwrap();
+        assert_eq!(gs.players[0].reminders.len(), 0, "提示標籤應已被移除");
+    }
 }
 

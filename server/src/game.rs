@@ -748,6 +748,21 @@ pub fn execute_action(gs: &mut GameState, cmd: &str, args: Value) -> Result<Valu
             serde_json::to_value(&*gs).map_err(|e| e.to_string())
         }
 
+        // 修改玩家身上的提醒標籤文字內容
+        // 參數: { "player_id": "uuid", "reminder_id": "標籤UUID", "new_text": "新標記文字" }
+        "update_reminder" => {
+            let player_id = args.get("player_id").or_else(|| args.get("playerId")).and_then(|v| v.as_str()).unwrap_or("");
+            let reminder_id = args.get("reminder_id").or_else(|| args.get("reminderId")).and_then(|v| v.as_str()).unwrap_or("");
+            let new_text = args.get("new_text").or_else(|| args.get("newText")).and_then(|v| v.as_str()).unwrap_or("");
+            if let Some(p) = gs.players.iter_mut().find(|p| p.id == player_id) {
+                if let Some(r) = p.reminders.iter_mut().find(|r| r.id == reminder_id) {
+                    r.text = new_text.to_string();
+                    gs.touch();
+                }
+            }
+            serde_json::to_value(&*gs).map_err(|e| e.to_string())
+        }
+
         // ─── 7. 提名與投票 ──────────────────────────────────────
 
         // 白天發起提名 (自動計算門檻票數並鎖定當日提名/被提名旗標)
